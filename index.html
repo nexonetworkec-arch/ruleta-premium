@@ -9,7 +9,58 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+/* --- INYECCIÓN ADITIVA: Interfaz Móvil Bottom-Nav --- */
+@media (max-width: 800px) {
+    /* Mantenemos la estructura de tablas intacta como en la web */
+    .admin-table {
+        min-width: 600px !important; /* Fuerza el scroll horizontal para mantener las columnas web */
+        display: table !important;
+    }
+    
+    #modalAdmin .modal-content {
+        max-width: 95vw !important;
+        padding: 15px !important;
+    }
 
+    /* Reubicación de botones a la parte inferior */
+    .side-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        background: rgba(10, 10, 10, 0.95) !important;
+        backdrop-filter: blur(15px) !important;
+        padding: 15px !important;
+        margin: 0 !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important; /* Organiza en filas de 2 */
+        gap: 10px !important;
+        border-top: 1px solid #333 !important;
+        z-index: 1000 !important;
+        border-radius: 25px 25px 0 0 !important;
+    }
+
+    /* Ajuste de botones para el nuevo layout */
+    .side-panel .btn {
+        padding: 12px 5px !important;
+        font-size: 0.65rem !important;
+        margin: 0 !important;
+    }
+
+    /* Espaciado extra para que la ruleta no choque con los botones */
+    .app-container {
+        padding-bottom: 220px !important; 
+        justify-content: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    .wheel-wrapper {
+        margin-top: 20px !important;
+        width: 75vw !important;
+        height: 75vw !important;
+    }
+}
     <style>
         :root { 
             --bg-color: #0a0a0a;
@@ -44,118 +95,100 @@
             width: 95%; max-width: 420px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.9);
         }
 
-        .input-group { position: relative; width: 100%; margin-bottom: 20px; text-align: left; }
+        .input-group { position: relative; width: 100%; margin-bottom: 20px; text-align: left;
+        }
         .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 8px;
-                             margin-left: 12px; font-weight: 800; text-transform: uppercase; }
+            margin-left: 12px; font-weight: 800; text-transform: uppercase; }
         .input-pin { width: 100%; padding: 18px;
-                     background: #000; border: 1px solid #333; color: var(--gold); border-radius: 18px; font-size: 1.1rem; transition: 0.3s; }
-        .input-pin:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15); }
-
-        .app-container { display: none; position: relative; width: 100vw; height: 100vh; flex-direction: row;
-                         align-items: center; justify-content: center; padding: 25px; }
-        .wheel-section { flex: 1; display: flex;
-                         flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .wheel-wrapper { position: relative;
-                         width: 78vh; height: 78vh; max-width: 580px; max-height: 580px; filter: drop-shadow(0 0 60px rgba(0,0,0,0.8)); }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #1a1a1a;
-                       background: #000; }
-        #pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-                   width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--gold); z-index: 50;
-                   filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
-        #centerLogo { position: absolute; top: 50%;
-                      left: 50%; transform: translate(-50%, -50%); width: 115px; height: 115px; border-radius: 50%; background: #000; z-index: 100; display: flex; justify-content: center;
-                      align-items: center; border: 4px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-
-        #btnSpinCenter { width: 98px; height: 98px; border-radius: 50%; border: 2px solid var(--gold);
-                         background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center;
-                         box-shadow: 0 7px 0 #5e4b14; transition: 0.1s; text-transform: uppercase; font-size: 0.9rem; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; }
-        #btnSpinCenter:active { transform: translateY(4px); box-shadow: 0 2px 0 #5e4b14; }
-
-        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column;
-                      gap: 15px; width: 220px; z-index: 100; }
-        .btn { padding: 18px; border: none;
-               border-radius: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.4s; }
-        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000; }
-        .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333; }
-        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger);
-                      border: 1px solid rgba(255, 77, 77, 0.2); }
-
-        .modal { position: fixed;
-                 inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 9000; padding: 25px; backdrop-filter: blur(15px); }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #222;
-                         width: 100%; max-width: 480px; text-align: center; }
-        .option-input { width: 100%; padding: 15px;
-                        background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px; }
-
-        .prize-row-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
-        .prize-number { color: var(--gold); font-weight: 900; font-size: 0.9rem; width: 25px; text-align: right; }
-        .prize-row-wrapper .option-input { margin-bottom: 0; flex: 1; }
-
-        #historyList { max-height: 280px; overflow-y: auto; text-align: left; background: #000; border-radius: 20px;
-                       padding: 20px; border: 1px solid #222; }
-        .history-item { padding: 12px 0;
-                        border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; display: flex; align-items: center; }
-        .history-ordinal { color: var(--gold); font-weight: 900; font-size: 0.75rem; width: 45px; text-align: left;
-                           flex-shrink: 0; }
-        .history-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
-
-        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.75rem; color: #aaa; }
-        .admin-table th { color: var(--gold); text-align: left; padding: 12px;
-                          border-bottom: 2px solid #222; }
-        .admin-table td { padding: 12px;
-                          border-bottom: 1px solid #1a1a1a; }
-
-        .row-marketing { border-left: 4px solid #007bff !important;
-                         background: rgba(0,123,255,0.05) !important; }
-        .badge-mkt { background: #007bff; color: white; padding: 2px 6px;
-                     border-radius: 4px; font-size: 9px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
-        .input-mkt { background: #000; border: 1px solid #333; color: #fff; font-size: 10px;
-                     padding: 4px; border-radius: 4px; width: 100%; }
-
-        @media (max-width: 800px) {
-            .app-container { flex-direction: column; }
-            .side-panel { position: relative; width: 100%; flex-direction: row;
-                          flex-wrap: wrap; margin-bottom: 20px; right: auto; top: auto; }
-            .wheel-wrapper { width: 85vw;
-                             height: 85vw; }
+            background: #000; border: 1px solid #333; color: var(--gold); border-radius: 18px; font-size: 1.1rem; transition: 0.3s;
+        }
+        .input-pin:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15);
         }
 
-        /* --- INYECCIÓN ADITIVA: BOTONERA MÓVIL (2 FILAS) --- */
-        @media (max-width: 480px) {
-            .app-container {
-                flex-direction: column !important;
-                justify-content: flex-start !important;
-                padding: 10px !important;
-            }
+        .app-container { display: none; position: relative; width: 100vw; height: 100vh; flex-direction: row;
+            align-items: center; justify-content: center; padding: 25px; }
+        .wheel-section { flex: 1; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .wheel-wrapper { position: relative;
+            width: 78vh; height: 78vh; max-width: 580px; max-height: 580px; filter: drop-shadow(0 0 60px rgba(0,0,0,0.8));
+        }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #1a1a1a;
+            background: #000; }
+        #pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--gold); z-index: 50;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
+        #centerLogo { position: absolute; top: 50%;
+            left: 50%; transform: translate(-50%, -50%); width: 115px; height: 115px; border-radius: 50%; background: #000; z-index: 100; display: flex; justify-content: center;
+            align-items: center; border: 4px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
 
-            .side-panel {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                width: 100% !important;
-                background: #000;
-                padding: 15px !important;
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 10px !important;
-                z-index: 200 !important;
-                border-top: 2px solid var(--gold);
-                border-radius: 25px 25px 0 0;
-                box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
-            }
+        #btnSpinCenter { width: 98px; height: 98px; border-radius: 50%; border: 2px solid var(--gold);
+            background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 7px 0 #5e4b14; transition: 0.1s; text-transform: uppercase; font-size: 0.9rem; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important;
+        }
+        #btnSpinCenter:active { transform: translateY(4px); box-shadow: 0 2px 0 #5e4b14;
+        }
 
-            .side-panel .btn {
-                padding: 12px 5px !important;
-                font-size: 0.65rem !important;
-                margin: 0 !important;
-                border-radius: 12px !important;
-            }
+        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column;
+            gap: 15px; width: 220px; z-index: 100; }
+        .btn { padding: 18px; border: none;
+            border-radius: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.4s;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000;
+        }
+        .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333;
+        }
+        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger);
+            border: 1px solid rgba(255, 77, 77, 0.2); }
 
-            .wheel-section {
-                margin-bottom: 180px !important; 
-                transform: scale(0.95);
+        .modal { position: fixed;
+            inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 9000; padding: 25px; backdrop-filter: blur(15px);
+        }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #222;
+            width: 100%; max-width: 480px; text-align: center; }
+        .option-input { width: 100%; padding: 15px;
+            background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px;
+        }
+
+        .prize-row-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 10px;
+        }
+        .prize-number { color: var(--gold); font-weight: 900; font-size: 0.9rem; width: 25px; text-align: right;
+        }
+        .prize-row-wrapper .option-input { margin-bottom: 0; flex: 1;
+        }
+
+        #historyList { max-height: 280px; overflow-y: auto; text-align: left; background: #000; border-radius: 20px;
+            padding: 20px; border: 1px solid #222; }
+        .history-item { padding: 12px 0;
+            border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; display: flex; align-items: center;
+        }
+        .history-ordinal { color: var(--gold); font-weight: 900; font-size: 0.75rem; width: 45px; text-align: left;
+            flex-shrink: 0; }
+        .history-info { flex: 1; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.75rem; color: #aaa;
+        }
+        .admin-table th { color: var(--gold); text-align: left; padding: 12px;
+            border-bottom: 2px solid #222; }
+        .admin-table td { padding: 12px;
+            border-bottom: 1px solid #1a1a1a; }
+
+        .row-marketing { border-left: 4px solid #007bff !important;
+            background: rgba(0,123,255,0.05) !important; }
+        .badge-mkt { background: #007bff; color: white; padding: 2px 6px;
+            border-radius: 4px; font-size: 9px; font-weight: bold; display: inline-block; margin-bottom: 4px;
+        }
+        .input-mkt { background: #000; border: 1px solid #333; color: #fff; font-size: 10px;
+            padding: 4px; border-radius: 4px; width: 100%; }
+
+        @media (max-width: 800px) {
+            .app-container { flex-direction: column;
             }
+            .side-panel { position: relative; width: 100%; flex-direction: row;
+                flex-wrap: wrap; margin-bottom: 20px; right: auto; top: auto; }
+            .wheel-wrapper { width: 85vw;
+                height: 85vw; }
         }
     </style>
 </head>
@@ -166,7 +199,8 @@
             <h2 style="color: var(--gold); font-size: 2.5rem; font-weight: 900; margin:0;">NEXO®</h2>
             <p style="color: #444; font-size: 0.7rem; letter-spacing: 5px; margin-bottom: 40px;">BUSINESS PRO</p>
             <div class="input-group"><label>Email</label><input type="email" id="authEmail" class="input-pin"></div>
-            <div class="input-group"><label>Pin</label><input type="password" id="authPin" class="input-pin"></div>
+            <div class="input-group"><label>Pin</label><input type="password" id="authPin" 
+                class="input-pin"></div>
             <div id="confirmGroup" style="display: none;">
                 <div class="input-group"><label>Confirmar Pin</label><input type="password" id="authPinConfirm" class="input-pin"></div>
                 <div class="input-group"><label>Nombres y Apellidos</label><input type="text" id="authFullName" class="input-pin" placeholder="EJ: JUAN PÉREZ"></div>
@@ -174,7 +208,8 @@
             </div>
    
              <button id="btnAuthAction" class="btn btn-primary" style="width: 100%;">ACCEDER</button>
-            <div id="toggleAuth" style="margin-top:30px; font-size:0.8rem; cursor:pointer; color:#666">¿Nuevo? <b style="color:var(--gold)">REGISTRAR</b></div>
+            <div id="toggleAuth" style="margin-top:30px;
+                font-size:0.8rem; cursor:pointer; color:#666">¿Nuevo? <b style="color:var(--gold)">REGISTRAR</b></div>
         </div>
     </div>
 
@@ -183,12 +218,15 @@
             <button id="btnEditList" class="btn btn-secondary">EDITAR PREMIOS</button>
             <button id="btnWinners" class="btn btn-secondary">VER HISTORIAL</button>
             <button id="btnResetApp" class="btn btn-danger">REINICIAR APP</button>
-            <button id="btnAdminMaster" class="btn btn-secondary" style="display:none; border-color:var(--gold); color:var(--gold);">ADMIN MASTER</button>
-            <button onclick="firebase.auth().signOut().then(()=>location.reload())" class="btn" style="color:#333; font-size:0.6rem;">SALIR</button>
+            <button id="btnAdminMaster" class="btn btn-secondary" style="display:none;
+                border-color:var(--gold); color:var(--gold);">ADMIN MASTER</button>
+            <button onclick="firebase.auth().signOut().then(()=>location.reload())" class="btn" style="color:#333;
+                font-size:0.6rem;">SALIR</button>
         </div>
 
         <div class="wheel-section">
-            <h2 id="mainTitle" contenteditable="true" spellcheck="false" oninput="syncTitles()" style="color:var(--gold); font-weight:900;">RULETA PREMIUM</h2>
+            <h2 id="mainTitle" contenteditable="true" spellcheck="false" oninput="syncTitles()" style="color:var(--gold);
+                font-weight:900;">RULETA PREMIUM</h2>
             <div id="userBadgeArea" style="margin-bottom:20px;"></div>
             <div class="wheel-wrapper">
                 <div id="pointer"></div>
@@ -196,57 +234,75 @@
                 <canvas id="wheelCanvas" width="800" height="800"></canvas>
             </div>
      
-            <div style="margin-top:35px; background:rgba(0,0,0,0.7); padding:18px; border-radius:25px; border: 1px solid #222;">
-                <label style="color:#888; cursor:pointer; display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" id="chkRemoveWinner" style="width:20px; height:20px;"> AUTO-ELIMINAR GANADOR
+        <div style="margin-top:35px; background:rgba(0,0,0,0.7); padding:18px; border-radius:25px;
+            border: 1px solid #222;">
+                <label style="color:#888;
+                    cursor:pointer; display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="chkRemoveWinner" style="width:20px;
+                        height:20px;"> AUTO-ELIMINAR GANADOR
                 </label>
             </div>
         </div>
     </div>
 
     <div id="modalHistory" class="modal"><div class="modal-content">
-        <div id="historyCaptureArea" style="background:var(--card-bg); padding:20px; border-radius:20px;">
+        <div id="historyCaptureArea" style="background:var(--card-bg);
+            padding:20px; border-radius:20px;">
             <h3 id="modalDynamicTitle" style="color:var(--gold);">HISTORIAL</h3>
             <div id="historyList"></div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+        <div style="display:grid;
+            grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
             <button id="btnDownloadImg" class="btn btn-primary">IMAGEN</button>
             <button id="btnExportCSV" class="btn btn-secondary">CSV</button>
         </div>
-        <button id="btnCloseHistory" class="btn" style="width:100%; color:#555; margin-top:10px;">CERRAR</button>
+        <button id="btnCloseHistory" class="btn" style="width:100%;
+            color:#555; margin-top:10px;">CERRAR</button>
     </div></div>
 
-    <div id="modalWinner" class="modal"><div class="modal-content" style="border: 4px solid var(--gold); background: #000;">
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border: 4px solid var(--gold);
+        background: #000;">
         <h2 style="color:#fff;">GANADOR</h2>
-        <div id="winnerDisplay" style="font-size: 3rem; margin: 30px 0; color:var(--gold); font-weight:900;">---</div>
+        <div id="winnerDisplay" style="font-size: 3rem;
+            margin: 30px 0; color:var(--gold); font-weight:900;">---</div>
         <button id="btnCloseWinner" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
     </div></div>
 
     <div id="modalAdmin" class="modal"><div class="modal-content" style="max-width: 650px;">
         <h3 style="color:var(--gold);">PANEL CONTROL NEXO®</h3>
         <input type="text" id="adminSearch" class="option-input" placeholder="BUSCAR...">
-        <div style="max-height: 380px; overflow-y: auto; background: #000; border-radius: 20px;">
+        <div style="max-height: 380px;
+            overflow-y: auto; background: #000; border-radius: 20px;">
             <table class="admin-table">
                 <thead><tr><th>UID / ROL</th><th>NIVEL</th><th>ACCIONES</th></tr></thead>
                 <tbody id="adminUserList"></tbody>
             </table>
         </div>
-        <button onclick="document.getElementById('modalAdmin').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR PANEL</button>
+        <button onclick="document.getElementById('modalAdmin').style.display='none'" class="btn btn-secondary" style="width:100%;
+            margin-top:20px;">CERRAR PANEL</button>
     </div></div>
 
     <div id="modalAdd" class="modal"><div class="modal-content">
         <h3 style="color:var(--gold);">PREMIOS</h3>
-        <div style="margin-bottom:20px; display:flex; gap:10px; align-items:center; justify-content:center;">
-            <span style="font-size:0.7rem; color:var(--gold); font-weight:800;">CANTIDAD:</span>
-            <input type="number" id="prizeQuantity" min="1" value="2" style="width:60px; background:#000; border:1px solid #333; color:white; border-radius:10px; padding:10px; text-align:center;">
-            <button onclick="generatePrizeInputs()" class="btn btn-secondary" style="padding:10px 15px; font-size:0.6rem;">GENERAR</button>
+        <div style="margin-bottom:20px;
+            display:flex; gap:10px; align-items:center; justify-content:center;">
+            <span style="font-size:0.7rem; color:var(--gold);
+                font-weight:800;">CANTIDAD:</span>
+            <input type="number" id="prizeQuantity" min="1" value="2" style="width:60px; background:#000;
+                border:1px solid #333; color:white; border-radius:10px; padding:10px; text-align:center;">
+            <button onclick="generatePrizeInputs()" class="btn btn-secondary" style="padding:10px 15px;
+                font-size:0.6rem;">GENERAR</button>
         </div>
-        <div id="inputsContainer" style="max-height: 300px; overflow-y: auto;"></div>
-        <button id="btnSaveList" class="btn btn-primary" style="width:100%; margin-top:10px;">GUARDAR</button>
-        <button onclick="document.getElementById('modalAdd').style.display='none'" class="btn" style="color:#555; margin-top:10px;">CANCELAR</button>
+        <div id="inputsContainer" style="max-height: 300px;
+            overflow-y: auto;"></div>
+        <button id="btnSaveList" class="btn btn-primary" style="width:100%;
+            margin-top:10px;">GUARDAR</button>
+        <button onclick="document.getElementById('modalAdd').style.display='none'" class="btn" style="color:#555;
+            margin-top:10px;">CANCELAR</button>
     </div></div>
 
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
+    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
+        z-index:9999"></canvas>
 
     <script>
         const firebaseConfig = {
@@ -256,7 +312,7 @@
             storageBucket: "ruletapremiumbusiness.firebasestorage.app",
             messagingSenderId: "15131512066",
             appId: "1:15131512066:web:f98b361c388fc1225e861b",
-            databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
+             databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
@@ -264,25 +320,28 @@
         let config = { title: "RULETA PREMIUM", prizes: ["OPCIÓN 1", "OPCIÓN 2"], colorA: "#d4af37", colorB: "#141414", level: "free", customLogoURL: "" };
 
         class AudioEngine {
-            constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+             constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
             playTick() { if(this.ctx.state === 'suspended') this.ctx.resume();
-            const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.setValueAtTime(600, this.ctx.currentTime); g.gain.setValueAtTime(0.1, this.ctx.currentTime); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.05); }
-            playWin() { [261, 329, 392].forEach((f, i) => { const o = this.ctx.createOscillator(); o.frequency.value = f; o.connect(this.ctx.destination); o.start(this.ctx.currentTime + i*0.1); o.stop(this.ctx.currentTime + 0.5); }); }
+                const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.setValueAtTime(600, this.ctx.currentTime); g.gain.setValueAtTime(0.1, this.ctx.currentTime); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.05);
+                }
+            playWin() { [261, 329, 392].forEach((f, i) => { const o = this.ctx.createOscillator(); o.frequency.value = f; o.connect(this.ctx.destination); o.start(this.ctx.currentTime + i*0.1); o.stop(this.ctx.currentTime + 0.5); });
+                }
         }
         class ConfettiEngine {
             constructor() { this.canvas = document.getElementById('confettiCanvas');
-            this.ctx = this.canvas.getContext('2d'); this.items = []; }
+                this.ctx = this.canvas.getContext('2d'); this.items = []; }
             burst() { this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight; for(let i=0; i<80; i++) this.items.push({ x: innerWidth/2, y: innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20-10, size: Math.random()*8+4, color: config.colorA, a: 1 });
-            this.loop(); }
+                this.canvas.height = window.innerHeight; for(let i=0; i<80; i++) this.items.push({ x: innerWidth/2, y: innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20-10, size: Math.random()*8+4, color: config.colorA, a: 1 });
+                this.loop(); }
             loop() { this.ctx.clearRect(0,0,innerWidth,innerHeight);
-            this.items.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.a -= 0.01; this.ctx.fillStyle = p.color; this.ctx.globalAlpha = p.a; this.ctx.fillRect(p.x, p.y, p.size, p.size); if(p.a <= 0) this.items.splice(i,1); });
-            if(this.items.length) requestAnimationFrame(()=>this.loop()); }
+                this.items.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.a -= 0.01; this.ctx.fillStyle = p.color; this.ctx.globalAlpha = p.a; this.ctx.fillRect(p.x, p.y, p.size, p.size); if(p.a <= 0) this.items.splice(i,1); });
+                if(this.items.length) requestAnimationFrame(()=>this.loop()); }
         }
 
         class Wheel {
             constructor() { this.canvas = document.getElementById('wheelCanvas');
-            this.ctx = this.canvas.getContext('2d'); this.angle = 0; this.isSpinning = false; this.audio = new AudioEngine(); this.confetti = new ConfettiEngine(); }
+                this.ctx = this.canvas.getContext('2d'); this.angle = 0; this.isSpinning = false; this.audio = new AudioEngine(); this.confetti = new ConfettiEngine();
+                }
             draw() {
                 const w = 800, cx = 400, r = 360;
                 this.ctx.clearRect(0,0,w,w);
@@ -291,10 +350,10 @@
                     this.ctx.save(); this.ctx.beginPath(); this.ctx.fillStyle = i%2?config.colorB:config.colorA;
                     this.ctx.moveTo(cx,cx); this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice); this.ctx.fill();
                     this.ctx.translate(cx,cx); this.ctx.rotate(this.angle+i*slice+slice/2);
-                    this.ctx.font = "900 40px Segoe UI"; this.ctx.textAlign="right"; this.ctx.fillStyle="#fff";
+                     this.ctx.font = "900 40px Segoe UI"; this.ctx.textAlign="right"; this.ctx.fillStyle="#fff";
                     this.ctx.fillText(t.toUpperCase(), r-40, 0); this.ctx.restore();
                 });
-            }
+                }
             spin() {
                 if(this.isSpinning) return;
                 this.isSpinning = true;
@@ -304,10 +363,11 @@
                     const p = Math.min((now-start)/5000, 1);
                     this.angle = total * (1 - Math.pow(1-p, 3)); this.draw();
                     if(p < 1) requestAnimationFrame(anim);
-                    else { this.isSpinning = false; this.finalize(); }
+                    else { this.isSpinning = false; this.finalize();
+                        }
                 };
                 requestAnimationFrame(anim);
-            }
+                }
             async finalize() {
                 const s = (Math.PI*2)/config.prizes.length;
                 let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
@@ -318,14 +378,19 @@
                 document.getElementById('modalWinner').style.display = 'flex';
                 this.audio.playWin();
                 this.confetti.burst();
+                
                 const fecha = new Date().toLocaleString();
                 winnersHistory.push({nombre: premio, fecha: fecha});
+                
+                // --- INYECCIÓN ADITIVA: Registro en Historial Global del Usuario ---
                 await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory);
-                await db.ref('users/'+currentUser.uid+'/spinLogs').push({ premio: premio, timestamp: fecha });
+                await db.ref('users/'+currentUser.uid+'/spinLogs').push({
+                    premio: premio,
+                    timestamp: fecha
+                });
             }
         }
         const appWheel = new Wheel();
-
         document.getElementById('btnCloseWinner').onclick = async () => {
             if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
                 config.prizes.splice(appWheel.winnerIdx, 1);
@@ -333,29 +398,27 @@
                 await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes);
             }
             document.getElementById('modalWinner').style.display = 'none';
-        };
-
+            };
         document.getElementById('btnWinners').onclick = () => { syncTitles(); document.getElementById('modalHistory').style.display = 'flex'; };
         document.getElementById('btnCloseHistory').onclick = () => { document.getElementById('modalHistory').style.display = 'none'; };
-
+        document.getElementById('btnResetApp').onclick = async () => { if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { await db.ref('users/'+currentUser.uid+'/history').remove(); winnersHistory = []; location.reload(); } };
         auth.onAuthStateChanged(user => {
             currentUser = user;
             if(user) {
                 document.getElementById('loginScreen').style.display='none';
                 document.getElementById('appMain').style.display='flex';
                 db.ref('admins/'+user.uid).on('value', s => { if(s.val()) document.getElementById('btnAdminMaster').style.display='block'; });
-                db.ref('users/'+user.uid+'/config').on('value', s => { if(s.val()) { config = {...config, ...s.val()}; document.getElementById('mainTitle').innerText = config.title; appWheel.draw(); } });
+                db.ref('users/'+user.uid+'/config').on('value', 
+                s => { if(s.val()) { config = {...config, ...s.val()}; document.getElementById('mainTitle').innerText = config.title; appWheel.draw(); } });
                 db.ref('users/'+user.uid+'/history').on('value', s => { winnersHistory = s.val() || []; renderHistory(); });
             }
         });
-
         const getOrdinal = (n) => {
             if (n === 1) return "1er";
             if (n === 2) return "2do";
             if (n === 3) return "3er";
             return n + "to";
         };
-
         const renderHistory = () => { 
             const list = document.getElementById('historyList');
             list.innerHTML = winnersHistory.map((h, i) => `
@@ -363,14 +426,15 @@
                     <span class="history-ordinal">${getOrdinal(i + 1)}</span>
                     <div class="history-info">
                         <span>${h.nombre}</span>
-                        <small>${h.fecha}</small>
+                         <small>${h.fecha}</small>
                     </div>
                 </div>
             `).join("");
-        };
+            };
 
         const checkExportPermission = () => {
-            const hasLvl = config.level === 'pro' || config.level === 'ppe';
+            const hasLvl = config.level === 'pro' ||
+                config.level === 'ppe';
             const hasCustomPerm = config.permissions?.canExport === true;
             if (!hasLvl && !hasCustomPerm) {
                 alert("🔒 FUNCIÓN PREMIUM: Esta herramienta solo está disponible para licencias PRO/PPE o autorizadas por el Administrador.");
@@ -379,9 +443,13 @@
             return true;
         };
 
+        // --- INYECCIÓN ADITIVA: Rastreador de Descargas ---
         const logDownload = async (type) => {
             if(currentUser) {
-                await db.ref(`users/${currentUser.uid}/downloadLogs`).push({ type: type, timestamp: new Date().toLocaleString() });
+                await db.ref(`users/${currentUser.uid}/downloadLogs`).push({
+                    type: type,
+                    timestamp: new Date().toLocaleString()
+                });
             }
         };
 
@@ -395,19 +463,22 @@
                 link.href = canvas.toDataURL("image/png");
                 link.click();
                 logDownload('IMAGE');
-            } catch (e) { alert("Error al generar imagen."); }
+            } catch (e) { alert("Error al generar imagen.");
+                }
         };
 
         document.getElementById('btnExportCSV').onclick = () => {
             if (!checkExportPermission()) return;
             if (winnersHistory.length === 0) return alert("Historial vacío.");
             let csv = "NRO,PREMIO,FECHA Y HORA\n";
-            winnersHistory.forEach((h, i) => { csv += `${i + 1},"${h.nombre.replace(/"/g, '""')}","${h.fecha}"\n`; });
+            winnersHistory.forEach((h, i) => {
+                csv += `${i + 1},"${h.nombre.replace(/"/g, '""')}","${h.fecha}"\n`;
+            });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.setAttribute('download', `Historial_${config.title.replace(/\s+/g, '_')}.csv`);
-            document.body.appendChild(link);
+             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             logDownload('CSV');
@@ -416,19 +487,23 @@
         document.getElementById('btnAuthAction').onclick = async () => {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPin').value, phone = document.getElementById('authPhone').value, fullName = document.getElementById('authFullName').value;
             const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-            try {
+              try {
                 if(isRegister) {
                     const cred = await auth.createUserWithEmailAndPassword(e, p);
                     await db.ref(`users/${cred.user.uid}/config`).set({ 
-                        email: e, phone: phone || "No registrado", fullName: fullName || "SIN NOMBRE", createdAt: new Date().toLocaleDateString(),
-                        level: "free", maxSpins: 10, permissions: { canExport: false, canCustom: false, canAutoRemove: false, showAds: true }
-                    });
-                } else { await auth.signInWithEmailAndPassword(e, p); }
-            } catch(err) { alert(err.message); }
+                        email: e, 
+                        phone: phone || "No registrado", 
+                        fullName: fullName || "SIN NOMBRE", 
+                         createdAt: new Date().toLocaleDateString(), 
+                        level: "free",
+                        maxSpins: 10,
+                        permissions: { canExport: false, canCustom: false, canAutoRemove: false, showAds: true }
+                     });
+                    } else { await auth.signInWithEmailAndPassword(e, p); }
+            } catch(err) { alert(err.message);
+                }
         };
-
         document.getElementById('toggleAuth').onclick = () => { document.getElementById('confirmGroup').style.display = (document.getElementById('confirmGroup').style.display==='none'?'block':'none'); };
-
         document.getElementById('btnEditList').onclick = () => { 
             const qtyInput = document.getElementById('prizeQuantity');
             qtyInput.value = config.prizes.length;
@@ -439,314 +514,322 @@
         window.generatePrizeInputs = () => {
             const container = document.getElementById('inputsContainer');
             let qty = parseInt(document.getElementById('prizeQuantity').value) || 1;
-            if (config.level === 'free' && qty > 10) { alert("Nivel FREE limitado a 10 premios."); qty = 10; document.getElementById('prizeQuantity').value = 10; }
+            
+            // Restricción Nivel FREE (Inyección Aditiva)
+            if (config.level === 'free' && qty > 10) {
+                alert("Nivel FREE limitado a 10 premios.");
+                qty = 10; document.getElementById('prizeQuantity').value = 10;
+            }
+
             const currentValues = Array.from(document.querySelectorAll('#inputsContainer .option-input')).map(i => i.value);
             container.innerHTML = "";
             for(let i=0; i < qty; i++) {
-                const val = currentValues[i] || config.prizes[i] || "";
+                const val = currentValues[i] ||
+                    config.prizes[i] || "";
                 container.innerHTML += `
                     <div class="prize-row-wrapper">
                         <span class="prize-number">${i + 1}.</span>
                         <input type="text" class="option-input" value="${val.toUpperCase()}" oninput="this.value = this.value.toUpperCase()">
-                    </div>`;
+                     </div>`;
             }
         };
-
-        document.getElementById('btnSaveList').onclick = async () => { const p = []; document.querySelectorAll('#inputsContainer input').forEach(i => { if(i.value) p.push(i.value.toUpperCase()); }); await db.ref('users/'+currentUser.uid+'/config/prizes').set(p); document.getElementById('modalAdd').style.display='none'; };
+        document.getElementById('btnSaveList').onclick = async () => { const p = []; document.querySelectorAll('#inputsContainer input').forEach(i => { if(i.value) p.push(i.value.toUpperCase()); }); await db.ref('users/'+currentUser.uid+'/config/prizes').set(p); document.getElementById('modalAdd').style.display='none';
+            };
         function syncTitles() { document.getElementById('modalDynamicTitle').innerText = document.getElementById('mainTitle').innerText; }
-
-        // --- INYECCIÓN ADITIVA: PANEL ADMIN MASTER AVANZADO ---
+        
         const injectMasterAdminStyles = () => {
             if (document.getElementById('adminMasterStyles')) return;
             const style = document.createElement('style');
             style.id = 'adminMasterStyles';
-            style.innerHTML = `
-                .admin-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
-                .admin-card { background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; text-align: center; }
-                .admin-card small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: 800; }
-                .admin-card div { font-size: 1.2rem; font-weight: 900; color: #fff; margin-top: 5px; }
-                .admin-filters { display: flex; gap: 8px; margin-bottom: 15px; justify-content: center; }
-                .filter-chip { padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; border: 1px solid #333; background: #000; color: #666; cursor: pointer; transition: 0.3s; }
-                .filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); }
-                .btn-action-mini { padding: 8px 12px !important; font-size: 0.75rem !important; border-radius: 8px; cursor: pointer; border: none; font-weight: 800; min-width: 50px; min-height: 38px; margin: 2px; }
-                .btn-msg { background: #007bff; color: white; }
-                .btn-cfg { background: #333; color: var(--gold); }
-                .btn-lvl { background: var(--gold); color: #000; }
-                .btn-view { background: #28a745; color: white; }
-                .profile-header { text-align: left; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; }
-                .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-                .stat-box { background: #000; padding: 15px; border-radius: 15px; border: 1px solid #222; text-align: center; }
-                .stat-box b { color: var(--gold); font-size: 1.4rem; display: block; }
-                .stat-box span { font-size: 0.6rem; color: #555; text-transform: uppercase; }
-                .online-badge { width: 8px; height: 8px; border-radius: 50%; background: #28a745; display: inline-block; margin-right: 5px; box-shadow: 0 0 10px #28a745; }
-                .offline-badge { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; margin-right: 5px; }
-            `;
+            style.innerHTML = `.admin-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+                margin: 20px 0; } .admin-card { background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; text-align: center;
+                } .admin-card small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: 800; } .admin-card div { font-size: 1.2rem; font-weight: 900;
+                color: #fff; margin-top: 5px; } .admin-filters { display: flex; gap: 8px; margin-bottom: 15px; justify-content: center;
+                } .filter-chip { padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; border: 1px solid #333; background: #000; color: #666; cursor: pointer;
+                transition: 0.3s; } .filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); } .btn-action-mini { padding: 8px 12px !important;
+                font-size: 0.75rem !important; border-radius: 8px; cursor: pointer; border: none; font-weight: 800; min-width: 50px; min-height: 38px; margin: 2px;
+                } .btn-msg { background: #007bff; color: white; } .btn-cfg { background: #333; color: var(--gold); } .btn-lvl { background: var(--gold);
+                color: #000; } .btn-view { background: #28a745; color: white; } .profile-header { text-align: left; border-bottom: 1px solid #333; padding-bottom: 15px;
+                margin-bottom: 15px; } .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; } .stat-box { background: #000;
+                padding: 15px; border-radius: 15px; border: 1px solid #222; text-align: center; } .stat-box b { color: var(--gold); font-size: 1.4rem; display: block;
+                } .stat-box span { font-size: 0.6rem; color: #555; text-transform: uppercase; } .online-badge { width: 8px; height: 8px; border-radius: 50%; background: #28a745; display: inline-block; margin-right: 5px; box-shadow: 0 0 10px #28a745; } .offline-badge { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; margin-right: 5px; }`;
             document.head.appendChild(style);
         };
-
         const updateAdminDashboard = (snap) => {
             let stats = { total: 0, free: 0, pro: 0, ppe: 0, active: 0 };
-            snap.forEach(u => {
-                stats.total++;
+            snap.forEach(u => { 
+                stats.total++; 
                 const d = u.val();
-                const lvl = d.config?.level || 'free';
+                const lvl = d.config?.level || 'free'; 
                 if (stats.hasOwnProperty(lvl)) stats[lvl]++;
                 if (d.status?.state === 'online') stats.active++;
             });
             let container = document.getElementById('adminDashContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'adminDashContainer';
-                const modal = document.querySelector('#modalAdmin .modal-content h3');
-                modal.parentNode.insertBefore(container, modal.nextSibling);
-            }
-            container.innerHTML = `
-                <div class="admin-dashboard">
-                    <div class="admin-card"><small>Usuarios</small><div>${stats.total}</div></div>
-                    <div class="admin-card"><small>Activos</small><div style="color:#28a745">${stats.active}</div></div>
-                    <div class="admin-card"><small>Pro</small><div>${stats.pro}</div></div>
-                    <div class="admin-card"><small>PPE</small><div>${stats.ppe}</div></div>
-                </div>
-                <div class="admin-filters">
-                    <div class="filter-chip active" onclick="applyAdminFilter('all', this)">TODOS</div>
-                    <div class="filter-chip" onclick="applyAdminFilter('free', this)">FREE</div>
-                    <div class="filter-chip" onclick="applyAdminFilter('pro', this)">PRO</div>
-                    <div class="filter-chip" onclick="applyAdminFilter('ppe', this)">PPE</div>
-                </div>`;
-        };
+            if (!container) { container = document.createElement('div'); container.id = 'adminDashContainer'; const modal = document.querySelector('#modalAdmin .modal-content h3'); modal.parentNode.insertBefore(container, modal.nextSibling);
+                }
+            container.innerHTML = `<div class="admin-dashboard"><div class="admin-card"><small>Usuarios</small><div>${stats.total}</div></div><div class="admin-card"><small>Activos</small><div style="color:#28a745">${stats.active}</div></div><div class="admin-card"><small>Pro</small><div>${stats.pro}</div></div><div class="admin-card"><small>PPE</small><div>${stats.ppe}</div></div></div><div class="admin-filters"><div class="filter-chip active" onclick="applyAdminFilter('all', this)">TODOS</div><div class="filter-chip" onclick="applyAdminFilter('free', this)">FREE</div><div class="filter-chip" onclick="applyAdminFilter('pro', this)">PRO</div><div class="filter-chip" onclick="applyAdminFilter('ppe', this)">PPE</div></div>`;
+            };
 
         window.updateAdminTableFull = () => {
             injectMasterAdminStyles();
             const list = document.getElementById('adminUserList');
             db.ref('users').on('value', snap => {
                 if (document.getElementById('modalAdmin').style.display === 'flex') {
-                    updateAdminDashboard(snap);
-                    list.innerHTML = "";
+                    updateAdminDashboard(snap); list.innerHTML = "";
                     snap.forEach(u => {
-                        const d = u.val();
-                        const level = d.config?.level || 'free';
-                        const isMkt = d.isMarketing || false;
+                        const d = u.val(); 
+                        const level = d.config?.level || 'free'; const isMkt = d.isMarketing || false;
                         const isOnline = d.status?.state === 'online';
-                        list.innerHTML += `
-                            <tr class="user-row ${isMkt ? 'row-marketing' : ''}" data-level="${level}">
-                                <td>
-                                    ${isOnline ? '<span class="online-badge"></span>' : '<span class="offline-badge"></span>'}
-                                    ${isMkt ? '<span class="badge-mkt">MKT</span><br>' : ''}
-                                    ${isMkt ? `<input type="text" class="input-mkt" value="${d.email || ''}" onchange="db.ref('users/${u.key}/email').set(this.value)">` : u.key.substring(0,8)}
-                                </td>
-                                <td style="color:var(--gold); font-weight:bold;">
-                                    ${level.toUpperCase()}<br>
-                                    ${isMkt ? `<input type="password" class="input-mkt" style="width:60px" value="${d.pin || ''}" onchange="db.ref('users/${u.key}/pin').set(this.value)">` : ''}
-                                </td>
-                                <td style="display:flex; gap:4px; justify-content:center;">
-                                    <button class="btn-action-mini btn-lvl" onclick="cycleLvl('${u.key}','${level}')">LVL</button>
-                                    <button class="btn-action-mini btn-cfg" onclick="openLic('${u.key}')">⚙️</button>
-                                    <button class="btn-action-mini ${isMkt ? 'btn-lvl' : 'btn-cfg'}" onclick="db.ref('users/${u.key}/isMarketing').set(${!isMkt})">M</button>
-                                    <button class="btn-action-mini btn-view" onclick="viewUserProfile('${u.key}')">VER</button>
-                                </td>
-                            </tr>`;
+                        list.innerHTML += `<tr class="user-row ${isMkt ? 'row-marketing' : ''}" data-level="${level}"><td>${isOnline ? '<span class="online-badge"></span>' : '<span class="offline-badge"></span>'}${isMkt ? '<span class="badge-mkt">MKT</span><br>' : ''}${isMkt ? `<input type="text" class="input-mkt" value="${d.email || ''}" onchange="db.ref('users/${u.key}/email').set(this.value)">` : u.key.substring(0,8)}</td><td style="color:var(--gold);">${level.toUpperCase()}<br>${isMkt ? `<input type="password" class="input-mkt" style="width:60px" value="${d.pin || ''}" onchange="db.ref('users/${u.key}/pin').set(this.value)">` : ''}</td><td style="display:flex; gap:4px; justify-content:center;"><button class="btn-action-mini btn-lvl" onclick="cycleLvl('${u.key}','${level}')">LVL</button><button class="btn-action-mini btn-cfg" onclick="openLic('${u.key}')">⚙️</button><button class="btn-action-mini ${isMkt ?
+                        'btn-lvl' : 'btn-cfg'}" onclick="db.ref('users/${u.key}/isMarketing').set(${!isMkt})">M</button><button class="btn-action-mini btn-view" onclick="viewUserProfile('${u.key}')">VER</button></td></tr>`;
                     });
                 }
             });
         };
 
-        window.applyAdminFilter = (filter, el) => {
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            document.querySelectorAll('.user-row').forEach(row => {
-                row.style.display = (filter === 'all' || row.dataset.level === filter) ? "" : "none";
-            });
-        };
-
-        window.cycleLvl = async (uid, cur) => {
-            const lvls = ['free', 'pro', 'ppe'];
-            const next = lvls[(lvls.indexOf(cur)+1)%lvls.length];
-            await db.ref(`users/${uid}/config/level`).set(next);
-        };
-
+        window.applyAdminFilter = (filter, el) => { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.querySelectorAll('.user-row').forEach(row => row.style.display = (filter === 'all' || row.dataset.level === filter) ? "" : "none"); };
+     
+        window.cycleLvl = async (uid, cur) => { const lvls = ['free', 'pro', 'ppe']; await db.ref(`users/${uid}/config/level`).set(lvls[(lvls.indexOf(cur)+1)%lvls.length]); };
         window.openLic = async (uid) => {
             if(!document.getElementById('modalLic')) {
                 const d = document.createElement('div'); d.id = 'modalLic'; d.className = 'modal';
-                d.innerHTML = `
-                    <div class="modal-content" style="max-width:380px; text-align:left;">
-                        <h3 style="color:var(--gold); text-align:center;">CONFIG LICENCIA</h3>
-                        <div style="background:#000; padding:15px; border-radius:15px; border:1px solid #222; margin-bottom:15px;">
-                            <label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pExp"> Exportar PNG/CSV</label>
-                            <label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pCus"> Personalizar Título</label>
-                            <label style="display:block;"><input type="checkbox" id="pAut"> Auto-Eliminar Ganador</label>
-                        </div>
-                        <label style="color:var(--gold); font-size:0.65rem;">RANGO EVENTO (PPE)</label>
-                        <input type="date" id="dS" class="option-input"><input type="date" id="dE" class="option-input">
-                        <button id="bSLic" class="btn btn-primary" style="width:100%;">GUARDAR</button>
-                        <button onclick="document.getElementById('modalLic').style.display='none'" class="btn" style="width:100%; color:#444; margin-top:10px;">SALIR</button>
-                    </div>`;
+                d.innerHTML = `<div class="modal-content" style="max-width:380px;
+                    text-align:left;"><h3 style="color:var(--gold); text-align:center;">CONFIG LICENCIA</h3><div style="background:#000; padding:15px; border-radius:15px; border:1px solid #222; margin-bottom:15px;"><label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pExp"> Exportar PNG/CSV</label><label style="display:block;
+                    margin-bottom:10px;"><input type="checkbox" id="pCus"> Personalizar Título</label><label style="display:block;"><input type="checkbox" id="pAut"> Auto-Eliminar Ganador</label></div><label style="color:var(--gold);
+                    font-size:0.65rem;">RANGO EVENTO (PPE)</label><input type="date" id="dS" class="option-input"><input type="date" id="dE" class="option-input"><button id="bSLic" class="btn btn-primary" style="width:100%;">GUARDAR</button><button onclick="document.getElementById('modalLic').style.display='none'" class="btn" style="width:100%; color:#444;
+                    margin-top:10px;">SALIR</button></div>`;
                 document.body.appendChild(d);
             }
             const s = await db.ref(`users/${uid}/config`).once('value'); const c = s.val() || {};
-            document.getElementById('pExp').checked = c.permissions?.canExport || false;
-            document.getElementById('pCus').checked = c.permissions?.canCustom || false;
-            document.getElementById('pAut').checked = c.permissions?.canAutoRemove || false;
-            document.getElementById('dS').value = c.eventDates?.start || "";
-            document.getElementById('dE').value = c.eventDates?.end || "";
-            document.getElementById('modalLic').style.display = 'flex';
-            document.getElementById('bSLic').onclick = async () => {
-                await db.ref(`users/${uid}/config/permissions`).set({ 
-                    canExport: document.getElementById('pExp').checked, 
-                    canCustom: document.getElementById('pCus').checked, 
-                    canAutoRemove: document.getElementById('pAut').checked 
-                });
-                await db.ref(`users/${uid}/config/eventDates`).set({ start: document.getElementById('dS').value, end: document.getElementById('dE').value });
-                document.getElementById('modalLic').style.display = 'none';
-            };
+            document.getElementById('pExp').checked = c.permissions?.canExport || false; document.getElementById('pCus').checked = c.permissions?.canCustom || false; document.getElementById('pAut').checked = c.permissions?.canAutoRemove || false; document.getElementById('dS').value = c.eventDates?.start || ""; document.getElementById('dE').value = c.eventDates?.end || ""; document.getElementById('modalLic').style.display = 'flex';
+           
+             document.getElementById('bSLic').onclick = async () => { await db.ref(`users/${uid}/config/permissions`).set({ canExport: document.getElementById('pExp').checked, canCustom: document.getElementById('pCus').checked, canAutoRemove: document.getElementById('pAut').checked }); await db.ref(`users/${uid}/config/eventDates`).set({ start: document.getElementById('dS').value, end: document.getElementById('dE').value });
+                document.getElementById('modalLic').style.display = 'none'; };
         };
 
         const repairAdminAccess = () => {
             const btn = document.getElementById('btnAdminMaster');
             const modal = document.getElementById('modalAdmin');
-            if (btn) {
-                btn.onclick = async () => {
-                    if (!currentUser) return alert("Sesión no activa.");
-                    try {
-                        const adminSnap = await db.ref('admins/' + currentUser.uid).once('value');
-                        if (adminSnap.val() === true) {
-                            modal.style.display = 'flex';
-                            updateAdminTableFull();
-                        } else {
-                            alert("ACCESO DENEGADO. Tu UID no es admin: " + currentUser.uid);
-                        }
-                    } catch (e) { alert("Error: " + e.message); }
-                };
-            }
+            if (btn) { btn.onclick = async () => { if (!currentUser) return alert("Sesión no activa.");
+                try { const adminSnap = await db.ref('admins/' + currentUser.uid).once('value'); if (adminSnap.val() === true) { modal.style.display = 'flex'; updateAdminTableFull();
+                    } else { alert("ACCESO DENEGADO. Tu UID no es admin: " + currentUser.uid);
+                    } } catch (e) { alert("Error: " + e.message); } }; }
         };
         setTimeout(repairAdminAccess, 2000);
 
+        // --- ACTUALIZACIÓN ADITIVA: Tarjeta de Perfil con Giros y Descargas ---
         window.viewUserProfile = async (uid) => {
-            if(!document.getElementById('modalUserProfile')) {
-                const d = document.createElement('div'); d.id = 'modalUserProfile'; d.className = 'modal';
-                d.innerHTML = `<div class="modal-content" style="max-width:500px; text-align:left;"><div id="userProfileContent">Cargando...</div><button onclick="document.getElementById('modalUserProfile').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR</button></div>`;
-                document.body.appendChild(d);
-            }
+            if(!document.getElementById('modalUserProfile')) { const d = document.createElement('div');
+                d.id = 'modalUserProfile'; d.className = 'modal'; d.innerHTML = `<div class="modal-content" style="max-width:500px; text-align:left;"><div id="userProfileContent">Cargando...</div><button onclick="document.getElementById('modalUserProfile').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR</button></div>`; document.body.appendChild(d);
+                }
             document.getElementById('modalUserProfile').style.display = 'flex';
             const userSnap = await db.ref(`users/${uid}`).once('value');
-            const data = userSnap.val() || {};
+            const data = userSnap.val() || {}; 
+            const hist = data.history ? Object.values(data.history) : []; 
+            const loginLogs = data.loginLogs ? Object.values(data.loginLogs).reverse() : [];
             const spinLogs = data.spinLogs ? Object.values(data.spinLogs).reverse() : [];
             const downloadLogs = data.downloadLogs ? Object.values(data.downloadLogs).reverse() : [];
-            const loginLogs = data.loginLogs ? Object.values(data.loginLogs).reverse() : [];
             const config = data.config || {};
             
             document.getElementById('userProfileContent').innerHTML = `
                 <div class="profile-header"><h2 style="color:var(--gold); margin:0;">${config.fullName || 'SIN NOMBRE'}</h2><small style="color:#666;">UID: ${uid}</small></div>
-                <div style="font-size:0.8rem; line-height:1.6;"><p><b>📧 Email:</b> ${data.email || config.email || 'No asignado'}</p><p><b>🎫 Licencia:</b> <span style="color:var(--gold); font-weight:bold;">${(config.level || 'FREE').toUpperCase()}</span></p></div>
+                <div style="font-size:0.8rem; line-height:1.6;"><p><b>📧 Email:</b> ${data.email || config.email || 'No asignado'}</p><p><b>📞 Teléfono:</b> ${config.phone || 'No registrado'}</p><p><b>🎫 Licencia:</b> <span style="color:var(--gold); font-weight:bold;">${(config.level || 'FREE').toUpperCase()}</span></p></div>
                 <div class="profile-grid">
-                    <div class="stat-box"><b>${spinLogs.length}</b><span>Giros</span></div>
+                    <div class="stat-box"><b>${spinLogs.length}</b><span>Giros Totales</span></div>
                     <div class="stat-box"><b>${downloadLogs.length}</b><span>Descargas</span></div>
                     <div class="stat-box"><b>${data.status?.state === 'online' ? 'SÍ' : 'NO'}</b><span>Online</span></div>
                     <div class="stat-box"><b>${loginLogs.length}</b><span>Sesiones</span></div>
                 </div>
                 <div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div><small style="color:var(--gold); font-weight:800;">Giros:</small><div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; max-height:80px; overflow-y:auto; font-size:0.6rem;">${spinLogs.map(s => `🎁 ${s.premio}`).join("<br>")}</div></div>
-                    <div><small style="color:var(--gold); font-weight:800;">Descargas:</small><div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; max-height:80px; overflow-y:auto; font-size:0.6rem;">${downloadLogs.map(d => `💾 ${d.type}`).join("<br>")}</div></div>
+                    <div>
+                        <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Giros:</small>
+                        <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">
+                            ${spinLogs.map(s => `<div style="border-bottom:1px solid #111; padding:3px 0;">🎁 ${s.premio} <br> <span style="color:#555">${s.timestamp}</span></div>`).join("") || "Sin giros"}
+                        </div>
+                    </div>
+                    <div>
+                        <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Descargas:</small>
+                        <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">
+                            ${downloadLogs.map(d => `<div style="border-bottom:1px solid #111; padding:3px 0;">💾 ${d.type} <br> <span style="color:#555">${d.timestamp}</span></div>`).join("") || "Sin descargas"}
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:15px;">
+                    <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Últimas Sesiones:</small>
+                    <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:80px; overflow-y:auto; font-size:0.65rem;">
+                        ${loginLogs.slice(0,5).map(l => `<div style="border-bottom:1px solid #111; padding:2px 0;">📅 ${l.timestamp}</div>`).join("") || "Sin registros"}
+                    </div>
                 </div>`;
         };
-
-        window.applyLogoToWheel = (url) => { 
-            const btn = document.getElementById('btnSpinCenter'); 
-            if(!btn) return; 
-            if (url && url.trim() !== "") { 
-                btn.style.backgroundImage = `url(${url})`; 
-                btn.style.color = "transparent"; 
-                btn.innerText = ""; 
-            } else { 
-                btn.style.backgroundImage = "none"; 
-                btn.style.color = "#000"; 
-                btn.innerText = "GIRAR"; 
-            } 
-        };
+        window.applyLogoToWheel = (url) => { const btn = document.getElementById('btnSpinCenter'); if(!btn) return;
+            if (url && url.trim() !== "") { btn.style.backgroundImage = `url(${url})`; btn.style.color = "transparent"; btn.innerText = "";
+                } else { btn.style.backgroundImage = "none"; btn.style.color = "#000"; btn.innerText = "GIRAR"; } };
         db.ref('users').on('value', () => { if(currentUser) { db.ref(`users/${currentUser.uid}/config/customLogoURL`).on('value', s => { window.applyLogoToWheel(s.val()); }); } });
-
-        const checkProBranding = () => {
+        const checkProBranding = () => { 
             if(!currentUser || !config) return;
-            if(!document.getElementById('btnBranding')) {
+            if(!document.getElementById('btnBranding')) { 
                 const side = document.querySelector('.side-panel');
-                const btn = document.createElement('button');
-                btn.id = 'btnBranding'; btn.className = 'btn btn-secondary'; btn.style.color = 'var(--gold)'; btn.style.borderColor = 'var(--gold)'; btn.innerText = '✨ CONFIG. MARCA';
-                btn.onclick = () => {
-                    if (config.level === 'free') return alert("🔒 Función bloqueada para nivel FREE.");
-                    const url = prompt("URL del Logo (PNG transparente):", config.customLogoURL || "");
-                    if(url !== null) db.ref(`users/${currentUser.uid}/config/customLogoURL`).set(url);
-                };
+                const btn = document.createElement('button'); 
+                btn.id = 'btnBranding'; btn.className = 'btn btn-secondary'; 
+                btn.style.color = 'var(--gold)'; btn.style.borderColor = 'var(--gold)';
+                btn.innerText = '✨ CONFIG. MARCA'; 
+                btn.onclick = () => { 
+                    if (config.level === 'free') return alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE.");
+                    const url = prompt("URL del Logo (PNG transparente):", config.customLogoURL || ""); 
+                    if(url !== null) db.ref(`users/${currentUser.uid}/config/customLogoURL`).set(url); 
+                }; 
                 side.insertBefore(btn, document.getElementById('btnResetApp'));
-            }
+                } 
         };
         setTimeout(checkProBranding, 3500);
-
         const injectGlobalControlPanel = () => {
             if (document.getElementById('adminMasterGlobalControl')) return;
-            const controlPanel = document.createElement('div');
-            controlPanel.id = 'adminMasterGlobalControl';
-            controlPanel.style = "background:#050505; padding:20px; border-radius:25px; margin:15px 0; border:2px solid var(--gold); text-align:left;";
-            controlPanel.innerHTML = `
-                <p style="color:var(--gold); font-weight:900; font-size:0.75rem; text-transform:uppercase;">Control Global (FREE)</p>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.65rem; color:#ccc;">
-                    <label><input type="checkbox" onchange="applyGlobalSync('showAds', this.checked)"> PUBLICIDAD</label>
-                    <label><input type="checkbox" onchange="applyGlobalSync('canExport', this.checked)"> DESCARGA</label>
-                </div>`;
-            const dash = document.getElementById('adminDashContainer');
-            if (dash) dash.parentNode.insertBefore(controlPanel, dash.nextSibling);
+            const controlPanel = document.createElement('div'); controlPanel.id = 'adminMasterGlobalControl'; controlPanel.style = "background:#050505; padding:20px; border-radius:25px; margin:15px 0; border:2px solid var(--gold); text-align:left; box-shadow: 0 0 20px rgba(212,175,55,0.1);";
+            controlPanel.innerHTML = `<p style="color:var(--gold); font-weight:900; font-size:0.75rem; margin-top:0; text-transform:uppercase; letter-spacing:1px;">Control Global de Segmento (Solo FREE)</p><div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.65rem; color:#ccc; margin-bottom:15px;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('isDefault', this.checked)"> PREDETERMINADO</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('showAds', this.checked)"> PUBLICIDAD</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canExport', this.checked)"> DESCARGA LISTA</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canAutoRemove', this.checked)"> AUTO-ELIMINAR</label></div><div style="padding-top:12px;
+                border-top:1px solid #222; display:flex; align-items:center; gap:12px; font-size:0.7rem;"><span style="color:var(--gold); font-weight:800;">LÍMITE GIROS:</span><input type="number" id="globalSpinLimit" value="5" style="width:60px; background:#000; border:1px solid #444; color:var(--gold); border-radius:8px;
+                padding:6px; text-align:center;"><button onclick="syncGlobalSpins()" style="background:var(--gold); border:none; padding:8px 15px; border-radius:10px; font-weight:900; cursor:pointer;
+                font-size:0.65rem;">APLICAR</button></div>`;
+            const dash = document.getElementById('adminDashContainer'); if (dash) dash.parentNode.insertBefore(controlPanel, dash.nextSibling);
         };
-        window.applyGlobalSync = async (field, value) => {
-            const snap = await db.ref('users').once('value');
-            const updates = {};
-            snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/permissions/${field}`] = value; });
-            await db.ref().update(updates);
-        };
-        setTimeout(() => { injectGlobalControlPanel(); }, 4000);
 
-        // --- INYECCIÓN ADITIVA: POLÍTICAS DE SEGURIDAD Y REGLAS DE NEGOCIO ---
+        window.applyGlobalSync = async (field, value) => { const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/permissions/${field}`] = value; }); await db.ref().update(updates); };
+        window.syncGlobalSpins = async () => { const limit = parseInt(document.getElementById('globalSpinLimit').value); const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/maxSpins`] = 
+                limit; }); await db.ref().update(updates); alert("Límite de giros actualizado globalmente."); };
+
+        const applyProSafetyShield = () => {
+            const btnEdit = document.getElementById('btnEditList');
+            if (!btnEdit) return;
+            const originalOnClick = btnEdit.onclick;
+            btnEdit.onclick = function(e) { if (config.level === 'pro') { alert("NIVEL PRO ACTIVADO: Las configuraciones de este nivel son fijas.");
+                return; } if (originalOnClick) originalOnClick.apply(this, arguments); };
+        };
+
+        const checkEmailVerificationStatus = async (user) => { if (user && !user.emailVerified) { alert("📧 CUENTA NO ACTIVADA: Por favor, verifica tu correo antes de entrar.");
+            await user.sendEmailVerification().catch(() => {}); await auth.signOut(); location.reload(); return false; } return true; };
+        const originalAuthAction = document.getElementById('btnAuthAction').onclick;
+        document.getElementById('btnAuthAction').onclick = async function() { const isRegister = document.getElementById('confirmGroup').style.display === 'block'; await originalAuthAction.apply(this, arguments); const user = auth.currentUser;
+            if (user && isRegister) { await user.sendEmailVerification(); alert("✅ Revisa tu correo y verifica tu cuenta."); await auth.signOut(); location.reload(); } };
+        auth.onAuthStateChanged(async (user) => { if (user) await checkEmailVerificationStatus(user); });
+        setTimeout(() => { injectGlobalControlPanel(); applyProSafetyShield(); }, 4000);
+        const injectUpperCasePolicyV2 = () => {
+            const style = document.createElement('style');
+            style.id = 'upperCasePolicyStyle'; style.innerHTML = `#mainTitle, .option-input, #authFullName, #authPhone { text-transform: uppercase !important; }`; document.head.appendChild(style);
+            const mainTitle = document.getElementById('mainTitle');
+            if(mainTitle) { mainTitle.addEventListener('blur', async () => { const upperVal = mainTitle.innerText.toUpperCase(); mainTitle.innerText = upperVal; if(currentUser) await db.ref(`users/${currentUser.uid}/config/title`).set(upperVal); });
+                }
+            const profileFields = ['authFullName', 'authPhone'];
+            profileFields.forEach(id => { const field = document.getElementById(id); if(field) field.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); }); });
+        };
+        setTimeout(injectUpperCasePolicyV2, 2000);
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); } });
+        const antiFlickerStyle = document.createElement('style');
+        antiFlickerStyle.innerHTML = `.user-logged #loginScreen { display: none !important; }`; document.head.appendChild(antiFlickerStyle);
+        if (localStorage.getItem('firebase:authUser:' + firebaseConfig.apiKey)) { document.body.classList.add('user-logged');
+            }
+
+        const btnReset = document.getElementById('btnResetApp');
+        if(btnReset) { btnReset.onclick = async function(e) { if(confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?")) { await db.ref('users/'+currentUser.uid+'/history').remove();
+            await db.ref('users/'+currentUser.uid+'/config/prizes').set(["OPCIÓN 1", "OPCIÓN 2"]); alert("✅ Datos restablecidos."); location.reload(); } };
+            }
+
+        // --- INYECCIÓN ADITIVA: MATRIZ DE PRIVILEGIOS INVIOLABLE ---
         const PowerLevelShield = {
             isPremium: () => (config.level === 'pro' || config.level === 'ppe'),
             enforcePrivileges: () => {
                 if (PowerLevelShield.isPremium()) {
-                  config.permissions = { canExport: true, canCustom: true, canAutoRemove: true, showAds: false, isDefault: false };
-                  config.maxSpins = Infinity;
+                     config.permissions = { canExport: true, canCustom: true, canAutoRemove: true, showAds: false, isDefault: false };
+                    config.maxSpins = Infinity;
                 }
             }
         };
         db.ref('users/'+(currentUser?.uid)+'/config').on('value', () => PowerLevelShield.enforcePrivileges());
-
+        const legacyExportCheck = window.checkExportPermission;
+        window.checkExportPermission = () => { if (PowerLevelShield.isPremium()) return true; return legacyExportCheck(); };
+        // --- INYECCIÓN ADITIVA: DESBLOQUEO DE EDICIÓN PARA NIVELES PREMIUM ---
+        (function() {
+            const btnEdit = document.getElementById('btnEditList');
+            if (btnEdit) {
+                btnEdit.addEventListener('click', function(e) {
+                    if (PowerLevelShield.isPremium()) {
+                         e.stopImmediatePropagation();
+                        const qtyInput = document.getElementById('prizeQuantity');
+                        qtyInput.value = config.prizes.length;
+                        generatePrizeInputs();
+                         document.getElementById('modalAdd').style.display='flex';
+                    }
+                }, true);
+            }
+        })();
+        // --- INYECCIÓN ADITIVA: RESTRICCIONES NIVEL FREE (VISIBLES PERO INACTIVAS) ---
         (function() {
             const originalSpin = appWheel.spin.bind(appWheel);
             appWheel.spin = function() {
-                if (config.level === 'free' && winnersHistory.length >= 10) { return alert("⛔ Límite de 10 giros alcanzado para nivel FREE."); }
+                if (config.level === 'free' && winnersHistory.length >= 10) {
+                     return alert("⛔ Límite de 10 giros alcanzado para nivel FREE. Solicita una licencia PRO para giros ilimitados.");
+                }
                 originalSpin();
             };
             const btnImg = document.getElementById('btnDownloadImg');
             const btnCSV = document.getElementById('btnExportCSV');
-            const blockFree = (e) => { if (config.level === 'free') { e.stopImmediatePropagation(); alert("🔒 Bloqueado para nivel FREE."); } };
+            const blockFree = (e) => {
+                if (config.level === 'free') {
+                    e.stopImmediatePropagation();
+                    alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE.");
+                }
+            };
             btnImg.addEventListener('click', blockFree, true);
             btnCSV.addEventListener('click', blockFree, true);
         })();
 
+        // --- INYECCIÓN ADITIVA: REFUERZO DE REGISTRO Y AUTH ---
+        (function() {
+            const btnAuth = document.getElementById('btnAuthAction');
+            if (btnAuth) {
+                const originalAuthClick = btnAuth.onclick;
+                btnAuth.onclick = async (e) => {
+                    const email = document.getElementById('authEmail').value;
+                    const pin = document.getElementById('authPin').value;
+                    const isRegister = document.getElementById('confirmGroup').style.display === 'block';
+                    if (!email || !pin) return alert("Por favor, completa Email y Pin.");
+                    if (isRegister) {
+                        const pinConfirm = document.getElementById('authPinConfirm').value;
+                        const fullName = document.getElementById('authFullName').value;
+                        if (pin !== pinConfirm) return alert("Los Pins no coinciden.");
+                        if (!fullName) return alert("El nombre es obligatorio para el registro.");
+                    }
+                    if (originalAuthClick) {
+                        try {
+                            await originalAuthClick.call(btnAuth, e);
+                        } catch (err) {
+                            alert("Error: " + err.message);
+                        }
+                    }
+                };
+            }
+        })();
+
+        // --- INYECCIÓN ADITIVA: MONITOREO DE SESIONES Y PRESENCIA (ADMIN MASTER) ---
         (function() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     const statusRef = db.ref(`users/${user.uid}/status`);
                     const loginRef = db.ref(`users/${user.uid}/loginLogs`).push();
                     const now = new Date().toLocaleString();
+                    
                     await loginRef.set({ timestamp: now });
+                    
                     const onlineStatus = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
                     const offlineStatus = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
+
                     db.ref('.info/connected').on('value', (snap) => {
                         if (snap.val() === false) return;
-                        statusRef.onDisconnect().set(offlineStatus).then(() => { statusRef.set(onlineStatus); });
+                        statusRef.onDisconnect().set(offlineStatus).then(() => {
+                            statusRef.set(onlineStatus);
+                        });
                     });
                 }
             });
         })();
-
-        // ESC para cerrar modales
-        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); } });
     </script>
 </body>
 </html>
-
