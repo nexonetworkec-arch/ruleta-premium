@@ -138,6 +138,58 @@
                 flex-wrap: wrap; margin-bottom: 20px; right: auto; top: auto; }
             .wheel-wrapper { width: 85vw;
                 height: 85vw; }
+            /* --- INYECCIÓN ADITIVA: Interfaz Móvil Bottom-Nav --- */
+@media (max-width: 800px) {
+    /* Mantenemos la estructura de tablas intacta como en la web */
+    .admin-table {
+        min-width: 600px !important; /* Fuerza el scroll horizontal para mantener las columnas web */
+        display: table !important;
+    }
+    
+    #modalAdmin .modal-content {
+        max-width: 95vw !important;
+        padding: 15px !important;
+    }
+
+    /* Reubicación de botones a la parte inferior */
+    .side-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        background: rgba(10, 10, 10, 0.95) !important;
+        backdrop-filter: blur(15px) !important;
+        padding: 15px !important;
+        margin: 0 !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important; /* Organiza en filas de 2 */
+        gap: 10px !important;
+        border-top: 1px solid #333 !important;
+        z-index: 1000 !important;
+        border-radius: 25px 25px 0 0 !important;
+    }
+
+    /* Ajuste de botones para el nuevo layout */
+    .side-panel .btn {
+        padding: 12px 5px !important;
+        font-size: 0.65rem !important;
+        margin: 0 !important;
+    }
+
+    /* Espaciado extra para que la ruleta no choque con los botones */
+    .app-container {
+        padding-bottom: 220px !important; 
+        justify-content: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    .wheel-wrapper {
+        margin-top: 20px !important;
+        width: 75vw !important;
+        height: 75vw !important;
+    }
+}
         }
     </style>
 </head>
@@ -252,23 +304,8 @@
 
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
         z-index:9999"></canvas>
-/* --- INYECCIÓN ADITIVA: Interfaz Móvil Bottom-Nav --- */
-        @media (max-width: 800px) {
-            .admin-table { min-width: 600px !important; display: table !important; }
-            #modalAdmin .modal-content { max-width: 95vw !important; padding: 15px !important; }
-            .side-panel {
-                position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
-                width: 100% !important; height: auto !important; max-height: 45vh !important;
-                background: rgba(10, 10, 10, 0.98) !important; backdrop-filter: blur(15px) !important;
-                padding: 15px !important; margin: 0 !important;
-                display: grid !important; grid-template-columns: repeat(2, 1fr) !important;
-                gap: 10px !important; border-top: 1px solid var(--gold) !important;
-                z-index: 1000 !important; border-radius: 25px 25px 0 0 !important;
-            }
-            .side-panel button { font-size: 0.7rem !important; padding: 12px !important; }
-            .app-container { padding-bottom: 250px !important; }
-        }
-        <script>
+
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCkjAXk40_6XZsXLv4Wc9flRaqPIwsSGLs",
             authDomain: "ruletapremiumbusiness.firebaseapp.com",
@@ -797,4 +834,3 @@
     </script>
 </body>
 </html>
-
