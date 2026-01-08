@@ -1036,124 +1036,129 @@
     });
 })();
 
-        /* --- INYECCIÓN ADITIVA: REESTRUCTURACIÓN RESPONSIVE TOTAL --- */
+        /* --- INYECCIÓN ADITIVA: RECTIFICACIÓN DINÁMICA DE INTERFAZ MÓVIL --- */
 (function() {
+    // 1. Estilos de Fuerza Bruta para reubicar elementos
     const style = document.createElement('style');
     style.innerHTML = `
-        /* 1. Reset de Seguridad para Móviles */
         @media (max-width: 800px) {
-            /* Forzar el título arriba y visible */
+            /* Forzar el Título a la parte superior izquierda */
             header {
-                position: absolute !important;
+                position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
-                width: 100% !important;
-                height: 60px !important;
+                width: 70% !important;
+                height: 50px !important;
+                z-index: 9999 !important;
+                background: none !important;
                 display: flex !important;
                 align-items: center !important;
                 padding-left: 15px !important;
-                background: linear-gradient(to bottom, #0a0a0a, transparent) !important;
-                z-index: 1000 !important;
             }
-            header h1 { font-size: 1.1rem !important; margin: 0 !important; }
+            header h1 { font-size: 1rem !important; color: var(--gold) !important; }
 
-            /* BOTONES: Ubicación superior derecha intuitiva */
+            /* BOTONES: Ubicación absoluta arriba a la derecha */
             .controls {
                 position: fixed !important;
-                top: 10px !important;
-                right: 10px !important;
-                bottom: auto !important; /* Anula posición inferior previa */
+                top: 5px !important;
+                right: 5px !important;
+                bottom: auto !important;
                 left: auto !important;
                 flex-direction: row !important;
-                gap: 5px !important;
-                z-index: 10002 !important;
-                width: auto !important;
-                background: none !important;
-                padding: 0 !important;
-            }
-
-            .btn {
-                padding: 6px 10px !important;
-                font-size: 11px !important;
-                min-width: 70px !important;
-                height: 35px !important;
-                border-radius: 5px !important;
-            }
-
-            /* LA RULETA: Auto-ajuste de tamaño dinámico */
-            .main-content {
-                padding-top: 70px !important; /* Espacio para el header y botones */
-                height: 100vh !important;
                 display: flex !important;
-                flex-direction: column !important;
-                justify-content: flex-start !important;
+                gap: 5px !important;
+                z-index: 10000 !important;
+                width: auto !important;
+                background: transparent !important;
+            }
+            .btn {
+                padding: 5px 10px !important;
+                font-size: 10px !important;
+                height: 32px !important;
+                width: auto !important;
+                min-width: 60px !important;
+            }
+
+            /* RULETA Y CONFIGURACIÓN: Reorganización de espacio */
+            .app-container {
+                padding-top: 55px !important; /* Baja todo para que no lo tapen los botones */
+                height: 100vh !important;
                 overflow: hidden !important;
             }
-
+            .main-content {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: calc(100vh - 60px) !important;
+            }
             .wheel-container {
-                flex: 0 1 auto !important;
-                margin: 0 auto !important;
-                transform: scale(0.8) !important; /* Reduce para dar espacio abajo */
+                flex: 1 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                transform: scale(0.8) !important; /* Espacio vital */
+            }
+            canvas#wheel {
+                max-width: 80vw !important;
                 max-height: 50vh !important;
             }
 
-            canvas#wheel {
-                max-width: 85vw !important;
-                height: auto !important;
-            }
-
-            /* CONFIGURACIÓN: Rescate de 'Auto-eliminar' */
+            /* RESCATE DE "AUTO-ELIMINAR": Ubicación prioritaria abajo */
             .setup-container {
                 position: relative !important;
+                width: 95% !important;
+                margin: 0 auto 10px auto !important;
+                background: rgba(22, 22, 22, 0.9) !important;
+                border: 1px solid #333 !important;
+                border-radius: 8px !important;
+                padding: 10px !important;
+                z-index: 9998 !important;
                 display: block !important;
-                width: 90% !important;
-                margin: 10px auto !important;
-                padding: 15px !important;
-                background: rgba(34, 34, 34, 0.95) !important;
-                border: 1px solid var(--gold) !important;
-                border-radius: 10px !important;
-                z-index: 1001 !important;
             }
 
-            /* MENÚ LATERAL: Scroll total */
+            /* MENÚ LATERAL: Scroll infinito garantizado */
             #nexoSideMenu {
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                width: 280px !important;
                 height: 100vh !important;
                 max-height: 100vh !important;
-                overflow-y: scroll !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                background: #111 !important;
+                z-index: 10001 !important;
+                padding-bottom: 80px !important;
                 -webkit-overflow-scrolling: touch !important;
-                padding-bottom: 100px !important;
-                z-index: 20000 !important;
             }
         }
 
-        /* 2. Ajuste para rotación (Landscape) */
+        /* Ajuste para modo Horizontal */
         @media (orientation: landscape) and (max-height: 500px) {
-            .wheel-container {
-                transform: scale(0.55) !important;
-                margin-top: -40px !important;
-            }
-            .setup-container {
-                padding: 5px !important;
-                font-size: 0.8rem !important;
-            }
+            .wheel-container { transform: scale(0.5) !important; margin-top: -50px !important; }
+            .setup-container { width: 50% !important; margin: 0 auto !important; }
         }
     `;
     document.head.appendChild(style);
 
-    // Forzar actualización de vista
-    const fixView = () => {
-        window.scrollTo(0, 0);
-        document.body.style.height = window.innerHeight + 'px';
+    // 2. Script de apoyo para asegurar el scroll en dispositivos táctiles
+    const preventOverscroll = () => {
+        const menu = document.getElementById('nexoSideMenu');
+        if (menu) {
+            menu.addEventListener('touchstart', function() {
+                const top = menu.scrollTop, totalScroll = menu.scrollHeight, currentScroll = top + menu.offsetHeight;
+                if (top === 0) menu.scrollTop = 1;
+                else if (currentScroll === totalScroll) menu.scrollTop = top - 1;
+            });
+        }
     };
 
-    window.addEventListener('resize', fixView);
-    window.addEventListener('orientationchange', () => setTimeout(fixView, 350));
-    fixView();
-
-    console.log("NEXO® Pro: Interfaz Rectificada (Botones Top-Right y Scroll)");
+    // Ejecución
+    setTimeout(preventOverscroll, 1000);
+    window.scrollTo(0, 0);
+    console.log("NEXO® Pro: Rectificación total aplicada.");
 })();
 /* --- FIN DEL BLOQUE --- */
     </script>
 </body>
 </html>
-
