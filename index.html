@@ -1037,201 +1037,207 @@
 })();
 
         /* ==========================================================
-   SISTEMA ELITE V6.4: CONEXIÓN BLINDADA Y MENÚ FUNCIONAL
+   SISTEMA ELITE V7: MOTOR DE ACCESO DIRECTO & CONEXIÓN TOTAL
    ========================================================== */
 (function() {
-    // 1. INYECCIÓN DE ESTILOS (Títulos en Negrita y Colores Dinámicos)
     const styleInject = document.createElement('style');
-    styleInject.id = 'v6-core-styles';
     styleInject.innerHTML = `
         #nexoMenuBtn, .side-menu, #nexoMenuOverlay { display: none !important; }
         
-        #v6-menu-trigger {
-            position: fixed; top: 15px; left: 15px; width: 48px; height: 48px;
-            background: #0a0a0a; border: 2px solid var(--gold, #d4af37); border-radius: 8px;
-            display: flex; justify-content: center; align-items: center; z-index: 999999;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        #v7-menu-trigger {
+            position: fixed; top: 15px; left: 15px; width: 50px; height: 50px;
+            background: #000; border: 3px solid var(--gold, #d4af37); border-radius: 10px;
+            display: flex; justify-content: center; align-items: center; z-index: 9999999 !important;
+            cursor: pointer; pointer-events: all !important;
         }
 
-        .v6-panel {
-            position: fixed; top: 0; left: -350px; width: 320px; height: 100vh;
-            background: #050505; border-right: 1px solid rgba(212, 175, 55, 0.3);
-            z-index: 1000001; transition: 0.4s ease-in-out;
+        .v7-panel {
+            position: fixed; top: 0; left: -350px; width: 330px; height: 100vh;
+            background: #080808; border-right: 2px solid var(--gold, #d4af37);
+            z-index: 10000000 !important; transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
             display: flex; flex-direction: column; color: white; overflow-y: auto;
+            pointer-events: all !important;
         }
-        .v6-panel.active { left: 0; }
+        .v7-panel.active { left: 0; }
         
-        .v6-overlay {
+        .v7-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 1000000; display: none; backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.85); z-index: 9999999 !important; display: none;
         }
 
-        .v6-header-main { 
-            color: var(--gold, #d4af37) !important; font-size: 14px; letter-spacing: 2px; 
-            font-weight: 900; margin-bottom: 20px; text-transform: uppercase; 
-            border-left: 5px solid var(--gold, #d4af37); padding-left: 12px;
+        .v7-header-pro { 
+            color: var(--gold, #d4af37) !important; font-size: 15px; letter-spacing: 2px; 
+            font-weight: 900 !important; margin-bottom: 20px; text-transform: uppercase; 
+            border-bottom: 2px solid var(--gold, #d4af37); padding-bottom: 10px;
         }
 
-        .v6-section { padding: 25px; border-bottom: 1px solid #1a1a1a; }
+        .v7-section { padding: 30px 20px; border-bottom: 1px solid #222; }
         
-        .v6-group-btn {
-            width: 100%; padding: 14px; background: rgba(212,175,55,0.05); 
+        .v7-btn-group {
+            width: 100%; padding: 15px; background: #111; 
             border: 1px solid var(--gold, #d4af37); color: var(--gold, #d4af37); 
-            font-weight: 800; border-radius: 6px; cursor: pointer; text-transform: uppercase;
+            font-weight: 900; border-radius: 8px; cursor: pointer; margin-bottom: 15px;
         }
 
-        .v6-group-content { display: none; padding-top: 20px; }
-        .v6-group-content.show { display: block; }
+        .v7-input-pro { 
+            width: 100%; background: #000; border: 1px solid #444; color: #fff; 
+            padding: 12px; border-radius: 6px; margin: 10px 0; font-size: 13px;
+        }
 
-        .v6-input { width: 100%; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
-        .v6-save-btn { width: 100%; padding: 15px; background: var(--gold, #d4af37); border: none; color: black; font-weight: 900; border-radius: 6px; cursor: pointer; }
+        .v7-save-btn { 
+            width: 100%; padding: 18px; background: var(--gold, #d4af37); 
+            border: none; color: #000; font-weight: 900; border-radius: 10px; 
+            cursor: pointer; font-size: 14px; margin-top: 20px;
+        }
+
+        .v7-color-picker { width: 100%; height: 50px; border: none; cursor: pointer; background: none; margin: 10px 0; }
+
+        .v7-palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .v7-dot { width: 100%; aspect-ratio: 1; border-radius: 6px; cursor: pointer; border: 2px solid #333; }
         
-        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
-        .palette-dot { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; border: 1px solid #222; }
+        /* Visibilidad forzada para inputs de archivo */
+        .v7-file-label { font-size: 11px; color: var(--gold, #d4af37); font-weight: bold; display: block; margin-top: 15px; }
     `;
     document.head.appendChild(styleInject);
 
-    // 2. ESTRUCTURA HTML
-    const panel = document.createElement('div');
-    panel.className = 'v6-panel';
-    panel.id = 'v6-main-panel';
-    
+    // 1. CONSTRUCCIÓN DEL DOM
     const trigger = document.createElement('div');
-    trigger.id = 'v6-menu-trigger';
-    trigger.innerHTML = `<b style="color:var(--gold, #d4af37); font-size:24px;">☰</b>`;
+    trigger.id = 'v7-menu-trigger';
+    trigger.innerHTML = `<span style="color:var(--gold, #d4af37); font-size:28px;">☰</span>`;
+
+    const panel = document.createElement('div');
+    panel.className = 'v7-panel';
+    panel.id = 'v7-panel-box';
 
     const overlay = document.createElement('div');
-    overlay.className = 'v6-overlay';
-    overlay.id = 'v6-main-overlay';
+    overlay.className = 'v7-overlay';
+    overlay.id = 'v7-overlay-box';
 
     panel.innerHTML = `
-        <div class="v6-section">
-            <div class="v6-header-main">👤 Mi Perfil</div>
-            <div id="v6-user-email" style="font-weight:900; font-size:14px;">Cargando...</div>
-            <div id="v6-user-info" style="font-size:12px; color:#777; margin-top:5px;"></div>
+        <div class="v7-section">
+            <div class="v7-header-pro">👤 MI PERFIL</div>
+            <div id="v7-mail" style="font-weight:900; font-size:16px;">Conectando...</div>
+            <div id="v7-extra" style="font-size:12px; color:#aaa; margin-top:8px; white-space: pre-wrap;"></div>
         </div>
 
         <div style="flex:1">
-            <div class="v6-section">
-                <div class="v6-header-main">🛠️ Configuración</div>
-                <button class="v6-group-btn" id="v6-brand-toggle">🎨 Gestión de Marca</button>
+            <div class="v7-section">
+                <div class="v7-header-pro">🎨 MARCA Y ESTILO</div>
                 
-                <div class="v6-group-content" id="v6-brand-box">
-                    <input type="text" id="v6-in-name" class="v6-input" placeholder="Nombre App">
-                    <label style="font-size:10px; color:#555;">IMÁGENES (LOCAL O URL)</label>
-                    <input type="file" id="v6-file-logo" hidden accept="image/*">
-                    <button class="v6-input" onclick="document.getElementById('v6-file-logo').click()">📁 Logo Central</button>
-                    
-                    <input type="file" id="v6-file-bg" hidden accept="image/*">
-                    <button class="v6-input" onclick="document.getElementById('v6-file-bg').click()">🖼️ Fondo Pantalla</button>
+                <label class="v7-file-label">NOMBRE DE LA APP</label>
+                <input type="text" id="v7-app-name" class="v7-input-pro" placeholder="Ej: Mi Ruleta Pro">
+                
+                <label class="v7-file-label">SUBIR LOGO CENTRAL</label>
+                <input type="file" id="v7-file-logo" class="v7-input-pro" accept="image/*">
+                
+                <label class="v7-file-label">SUBIR FONDO DE PANTALLA</label>
+                <input type="file" id="v7-file-bg" class="v7-input-pro" accept="image/*">
 
-                    <label style="font-size:10px; color:var(--gold, #d4af37); font-weight:900;">PALETA DE COLORES</label>
-                    <input type="color" id="v6-in-color" style="width:100%; height:40px; border:none; cursor:pointer; background:none;">
-                    <div class="palette-grid" id="v6-presets"></div>
-                    
-                    <button id="v6-btn-save" class="v6-save-btn" style="margin-top:20px;">APLICAR BRANDING</button>
-                </div>
+                <label class="v7-file-label">PALETA DE COLORES (TÍTULOS Y BOTONES)</label>
+                <input type="color" id="v7-main-color" class="v7-color-picker">
+                <div class="v7-palette" id="v7-palette-dots"></div>
+                
+                <button id="v7-btn-save" class="v7-save-btn">GUARDAR CAMBIOS</button>
             </div>
 
-            <div class="v6-section">
-                <div class="v6-header-main">⚙️ Sistema</div>
-                <button id="v6-btn-reset" style="width:100%; padding:10px; background:none; border:1px solid #333; color:#555; cursor:pointer; border-radius:6px;">🔄 Restaurar Fábrica</button>
+            <div class="v7-section">
+                <div class="v7-header-pro">⚙️ SISTEMA</div>
+                <button id="v7-btn-reset" style="width:100%; padding:12px; background:none; border:2px solid #333; color:#666; font-weight:bold; cursor:pointer; border-radius:8px;">🔄 REINICIAR TODO</button>
             </div>
         </div>
     `;
 
     document.body.append(trigger, overlay, panel);
 
-    // 3. FUNCIONES TÉCNICAS (Blindadas)
-    const compress = (file, size) => new Promise(res => {
-        const r = new FileReader(); r.readAsDataURL(file);
-        r.onload = e => {
-            const i = new Image(); i.src = e.target.result;
-            i.onload = () => {
-                const c = document.createElement('canvas');
-                const m = size / Math.max(i.width, i.height);
-                c.width = i.width * m; c.height = i.height * m;
-                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-                res(c.toDataURL('image/jpeg', 0.6));
-            }
-        }
+    // 2. LÓGICA DE COMPRESIÓN MEJORADA
+    const processImg = (file, max) => new Promise(resolve => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = e => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = max / Math.max(img.width, img.height);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.5));
+            };
+        };
     });
 
-    // Toggle de secciones
-    document.getElementById('v6-brand-toggle').onclick = () => document.getElementById('v6-brand-box').classList.toggle('show');
-    trigger.onclick = () => { panel.classList.add('active'); overlay.style.display = 'block'; };
-    overlay.onclick = () => { panel.classList.remove('active'); overlay.style.display = 'none'; };
+    // 3. EVENTOS DE INTERFAZ
+    trigger.addEventListener('click', () => { panel.classList.add('active'); overlay.style.display = 'block'; });
+    overlay.addEventListener('click', () => { panel.classList.remove('active'); overlay.style.display = 'none'; });
 
-    // Paleta de colores
-    const colors = ['#d4af37', '#ffffff', '#ff4444', '#00ff00', '#007bff', '#ff00ff', '#ffa500', '#00ffff', '#808080', '#000000'];
-    colors.forEach(c => {
-        const d = document.createElement('div'); d.className = 'palette-dot'; d.style.background = c;
-        d.onclick = () => document.getElementById('v6-in-color').value = c;
-        document.getElementById('v6-presets').appendChild(d);
+    const dots = ['#d4af37', '#ffffff', '#ff4444', '#00ff00', '#007bff', '#ff00ff', '#ffa500', '#00ffff', '#808080', '#1a1a1a'];
+    dots.forEach(color => {
+        const d = document.createElement('div'); d.className = 'v7-dot'; d.style.backgroundColor = color;
+        d.onclick = () => { document.getElementById('v7-main-color').value = color; };
+        document.getElementById('v7-palette-dots').appendChild(d);
     });
 
-    // GUARDADO (Reparado con validación de db)
-    document.getElementById('v6-btn-save').onclick = async function() {
+    // 4. GUARDADO DEFINITIVO
+    document.getElementById('v7-btn-save').onclick = async function() {
         this.innerText = "PROCESANDO..."; this.disabled = true;
         try {
-            const logoF = document.getElementById('v6-file-logo').files[0];
-            const bgF = document.getElementById('v6-file-bg').files[0];
-            
-            const payload = {
-                appName: document.getElementById('v6-in-name').value || "",
-                color: document.getElementById('v6-in-color').value,
-                logo: logoF ? await compress(logoF, 400) : "",
-                bg: bgF ? await compress(bgF, 1000) : ""
+            const logFile = document.getElementById('v7-file-logo').files[0];
+            const bgFile = document.getElementById('v7-file-bg').files[0];
+
+            const updateData = {
+                appName: document.getElementById('v7-app-name').value || "",
+                color: document.getElementById('v7-main-color').value,
+                logo: logFile ? await processImg(logFile, 400) : null,
+                bg: bgFile ? await processImg(bgFile, 900) : null
             };
 
-            // Referencia directa a la rama appBranding
-            await firebase.database().ref('appBranding').update(payload);
-            alert("¡Cambios aplicados!");
+            // Eliminamos nulos para no borrar datos existentes si no se sube nada nuevo
+            Object.keys(updateData).forEach(key => updateData[key] === null && delete updateData[key]);
+
+            await firebase.database().ref('appBranding').update(updateData);
+            alert("¡Marca actualizada con éxito!");
             location.reload();
         } catch (err) {
-            console.error(err);
-            alert("Error de Firebase: " + err.message);
-            this.innerText = "APLICAR BRANDING"; this.disabled = false;
+            alert("Error crítico: " + err.message);
+            this.innerText = "GUARDAR CAMBIOS"; this.disabled = false;
         }
     };
 
-    // MOTOR DE APLICACIÓN
-    const runBranding = () => {
-        firebase.database().ref('appBranding').on('value', snap => {
-            const d = snap.val(); if(!d) return;
+    // 5. MOTOR DE SINCRONIZACIÓN
+    const initApp = () => {
+        firebase.database().ref('appBranding').on('value', s => {
+            const d = s.val(); if(!d) return;
             const c = d.color || '#d4af37';
             document.documentElement.style.setProperty('--gold', c);
-            
-            if(d.appName) { document.title = d.appName; const t = document.querySelector('h1'); if(t) t.innerText = d.appName; }
+            if(d.appName) { document.title = d.appName; const h1 = document.querySelector('h1'); if(h1) h1.innerText = d.appName; }
             if(d.bg) document.body.style.background = `linear-gradient(${c}33, ${c}33), url(${d.bg}) center/cover fixed no-repeat`;
-            
-            const btn = document.querySelector('.spin-button') || document.getElementById('spinBtn');
-            if(btn) {
-                btn.style.boxShadow = `0 0 30px ${c}88`;
-                btn.style.borderColor = c;
-                const img = btn.querySelector('img'); if(img && d.logo) img.src = d.logo;
+            const spin = document.querySelector('.spin-button') || document.getElementById('spinBtn');
+            if(spin) {
+                spin.style.boxShadow = `0 0 40px ${c}77`;
+                spin.style.borderColor = c;
+                const img = spin.querySelector('img'); if(img && d.logo) img.src = d.logo;
             }
         });
     };
 
-    // Datos de Usuario
+    // Datos de Usuario en tiempo real
     setInterval(() => {
-        const u = firebase.auth().currentUser;
-        if(u) {
-            trigger.style.display = 'flex';
-            document.getElementById('v6-user-email').innerText = u.email;
-            firebase.database().ref('users/' + u.uid).once('value', s => {
-                const ud = s.val();
-                if(ud) document.getElementById('v6-user-info').innerText = `${ud.nombre || ''} ${ud.apellido || ''} \n ${ud.telefono || ''}`;
+        const user = firebase.auth().currentUser;
+        if(user) {
+            document.getElementById('v7-mail').innerText = user.email;
+            firebase.database().ref('users/' + user.uid).once('value', snap => {
+                const u = snap.val();
+                if(u) document.getElementById('v7-extra').innerText = `${u.nombre || ''} ${u.apellido || ''}\nTel: ${u.telefono || ''}`;
             });
         }
     }, 2000);
 
-    document.getElementById('v6-btn-reset').onclick = () => {
-        if(confirm("¿Restaurar todo?")) firebase.database().ref('appBranding').remove().then(() => location.reload());
+    document.getElementById('v7-btn-reset').onclick = () => {
+        if(confirm("¿Restaurar diseño de fábrica?")) firebase.database().ref('appBranding').remove().then(() => location.reload());
     };
 
-    setTimeout(runBranding, 1500);
+    setTimeout(initApp, 1000);
 })();
     </script>
 </body>
