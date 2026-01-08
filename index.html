@@ -1038,57 +1038,88 @@
     </script>
     <style>
     @media screen and (orientation: landscape) and (max-width: 950px) {
-        /* Reajuste del contenedor principal para emular vista de escritorio */
+        /* 1. Contenedor Principal: Centrado absoluto */
         .app-container {
             flex-direction: row !important;
-            align-items: center !important;
-            justify-content: space-around !important;
-            padding: 10px !important;
-            height: 100vh !important;
-            overflow: hidden !important;
-        }
-
-        /* Ajuste de la sección de la ruleta */
-        .wheel-section {
-            flex: 1.2 !important;
-            display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            transform: scale(0.85); /* Escala para ajustar a la altura de pantalla */
-        }
-
-        /* Transformación del panel lateral (Mobile Bottom -> Web Side) */
-        .side-panel {
+            height: 100vh !important;
+            padding: 0 !important;
+            overflow: hidden !important;
             position: relative !important;
-            width: 220px !important;
-            height: auto !important;
-            flex-direction: column !important;
-            background: rgba(22, 22, 22, 0.9) !important;
-            border-left: 1px solid var(--gold) !important;
-            border-radius: 15px !important;
-            padding: 15px !important;
-            margin-left: 10px !important;
-            display: flex !important;
-            gap: 10px !important;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5) !important;
         }
 
-        /* Ajuste de botones en el panel */
+        /* 2. Sección de la Ruleta: Al centro */
+        .wheel-section {
+            flex: 0 1 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 auto !important;
+            z-index: 1;
+        }
+
+        .wheel-wrapper {
+            width: 75vh !important; /* Ajuste basado en altura para no desbordar */
+            height: 75vh !important;
+            margin: 0 !important;
+        }
+
+        /* 3. Panel de Botones: Superior Derecha en Columna */
+        .side-panel {
+            position: absolute !important;
+            top: 15px !important;
+            right: 15px !important;
+            width: 180px !important;
+            height: auto !important;
+            display: flex !important;
+            flex-direction: column !important; /* Orden de la Web */
+            gap: 8px !important;
+            background: rgba(22, 22, 22, 0.8) !important;
+            padding: 10px !important;
+            border-radius: 12px !important;
+            border: 1px solid var(--gold) !important;
+            z-index: 100 !important;
+            bottom: auto !important; /* Anula posición de móvil vertical */
+        }
+
         .side-panel .btn {
             width: 100% !important;
+            font-size: 0.7rem !important;
+            padding: 8px !important;
             margin: 0 !important;
-            font-size: 0.75rem !important;
-            padding: 12px 5px !important;
         }
 
-        /* Ocultar elementos que estorben en vista horizontal reducida */
-        #mainTitle {
-            font-size: 1.1rem !important;
-            margin-bottom: 5px !important;
+        /* 4. Auto-eliminar: Debajo de la ruleta */
+        .auto-delete-container {
+            margin-top: 10px !important;
+            background: rgba(0,0,0,0.5) !important;
+            padding: 5px 15px !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            order: 10 !important; /* Asegura que vaya después del wrapper */
         }
-        
+
+        /* Ajustes de elementos secundarios */
+        #mainTitle {
+            position: absolute !important;
+            top: 10px !important;
+            left: 20px !important;
+            font-size: 1rem !important;
+            margin: 0 !important;
+            pointer-events: none;
+        }
+
+        .logo-container {
+            position: absolute !important;
+            bottom: 10px !important;
+            left: 20px !important;
+            margin: 0 !important;
+        }
+
         .logo-container img {
-            max-height: 40px !important;
+            max-height: 35px !important;
         }
     }
 </style>
@@ -1096,28 +1127,27 @@
 <script>
     (function() {
         /**
-         * Lógica de Redibujado: Referenciación al objeto appWheel existente.
-         * Se activa al detectar cambios de orientación o tamaño.
+         * Referenciación: Mantenemos la integridad del dibujo del canvas
+         * al cambiar el tamaño del viewport.
          */
-        const handleOrientationChange = () => {
-            setTimeout(() => {
-                if (window.appWheel && typeof window.appWheel.draw === 'function') {
-                    // Forzamos el redibujado para que el canvas no se pixele o deforme
+        const fixLayout = () => {
+            if (window.appWheel && typeof window.appWheel.draw === 'function') {
+                // Pequeño delay para que el CSS se aplique antes de redibujar
+                setTimeout(() => {
                     window.appWheel.draw();
-                }
-            }, 300); // Delay para permitir que el DOM se asiente
+                }, 250);
+            }
         };
 
-        window.addEventListener("resize", handleOrientationChange);
-        window.addEventListener("orientationchange", handleOrientationChange);
+        window.addEventListener("resize", fixLayout);
+        window.addEventListener("orientationchange", fixLayout);
         
-        // Ejecución inmediata por si carga en horizontal
-        if (window.innerWidth > window.innerHeight) {
-            handleOrientationChange();
+        // Ejecución inicial por si carga directamente en horizontal
+        if (window.matchMedia("(orientation: landscape)").matches) {
+            fixLayout();
         }
     })();
 </script>
 </body>
 </html>
-
 
