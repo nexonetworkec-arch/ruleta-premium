@@ -1038,3 +1038,85 @@
     </script>
 </body>
 </html>
+/* --- INYECCIÓN ADITIVA: OPTIMIZACIÓN RESPONSIVE Y AUTO-AJUSTE --- */
+(function() {
+    // 1. Inyección de Estilos CSS para ajuste dinámico y scroll
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* Ajuste del contenedor principal para visualización completa */
+        .app-container {
+            height: 100vh !important;
+            height: -webkit-fill-available !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+
+        /* Hacer el menú lateral scroleable en móviles */
+        #nexoSideMenu {
+            max-height: 100vh !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding-bottom: 80px !important; /* Espacio para no chocar con el borde inferior */
+        }
+
+        /* Ajuste automático al girar el dispositivo (Landscape) */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .wheel-container {
+                transform: scale(0.7) !important;
+                margin-top: -50px !important;
+            }
+            .main-content {
+                justify-content: center !important;
+                align-items: center !important;
+            }
+        }
+
+        /* Garantizar que la ruleta mantenga su proporción exacta */
+        canvas#wheel {
+            max-width: 95vw !important;
+            max-height: 70vh !important;
+            object-fit: contain !important;
+        }
+
+        /* Estabilización de la interfaz en cambios de orientación */
+        html, body {
+            position: fixed;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 2. Función de Auto-Ajuste de Referenciación
+    const adjustViewport = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // Forzar redibujado de la ruleta para evitar desfases visuales
+        if (typeof appWheel !== 'undefined' && appWheel.canvas) {
+            const container = document.querySelector('.wheel-container');
+            if (container) {
+                container.style.display = 'none';
+                container.offsetHeight; // Force reflow
+                container.style.display = 'block';
+            }
+        }
+    };
+
+    // 3. Listeners para detectar rotación y cambio de tamaño
+    window.addEventListener('resize', adjustViewport);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(adjustViewport, 300); // Delay para esperar que el navegador procese el giro
+    });
+
+    // Ejecución inicial
+    adjustViewport();
+    
+    console.log("NEXO® Pro: Sistema de auto-ajuste responsive inyectado correctamente.");
+})();
+/* --- FIN DEL BLOQUE ADITIVO --- */
+
