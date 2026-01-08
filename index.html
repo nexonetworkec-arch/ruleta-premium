@@ -1029,41 +1029,46 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: SISTEMA DE AVISOS POR NIVEL
- * Este bloque extiende la funcionalidad original sin modificar el código base.
+ * INYECCIÓN ADITIVA: SISTEMA DE AVISOS POR NIVEL (CORREGIDO)
+ * Se añade un intervalo para asegurar la inyección incluso si el panel tarda en cargar.
  */
 (function() {
-    // 1. Extensión del Panel Admin mediante Referenciación
-    const originalInyectarPanel = window.inyectarPanelAdmin;
-    window.inyectarPanelAdmin = function() {
-        if (typeof originalInyectarPanel === 'function') originalInyectarPanel();
-        
+    // 1. Función de Inyección de Interfaz
+    const inyectarInterfazNiveles = () => {
         const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
+        
+        // Si el botón existe y aún no hemos inyectado nuestras casillas
         if (btnEnvio && !document.getElementById('contenedor-niveles-aviso')) {
             const divNiveles = document.createElement('div');
             divNiveles.id = 'contenedor-niveles-aviso';
-            divNiveles.style = "margin: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #111; padding: 10px; border-radius: 12px; border: 1px solid #333;";
+            // Estilo forzado con z-index y visibilidad
+            divNiveles.style = "margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #1a1a1a; padding: 12px; border-radius: 12px; border: 2px solid var(--gold); position: relative; z-index: 9999;";
+            
             divNiveles.innerHTML = `
-                <label style="font-size: 0.7rem; color: var(--gold); cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <div style="width: 100%; text-align: center; margin-bottom: 5px; font-size: 0.6rem; color: var(--gold); font-weight: bold; text-transform: uppercase;">Enviar mensaje a:</div>
+                <label style="font-size: 0.75rem; color: var(--gold); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold;">
                     <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)"> TODOS
                 </label>
-                <label style="font-size: 0.7rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
                     <input type="checkbox" class="chk-lvl-target" value="pro"> PRO
                 </label>
-                <label style="font-size: 0.7rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
                     <input type="checkbox" class="chk-lvl-target" value="ppe"> PPE
                 </label>
-                <label style="font-size: 0.7rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
                     <input type="checkbox" class="chk-lvl-target" value="free"> FREE
                 </label>
             `;
+            
+            // Insertar justo antes del botón de enviar
             btnEnvio.parentNode.insertBefore(divNiveles, btnEnvio);
             
+            // Definir funciones globales necesarias
             window.toggleAllLevels = (val) => {
                 document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = val);
             };
 
-            // Redefinir el envío para capturar los niveles seleccionados
+            // Redefinir la función de envío original
             window.sendGlobalMsg = async () => {
                 const msgInput = document.getElementById('globalMsgInput');
                 const msg = msgInput ? msgInput.value.trim() : "";
@@ -1080,12 +1085,15 @@
                     });
                     alert("📢 Enviado con éxito a: " + selectedTargets.join(", ").toUpperCase());
                     msgInput.value = "";
-                } catch (e) { console.error("Error envío:", e); }
+                } catch (e) { alert("Error: " + e.message); }
             };
         }
     };
 
-    // 2. Escucha Filtrada (Anula la escucha anterior por Referenciación)
+    // 2. Ejecución constante para detectar la apertura del panel (Referenciación dinámica)
+    setInterval(inyectarInterfazNiveles, 1000);
+
+    // 3. Escucha Filtrada (Anula la escucha anterior)
     if (window.dbRef) {
         window.dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
         window.dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
