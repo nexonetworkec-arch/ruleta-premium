@@ -920,130 +920,112 @@
     </script>
 
     <style>
-    /* Estilos para el Historial en Tarjetas */
-    .user-card-history { 
-        background: #0a0a0a; 
-        border: 1px solid #222; 
-        border-radius: 6px; 
-        margin-top: 10px; 
-        padding: 8px; 
-        font-size: 11px; 
-    }
-    .history-item { 
-        display: flex; 
-        justify-content: space-between; 
-        border-bottom: 1px solid #1a1a1a; 
-        padding: 3px 0; 
-        color: #ccc;
-    }
-    .history-item:last-child { border: none; }
-    .badge-count { 
-        background: var(--gold); 
-        color: black; 
-        padding: 2px 6px; 
-        border-radius: 10px; 
-        font-weight: bold; 
-        font-size: 10px; 
-    }
-    /* Estilos Suite Admin */
+    .modal { display: none; overflow-y: auto !important; align-items: flex-start !important; padding: 20px 10px; }
+    .modal-content { max-height: 90vh !important; overflow-y: auto !important; margin: auto !important; }
+
     #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
-    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 140px; overflow-y: auto; font-family: monospace; font-size: 11px; padding: 10px; margin: 10px 0; color: #00ff00; }
+    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 160px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; padding: 10px; margin: 10px 0; color: #00ff00; }
+    .nexo-log { border-bottom: 1px dotted #333; padding: 6px 0; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .nexo-gold { color: var(--gold); }
 </style>
 
 <script>
 (function() {
     const getDB = () => { try { return firebase.database(); } catch(e) { return null; } };
 
-    const iniciarSuperAdmin = () => {
+    const iniciarMonitorForzado = () => {
         const dbRef = getDB();
-        if (!dbRef) return setTimeout(iniciarSuperAdmin, 1000);
+        if (!dbRef) return setTimeout(iniciarMonitorForzado, 1000);
 
-        // 1. INYECTOR DE INTERFAZ GLOBAL
         const inyectarPanel = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
             if (!container || document.getElementById('nexo-admin-suite')) return;
 
             container.insertAdjacentHTML('afterbegin', `
                 <div id="nexo-admin-suite">
-                    <small style="color:var(--gold)"><b>📡 MONITOR DE RED</b></small>
-                    <div id="monitorVivo" class="nexo-monitor">
-                        <div style="text-align:center; padding-top:40px; color:#444;">Conectado a historiales...</div>
+                    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                        <small class="nexo-gold"><b>📣 AVISO GLOBAL</b></small>
+                        <div style="display:flex; gap:5px; margin-top:5px;">
+                            <input type="text" id="msgGlobal" placeholder="Mensaje..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
+                            <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
+                        </div>
                     </div>
+                    <small class="nexo-gold"><b>📡 MONITOR DE ACTIVIDAD (TEST)</b></small>
+                    <div id="monitorVivo" class="nexo-monitor">
+                        <div id="status-wait" style="color:#444; text-align:center; margin-top:50px;">Buscando registros en historiales...</div>
+                    </div>
+                    <button id="btnDescargarDB" style="width:100%; background:#1b5e20; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📊 DESCARGAR EXCEL (CSV)</button>
                 </div>`);
+
+            document.getElementById('btnEnviarMsg').onclick = () => {
+                const txt = document.getElementById('msgGlobal').value;
+                if(!txt) return;
+                dbRef.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() }).then(() => alert("✅ Enviado"));
+            };
+
+            document.getElementById('btnDescargarDB').onclick = async () => {
+                const snap = await dbRef.ref('users').once('value');
+                const data = snap.val();
+                let csv = "\uFEFFUID,Email,Nivel\n";
+                for(let k in data) { if(k !== 'ADMIN_MESSAGES') csv += `${k},${data[k].email || 'N/A'},${data[k].config?.level || 'free'}\n`; }
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "DB_Nexo.csv";
+                a.click();
+            };
         };
 
-        // 2. PARCHE DE TARJETAS (Escaneo y Actualización)
-        const actualizarTarjetas = () => {
-            // Buscamos todas las tarjetas de usuario en el modal
-            // Ajustado a la clase común de tus tarjetas (.user-card o filas de tabla)
-            const cards = document.querySelectorAll('#userTableBody tr, .user-card'); 
-            
-            cards.forEach(card => {
-                // Extraer el UID del texto o de un atributo data si existe
-                // Tu código suele poner el UID en un botón o ID de fila
-                const uidMatch = card.innerText.match(/[a-zA-Z0-9]{20,}/); 
-                if (!uidMatch) return;
-                const uid = uidMatch[0];
+        // LÓGICA DE DETECCIÓN SIN FILTRO DE TIEMPO
+        dbRef.ref('users').on('child_added', (uSnap) => {
+            const uid = uSnap.key;
+            if (uid === 'ADMIN_MESSAGES') return;
 
-                if (card.getAttribute('data-patched')) return;
-                card.setAttribute('data-patched', 'true');
+            // Escuchamos el último cambio en el historial de cada usuario
+            dbRef.ref(`users/${uid}/history`).limitToLast(1).on('value', (hSnap) => {
+                const histData = hSnap.val();
+                if (!histData) return;
 
-                // Escuchar el historial de este UID específico
-                dbRef.ref(`users/${uid}/history`).on('value', snap => {
-                    const history = snap.val();
-                    if (!history) return;
+                const monitor = document.getElementById('monitorVivo');
+                if (!monitor) return;
 
-                    const entries = Object.values(history);
-                    const count = entries.length;
+                // Limpiar mensaje de espera
+                const wait = document.getElementById('status-wait');
+                if (wait) wait.remove();
+
+                // Obtener el objeto del premio (Firebase lo devuelve como objeto con un ID único)
+                const prizeID = Object.keys(histData)[0];
+                const prize = histData[prizeID];
+
+                // Obtener email y mostrar
+                dbRef.ref(`users/${uid}/email`).once('value', eSnap => {
+                    const email = eSnap.val() ? eSnap.val().split('@')[0] : 'Usuario';
+                    const nombreP = prize.nombre || prize.premio || prize.text || "Giro Detectado";
+                    const fecha = prize.fecha || new Date().toLocaleTimeString();
                     
-                    // Crear o actualizar el contenedor de historial en la tarjeta
-                    let historyContainer = card.querySelector('.user-card-history');
-                    if (!historyContainer) {
-                        historyContainer = document.createElement('div');
-                        historyContainer.className = 'user-card-history';
-                        card.appendChild(historyContainer);
-                    }
-
-                    // Construir HTML de los últimos 3 premios
-                    const last3 = entries.reverse().slice(0, 3);
-                    let itemsHtml = `<div style="margin-bottom:5px"><b>Giros Totales:</b> <span class="badge-count">${count}</span></div>`;
+                    const log = document.createElement('div');
+                    log.className = 'nexo-log';
+                    log.innerHTML = `<span class="nexo-gold">[${fecha}]</span> <b>${email}</b>: ${nombreP}`;
                     
-                    last3.forEach(item => {
-                        const pName = item.nombre || item.premio || "Giro";
-                        itemsHtml += `<div class="history-item"><span>${pName}</span><span style="color:#555">${item.fecha || ''}</span></div>`;
-                    });
-
-                    historyContainer.innerHTML = itemsHtml;
-
-                    // 3. ENVIAR TAMBIÉN AL MONITOR GLOBAL SI ES RECIENTE
-                    const last = entries[0];
-                    if (last && last.timestamp > (Date.now() - 10000)) {
-                        const mon = document.getElementById('monitorVivo');
-                        if (mon) {
-                            const log = document.createElement('div');
-                            log.style.borderBottom = "1px solid #111";
-                            log.innerHTML = `<span style="color:var(--gold)">[NUEVO]</span> Giro detectado de un usuario.`;
-                            mon.prepend(log);
-                        }
-                    }
+                    monitor.prepend(log);
+                    if (monitor.childNodes.length > 40) monitor.lastChild.remove();
                 });
             });
-        };
+        });
 
-        // Ejecutar inyectores periódicamente
-        setInterval(() => {
-            inyectarPanel();
-            actualizarTarjetas();
-        }, 3000);
+        // ESCUCHA DE AVISOS
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+            const d = s.val();
+            if(d && d.time > (Date.now() - 15000)) alert("📢 AVISO ADMIN:\n" + d.msg);
+        });
+
+        setInterval(inyectarPanel, 2000);
     };
 
-    iniciarSuperAdmin();
+    iniciarMonitorForzado();
 })();
 </script>
 </body>
 </html>
-
-
-
-
 
