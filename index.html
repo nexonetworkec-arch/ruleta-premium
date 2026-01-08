@@ -1029,97 +1029,84 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: SISTEMA DE NIVELES (VERSION ULTRA-PERSISTENTE)
- * Ubicación: Antes de </body>
+ * INYECCIÓN ADITIVA: SISTEMA DE NIVELES (SINCRONIZACIÓN NATIVA)
+ * Este bloque se sincroniza con el setInterval de la línea 1031 del código base.
  */
 (function() {
-    // 1. Plantilla de la interfaz
+    // 1. Definición de la Interfaz con CSS de Alta Prioridad
     const HTML_NIVELES = `
-        <div id="contenedor-niveles-aviso" style="display: flex !important; align-items: center !important; gap: 8px !important; background: #111 !important; padding: 5px 12px !important; border-radius: 8px !important; border: 1px solid #d4af37 !important; margin-right: 12px !important; z-index: 999999 !important; box-shadow: 0 0 10px rgba(0,0,0,0.5) !important;">
-            <label style="font-size: 10px; color: #d4af37; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; margin:0; white-space: nowrap;">
-                <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)" style="width:14px; height:14px; accent-color: #d4af37;"> ALL
+        <div id="contenedor-niveles-aviso" style="display: flex !important; flex-direction: row !important; align-items: center !important; gap: 8px !important; background: #111 !important; padding: 6px 12px !important; border-radius: 10px !important; border: 1px solid #d4af37 !important; margin: 10px 0 !important; justify-content: center !important; width: 100% !important;">
+            <span style="font-size: 9px; color: #d4af37; font-weight: bold; text-transform: uppercase;">Enviar a:</span>
+            <label style="font-size: 11px; color: #d4af37; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold;">
+                <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)" style="accent-color: #d4af37;"> TODOS
             </label>
-            <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0; white-space: nowrap;">
-                <input type="checkbox" class="chk-lvl-target" value="pro" style="width:14px; height:14px; accent-color: #d4af37;"> PRO
+            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" class="chk-lvl-target" value="pro" style="accent-color: #d4af37;"> PRO
             </label>
-            <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0; white-space: nowrap;">
-                <input type="checkbox" class="chk-lvl-target" value="ppe" style="width:14px; height:14px; accent-color: #d4af37;"> PPE
+            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" class="chk-lvl-target" value="ppe" style="accent-color: #d4af37;"> PPE
             </label>
-            <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0; white-space: nowrap;">
-                <input type="checkbox" class="chk-lvl-target" value="free" style="width:14px; height:14px; accent-color: #d4af37;"> FREE
+            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <input type="checkbox" class="chk-lvl-target" value="free" style="accent-color: #d4af37;"> FREE
             </label>
         </div>
     `;
 
-    // 2. Función de inyección y re-vinculación
-    const sincronizarInterfazAdmin = () => {
-        // Buscamos el botón de envío en el DOM
+    // 2. Función de Sincronización (Corre junto al setInterval original)
+    const sincronizarConPanelOriginal = () => {
+        const modalAdmin = document.getElementById('modalAdmin');
+        if (!modalAdmin || modalAdmin.style.display === 'none') return;
+
         const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
-        
+        const inputMsg = document.getElementById('globalMsgInput');
+
         if (btnEnvio && !document.getElementById('contenedor-niveles-aviso')) {
-            // Inyectamos el HTML a la izquierda del botón
+            // Inyectamos justo encima del botón de envío para que sea visible
             btnEnvio.insertAdjacentHTML('beforebegin', HTML_NIVELES);
             
-            // Forzamos al contenedor padre a ser un Flexbox horizontal
-            const padre = btnEnvio.parentNode;
-            padre.style.display = "flex";
-            padre.style.flexDirection = "row";
-            padre.style.alignItems = "center";
-            padre.style.justifyContent = "center";
-            padre.style.flexWrap = "wrap";
-            padre.style.gap = "5px";
-
-            // Estilizamos el botón para que encaje en la fila
-            btnEnvio.style.margin = "0";
-            btnEnvio.style.width = "auto";
-            btnEnvio.style.minWidth = "120px";
-
-            // Redefinimos la función de envío (Inyección Aditiva sobre el evento)
+            // Re-vinculamos la lógica de envío para capturar los niveles
             window.sendGlobalMsg = async () => {
-                const msgInput = document.getElementById('globalMsgInput');
-                const texto = msgInput ? msgInput.value.trim() : "";
-                const seleccionados = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
+                const msg = inputMsg ? inputMsg.value.trim() : "";
+                const targets = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
                 
-                if(!texto) return alert("Por favor, escribe un mensaje.");
-                if(seleccionados.length === 0) return alert("Selecciona al menos un nivel de destino.");
+                if(!msg) return alert("Escribe un mensaje.");
+                if(targets.length === 0) return alert("Selecciona niveles.");
 
                 try {
-                    // Referenciación a dbRef (Firebase) del código principal
+                    // Referenciación: Usamos el dbRef ya definido en la línea 146 aprox.
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: texto,
+                        msg: msg,
                         time: Date.now(),
-                        targets: seleccionados
+                        targets: targets
                     });
-                    alert("📢 Enviado a: " + seleccionados.join(", ").toUpperCase());
-                    msgInput.value = "";
-                } catch(e) { console.error("Error en envío:", e); }
+                    alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
+                    inputMsg.value = "";
+                } catch (e) { console.error("Error envío:", e); }
             };
         }
     };
 
-    // 3. Funciones auxiliares globales
-    window.toggleAllLevels = (checked) => {
-        document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = checked);
+    // 3. Funciones de Control Global
+    window.toggleAllLevels = (val) => {
+        document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = val);
     };
 
-    // 4. Bucle de persistencia (Cada 500ms)
-    // Esto garantiza que si el panel se refresca, las casillas vuelvan a aparecer.
-    setInterval(sincronizarInterfazAdmin, 500);
+    // 4. EL MOTOR: Escucha constante (cada 1s) para re-inyectar si el código original borra el DOM
+    setInterval(sincronizarConPanelOriginal, 1000);
 
-    // 5. Escucha de Avisos con filtrado (Lógica de Recepción)
+    // 5. RECEPCIÓN FILTRADA: Sobrescribimos la escucha de la línea 1028
     if (window.dbRef) {
-        // Desactivamos la escucha simple original para no duplicar alertas
-        window.dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
+        // Apagamos la escucha original para evitar el alert doble sin filtro
+        dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         
-        window.dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
+        // Iniciamos nuestra escucha con Referenciación al objeto 'config'
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const data = snap.val();
-            // Referenciación al objeto 'config' que ya existe en tu código de 1031 líneas
             const miNivel = (window.config && window.config.level) ? window.config.level.toLowerCase() : 'free';
             
             if(data && data.time > (Date.now() - 15000)) {
-                // Verificamos si mi nivel está en la lista de objetivos del mensaje
                 if(data.targets && data.targets.includes(miNivel)) {
-                    alert("📢 AVISO ADMINISTRACIÓN:\n\n" + data.msg);
+                    alert("📢 AVISO ADMIN:\n" + data.msg);
                 }
             }
         });
