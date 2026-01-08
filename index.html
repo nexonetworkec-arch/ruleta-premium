@@ -1035,75 +1035,66 @@
         }
     });
 })();
+    </script>
+</body>
 
-        // ==========================================
-// INYECCIÓN ADITIVA: TELETRANSPORTACIÓN ADMIN
+    <script>
+// ==========================================
+// INYECCIÓN DE EMERGENCIA: TELEPORT ADMIN
 // ==========================================
 (function() {
-    const moveAdminButton = () => {
+    // Esta función se encarga de mover el botón sin romper el motor original
+    const initTeleport = () => {
         const sideMenu = document.getElementById('nexoSideMenu');
         const originalBtn = document.getElementById('btnAdminMaster');
-        
-        // Si ambos existen y el botón aún no está dentro del menú
-        if (sideMenu && originalBtn && originalBtn.parentNode !== sideMenu) {
+
+        // Solo actuamos si el menú lateral y el botón original existen
+        if (sideMenu && originalBtn) {
             
-            // 1. Aplicar estilos de menú al botón original para que se integre
-            originalBtn.classList.add('menu-option-item'); // Mantiene tu estética
-            originalBtn.style.cssText = `
-                display: flex !important;
-                position: relative !important;
-                top: auto !important;
-                left: auto !important;
-                margin-top: 10px !important;
-                border: 1px solid var(--gold) !important;
-                background: rgba(212,175,55,0.1) !important;
-                width: 100% !important;
-                z-index: 1000 !important;
-            `;
+            // 1. Forzamos los estilos para que encaje en el menú
+            originalBtn.style.setProperty('display', 'flex', 'important');
+            originalBtn.style.setProperty('position', 'relative', 'important');
+            originalBtn.style.setProperty('top', 'auto', 'important');
+            originalBtn.style.setProperty('left', 'auto', 'important');
+            originalBtn.style.setProperty('width', '100%', 'important');
+            originalBtn.style.setProperty('margin', '10px 0', 'important');
+            originalBtn.style.setProperty('background', 'rgba(212,175,55,0.1)', 'important');
+            originalBtn.style.setProperty('border', '1px solid var(--gold)', 'important');
+            
+            // Aseguramos que tenga la clase de tus otros botones del menú
+            originalBtn.classList.add('menu-option-item');
             originalBtn.innerHTML = `👑 ADMIN MASTER`;
 
-            // 2. Moverlo físicamente dentro del menú
-            const logoutBtn = sideMenu.querySelector('.menu-logout');
-            if (logoutBtn) {
-                sideMenu.insertBefore(originalBtn, logoutBtn);
-            } else {
-                sideMenu.appendChild(originalBtn);
+            // 2. Teletransportación física al menú
+            if (originalBtn.parentNode !== sideMenu) {
+                // Buscamos el botón de cerrar sesión para poner el Admin Master justo arriba
+                const logout = sideMenu.querySelector('.menu-logout');
+                if (logout) {
+                    sideMenu.insertBefore(originalBtn, logout);
+                } else {
+                    sideMenu.appendChild(originalBtn);
+                }
             }
-
-            // 3. Vincular el cierre del menú al hacer click
-            originalBtn.addEventListener('click', () => {
-                if (typeof closeAll === 'function') closeAll();
-            });
         }
     };
 
-    // Observador para asegurar que el botón regrese al menú si el código original lo recrea
+    // 3. Vigilante de seguridad: si el menú se recrea, volvemos a meter el botón
     const observer = new MutationObserver(() => {
-        moveAdminButton();
+        initTeleport();
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Ejecución vinculada a la autenticación
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            db.ref('admins/' + user.uid).on('value', (s) => {
-                const isAdmin = s.val();
-                const btn = document.getElementById('btnAdminMaster');
-                if (btn) {
-                    btn.style.setProperty('display', isAdmin ? 'flex' : 'none', 'important');
-                }
-                moveAdminButton();
-            });
-        }
+    // Empezamos a observar todo el documento
+    observer.observe(document.documentElement, { 
+        childList: true, 
+        subtree: true 
     });
 
-    moveAdminButton();
+    // Ejecución inmediata al cargar la ventana
+    window.addEventListener('load', initTeleport);
+    
+    // Ejecución de respaldo por si el DOM ya estaba listo
+    setTimeout(initTeleport, 1000);
 })();
-// ==========================================
-// FIN DE LA INYECCIÓN
-// ==========================================
-    </script>
-</body>
+</script>
 </html>
 
