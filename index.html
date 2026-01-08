@@ -1035,69 +1035,9 @@
         }
     });
 })();
-
-        // ==========================================
-// INYECCIÓN ADITIVA: INTEGRACIÓN ADMIN EN MENÚ
-// ==========================================
-(function() {
-    // 1. Inyectar la opción en el menú existente
-    const injectAdminToMenu = () => {
-        const sideMenu = document.getElementById('nexoSideMenu');
-        if (!sideMenu) return;
-
-        // Crear el elemento de la opción
-        const adminOption = document.createElement('div');
-        adminOption.id = 'menuOptionAdminMaster';
-        adminOption.className = 'menu-option-item';
-        adminOption.style.display = 'none'; // Oculto por defecto
-        adminOption.style.border = '1px solid var(--gold)';
-        adminOption.style.marginTop = '10px';
-        adminOption.innerHTML = `👑 Admin Master`;
-        
-        // Referenciación: Vincular al clic del botón original
-        adminOption.onclick = () => {
-            const originalBtn = document.getElementById('btnAdminMaster');
-            if (originalBtn) originalBtn.click();
-            // Cerrar menú tras click (usando tu función closeAll si está disponible)
-            if (typeof closeAll === 'function') closeAll();
-        };
-
-        // Insertar antes del botón de Cerrar Sesión para mantener orden
-        const logoutBtn = sideMenu.querySelector('.menu-logout');
-        if (logoutBtn) {
-            sideMenu.insertBefore(adminOption, logoutBtn);
-        } else {
-            sideMenu.appendChild(adminOption);
-        }
-    };
-
-    // 2. Lógica de visibilidad y limpieza
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            // Esperar a que el DOM del menú esté listo
-            setTimeout(injectAdminToMenu, 600);
-
-            // Validar si es Admin para mostrar la opción
-            db.ref('admins/' + user.uid).on('value', (snapshot) => {
-                const adminOption = document.getElementById('menuOptionAdminMaster');
-                const originalBtn = document.getElementById('btnAdminMaster');
-                
-                if (snapshot.val()) {
-                    if (adminOption) adminOption.style.display = 'flex';
-                    // Ocultar el botón original de la interfaz principal para "moverlo" visualmente
-                    if (originalBtn) originalBtn.style.display = 'none';
-                }
-            });
-        }
-    });
-})();
-// ==========================================
-// FIN DE INYECCIÓN ADITIVA
-// ==========================================
     </script>
 </body>
 </html>
-
 
 
 
