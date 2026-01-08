@@ -1035,9 +1035,102 @@
         }
     });
 })();
+
+        // --- INYECCIÓN ADITIVA: SINCRONIZADOR DE PERMISOS NEXO® (SOLUCIÓN DE DESBLOQUEO) ---
+// Insertar después del bloque anterior o al final del archivo principal.
+(function() {
+    // 1. Estilos de Interfaz (Se mantienen para asegurar la visualización correcta)
+    if (!document.getElementById('nexo-access-styles')) {
+        const accessStyles = document.createElement('style');
+        accessStyles.id = 'nexo-access-styles';
+        accessStyles.innerHTML = `
+            .locked-feature { opacity: 0.5 !important; cursor: not-allowed !important; position: relative; pointer-events: none !important; }
+            .locked-feature::after { content: '🔒'; position: absolute; top: 10px; right: 15px; font-size: 14px; }
+            .branding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+            .branding-control { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        `;
+        document.head.appendChild(accessStyles);
+    }
+
+    // 2. Validador Robusto: Evita el falso "FREE" durante la carga
+    const checkUserAccess = () => {
+        if (typeof currentUserData === 'undefined' || !currentUserData) return "LOADING";
+        // Buscamos nivel en múltiples ubicaciones posibles del objeto
+        const lvl = (currentUserData.level || currentUserData.plan || currentUserData.role || 'FREE').toString().toUpperCase().trim();
+        return lvl;
+    };
+
+    const isPremium = () => {
+        const level = checkUserAccess();
+        return level === 'PRO' || level === 'PPE';
+    };
+
+    // 3. Aplicar Permisos Dinámicos (Forzado para Pro/PPE)
+    const applyPermissions = () => {
+        const userLevel = checkUserAccess();
+        if (userLevel === "LOADING") return; // No actuar hasta tener datos reales
+
+        const premium = isPremium();
+        console.log(`[NEXO AUTH] Sincronizando estado: ${userLevel}`);
+
+        const menuItems = document.querySelectorAll('.menu-option-item');
+        menuItems.forEach(item => {
+            const text = item.innerText.toUpperCase();
+
+            // Lógica para MI PERFIL
+            if (text.includes('PERFIL')) {
+                item.classList.remove('locked-feature');
+                item.style.pointerEvents = 'all';
+            }
+
+            // Lógica para CONFIGURACIÓN DE MARCA
+            if (text.includes('MARCA')) {
+                if (premium) {
+                    item.classList.remove('locked-feature');
+                    item.style.pointerEvents = 'all';
+                    item.onclick = () => {
+                        if (typeof toggleBrandingConfig === 'function') toggleBrandingConfig();
+                        const overlay = document.getElementById('nexoMenuOverlay');
+                        if (overlay) overlay.click();
+                    };
+                } else {
+                    item.classList.add('locked-feature');
+                    item.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        alert("✨ FUNCIÓN PREMIUM: El diseño de marca es exclusivo para planes Pro y PPE.");
+                    };
+                }
+            }
+        });
+    };
+
+    // 4. Bucle de Verificación Persistente
+    // Ejecuta múltiples veces para asegurar que el cambio de DOM no "pise" el desbloqueo
+    let syncInterval = setInterval(() => {
+        const level = checkUserAccess();
+        if (level !== "LOADING") {
+            applyPermissions();
+        }
+    }, 500);
+
+    // Detener el bucle pesado tras 10 segundos para ahorrar recursos, 
+    // pero dejar el estado final establecido.
+    setTimeout(() => clearInterval(syncInterval), 10000);
+
+    // Re-verificar en cambios de Auth
+    if (typeof auth !== 'undefined') {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                setTimeout(applyPermissions, 1000);
+            }
+        });
+    }
+})();
     </script>
 </body>
 </html>
+
 
 
 
