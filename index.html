@@ -1029,79 +1029,84 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: INTERCEPTOR DE RENDERIZADO (SOLUCIÓN DEFINITIVA)
- * Inserta los niveles directamente en el flujo de datos del modal administrativo.
+ * INYECCIÓN ADITIVA: MENÚ EMERGENTE DE ACCIÓN (FINAL)
+ * No modifica el DOM original; actúa sobre el evento de clic.
  */
 (function() {
-    // 1. Definimos el bloque de niveles que queremos "colar" en tu HTML original
-    const HTML_NIVELES_ADITIVO = `
-        <div id="wrapper-niveles-seguro" style="display:flex; align-items:center; gap:8px; background:#111; padding:10px; border-radius:10px; border:1px solid #d4af37; margin-bottom:12px; justify-content:center; width:100%; box-sizing:border-box;">
-            <span style="font-size:9px; color:#d4af37; font-weight:bold; letter-spacing:1px;">DESTINO:</span>
-            <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                <input type="checkbox" id="checkAll" onchange="window.masterToggle(this.checked)"> ALL
-            </label>
-            <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                <input type="checkbox" class="lvl-chk" value="pro"> PRO
-            </label>
-            <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                <input type="checkbox" class="lvl-chk" value="ppe"> PPE
-            </label>
-            <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                <input type="checkbox" class="lvl-chk" value="free"> FREE
-            </label>
-        </div>
-    `;
-
-    // 2. INTERCEPTOR: Secuestramos la propiedad innerHTML del Modal
-    // Esto hace que cada vez que tu código original haga: modal.innerHTML = "...",
-    // nosotros modifiquemos ese texto antes de que se muestre.
-    const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-    Object.defineProperty(Element.prototype, 'innerHTML', {
-        set: function(value) {
-            let contenido = value;
-            // Si el contenido que se intenta escribir tiene el botón de aviso y no tiene ya nuestra inyección
-            if (this.id === 'modalAdmin' && contenido.includes('sendGlobalMsg') && !contenido.includes('wrapper-niveles-seguro')) {
-                // Insertamos los niveles justo antes del botón ENVIAR AVISO
-                contenido = contenido.replace('<button onclick="sendGlobalMsg()', HTML_NIVELES_ADITIVO + '<button onclick="sendGlobalMsg()');
-            }
-            // Aplicamos la escritura original con el contenido modificado
-            descriptor.set.call(this, contenido);
-        }
-    });
-
-    // 3. Redefinición de la función de envío (Referenciación Externa)
-    window.sendGlobalMsg = async () => {
-        const input = document.getElementById('globalMsgInput');
-        const msg = input ? input.value.trim() : "";
-        const targets = Array.from(document.querySelectorAll('.lvl-chk:checked')).map(i => i.value);
-        
-        if(!msg) return alert("Escribe un mensaje.");
-        if(targets.length === 0) return alert("Selecciona niveles.");
-
-        try {
-            // Referenciación: Conexión con tu dbRef original
-            await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                msg: msg,
-                time: Date.now(),
-                targets: targets
-            });
-            alert("📢 Enviado con éxito a: " + targets.join(", ").toUpperCase());
-            if(input) input.value = "";
-        } catch (e) { console.error("Error en envío aditivo:", e); }
+    // 1. Crear el menú flotante oculto
+    const crearMenuEmergente = () => {
+        if (document.getElementById('menu-niveles-click')) return;
+        const div = document.createElement('div');
+        div.id = 'menu-niveles-click';
+        div.style.cssText = `
+            position: fixed; display: none; flex-direction: column; gap: 8px;
+            background: #111; border: 2px solid #d4af37; padding: 12px;
+            border-radius: 12px; z-index: 2147483647; box-shadow: 0 0 25px rgba(0,0,0,0.9);
+            color: #fff; min-width: 140px;
+        `;
+        div.innerHTML = `
+            <div style="font-size:10px; color:#d4af37; font-weight:bold; text-align:center; border-bottom:1px solid #333; margin-bottom:5px;">¿A QUIÉN ENVIAR?</div>
+            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="popAll" onchange="window.togglePopAll(this.checked)"> TODOS</label>
+            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="pro"> PRO</label>
+            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="ppe"> PPE</label>
+            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="free"> FREE</label>
+            <button id="btn-final-send" style="margin-top:8px; background:#d4af37; border:none; color:#000; font-weight:bold; padding:5px; border-radius:5px; cursor:pointer;">CONFIRMAR Y ENVIAR</button>
+        `;
+        document.body.appendChild(div);
     };
 
-    // Funciones globales
-    window.masterToggle = (v) => document.querySelectorAll('.lvl-chk').forEach(i => i.checked = v);
+    // 2. Escuchar clics en toda la ventana (Intercepción)
+    window.addEventListener('click', function(e) {
+        // Si el clic es en un botón que dice "ENVIAR AVISO"
+        if (e.target.tagName === 'BUTTON' && e.target.innerText.includes('ENVIAR AVISO')) {
+            e.preventDefault();
+            e.stopPropagation();
 
-    // 4. Recepción Filtrada (Lógica para usuarios)
+            const menu = document.getElementById('menu-niveles-click') || (crearMenuEmergente(), document.getElementById('menu-niveles-click'));
+            
+            // Posicionar el menú donde está el ratón
+            menu.style.display = 'flex';
+            menu.style.top = (e.clientY - 50) + 'px';
+            menu.style.left = (e.clientX - 70) + 'px';
+
+            // Configurar el botón de confirmación del menú
+            document.getElementById('btn-final-send').onclick = async () => {
+                const msgInput = document.getElementById('globalMsgInput');
+                const texto = msgInput ? msgInput.value.trim() : "";
+                const niveles = Array.from(document.querySelectorAll('.pop-chk:checked')).map(i => i.value);
+
+                if(!texto) { alert("Escribe un mensaje"); return; }
+                if(niveles.length === 0) { alert("Selecciona niveles"); return; }
+
+                try {
+                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                        msg: texto,
+                        time: Date.now(),
+                        targets: niveles
+                    });
+                    alert("📢 Enviado a: " + niveles.join(", ").toUpperCase());
+                    msgInput.value = "";
+                    menu.style.display = 'none';
+                } catch(err) { console.error(err); }
+            };
+        } else if (!e.target.closest('#menu-niveles-click')) {
+            // Cerrar menú si se hace clic fuera
+            const menu = document.getElementById('menu-niveles-click');
+            if(menu) menu.style.display = 'none';
+        }
+    }, true); // El 'true' es vital: captura el evento antes que tu código original
+
+    window.togglePopAll = (v) => document.querySelectorAll('.pop-chk').forEach(i => i.checked = v);
+
+    // 3. Recepción Filtrada (Lado Usuario)
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const data = snap.val();
+            const d = snap.val();
             const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            if(data && data.time > (Date.now() - 15000)) {
-                if(data.targets && data.targets.includes(miLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + data.msg);
+            if(d && d.time > (Date.now() - 15000)) {
+                if(d.targets && d.targets.includes(miLvl)) {
+                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
                 }
             }
         });
