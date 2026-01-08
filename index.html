@@ -1035,6 +1035,133 @@
         }
     });
 })();
+
+        // --- INYECCIÓN ADITIVA: SISTEMA DE BLOQUEO PREMIUM Y FUNCIONES DE MARCA AVANZADAS ---
+(function() {
+    // 1. Estilos para el Sistema de Bloqueo (Candados y Opacidad)
+    const lockStyles = document.createElement('style');
+    lockStyles.innerHTML = `
+        .locked-feature { opacity: 0.5; position: relative; cursor: not-allowed !important; }
+        .locked-feature::after {
+            content: '🔒'; position: absolute; top: 5px; right: 10px; font-size: 12px;
+        }
+        .branding-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;
+        }
+        .branding-control {
+            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;
+            border: 1px solid #333; font-size: 11px; color: var(--gold);
+        }
+        .branding-control label { display: block; margin-bottom: 5px; color: #aaa; }
+        .branding-control select, .branding-control input {
+            width: 100%; background: #000; border: 1px solid #444; color: #fff; border-radius: 4px; padding: 4px;
+        }
+    `;
+    document.head.appendChild(lockStyles);
+
+    // 2. Función Central de Validación de Rango
+    const isPremium = () => {
+        if (typeof currentUserData === 'undefined') return false;
+        const level = currentUserData.level || currentUserData.plan || 'Free';
+        return level === 'Pro' || level === 'PPE';
+    };
+
+    const handleLockedClick = (e) => {
+        if (!isPremium()) {
+            e.stopImmediatePropagation();
+            alert("✨ FUNCIÓN PREMIUM: Esta opción solo está disponible para planes Pro y PPE. ¡Mejora tu cuenta en Nexo.com!");
+            return false;
+        }
+        return true;
+    };
+
+    // 3. Inyección de Funciones en el Panel de Marca
+    const injectBrandingTools = () => {
+        const brandingPanel = document.getElementById('brandingConfigPanel'); // ID del contenedor de marca
+        if (!brandingPanel) return;
+
+        // Si ya existen las herramientas, no duplicar
+        if (document.getElementById('nexoPremiumTools')) return;
+
+        const toolsDiv = document.createElement('div');
+        toolsDiv.id = 'nexoPremiumTools';
+        toolsDiv.className = isPremium() ? '' : 'locked-feature';
+        toolsDiv.innerHTML = `
+            <div style="margin-top:20px; border-top: 1px solid #333; padding-top:10px;">
+                <h4 style="color:var(--gold); font-size:12px;">HERRAMIENTAS AVANZADAS NEXO®</h4>
+                <div class="branding-grid">
+                    <div class="branding-control">
+                        <label>Subir Logotipo</label>
+                        <input type="file" accept="image/*" onchange="if(isPremium()) uploadLogo(this)">
+                    </div>
+                    <div class="branding-control">
+                        <label>Tipografía Ruleta</label>
+                        <select onchange="if(isPremium()) changeFont(this.value)">
+                            <option>Classic</option>
+                            <option>Modern</option>
+                            <option>Futuristic</option>
+                        </select>
+                    </div>
+                    <div class="branding-control">
+                        <label>Tema de Color</label>
+                        <select onchange="if(isPremium()) changeTheme(this.value)">
+                            <option>Dorado (Default)</option>
+                            <option>Plata Premium</option>
+                            <option>Oscuro Total</option>
+                        </select>
+                    </div>
+                    <div class="branding-control">
+                        <label>Efectos de Audio</label>
+                        <select onchange="if(isPremium()) toggleAudio(this.value)">
+                            <option>Activados</option>
+                            <option>Solo Aplausos</option>
+                            <option>Silencio</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="branding-control" style="margin-top:10px;">
+                    <label>Fondo de Pantalla Personalizado (URL)</label>
+                    <input type="text" placeholder="https://..." onchange="if(isPremium()) setCustomBg(this.value)">
+                </div>
+            </div>
+        `;
+
+        brandingPanel.appendChild(toolsDiv);
+        
+        // Bloquear clics si es Free
+        if (!isPremium()) {
+            toolsDiv.onclick = handleLockedClick;
+            toolsDiv.querySelectorAll('input, select').forEach(el => el.disabled = true);
+        }
+    };
+
+    // 4. Aplicar Bloqueo al Menú Lateral
+    const secureMenu = () => {
+        const menuItems = document.querySelectorAll('.menu-option-item');
+        menuItems.forEach(item => {
+            // Ejemplo: Bloqueamos "Mi Perfil" y "Configuración de Marca" para Free
+            const text = item.innerText.toUpperCase();
+            if (text.includes('PERFIL') || text.includes('MARCA')) {
+                if (!isPremium()) {
+                    item.classList.add('locked-feature');
+                    item.onclick = handleLockedClick;
+                }
+            }
+        });
+    };
+
+    // Ejecutar cuando cambie el estado de Auth
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // Esperar un momento a que los datos del usuario carguen desde la DB
+            setTimeout(() => {
+                injectBrandingTools();
+                secureMenu();
+            }, 1500);
+        }
+    });
+})();
     </script>
 </body>
 </html>
+
