@@ -1037,72 +1037,52 @@
 })();
 
         /* ==========================================================
-   SISTEMA DE INTERFAZ ELITE V6: BRANDING GRUPAL & TÍTULOS PRO
+   SISTEMA ELITE V6.1: REPARACIÓN DE MOTOR Y COLOR TOTAL
    ========================================================== */
 (function() {
-    // 1. MOTOR DE ESTILOS (Títulos Notorios y Colapsables)
     const styleInject = document.createElement('style');
     styleInject.innerHTML = `
         #nexoMenuBtn, .side-menu, #nexoMenuOverlay { display: none !important; }
-
         #v6-menu-trigger {
             position: fixed; top: 15px; left: 15px; width: 45px; height: 45px;
-            background: rgba(10, 10, 10, 0.8); border: 2px solid var(--gold); border-radius: 6px;
+            background: rgba(10, 10, 10, 0.9); border: 2px solid var(--gold); border-radius: 6px;
             display: none; justify-content: center; align-items: center; z-index: 1000000;
             cursor: pointer; backdrop-filter: blur(15px);
         }
-
         .v6-panel {
             position: fixed; top: 0; left: -350px; width: 350px; height: 100vh;
             background: rgba(5, 5, 5, 0.98); border-right: 1px solid rgba(212, 175, 55, 0.2);
             z-index: 1000001; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column; color: white; overflow-y: auto; font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex; flex-direction: column; color: white; overflow-y: auto; font-family: sans-serif;
         }
         .v6-panel.active { left: 0; }
         .v6-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000000; display: none; backdrop-filter: blur(10px);
         }
-
-        /* TÍTULOS NOTORIOS (PREDETERMINADO DORADO Y NEGRITA) */
         .v6-header-main { 
-            color: var(--gold); 
-            font-size: 13px; 
-            letter-spacing: 2.5px; 
-            font-weight: 900; 
-            margin-bottom: 20px; 
-            text-transform: uppercase;
-            border-left: 4px solid var(--gold);
-            padding-left: 10px;
+            color: var(--gold) !important; font-size: 14px; letter-spacing: 2px; font-weight: 900; 
+            margin-bottom: 20px; text-transform: uppercase; border-left: 5px solid var(--gold); padding-left: 12px;
         }
-
         .v6-section { padding: 30px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        /* BOTÓN GRUPAL DE BRANDING */
         .v6-group-btn {
-            width: 100%; padding: 15px; background: rgba(212,175,55,0.1); 
+            width: 100%; padding: 15px; background: rgba(212,175,55,0.05); 
             border: 1px solid var(--gold); color: var(--gold); font-weight: 800;
             border-radius: 8px; cursor: pointer; text-align: center; margin-bottom: 10px;
-            transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
         }
-        .v6-group-btn:hover { background: var(--gold); color: black; }
-
-        .v6-group-content { display: none; padding-top: 20px; }
+        .v6-group-content { display: none; padding-top: 15px; }
         .v6-group-content.open { display: block; }
-
-        .v6-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
-        .v6-btn-action { width: 100%; padding: 12px; background: var(--gold); border: none; font-weight: bold; cursor: pointer; border-radius: 6px; }
-        .v6-btn-reset { width: 100%; padding: 10px; background: transparent; border: 1px solid #444; color: #777; border-radius: 6px; margin-top: 10px; cursor: pointer; }
+        .v6-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+        .v6-btn-action { width: 100%; padding: 15px; background: var(--gold); border: none; font-weight: 900; cursor: pointer; border-radius: 8px; color: black; }
+        .v6-btn-action:disabled { opacity: 0.5; cursor: wait; }
     `;
     document.head.appendChild(styleInject);
 
-    // 2. ESTRUCTURA DE INTERFAZ
     const ui = {
         trigger: document.createElement('div'),
         panel: document.createElement('div'),
         overlay: document.createElement('div')
     };
-
     ui.trigger.id = 'v6-menu-trigger';
     ui.trigger.innerHTML = `<span style="color:var(--gold); font-size:22px;">☰</span>`;
     ui.panel.className = 'v6-panel';
@@ -1111,96 +1091,95 @@
     ui.panel.innerHTML = `
         <div class="v6-section">
             <div class="v6-header-main">👤 Mi Perfil</div>
-            <div id="v6-email" style="font-size:14px; font-weight:bold;">---</div>
-            <div id="v6-fullname" style="font-size:12px; color:#888; margin-top:5px;">---</div>
-            <div id="v6-phone" style="font-size:12px; color:#888;">---</div>
+            <div id="v6-email" style="font-weight:bold;">---</div>
+            <div id="v6-fullname" style="font-size:12px; color:#aaa; margin-top:5px;">---</div>
+            <div id="v6-phone" style="font-size:12px; color:#aaa;">---</div>
         </div>
-
         <div style="flex:1; overflow-y:auto;">
             <div class="v6-section">
                 <div class="v6-header-main">🛠️ Gestión</div>
-                
-                <div class="v6-group-btn" id="btn-toggle-brand">🎨 Configuración de Marca</div>
-                
+                <div class="v6-group-btn" onclick="document.getElementById('brand-content').classList.toggle('open')">🎨 Configuración de Marca</div>
                 <div class="v6-group-content" id="brand-content">
-                    <label style="font-size:11px; color:#666;">NOMBRE DEL SISTEMA</label>
-                    <input type="text" id="v6-name" class="v6-input">
-                    
-                    <label style="font-size:11px; color:#666;">LOGO CENTRAL (LOCAL/URL)</label>
-                    <input type="text" id="v6-logo-url" class="v6-input" placeholder="URL...">
+                    <input type="text" id="v6-name" class="v6-input" placeholder="Nombre del sistema">
+                    <input type="text" id="v6-logo-url" class="v6-input" placeholder="URL Logo...">
+                    <button class="v6-input" style="cursor:pointer" onclick="document.getElementById('v6-logo-file').click()">📁 Logo Local</button>
                     <input type="file" id="v6-logo-file" hidden accept="image/*">
-                    <button class="v6-btn-reset" onclick="document.getElementById('v6-logo-file').click()" style="margin-bottom:15px;">📁 Subir Logo Local</button>
-                    
-                    <label style="font-size:11px; color:#666;">FONDO DE PANTALLA (LOCAL/URL)</label>
-                    <input type="text" id="v6-bg-url" class="v6-input" placeholder="URL...">
+                    <input type="text" id="v6-bg-url" class="v6-input" placeholder="URL Fondo...">
+                    <button class="v6-input" style="cursor:pointer" onclick="document.getElementById('v6-bg-file').click()">🖼️ Fondo Local</button>
                     <input type="file" id="v6-bg-file" hidden accept="image/*">
-                    <button class="v6-btn-reset" onclick="document.getElementById('v6-bg-file').click()" style="margin-bottom:15px;">🖼️ Subir Fondo Local</button>
-
-                    <label style="font-size:11px; color:#666;">COLOR DE MARCA (TÍTULOS Y ACENTOS)</label>
+                    <label style="font-size:10px; color:var(--gold); font-weight:bold;">COLOR GLOBAL APP</label>
                     <input type="color" id="v6-color" style="width:100%; height:45px; border:none; background:none; cursor:pointer;">
-                    
-                    <button id="v6-save" class="v6-btn-action" style="margin-top:20px;">APLICAR BRANDING</button>
+                    <button id="v6-save" class="v6-btn-action" style="margin-top:15px;">APLICAR BRANDING</button>
                 </div>
             </div>
-
             <div class="v6-section">
                 <div class="v6-header-main">⚙️ Sistema</div>
-                <button id="v6-reset" class="v6-btn-reset" style="width:100%; border-color:#ff4444; color:#ff4444;">🔄 Reinicio Maestro</button>
-                
-                <div class="v6-header-main" style="margin-top:40px;">📞 Legal</div>
-                <div style="font-size:11px; color:#444; font-weight:bold;">
-                    NEXO® Business Pro<br>
-                    Marca Registrada - Derechos Reservados 2026
-                </div>
+                <button id="v6-reset" style="width:100%; padding:10px; background:none; border:1px solid #444; color:#666; cursor:pointer; border-radius:6px;">🔄 Reinicio Maestro</button>
             </div>
         </div>
-        
-        <div class="v6-section" onclick="auth.signOut()" style="text-align:center; color:#ff4444; font-weight:bold; cursor:pointer; background:rgba(255,68,68,0.05);">
-            CERRAR SESIÓN
-        </div>
     `;
-
     document.body.append(ui.trigger, ui.overlay, ui.panel);
 
-    // 3. LÓGICA DE CONTROL
-    const toBase64 = file => new Promise((res, rej) => {
-        const r = new FileReader(); r.readAsDataURL(file);
-        r.onload = () => res(r.result); r.onerror = e => rej(e);
-    });
+    const toBase64 = file => file ? new Promise((res) => {
+        const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
+    }) : Promise.resolve(null);
 
-    // Toggle del Grupo de Marca
-    document.getElementById('btn-toggle-brand').onclick = () => {
-        document.getElementById('brand-content').classList.toggle('open');
-    };
+    // FUNCIÓN DE GUARDADO CORREGIDA
+    document.getElementById('v6-save').onclick = async function() {
+        const btn = this;
+        btn.disabled = true; btn.innerText = "PROCESANDO...";
+        
+        try {
+            const lFile = document.getElementById('v6-logo-file').files[0];
+            const bFile = document.getElementById('v6-bg-file').files[0];
+            
+            const logoRes = await toBase64(lFile);
+            const bgRes = await toBase64(bFile);
 
-    const saveBrand = async () => {
-        const lFile = document.getElementById('v6-logo-file').files[0];
-        const bFile = document.getElementById('v6-bg-file').files[0];
+            const data = {
+                appName: document.getElementById('v6-name').value || "",
+                logo: logoRes || document.getElementById('v6-logo-url').value || "",
+                bg: bgRes || document.getElementById('v6-bg-url').value || "",
+                color: document.getElementById('v6-color').value || "#d4af37"
+            };
 
-        const data = {
-            appName: document.getElementById('v6-name').value,
-            logo: lFile ? await toBase64(lFile) : document.getElementById('v6-logo-url').value,
-            bg: bFile ? await toBase64(bFile) : document.getElementById('v6-bg-url').value,
-            color: document.getElementById('v6-color').value
-        };
-
-        db.ref('appBranding').set(data).then(() => {
-            alert("Sincronización de Marca Completa");
+            await db.ref('appBranding').update(data);
+            alert("¡Branding aplicado con éxito!");
             location.reload();
-        });
-    };
-
-    // 4. EVENTOS
-    ui.trigger.onclick = () => { ui.panel.classList.add('active'); ui.overlay.style.display = 'block'; };
-    ui.overlay.onclick = () => { ui.panel.classList.remove('active'); ui.overlay.style.display = 'none'; };
-    document.getElementById('v6-save').onclick = saveBrand;
-    document.getElementById('v6-reset').onclick = () => {
-        if(confirm("¿Restaurar sistema al estado original de fábrica?")) {
-            db.ref('appBranding').remove().then(() => location.reload());
+        } catch (e) {
+            console.error(e);
+            alert("Error al guardar. Verifica la conexión.");
+        } finally {
+            btn.disabled = false; btn.innerText = "APLICAR BRANDING";
         }
     };
 
-    // 5. MOTOR DE SINCRONIZACIÓN
+    // APLICACIÓN DE COLOR EXTENDIDA
+    const applyBranding = () => {
+        db.ref('appBranding').on('value', s => {
+            const d = s.val(); if(!d) return;
+            const themeCol = d.color || "#d4af37";
+            
+            document.documentElement.style.setProperty('--gold', themeCol);
+            
+            if(d.appName) { document.title = d.appName; const h = document.querySelector('h1'); if(h) h.innerText = d.appName; }
+            if(d.bg) document.body.style.background = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${d.bg}) center/cover fixed no-repeat`;
+            else document.body.style.backgroundColor = themeCol + "22"; // 22 es transparencia sutil
+
+            const spinBtn = document.querySelector('.spin-button') || document.getElementById('spinBtn');
+            if(spinBtn) {
+                spinBtn.style.boxShadow = `0 0 30px ${themeCol}66`;
+                spinBtn.style.borderColor = themeCol;
+                const img = spinBtn.querySelector('img');
+                if(img && d.logo) img.src = d.logo;
+            }
+        });
+    };
+
+    ui.trigger.onclick = () => { ui.panel.classList.add('active'); ui.overlay.style.display = 'block'; };
+    ui.overlay.onclick = () => { ui.panel.classList.remove('active'); ui.overlay.style.display = 'none'; };
+    document.getElementById('v6-reset').onclick = () => { if(confirm("¿Reset total?")) db.ref('appBranding').remove().then(() => location.reload()); };
+
     setInterval(() => {
         if(auth.currentUser) {
             ui.trigger.style.display = 'flex';
@@ -1208,29 +1187,13 @@
             db.ref('users/' + auth.currentUser.uid).once('value', s => {
                 const u = s.val(); if(u) {
                     document.getElementById('v6-fullname').innerText = (u.nombre || "") + " " + (u.apellido || "");
-                    document.getElementById('v6-phone').innerText = "Tel: " + (u.telefono || "---");
+                    document.getElementById('v6-phone').innerText = u.telefono || "---";
                 }
             });
         }
     }, 2000);
-
-    const applyBranding = () => {
-        db.ref('appBranding').on('value', s => {
-            const d = s.val(); if(!d) return;
-            if(d.appName) { document.title = d.appName; const h = document.querySelector('h1'); if(h) h.innerText = d.appName; }
-            if(d.color) {
-                document.documentElement.style.setProperty('--gold', d.color);
-                // Los títulos ya están vinculados por la variable CSS --gold
-            }
-            if(d.bg) document.body.style.background = `url(${d.bg}) center/cover fixed no-repeat`;
-            const spinImg = document.querySelector('.spin-button img');
-            if(spinImg && d.logo) spinImg.src = d.logo;
-        });
-    };
     setTimeout(applyBranding, 1500);
-
 })();
     </script>
 </body>
 </html>
-
