@@ -1041,25 +1041,27 @@
 // ==========================================
 (function() {
     const fixAdminIntegration = () => {
+        // Buscamos el menú lateral que ya existe en tu código original
         const sideMenu = document.getElementById('nexoSideMenu');
         const originalBtn = document.getElementById('btnAdminMaster');
         
-        // Si el menú existe y no hemos inyectado el botón aún
+        // Verificamos si el menú existe y si aún no hemos inyectado nuestra opción
         if (sideMenu && !document.getElementById('menuOptionAdminMaster')) {
             const adminOption = document.createElement('div');
             adminOption.id = 'menuOptionAdminMaster';
-            adminOption.className = 'menu-option-item'; // Clase original de tus items
-            adminOption.style.display = 'none'; 
-            adminOption.style.borderLeft = '4px solid var(--gold)'; // Distintivo VIP
+            adminOption.className = 'menu-option-item'; // Usamos tu clase CSS original
+            adminOption.style.display = 'none'; // Se controla por lógica de Firebase
+            adminOption.style.borderLeft = '4px solid var(--gold)'; // Distintivo visual
+            adminOption.style.fontWeight = 'bold';
             adminOption.innerHTML = `👑 ADMIN MASTER`;
             
+            // Referenciación: Al hacer clic, dispara la función del botón original
             adminOption.onclick = () => {
                 if (originalBtn) originalBtn.click();
-                // Cerrar menú usando tu función original
-                if (typeof closeAll === 'function') closeAll();
+                if (typeof closeAll === 'function') closeAll(); // Cierra el menú tras pulsar
             };
 
-            // Insertar al final del menú pero antes del botón de salida
+            // Inyectar antes del botón de "Cerrar Sesión" para que quede bien ordenado
             const logoutBtn = sideMenu.querySelector('.menu-logout');
             if (logoutBtn) {
                 sideMenu.insertBefore(adminOption, logoutBtn);
@@ -1069,22 +1071,23 @@
         }
     };
 
-    // Ejecutar la integración y validar seguridad
+    // Lógica de visibilidad sincronizada con tu base de datos
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // Reintentar inyección por si el DOM tarda en renderizar
+            // Ejecutamos la inyección con un pequeño retraso para asegurar que el DOM cargó
             setTimeout(fixAdminIntegration, 500);
-            setTimeout(fixAdminIntegration, 1500);
+            setTimeout(fixAdminIntegration, 1500); // Reintento de seguridad
 
-            // Escuchar cambios de privilegios
-            db.ref('admins/' + user.uid).on('value', (s) => {
-                const isAdmin = s.val();
+            // Validación de rango de Administrador
+            db.ref('admins/' + user.uid).on('value', (snapshot) => {
+                const isAdmin = snapshot.val();
                 const menuAdmin = document.getElementById('menuOptionAdminMaster');
                 const oldBtn = document.getElementById('btnAdminMaster');
 
                 if (isAdmin) {
+                    // Mostrar en el menú
                     if (menuAdmin) menuAdmin.style.display = 'flex';
-                    // Forzar ocultamiento del botón viejo que está fuera del menú
+                    // Ocultar definitivamente el botón original de la pantalla principal
                     if (oldBtn) {
                         oldBtn.style.setProperty('display', 'none', 'important');
                     }
@@ -1093,11 +1096,12 @@
         }
     });
 })();
+// ==========================================
+// FIN DEL BLOQUE
+// ==========================================
     </script>
 </body>
 </html>
-
-
 
 
 
