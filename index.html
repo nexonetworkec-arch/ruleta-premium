@@ -920,22 +920,28 @@
     </script>
 
     <style>
-    /* Estilos encapsulados para evitar conflictos */
     #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
-    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 120px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; }
-    .nexo-log { border-bottom: 1px solid #111; padding: 2px 0; display: flex; justify-content: space-between; }
+    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; }
+    .nexo-log { border-bottom: 1px solid #111; padding: 4px 0; display: flex; justify-content: space-between; }
     .nexo-gold { color: var(--gold); }
 </style>
 
 <script>
 (function() {
-    // Función de seguridad: Esperar a que Firebase y el DOM estén listos
-    const iniciarAdminPro = () => {
-        if (typeof firebase === 'undefined' || typeof db === 'undefined') {
-            return setTimeout(iniciarAdminPro, 1000);
-        }
+    // FUNCIÓN PARA OBTENER DB Y AUTH GLOBALMENTE (Saltando el scope local)
+    const getFirebase = () => {
+        try {
+            return {
+                base: firebase.database(),
+                acceso: firebase.auth()
+            };
+        } catch(e) { return null; }
+    };
 
-        // 1. INYECTOR DINÁMICO DE INTERFAZ
+    const iniciarAdminFix = () => {
+        const fb = getFirebase();
+        if (!fb) return setTimeout(iniciarAdminFix, 1000);
+
         const inyectarPanel = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
             if (!container || document.getElementById('nexo-admin-suite')) return;
@@ -943,7 +949,7 @@
             const html = `
                 <div id="nexo-admin-suite">
                     <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                        <small class="nexo-gold"><b>📣 COMUNICADO GLOBAL</b></small>
+                        <small class="nexo-gold"><b>📣 AVISO GLOBAL</b></small>
                         <div style="display:flex; gap:5px; margin-top:5px;">
                             <input type="text" id="msgGlobal" placeholder="Escribir aviso..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
                             <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
@@ -954,88 +960,66 @@
                     <button id="btnDescargarDB" style="width:100%; background:#2e7d32; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 EXPORTAR USUARIOS (CSV)</button>
                 </div>`;
             
-            const tituloTabla = container.querySelector('h3');
-            if (tituloTabla) tituloTabla.insertAdjacentHTML('beforebegin', html);
+            const titulo = container.querySelector('h3');
+            if (titulo) titulo.insertAdjacentHTML('beforebegin', html);
 
-            // Vinculación directa de eventos (Solución al error de envío)
-            document.getElementById('btnEnviarMsg').addEventListener('click', enviarAviso);
-            document.getElementById('btnDescargarDB').addEventListener('click', exportarCSV);
+            document.getElementById('btnEnviarMsg').onclick = async () => {
+                const txt = document.getElementById('msgGlobal').value;
+                if(!txt) return;
+                // Ruta alternativa por si la raíz está bloqueada
+                fb.base.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() })
+                    .then(() => { alert("✅ Enviado"); document.getElementById('msgGlobal').value = ""; })
+                    .catch(e => alert("❌ Error: Verifica reglas de Firebase"));
+            };
+
+            document.getElementById('btnDescargarDB').onclick = async () => {
+                const snap = await fb.base.ref('users').once('value');
+                const users = snap.val();
+                if(!users) return alert("Sin datos");
+                
+                let csv = "\uFEFFUID,Email,Nivel,Estado\n";
+                Object.keys(users).forEach(uid => {
+                    if(uid === 'ADMIN_MESSAGES') return;
+                    const u = users[uid];
+                    csv += `${uid},${u.email || 'N/A'},${u.level || u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "Nexo_DB.csv";
+                a.click();
+            };
         };
 
-        // 2. FUNCIÓN ENVIAR AVISO (Ruta corregida para permisos)
-        async function enviarAviso() {
-            const txt = document.getElementById('msgGlobal').value;
-            if(!txt) return;
-            try {
-                // Escribimos en una ruta que suele tener permisos de admin: /admin_notices/
-                await db.ref('admin_notices/current').set({
-                    msg: txt,
-                    time: Date.now()
-                });
-                document.getElementById('msgGlobal').value = "";
-                alert("✅ Aviso enviado exitosamente.");
-            } catch (err) {
-                console.error(err);
-                alert("❌ Error de permisos. Asegúrate de ser Admin en Firebase.");
-            }
-        }
-
-        // 3. MONITOR DE ACTIVIDAD (Listener de Historial)
-        db.ref('users').on('child_changed', snap => {
+        // MONITOR DE ACTIVIDAD GLOBAL
+        fb.base.ref('users').on('child_changed', snap => {
             const user = snap.val();
             const monitor = document.getElementById('monitorVivo');
             if(!monitor || !user.history) return;
 
             const hist = Object.values(user.history);
-            const ultimo = hist[hist.length - 1];
+            const last = hist[hist.length - 1];
             
-            // Si el giro es de hace menos de 8 segundos, mostrarlo
-            if(ultimo && ultimo.timestamp > (Date.now() - 8000)) {
-                const nombrePremio = ultimo.premio || ultimo.nombre || "Premio";
+            if(last && last.timestamp > (Date.now() - 10000)) {
                 const div = document.createElement('div');
                 div.className = 'nexo-log';
-                div.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> <span>${user.email?.split('@')[0] || 'User'}: <b>${nombrePremio}</b></span>`;
+                div.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> <span>${user.email?.split('@')[0] || 'User'}: <b>${last.premio || last.nombre || 'Giro'}</b></span>`;
                 monitor.prepend(div);
-                if(monitor.childNodes.length > 25) monitor.lastChild.remove();
+                if(monitor.childNodes.length > 20) monitor.lastChild.remove();
             }
         });
 
-        // 4. EXPORTAR CSV (Constructor compatible)
-        async function exportarCSV() {
-            try {
-                const snap = await db.ref('users').once('value');
-                const data = snap.val();
-                let csv = "\uFEFFUID,Email,Nivel,Estado\n"; // \uFEFF es para que Excel lea bien las tildes
-                
-                for(let uid in data) {
-                    const u = data[uid];
-                    csv += `${uid},${u.email || 'N/A'},${u.level || u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
-                }
-
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `Nexo_Reporte_${new Date().getTime()}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } catch (e) { alert("Error al generar CSV"); }
-        }
-
-        // 5. ESCUCHA DE AVISOS PARA TODOS LOS USUARIOS
-        db.ref('admin_notices/current').on('value', snap => {
-            const data = snap.val();
-            if(data && data.time > (Date.now() - 10000)) {
-                alert("📢 MENSAJE DE DIRECCIÓN:\n\n" + data.msg);
-            }
+        // ESCUCHA DE AVISOS PARA TODOS
+        fb.base.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
+            const d = snap.val();
+            if(d && d.time > (Date.now() - 15000)) alert("📢 MENSAJE ADMIN:\n" + d.msg);
         });
 
-        // Lanzar el inyector visual cada vez que el usuario use el panel
         setInterval(inyectarPanel, 2000);
     };
 
-    iniciarAdminPro();
+    iniciarAdminFix();
 })();
 </script>
 </body>
