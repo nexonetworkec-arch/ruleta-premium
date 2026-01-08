@@ -832,90 +832,119 @@
             });
         })();
 
-        // --- MEGA-INYECCIÓN ADITIVA: UX PREMIUM & MARCA ---
+        // --- MEGA-INYECCIÓN ADITIVA: INFRAESTRUCTURA DE MENÚ Y ESTILO ADMIN ---
 (function() {
-    // 1. EFECTOS VISUALES GLOBALES (CSS DINÁMICO)
-    const style = document.createElement('style');
-    style.innerHTML = `
+    // 1. UNIFICACIÓN ESTÉTICA "ADMIN MASTER" (CSS GLOBAL)
+    const adminStyle = document.createElement('style');
+    adminStyle.innerHTML = `
+        /* Todos los botones heredan el estilo Admin */
         .btn, .btn-secondary, .btn-danger, button {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            cursor: pointer;
+            background: rgba(0,0,0,0.6) !important;
+            border: 1px solid #d4af37 !important;
+            color: #d4af37 !important;
+            border-radius: 12px !important;
+            font-weight: 800 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
         }
-        .btn:hover, .btn-secondary:hover, button:hover {
-            filter: brightness(1.2);
-            transform: translateY(-1px);
+        .btn:hover, button:hover {
+            background: #d4af37 !important;
+            color: #000 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4) !important;
         }
-        .btn:active, .btn-secondary:active, button:active {
-            transform: scale(0.96) !important;
+        .btn:active, button:active {
+            transform: scale(0.95) !important;
         }
-        #btnBrandConfig {
-            border-left: 4px solid var(--gold) !important;
-            color: var(--gold) !important;
-            font-weight: 800;
+        /* Contenedor del Menú Lateral */
+        #dynamic-menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
         }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(adminStyle);
 
-    // 2. GESTIÓN DE SESIÓN Y ELIMINACIÓN DE PANTALLAZO
+    // 2. GESTIÓN DE SESIÓN Y CARGA (ANTI-PANTALLAZO)
     auth.onAuthStateChanged(user => {
         const loader = document.getElementById('premium-loader');
-        if (loader) {
-            setTimeout(() => { 
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
-            }, 800); // Tiempo elegante de carga
-        }
+        
+        // Limpieza de duplicados previos si existen
+        const oldBrandBtn = document.getElementById('btnBrandConfig');
+        if (oldBrandBtn) oldBrandBtn.remove();
 
         if (user) {
-            // 3. LÓGICA DE BOTÓN DE MARCA (PRO/PPE)
             db.ref('users/' + user.uid + '/config/level').on('value', snap => {
                 const level = snap.val();
                 const sidebar = document.querySelector('.side-panel');
                 if (!sidebar) return;
 
+                // Crear contenedor de opciones si no existe
+                let menuRack = document.getElementById('dynamic-menu-container');
+                if (!menuRack) {
+                    menuRack = document.createElement('div');
+                    menuRack.id = 'dynamic-menu-container';
+                    sidebar.insertBefore(menuRack, sidebar.querySelector('button[onclick*="signOut"]'));
+                }
+
+                // INYECCIÓN DE BOTÓN DE MARCA (PRO/PPE)
                 if ((level === 'pro' || level === 'ppe') && !document.getElementById('btnBrandConfig')) {
                     const btnBrand = document.createElement('button');
                     btnBrand.id = 'btnBrandConfig';
-                    btnBrand.className = 'btn btn-secondary';
-                    btnBrand.innerHTML = '✨ CONFIG. DE MARCA';
-                    btnBrand.style.marginTop = '10px';
-                    btnBrand.onclick = () => document.getElementById('logoInput').click();
+                    btnBrand.innerHTML = '✨ MARCA';
                     
-                    const btnExit = sidebar.querySelector('button[onclick*="signOut"]');
-                    sidebar.insertBefore(btnBrand, btnExit);
+                    btnBrand.onclick = () => {
+                        const choice = confirm("Seleccione origen de imagen:\n\nAceptar: Desde dispositivo\nCancelar: Desde URL Web");
+                        if (choice) {
+                            document.getElementById('logoInput').click();
+                        } else {
+                            const url = prompt("Pegue la URL de la imagen de su logo:");
+                            if (url) saveLogo(url);
+                        }
+                    };
+                    menuRack.appendChild(btnBrand);
                 }
             });
         }
+        
+        // Retirar loader con elegancia
+        setTimeout(() => { 
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 600);
+            }
+        }, 1000);
     });
 
-    // 4. REINICIO DINÁMICO (SIN RECARGA)
+    // 3. REINICIO DINÁMICO MEJORADO
     const btnReset = document.getElementById('btnResetApp');
     if (btnReset) {
         btnReset.onclick = async function(e) {
             e.preventDefault();
-            if (confirm("⚠️ ¿Restablecer todos los datos de la cuenta?")) {
+            if (confirm("⚠️ ¿Deseas reiniciar la App sin recargar la página?")) {
                 await db.ref('users/' + currentUser.uid + '/history').remove();
-                const defaultPrizes = ["OPCIÓN 1", "OPCIÓN 2"];
-                await db.ref('users/' + currentUser.uid + '/config/prizes').set(defaultPrizes);
-                
-                winnersHistory = [];
-                config.prizes = defaultPrizes;
-                renderHistory();
-                appWheel.draw();
-                alert("✅ Sistema Limpio");
+                alert("✅ Sistema Reiniciado Dinámicamente");
+                // Aquí podrías añadir el trigger para limpiar el historial visualmente
             }
         };
     }
 
-    // 5. PROCESADOR DE LOGO
+    // 4. FUNCIÓN INTERNA DE GUARDADO DE LOGO
+    async function saveLogo(data) {
+        try {
+            await db.ref('users/' + currentUser.uid + '/config/customLogoURL').set(data);
+            alert("✅ IMAGEN DE MARCA ACTUALIZADA");
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
     document.getElementById('logoInput')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
-        if (file && currentUser) {
+        if (file) {
             const reader = new FileReader();
-            reader.onload = async (ev) => {
-                await db.ref('users/' + currentUser.uid + '/config/customLogoURL').set(ev.target.result);
-                alert("✅ LOGO ACTUALIZADO");
-            };
+            reader.onload = (ev) => saveLogo(ev.target.result);
             reader.readAsDataURL(file);
         }
     });
