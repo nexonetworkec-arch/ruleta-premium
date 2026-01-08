@@ -832,60 +832,66 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: OPTIMIZACIÓN DE CARGA SILENCIOSA Y REINICIO TRANSPARENTE ---
+        // --- INYECCIÓN ADITIVA: GESTIÓN DE CARGA SILENCIOSA Y REINICIO TRANSPARENTE V2 ---
 (function() {
-    // 1. Inyección de CSS de alta prioridad para ocultar el parpadeo
+    // 1. Estilo de transición suave para evitar el "pantallazo"
     const silentStyle = document.createElement('style');
     silentStyle.innerHTML = `
-        #loginScreen { opacity: 0; transition: opacity 0.3s ease; }
-        #appMain { opacity: 0; transition: opacity 0.3s ease; }
-        .auth-verified #appMain { opacity: 1 !important; display: flex !important; }
-        .auth-none #loginScreen { opacity: 1 !important; display: flex !important; }
+        #loginScreen, #appMain { transition: opacity 0.4s ease-in-out; }
+        .is-loading #loginScreen { opacity: 0; pointer-events: none; }
+        .is-loading #appMain { opacity: 0; pointer-events: none; }
+        .show-app #appMain { opacity: 1 !important; display: flex !important; pointer-events: auto; }
+        .show-login #loginScreen { opacity: 1 !important; display: flex !important; pointer-events: auto; }
     `;
     document.head.appendChild(silentStyle);
 
-    // 2. Interceptación del estado de sesión antes del renderizado completo
-    const checkSessionState = () => {
-        const hasToken = localStorage.getItem('firebase:authUser:' + firebaseConfig.apiKey); [cite: 240, 241]
-        if (hasToken) {
-            // Pre-activación visual para evitar el salto
-            document.getElementById('loginScreen').style.display = 'none'; [cite: 126]
-            document.body.classList.add('user-logged'); [cite: 241]
-        }
-    };
-    checkSessionState();
+    // 2. Estado inicial: Ocultar todo mientras se verifica
+    document.body.classList.add('is-loading');
 
-    // 3. Refuerzo del observador de Auth para transiciones limpias
-    auth.onAuthStateChanged((user) => { [cite: 126, 233]
+    // 3. Verificación inmediata de token local
+    const hasToken = localStorage.getItem(`firebase:authUser:${firebaseConfig.apiKey}`);
+    
+    // 4. Lógica de visualización limpia
+    auth.onAuthStateChanged((user) => {
+        document.body.classList.remove('is-loading');
         const login = document.getElementById('loginScreen');
         const app = document.getElementById('appMain');
-        
+
         if (user) {
-            login.style.display = 'none'; [cite: 126]
-            app.style.display = 'flex'; [cite: 126]
-            document.body.classList.add('auth-verified');
-            document.body.classList.remove('auth-none');
+            login.style.display = 'none';
+            app.style.display = 'flex';
+            setTimeout(() => document.body.classList.add('show-app'), 50);
         } else {
             app.style.display = 'none';
-            login.style.display = 'flex'; [cite: 7, 8]
-            document.body.classList.add('auth-none');
-            document.body.classList.remove('auth-verified');
+            login.style.display = 'flex';
+            setTimeout(() => document.body.classList.add('show-login'), 50);
         }
     });
 
-    // 4. Optimización de la función Reiniciar (Sobrescritura del listener original)
-    const btnReset = document.getElementById('btnResetApp'); [cite: 74, 125]
+    // 5. Seguro de emergencia: Si en 2.5s no hay respuesta de Firebase, mostrar login
+    setTimeout(() => {
+        if (document.body.classList.contains('is-loading')) {
+            document.body.classList.remove('is-loading');
+            document.body.classList.add('show-login');
+        }
+    }, 2500);
+
+    // 6. Optimización del botón Reiniciar (Referenciación directa)
+    const btnReset = document.getElementById('btnResetApp');
     if (btnReset) {
         btnReset.onclick = async function(e) {
             e.stopImmediatePropagation();
-            if (confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?")) { [cite: 242]
-                // Mostrar estado de carga mínimo (opcional) o simplemente ejecutar
-                await db.ref('users/' + currentUser.uid + '/history').remove(); [cite: 242]
-                await db.ref('users/' + currentUser.uid + '/config/prizes').set(["OPCIÓN 1", "OPCIÓN 2"]); [cite: 243]
-                
-                // Recarga limpia: Forzamos la clase de usuario logueado antes de recargar
-                document.body.classList.add('user-logged'); [cite: 241]
-                location.reload(); [cite: 243]
+            if (confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?")) {
+                try {
+                    await db.ref('users/' + currentUser.uid + '/history').remove();
+                    await db.ref('users/' + currentUser.uid + '/config/prizes').set(["OPCIÓN 1", "OPCIÓN 2"]);
+                    // Al recargar, forzamos que se mantenga el estado de carga para que sea invisible
+                    document.body.classList.add('is-loading');
+                    location.reload();
+                } catch (err) {
+                    console.error("Error en reset:", err);
+                    location.reload();
+                }
             }
         };
     }
