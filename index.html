@@ -923,8 +923,12 @@
     // 1. Estilos para el Menú, Panel Lateral y Ocultamiento de Botón Salir original
     const menuStyles = document.createElement('style');
     menuStyles.innerHTML = `
-        /* Ocultar el botón Salir original de la pantalla de inicio */
-        #btnExit { display: none !important; }
+        /* Ocultar el botón Salir original por ID y Clase de forma agresiva */
+        #btnExit, .btn-exit, button:contains('SALIR') { 
+            display: none !important; 
+            visibility: hidden !important; 
+            pointer-events: none !important; 
+        }
 
         /* Botón Hamburguesa */
         #nexoMenuBtn {
@@ -947,7 +951,7 @@
         }
         #nexoSideMenu.active { left: 0; }
         
-        /* Overlay */
+        /* Overlay de desenfoque */
         #nexoMenuOverlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
@@ -972,7 +976,7 @@
     `;
     document.head.appendChild(menuStyles);
 
-    // 2. Creación e inyección de elementos
+    // 2. Creación e inyección de elementos del Menú
     const menuBtn = document.createElement('button');
     menuBtn.id = 'nexoMenuBtn';
     menuBtn.innerHTML = '<span></span><span></span><span></span>';
@@ -1002,7 +1006,7 @@
     document.body.appendChild(sideMenu);
     document.body.appendChild(overlay);
 
-    // 3. Lógica de Interacción
+    // 3. Lógica de Interacción y Limpieza Dinámica del botón antiguo
     const toggleNexoMenu = () => {
         sideMenu.classList.toggle('active');
         overlay.classList.toggle('active');
@@ -1011,10 +1015,21 @@
     menuBtn.onclick = toggleNexoMenu;
     overlay.onclick = toggleNexoMenu;
 
-    // 4. Gestión de visibilidad
+    // Función de limpieza extra para asegurar que el botón original desaparezca
+    const cleanOldExitButton = () => {
+        const buttons = document.querySelectorAll('button, .btn');
+        buttons.forEach(btn => {
+            if (btn.innerText.includes('SALIR')) {
+                btn.style.setProperty('display', 'none', 'important');
+            }
+        });
+    };
+
+    // 4. Gestión de visibilidad y ejecución de limpieza
     auth.onAuthStateChanged((user) => {
         if (user) {
             menuBtn.style.display = 'flex';
+            cleanOldExitButton(); // Limpiar al entrar
         } else {
             menuBtn.style.display = 'none';
             sideMenu.classList.remove('active');
@@ -1025,5 +1040,3 @@
     </script>
 </body>
 </html>
-
-
