@@ -1036,184 +1036,198 @@
     });
 })();
 
-                                 /* ==========================================================
-   SISTEMA DE BRANDING TOTAL & INTERFAZ ELITE V4
+        /* ==========================================================
+   SISTEMA ELITE V5: BRANDING AVANZADO Y RESET MAESTRO
    ========================================================== */
 (function() {
-    // 1. MOTOR DE ESTILOS "ULTRA PRO" (Glassmorphism & Adaptive)
+    // 1. ESTILOS DE DISEÑO EJECUTIVO (Glassmorphism Pro)
     const styleInject = document.createElement('style');
     styleInject.innerHTML = `
         #nexoMenuBtn, .side-menu, #nexoMenuOverlay { display: none !important; }
 
-        #v4-menu-trigger {
-            position: fixed; top: 15px; left: 15px; width: 42px; height: 42px;
-            background: rgba(22, 22, 22, 0.8); border: 1px solid var(--gold); border-radius: 4px;
+        #v5-menu-trigger {
+            position: fixed; top: 15px; left: 15px; width: 45px; height: 45px;
+            background: rgba(15, 15, 15, 0.7); border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 8px;
             display: none; justify-content: center; align-items: center; z-index: 1000000;
-            cursor: pointer; backdrop-filter: blur(10px); transition: 0.3s;
+            cursor: pointer; backdrop-filter: blur(15px); transition: all 0.3s ease;
         }
+        #v5-menu-trigger:hover { border-color: #d4af37; box-shadow: 0 0 15px rgba(212,175,55,0.2); }
 
-        .v4-panel {
-            position: fixed; top: 0; left: -340px; width: 340px; height: 100vh;
-            background: rgba(10, 10, 10, 0.98); border-right: 1px solid rgba(212, 175, 55, 0.3);
-            z-index: 1000001; transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-            display: flex; flex-direction: column; color: white; font-family: 'Segoe UI', sans-serif;
-            box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        .v5-panel {
+            position: fixed; top: 0; left: -360px; width: 360px; height: 100vh;
+            background: rgba(5, 5, 5, 0.96); border-right: 1px solid rgba(212, 175, 55, 0.2);
+            z-index: 1000001; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex; flex-direction: column; color: white; overflow-y: auto;
         }
-        .v4-panel.active { left: 0; }
-        .v4-overlay {
+        .v5-panel.active { left: 0; }
+        .v5-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 1000000; display: none; backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.8); z-index: 1000000; display: none; backdrop-filter: blur(8px);
         }
 
-        .v4-section { padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .v4-tag { color: var(--gold); font-size: 10px; letter-spacing: 3px; font-weight: bold; margin-bottom: 15px; opacity: 0.6; text-transform: uppercase; }
+        .v5-section { padding: 30px 25px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .v5-header { color: #d4af37; font-size: 10px; letter-spacing: 4px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
         
-        .v4-input-group { margin-bottom: 15px; }
-        .v4-input-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 6px; }
-        .v4-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 13px; transition: 0.3s; }
-        .v4-input:focus { border-color: var(--gold); box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+        .v5-input-group { margin-bottom: 18px; }
+        .v5-input-group label { display: block; font-size: 11px; color: #777; margin-bottom: 6px; text-transform: uppercase; }
+        .v5-input { width: 100%; background: #000; border: 1px solid #222; color: white; padding: 12px; border-radius: 6px; font-size: 13px; outline: none; }
+        .v5-input:focus { border-color: #d4af37; }
 
-        .v4-btn-file { 
-            background: #222; color: #ddd; padding: 8px; border-radius: 6px; font-size: 11px; 
-            cursor: pointer; display: inline-block; border: 1px dashed #444; width: 100%; text-align: center; margin-top: 5px;
-        }
-        .v4-btn-save { 
-            width: 100%; padding: 14px; background: var(--gold); border: none; color: black; 
-            font-weight: 800; cursor: pointer; border-radius: 8px; margin-top: 20px; transition: 0.3s;
-        }
-        .v4-btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); }
+        .v5-color-engine { display: flex; flex-direction: column; gap: 10px; background: #111; padding: 15px; border-radius: 10px; }
+        .v5-presets { display: flex; gap: 8px; margin-top: 10px; }
+        .v5-dot { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* Responsive Landscape Shield */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .v4-panel { width: 100%; left: -100%; display: grid; grid-template-columns: 1fr 1fr; overflow-y: auto; }
-            .v4-section:last-child { grid-column: span 2; }
-        }
+        .v5-btn-main { width: 100%; padding: 15px; background: #d4af37; border: none; color: black; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .v5-btn-reset { width: 100%; padding: 12px; background: transparent; border: 1px solid #444; color: #888; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 12px; }
+        .v5-btn-reset:hover { border-color: #ff4444; color: #ff4444; }
+
+        .file-status { font-size: 10px; color: #d4af37; display: none; margin-top: 5px; }
     `;
     document.head.appendChild(styleInject);
 
-    // 2. ESTRUCTURA DE INTERFAZ
+    // 2. CONSTRUCCIÓN DE INTERFAZ
     const ui = {
         trigger: document.createElement('div'),
         panel: document.createElement('div'),
         overlay: document.createElement('div')
     };
 
-    ui.trigger.id = 'v4-menu-trigger';
-    ui.trigger.innerHTML = `<span style="color:var(--gold); font-size:22px;">☰</span>`;
-    ui.panel.className = 'v4-panel';
-    ui.overlay.className = 'v4-overlay';
+    ui.trigger.id = 'v5-menu-trigger';
+    ui.trigger.innerHTML = `<span style="color:#d4af37; font-size:22px;">☰</span>`;
+    ui.panel.className = 'v5-panel';
+    ui.overlay.className = 'v5-overlay';
 
     ui.panel.innerHTML = `
-        <div class="v4-section" style="background: rgba(212,175,55,0.05);">
-            <div class="v4-tag">👤 MI PERFIL</div>
-            <div id="v4-profile-data" style="font-size:14px; font-weight:bold;">Cargando usuario...</div>
-            <div id="v4-profile-id" style="font-size:10px; color:#555; margin-top:5px;">ID: ---</div>
+        <div class="v5-section" style="background: linear-gradient(to bottom, #111, #050505);">
+            <div class="v5-header">👤 Mi Perfil</div>
+            <div id="v5-p-email" style="font-size:14px; font-weight:600;">---</div>
+            <div id="v5-p-name" style="font-size:12px; color:#aaa; margin-top:4px;">---</div>
+            <div id="v5-p-phone" style="font-size:11px; color:#666;">---</div>
         </div>
 
-        <div style="flex: 1; overflow-y: auto;">
-            <div class="v4-section">
-                <div class="v4-tag">🎨 CONFIGURACIÓN DE MARCA</div>
-                <div class="v4-input-group">
-                    <label>Nombre de la App (Superior)</label>
-                    <input type="text" id="v4-name" class="v4-input" placeholder="Ej: NEXO® Premium">
+        <div style="flex:1; overflow-y:auto;">
+            <div class="v5-section">
+                <div class="v5-header">🎨 Configuración de Marca</div>
+                <div class="v5-input-group">
+                    <label>Nombre del Sistema</label>
+                    <input type="text" id="v5-name" class="v5-input" placeholder="Nombre superior...">
                 </div>
-                <div class="v4-input-group">
+                <div class="v5-input-group">
                     <label>Logo Central (GIRAR)</label>
-                    <input type="text" id="v4-logo-url" class="v4-input" placeholder="URL de imagen...">
-                    <label class="v4-btn-file">📁 Subir Logo Local <input type="file" id="v4-logo-file" hidden accept="image/*"></label>
+                    <input type="text" id="v5-logo-url" class="v5-input" placeholder="URL o subir local...">
+                    <input type="file" id="v5-logo-file" hidden accept="image/*">
+                    <div class="v5-btn-reset" onclick="document.getElementById('v5-logo-file').click()">📁 Cargar Logo Local</div>
+                    <span id="st-logo" class="file-status">✓ Imagen cargada</span>
                 </div>
-                <div class="v4-input-group">
+                <div class="v5-input-group">
                     <label>Fondo de Pantalla</label>
-                    <input type="text" id="v4-bg-url" class="v4-input" placeholder="URL de imagen...">
-                    <label class="v4-btn-file">🖼️ Subir Fondo Local <input type="file" id="v4-bg-file" hidden accept="image/*"></label>
+                    <input type="text" id="v5-bg-url" class="v5-input" placeholder="URL o subir local...">
+                    <input type="file" id="v5-bg-file" hidden accept="image/*">
+                    <div class="v5-btn-reset" onclick="document.getElementById('v5-bg-file').click()">🖼️ Cargar Fondo Local</div>
+                    <span id="st-bg" class="file-status">✓ Imagen cargada</span>
                 </div>
-                <div class="v4-tag" style="margin-top:20px;">COLORES AVANZADOS</div>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1"><label style="font-size:10px;">ACENTO</label><input type="color" id="v4-c-gold" style="width:100%; height:30px; border:none; background:none;"></div>
-                    <div style="flex:1"><label style="font-size:10px;">FONDO</label><input type="color" id="v4-c-bg" style="width:100%; height:30px; border:none; background:none;"></div>
+
+                <div class="v5-header" style="margin-top:20px;">Control de Color (RGB/HEX)</div>
+                <div class="v5-color-engine">
+                    <input type="color" id="v5-hex" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
+                    <input type="text" id="v5-rgb" class="v5-input" placeholder="RGB (212, 175, 55)">
+                    <div class="v5-presets">
+                        <div class="v5-dot" style="background:#d4af37" onclick="setPreset('#d4af37')"></div>
+                        <div class="v5-dot" style="background:#007bff" onclick="setPreset('#007bff')"></div>
+                        <div class="v5-dot" style="background:#e91e63" onclick="setPreset('#e91e63')"></div>
+                        <div class="v5-dot" style="background:#ffffff" onclick="setPreset('#ffffff')"></div>
+                    </div>
                 </div>
-                <button id="v4-save" class="v4-btn-save">GUARDAR CAMBIOS</button>
+                <button id="v5-save" class="v5-btn-main" style="margin-top:20px;">GUARDAR CAMBIOS</button>
             </div>
 
-            <div class="v4-section">
-                <div class="v4-tag">⚙️ CONFIGURACIÓN</div>
-                <div style="padding:10px; background:#111; border-radius:8px; font-size:12px; color:#666; text-align:center;">Ajustes de sistema activos</div>
+            <div class="v5-section">
+                <div class="v5-header">⚙️ Sistema</div>
+                <button id="v5-reset" class="v5-btn-reset" style="width:100%;">🔄 Restaurar Valores de Fábrica</button>
                 
-                <div class="v4-tag" style="margin-top:25px;">📞 CONTACTO & LEGAL</div>
-                <div style="font-size:11px; color:#555; line-height:1.6;">
-                    Soporte Técnico: <b>Admin NEXO</b><br>
-                    Derechos Reservados © 2026<br>
-                    <b>Marca Registrada ®</b>
+                <div class="v5-header" style="margin-top:30px;">📞 Contacto & Legal</div>
+                <div style="font-size:11px; color:#444; line-height:1.6;">
+                    Soporte: NEXO® Business Pro<br>
+                    © 2026 Marca Registrada.<br>
+                    Todos los derechos reservados.
                 </div>
             </div>
-        </div>
-
-        <div class="v4-section" onclick="auth.signOut()" style="cursor:pointer; color:var(--danger); text-align:center; font-weight:bold; font-size:13px;">
-            🚪 CERRAR SESIÓN
         </div>
     `;
 
     document.body.append(ui.trigger, ui.overlay, ui.panel);
 
-    // 3. LÓGICA DE ARCHIVOS (Base64 Converter)
-    const getBase64 = (file) => new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => res(reader.result);
-        reader.onerror = e => rej(e);
+    // 3. LÓGICA DE PROCESAMIENTO
+    const toBase64 = file => new Promise((res, rej) => {
+        const r = new FileReader(); r.readAsDataURL(file);
+        r.onload = () => res(r.result); r.onerror = e => rej(e);
     });
 
-    // 4. PERSISTENCIA Y APLICACIÓN
-    const saveAll = async () => {
-        const logoFile = document.getElementById('v4-logo-file').files[0];
-        const bgFile = document.getElementById('v4-bg-file').files[0];
+    window.setPreset = (color) => {
+        document.getElementById('v5-hex').value = color;
+        document.getElementById('v5-rgb').value = "RGB Aplicado";
+    };
 
-        const config = {
-            appName: document.getElementById('v4-name').value,
-            logoUrl: logoFile ? await getBase64(logoFile) : document.getElementById('v4-logo-url').value,
-            bgUrl: bgFile ? await getBase64(bgFile) : document.getElementById('v4-bg-url').value,
-            primaryColor: document.getElementById('v4-c-gold').value,
-            bgColor: document.getElementById('v4-c-bg').value
+    const saveBranding = async () => {
+        const lFile = document.getElementById('v5-logo-file').files[0];
+        const bFile = document.getElementById('v5-bg-file').files[0];
+
+        const data = {
+            appName: document.getElementById('v5-name').value,
+            logo: lFile ? await toBase64(lFile) : document.getElementById('v5-logo-url').value,
+            bg: bFile ? await toBase64(bFile) : document.getElementById('v5-bg-url').value,
+            color: document.getElementById('v5-hex').value
         };
 
-        if(typeof db !== 'undefined') {
-            db.ref('appBranding').set(config).then(() => {
-                alert("Marca Actualizada Exitosamente");
-                location.reload();
-            });
+        db.ref('appBranding').set(data).then(() => {
+            alert("Sincronización de marca exitosa.");
+            location.reload();
+        });
+    };
+
+    const resetSystem = () => {
+        if(confirm("¿Estás seguro de restaurar el diseño original de fábrica?")) {
+            db.ref('appBranding').remove().then(() => location.reload());
         }
     };
 
-    // 5. EVENTOS Y MOTOR VISUAL
+    // 4. CONTROL DE EVENTOS
     ui.trigger.onclick = () => { ui.panel.classList.add('active'); ui.overlay.style.display = 'block'; };
     ui.overlay.onclick = () => { ui.panel.classList.remove('active'); ui.overlay.style.display = 'none'; };
-    document.getElementById('v4-save').onclick = saveAll;
+    document.getElementById('v5-save').onclick = saveBranding;
+    document.getElementById('v5-reset').onclick = resetSystem;
 
+    // Listener para feedback de archivos
+    document.getElementById('v5-logo-file').onchange = () => document.getElementById('st-logo').style.display = 'block';
+    document.getElementById('v5-bg-file').onchange = () => document.getElementById('st-bg').style.display = 'block';
+
+    // 5. MOTOR DE SINCRONIZACIÓN (Perfil y Branding)
     setInterval(() => {
         if(auth.currentUser) {
             ui.trigger.style.display = 'flex';
-            document.getElementById('v4-profile-data').innerText = auth.currentUser.email;
-            document.getElementById('v4-profile-id').innerText = "ID: " + auth.currentUser.uid.substring(0,12);
-        } else { ui.trigger.style.display = 'none'; }
-    }, 1000);
+            document.getElementById('v5-p-email').innerText = auth.currentUser.email;
+            // Sincronizar datos extendidos si existen en la DB del usuario
+            db.ref('users/' + auth.currentUser.uid).once('value', s => {
+                const u = s.val();
+                if(u) {
+                    document.getElementById('v5-p-name').innerText = (u.nombre || "") + " " + (u.apellido || "");
+                    document.getElementById('v5-p-phone').innerText = u.telefono || "Sin teléfono";
+                }
+            });
+        }
+    }, 2000);
 
-    // Aplicador en Tiempo Real
-    const initBranding = () => {
-        if(typeof db === 'undefined') return;
+    const applyGlobalBranding = () => {
         db.ref('appBranding').on('value', s => {
             const d = s.val(); if(!d) return;
             if(d.appName) { document.title = d.appName; const h = document.querySelector('h1'); if(h) h.innerText = d.appName; }
-            if(d.primaryColor) document.documentElement.style.setProperty('--gold', d.primaryColor);
-            if(d.bgColor) document.documentElement.style.setProperty('--bg-color', d.bgColor);
-            if(d.bgUrl) { document.body.style.background = `url(${d.bgUrl}) center/cover fixed no-repeat`; }
-            
-            // Logo del botón Girar
+            if(d.color) document.documentElement.style.setProperty('--gold', d.color);
+            if(d.bg) document.body.style.background = `url(${d.bg}) center/cover fixed no-repeat`;
             const spinImg = document.querySelector('.spin-button img');
-            if(spinImg && d.logoUrl) spinImg.src = d.logoUrl;
+            if(spinImg && d.logo) spinImg.src = d.logo;
         });
     };
-    setTimeout(initBranding, 1500);
-
+    setTimeout(applyGlobalBranding, 1500);
 })();
     </script>
 </body>
