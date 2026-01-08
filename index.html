@@ -1037,76 +1037,68 @@
 })();
 
         // ==========================================
-// INYECCIÓN DEFINITIVA: HOOK DE MENÚ ADMIN
+// INYECCIÓN ADITIVA: TELETRANSPORTACIÓN ADMIN
 // ==========================================
 (function() {
-    // 1. Inyectar CSS de alta prioridad para ocultar el botón viejo y dar estilo al nuevo
-    const style = document.createElement('style');
-    style.innerHTML = `
-        #btnAdminMaster { display: none !important; } 
-        .admin-hook-item { 
-            color: var(--gold) !important; 
-            border: 1px solid var(--gold) !important;
-            margin-top: 10px !important;
-            font-weight: 900 !important;
-            box-shadow: inset 0 0 10px rgba(212,175,55,0.1);
-        }
-    `;
-    document.head.appendChild(style);
-
-    const injectAdminNow = () => {
+    const moveAdminButton = () => {
         const sideMenu = document.getElementById('nexoSideMenu');
         const originalBtn = document.getElementById('btnAdminMaster');
         
-        // Si el menú existe y no tiene ya mi botón
-        if (sideMenu && !document.getElementById('adminHookBtn')) {
-            const adminBtn = document.createElement('div');
-            adminBtn.id = 'adminHookBtn';
-            adminBtn.className = 'menu-option-item admin-hook-item';
-            adminBtn.innerHTML = `👑 ADMIN MASTER`;
+        // Si ambos existen y el botón aún no está dentro del menú
+        if (sideMenu && originalBtn && originalBtn.parentNode !== sideMenu) {
             
-            adminBtn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (originalBtn) originalBtn.click(); // Ejecuta la función original
-                if (typeof closeAll === 'function') closeAll(); // Cierra el menú
-            };
+            // 1. Aplicar estilos de menú al botón original para que se integre
+            originalBtn.classList.add('menu-option-item'); // Mantiene tu estética
+            originalBtn.style.cssText = `
+                display: flex !important;
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                margin-top: 10px !important;
+                border: 1px solid var(--gold) !important;
+                background: rgba(212,175,55,0.1) !important;
+                width: 100% !important;
+                z-index: 1000 !important;
+            `;
+            originalBtn.innerHTML = `👑 ADMIN MASTER`;
 
-            // Insertar justo antes del botón de Cerrar Sesión
+            // 2. Moverlo físicamente dentro del menú
             const logoutBtn = sideMenu.querySelector('.menu-logout');
             if (logoutBtn) {
-                sideMenu.insertBefore(adminBtn, logoutBtn);
+                sideMenu.insertBefore(originalBtn, logoutBtn);
             } else {
-                sideMenu.appendChild(adminBtn);
+                sideMenu.appendChild(originalBtn);
             }
+
+            // 3. Vincular el cierre del menú al hacer click
+            originalBtn.addEventListener('click', () => {
+                if (typeof closeAll === 'function') closeAll();
+            });
         }
     };
 
-    // 2. Usar un observador persistente para combatir la sobreescritura de tu código original
+    // Observador para asegurar que el botón regrese al menú si el código original lo recrea
     const observer = new MutationObserver(() => {
-        // Cada vez que tu código original reescriba el menú, yo vuelvo a meter el botón
-        injectAdminNow();
+        moveAdminButton();
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // 3. Verificación de permisos con Firebase
+    // Ejecución vinculada a la autenticación
     auth.onAuthStateChanged((user) => {
         if (user) {
-            db.ref('admins/' + user.uid).on('value', (snapshot) => {
-                const isAdmin = snapshot.val();
-                // Usamos un intervalo para forzar la visibilidad según el permiso
-                const forceVisible = setInterval(() => {
-                    const btn = document.getElementById('adminHookBtn');
-                    if (btn) {
-                        btn.style.setProperty('display', isAdmin ? 'flex' : 'none', 'important');
-                        if (isAdmin) clearInterval(forceVisible);
-                    }
-                }, 200);
-                setTimeout(() => clearInterval(forceVisible), 4000);
+            db.ref('admins/' + user.uid).on('value', (s) => {
+                const isAdmin = s.val();
+                const btn = document.getElementById('btnAdminMaster');
+                if (btn) {
+                    btn.style.setProperty('display', isAdmin ? 'flex' : 'none', 'important');
+                }
+                moveAdminButton();
             });
         }
     });
+
+    moveAdminButton();
 })();
 // ==========================================
 // FIN DE LA INYECCIÓN
@@ -1114,8 +1106,4 @@
     </script>
 </body>
 </html>
-
-
-
-
 
