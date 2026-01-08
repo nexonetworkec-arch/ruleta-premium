@@ -1029,53 +1029,66 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: SISTEMA DE AVISOS POR NIVEL (CORREGIDO)
- * Se añade un intervalo para asegurar la inyección incluso si el panel tarda en cargar.
+ * INYECCIÓN ADITIVA: SISTEMA DE AVISOS POR NIVEL (ALINEACIÓN IZQUIERDA)
+ * Este bloque extiende la funcionalidad del panel sin modificar el código base.
  */
 (function() {
-    // 1. Función de Inyección de Interfaz
     const inyectarInterfazNiveles = () => {
+        // Buscamos el botón de envío original
         const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
         
-        // Si el botón existe y aún no hemos inyectado nuestras casillas
-        if (btnEnvio && !document.getElementById('contenedor-niveles-aviso')) {
-            const divNiveles = document.createElement('div');
-            divNiveles.id = 'contenedor-niveles-aviso';
-            // Estilo forzado con z-index y visibilidad
-            divNiveles.style = "margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; background: #1a1a1a; padding: 12px; border-radius: 12px; border: 2px solid var(--gold); position: relative; z-index: 9999;";
-            
-            divNiveles.innerHTML = `
-                <div style="width: 100%; text-align: center; margin-bottom: 5px; font-size: 0.6rem; color: var(--gold); font-weight: bold; text-transform: uppercase;">Enviar mensaje a:</div>
-                <label style="font-size: 0.75rem; color: var(--gold); cursor: pointer; display: flex; align-items: center; gap: 5px; font-weight: bold;">
-                    <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)"> TODOS
-                </label>
-                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" class="chk-lvl-target" value="pro"> PRO
-                </label>
-                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" class="chk-lvl-target" value="ppe"> PPE
-                </label>
-                <label style="font-size: 0.75rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                    <input type="checkbox" class="chk-lvl-target" value="free"> FREE
-                </label>
+        // Si el botón existe y aún no hemos inyectado nuestra fila de control
+        if (btnEnvio && !document.getElementById('contenedor-fila-aviso')) {
+            const padre = btnEnvio.parentNode;
+
+            // Creamos un contenedor horizontal para los niveles y el botón
+            const fila = document.createElement('div');
+            fila.id = 'contenedor-fila-aviso';
+            fila.style = "display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; width: 100%; flex-wrap: nowrap;";
+
+            // HTML de los niveles (Checkboxes)
+            const nivelesHTML = `
+                <div style="display: flex; gap: 5px; background: #1a1a1a; padding: 6px 10px; border-radius: 8px; border: 1px solid #333; align-items: center;">
+                    <label style="font-size: 0.6rem; color: var(--gold); cursor: pointer; display: flex; align-items: center; gap: 3px; font-weight: bold; margin: 0;">
+                        <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)" style="transform: scale(0.8);"> ALL
+                    </label>
+                    <label style="font-size: 0.6rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin: 0;">
+                        <input type="checkbox" class="chk-lvl-target" value="pro" style="transform: scale(0.8);"> PRO
+                    </label>
+                    <label style="font-size: 0.6rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin: 0;">
+                        <input type="checkbox" class="chk-lvl-target" value="ppe" style="transform: scale(0.8);"> PPE
+                    </label>
+                    <label style="font-size: 0.6rem; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin: 0;">
+                        <input type="checkbox" class="chk-lvl-target" value="free" style="transform: scale(0.8);"> FREE
+                    </label>
+                </div>
             `;
+
+            fila.innerHTML = nivelesHTML;
             
-            // Insertar justo antes del botón de enviar
-            btnEnvio.parentNode.insertBefore(divNiveles, btnEnvio);
-            
-            // Definir funciones globales necesarias
+            // Reubicamos el botón original dentro de nuestra nueva fila
+            // Esto asegura que el botón quede justo a la derecha de los niveles
+            padre.insertBefore(fila, btnEnvio);
+            fila.appendChild(btnEnvio);
+
+            // Ajustamos el estilo del botón para que no ocupe todo el ancho
+            btnEnvio.style.margin = "0";
+            btnEnvio.style.flex = "none";
+            btnEnvio.style.padding = "8px 15px";
+
+            // Definición de funciones globales
             window.toggleAllLevels = (val) => {
                 document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = val);
             };
 
-            // Redefinir la función de envío original
+            // Redefinición aditiva de la función de envío
             window.sendGlobalMsg = async () => {
                 const msgInput = document.getElementById('globalMsgInput');
                 const msg = msgInput ? msgInput.value.trim() : "";
                 const selectedTargets = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
                 
                 if(!msg) return alert("Escribe un mensaje.");
-                if(selectedTargets.length === 0) return alert("Selecciona al menos un nivel.");
+                if(selectedTargets.length === 0) return alert("Selecciona niveles.");
 
                 try {
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
@@ -1083,17 +1096,17 @@
                         time: Date.now(),
                         targets: selectedTargets
                     });
-                    alert("📢 Enviado con éxito a: " + selectedTargets.join(", ").toUpperCase());
+                    alert("📢 Enviado a: " + selectedTargets.join(", ").toUpperCase());
                     msgInput.value = "";
-                } catch (e) { alert("Error: " + e.message); }
+                } catch (e) { console.error("Error envío:", e); }
             };
         }
     };
 
-    // 2. Ejecución constante para detectar la apertura del panel (Referenciación dinámica)
+    // Verificación constante para inyección dinámica
     setInterval(inyectarInterfazNiveles, 1000);
 
-    // 3. Escucha Filtrada (Anula la escucha anterior)
+    // Escucha de Avisos con Referenciación al objeto config existente
     if (window.dbRef) {
         window.dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
         window.dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
