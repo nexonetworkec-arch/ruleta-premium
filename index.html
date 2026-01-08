@@ -1029,97 +1029,75 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: SISTEMA DE NIVELES (ANCLAJE DE ALTA PRIORIDAD)
- * Este bloque es independiente del renderizado original.
+ * RECONSTRUCCIÓN ADITIVA: FUNCIÓN INYECTAR PANEL ADMIN
+ * Esta versión sobreescribe la original para integrar los niveles de forma nativa.
  */
 (function() {
-    // 1. Crear el elemento de niveles como una capa flotante controlada
-    const crearCapaNiveles = () => {
-        const div = document.createElement('div');
-        div.id = 'capa-niveles-admin';
-        // Estilo Ultra-Resistente para asegurar visibilidad
-        div.style.cssText = `
-            display: none;
-            align-items: center;
-            gap: 10px;
-            background: #111;
-            padding: 8px 15px;
-            border-radius: 10px;
-            border: 1px solid #d4af37;
-            position: absolute;
-            z-index: 1000001;
-            box-shadow: 0 0 15px rgba(0,0,0,0.8);
-            pointer-events: auto;
-        `;
-        div.innerHTML = `
-            <span style="font-size: 9px; color: #d4af37; font-weight: bold;">ENVIAR A:</span>
-            <label style="font-size: 11px; color: #d4af37; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)"> ALL
-            </label>
-            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" class="chk-lvl-target" value="pro"> PRO
-            </label>
-            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" class="chk-lvl-target" value="ppe"> PPE
-            </label>
-            <label style="font-size: 11px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                <input type="checkbox" class="chk-lvl-target" value="free"> FREE
-            </label>
-        `;
-        document.body.appendChild(div);
-    };
+    // Sobrescribimos la función original para que el setInterval use esta versión
+    window.inyectarPanelAdmin = function() {
+        const modal = document.getElementById('modalAdmin');
+        if (!modal) return;
 
-    // 2. Motor de Posicionamiento (Sincroniza con el botón original)
-    const sincronizarPosicion = () => {
-        const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
-        const capa = document.getElementById('capa-niveles-admin') || (crearCapaNiveles(), document.getElementById('capa-niveles-admin'));
-
-        if (btnEnvio && btnEnvio.getBoundingClientRect().top > 0) {
-            const rect = btnEnvio.getBoundingClientRect();
-            capa.style.display = 'flex';
-            // Se posiciona justo encima del botón "ENVIAR AVISO"
-            capa.style.top = (window.scrollY + rect.top - 50) + 'px';
-            capa.style.left = (window.scrollX + rect.left) + 'px';
-            
-            // Redefinir la función de envío de forma aditiva
-            window.sendGlobalMsg = async () => {
-                const msgInput = document.getElementById('globalMsgInput');
-                const msg = msgInput ? msgInput.value.trim() : "";
-                const levels = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
+        // Integramos los niveles directamente en la construcción del HTML
+        modal.innerHTML = `
+            <div style="background:rgba(0,0,0,0.95); padding:20px; border-radius:15px; border:2px solid var(--gold); max-width:500px; width:90%; position:relative; box-shadow: 0 0 20px var(--gold);">
+                <span onclick="cerrarAdmin()" style="position:absolute; top:10px; right:15px; color:#fff; cursor:pointer; font-size:20px;">&times;</span>
+                <h2 style="color:var(--gold); text-align:center; margin-top:0;">PANEL ADMINISTRADOR</h2>
                 
-                if(!msg) return alert("Escribe un mensaje");
-                if(levels.length === 0) return alert("Selecciona niveles");
+                <div style="max-height:400px; overflow-y:auto; padding-right:10px;">
+                    <div style="background:#111; padding:15px; border-radius:12px; border:1px solid #333; margin-bottom:15px;">
+                        <h3 style="color:var(--gold); font-size:0.9rem; margin-top:0;">📢 ENVIAR AVISO GLOBAL</h3>
+                        <textarea id="globalMsgInput" placeholder="Escribe el mensaje para los usuarios..." style="width:100%; height:60px; background:#222; border:1px solid #444; color:#fff; border-radius:8px; padding:10px; margin-bottom:10px; resize:none;"></textarea>
+                        
+                        <div id="contenedor-niveles-aviso" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px; background:#0a0a0a; padding:8px; border-radius:8px; border:1px solid #222;">
+                            <label style="font-size:0.7rem; color:var(--gold); cursor:pointer;"><input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)"> TODOS</label>
+                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="pro"> PRO</label>
+                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="ppe"> PPE</label>
+                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="free"> FREE</label>
+                        </div>
 
-                try {
-                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: msg,
-                        time: Date.now(),
-                        targets: levels
-                    });
-                    alert("📢 Enviado a: " + levels.join(", ").toUpperCase());
-                    msgInput.value = "";
-                } catch(e) { console.error(e); }
-            };
-        } else {
-            capa.style.display = 'none';
-        }
+                        <button onclick="sendGlobalMsg()" style="width:100%; padding:10px; background:linear-gradient(135deg, var(--gold), #b8860b); border:none; border-radius:8px; color:#000; font-weight:bold; cursor:pointer;">ENVIAR AVISO</button>
+                    </div>
+
+                    <div id="listaUsuariosAdmin" style="color:#fff; font-size:0.8rem;">Cargando usuarios...</div>
+                </div>
+            </div>
+        `;
+        // Llamada a tu función original de cargar usuarios si existe
+        if(typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
     };
 
-    // Funciones globales
+    // Lógica de Envío con Targets
+    window.sendGlobalMsg = async () => {
+        const msgInput = document.getElementById('globalMsgInput');
+        const msg = msgInput ? msgInput.value.trim() : "";
+        const targets = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
+        
+        if(!msg) return alert("Escribe un mensaje.");
+        if(targets.length === 0) return alert("Selecciona niveles.");
+
+        try {
+            await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                msg: msg,
+                time: Date.now(),
+                targets: targets
+            });
+            alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
+            msgInput.value = "";
+        } catch (e) { console.error(e); }
+    };
+
     window.toggleAllLevels = (v) => document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = v);
 
-    // Ejecutar sincronización constante
-    setInterval(sincronizarPosicion, 500);
-
-    // Filtrado de recepción (Igual que antes)
+    // Recepción Filtrada para Usuarios
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const data = snap.val();
-            const miNivel = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            if(data && data.time > (Date.now() - 15000)) {
-                if(data.targets && data.targets.includes(miNivel)) {
-                    alert("📢 AVISO ADMIN:\n" + data.msg);
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+            const d = s.val();
+            const userLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            if(d && d.time > (Date.now() - 15000)) {
+                if(d.targets && d.targets.includes(userLvl)) {
+                    alert("📢 AVISO ADMIN:\n" + d.msg);
                 }
             }
         });
