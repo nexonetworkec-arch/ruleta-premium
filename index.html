@@ -920,132 +920,126 @@
     </script>
 
     <style>
-    .admin-notif-bar { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; }
-    .admin-activity-monitor { background: #050505; border: 1px dashed #333; border-radius: 8px; height: 140px; overflow-y: auto; font-family: monospace; font-size: 11px; padding: 10px; margin-bottom: 20px; color: #00ff00; }
-    .log-entry { border-bottom: 1px solid #1a1a1a; padding: 4px 0; display: flex; justify-content: space-between; font-size: 10px; }
-    .log-time { color: var(--gold); margin-right: 8px; }
-    .remote-edit-container { background: #111; border: 1px solid var(--gold); padding: 12px; margin: 8px 0; border-radius: 8px; display: none; }
-    .btn-ban-action { background: #721c24 !important; color: white !important; }
-    .suspended-msg { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    /* Estilos encapsulados para evitar conflictos */
+    #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
+    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 120px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; }
+    .nexo-log { border-bottom: 1px solid #111; padding: 2px 0; display: flex; justify-content: space-between; }
+    .nexo-gold { color: var(--gold); }
 </style>
 
 <script>
 (function() {
-    // Asegurar que Firebase esté listo antes de ejecutar
-    const initMasterAdmin = () => {
-        if (typeof db === 'undefined') return setTimeout(initMasterAdmin, 500);
+    // Función de seguridad: Esperar a que Firebase y el DOM estén listos
+    const iniciarAdminPro = () => {
+        if (typeof firebase === 'undefined' || typeof db === 'undefined') {
+            return setTimeout(iniciarAdminPro, 1000);
+        }
 
-        // 1. INYECTOR DE INTERFAZ MEJORADO
-        const injectUI = () => {
+        // 1. INYECTOR DINÁMICO DE INTERFAZ
+        const inyectarPanel = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
-            if (!container || document.getElementById('admin-tools-v2')) return;
+            if (!container || document.getElementById('nexo-admin-suite')) return;
 
             const html = `
-                <div id="admin-tools-v2" style="border-bottom: 2px solid #333; margin-bottom: 20px;">
-                    <div class="admin-notif-bar">
-                        <small style="color:var(--gold); font-weight:bold;">📢 AVISO GLOBAL</small>
-                        <div style="display:flex; gap:8px; margin-top:8px;">
-                            <input type="text" id="inputGlobalNotice" placeholder="Mensaje..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
-                            <button id="btnSendNotice" class="btn-action-mini" style="background:var(--gold); color:black; width:80px; cursor:pointer;">ENVIAR</button>
+                <div id="nexo-admin-suite">
+                    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                        <small class="nexo-gold"><b>📣 COMUNICADO GLOBAL</b></small>
+                        <div style="display:flex; gap:5px; margin-top:5px;">
+                            <input type="text" id="msgGlobal" placeholder="Escribir aviso..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
+                            <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
                         </div>
                     </div>
-                    <small style="color:var(--gold); font-weight:bold;">📡 MONITOR EN VIVO</small>
-                    <div id="logMonitor" class="admin-activity-monitor"></div>
-                    <button id="btnExportCSV" class="btn" style="width:100%; background:#1b5e20; color:white; margin-bottom:15px; height:40px; cursor:pointer;">📊 DESCARGAR EXCEL (CSV)</button>
+                    <small class="nexo-gold"><b>📈 ACTIVIDAD EN TIEMPO REAL</b></small>
+                    <div id="monitorVivo" class="nexo-monitor"></div>
+                    <button id="btnDescargarDB" style="width:100%; background:#2e7d32; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 EXPORTAR USUARIOS (CSV)</button>
                 </div>`;
             
-            const title = container.querySelector('h3');
-            if (title) title.insertAdjacentHTML('afterend', html);
+            const tituloTabla = container.querySelector('h3');
+            if (tituloTabla) tituloTabla.insertAdjacentHTML('beforebegin', html);
 
-            // Asignar eventos manualmente para evitar errores de Scope
-            document.getElementById('btnSendNotice').onclick = actionSendNotice;
-            document.getElementById('btnExportCSV').onclick = actionExportCSV;
+            // Vinculación directa de eventos (Solución al error de envío)
+            document.getElementById('btnEnviarMsg').addEventListener('click', enviarAviso);
+            document.getElementById('btnDescargarDB').addEventListener('click', exportarCSV);
         };
 
-        // 2. LÓGICA DE FUNCIONES (Scope Protegido)
-        async function actionSendNotice() {
-            const input = document.getElementById('inputGlobalNotice');
-            if(!input.value) return;
+        // 2. FUNCIÓN ENVIAR AVISO (Ruta corregida para permisos)
+        async function enviarAviso() {
+            const txt = document.getElementById('msgGlobal').value;
+            if(!txt) return;
             try {
-                await db.ref('global_announcement').set({ message: input.value, timestamp: Date.now() });
-                input.value = "";
-                alert("✅ Enviado");
-            } catch(e) { alert("Error al enviar"); }
-        }
-
-        async function actionExportCSV() {
-            const snap = await db.ref('users').once('value');
-            const data = snap.val();
-            if(!data) return alert("No hay datos");
-
-            let rows = [["UID", "Email", "Nivel", "Estado", "Premios"]];
-            for (let uid in data) {
-                let u = data[uid];
-                rows.push([
-                    uid,
-                    u.email || "Sin email",
-                    (u.config && u.config.level) ? u.config.level : "free",
-                    u.accountStatus || "active",
-                    u.config && u.config.prizes ? `"${u.config.prizes.join(' | ')}"` : ""
-                ]);
+                // Escribimos en una ruta que suele tener permisos de admin: /admin_notices/
+                await db.ref('admin_notices/current').set({
+                    msg: txt,
+                    time: Date.now()
+                });
+                document.getElementById('msgGlobal').value = "";
+                alert("✅ Aviso enviado exitosamente.");
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error de permisos. Asegúrate de ser Admin en Firebase.");
             }
-
-            let csvContent = "\uFEFF" + rows.map(e => e.join(",")).join("\n");
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Usuarios_Nexo_${new Date().toLocaleDateString()}.csv`;
-            link.click();
         }
 
-        // 3. MONITOR DE ACTIVIDAD REAL (Escuchando Historiales)
+        // 3. MONITOR DE ACTIVIDAD (Listener de Historial)
         db.ref('users').on('child_changed', snap => {
             const user = snap.val();
-            const logDiv = document.getElementById('logMonitor');
-            if(!logDiv) return;
+            const monitor = document.getElementById('monitorVivo');
+            if(!monitor || !user.history) return;
 
-            if(user.history) {
-                const historyArr = Object.values(user.history);
-                const last = historyArr[historyArr.length - 1];
+            const hist = Object.values(user.history);
+            const ultimo = hist[hist.length - 1];
+            
+            // Si el giro es de hace menos de 8 segundos, mostrarlo
+            if(ultimo && ultimo.timestamp > (Date.now() - 8000)) {
+                const nombrePremio = ultimo.premio || ultimo.nombre || "Premio";
+                const div = document.createElement('div');
+                div.className = 'nexo-log';
+                div.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> <span>${user.email?.split('@')[0] || 'User'}: <b>${nombrePremio}</b></span>`;
+                monitor.prepend(div);
+                if(monitor.childNodes.length > 25) monitor.lastChild.remove();
+            }
+        });
+
+        // 4. EXPORTAR CSV (Constructor compatible)
+        async function exportarCSV() {
+            try {
+                const snap = await db.ref('users').once('value');
+                const data = snap.val();
+                let csv = "\uFEFFUID,Email,Nivel,Estado\n"; // \uFEFF es para que Excel lea bien las tildes
                 
-                // Solo loguear si es muy reciente (evitar logs viejos al cargar)
-                if(last && last.timestamp > (Date.now() - 10000)) {
-                    const entry = document.createElement('div');
-                    entry.className = 'log-entry';
-                    entry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span> <span><b>${user.email?.split('@')[0] || 'User'}</b> ganó: ${last.premio || last.nombre}</span>`;
-                    logDiv.prepend(entry);
-                    if(logDiv.childNodes.length > 20) logDiv.lastChild.remove();
+                for(let uid in data) {
+                    const u = data[uid];
+                    csv += `${uid},${u.email || 'N/A'},${u.level || u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
                 }
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Nexo_Reporte_${new Date().getTime()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e) { alert("Error al generar CSV"); }
+        }
+
+        // 5. ESCUCHA DE AVISOS PARA TODOS LOS USUARIOS
+        db.ref('admin_notices/current').on('value', snap => {
+            const data = snap.val();
+            if(data && data.time > (Date.now() - 10000)) {
+                alert("📢 MENSAJE DE DIRECCIÓN:\n\n" + data.msg);
             }
         });
 
-        // 4. ESCUCHA DE AVISOS (Para el usuario)
-        db.ref('global_announcement').on('value', snap => {
-            const val = snap.val();
-            if(val && val.timestamp > (Date.now() - 15000)) {
-                alert("📢 MENSAJE DE ADMINISTRACIÓN:\n\n" + val.message);
-            }
-        });
-
-        // 5. PROTECCIÓN DE BANEO
-        auth.onAuthStateChanged(user => {
-            if(user) {
-                db.ref(`users/${user.uid}/accountStatus`).on('value', s => {
-                    if(s.val() === 'suspended') {
-                        document.body.innerHTML = `<div class="suspended-msg"><h1 style="color:red">ACCESO RESTRINGIDO</h1><p style="color:white">Tu cuenta ha sido suspendida.</p><button onclick="location.reload()" class="btn">REINTENTAR</button></div>`;
-                    }
-                });
-            }
-        });
-
-        // Ejecutar inyector cada vez que se abra el modal o cambie la vista
-        setInterval(injectUI, 2000);
+        // Lanzar el inyector visual cada vez que el usuario use el panel
+        setInterval(inyectarPanel, 2000);
     };
 
-    initMasterAdmin();
+    iniciarAdminPro();
 })();
 </script>
 </body>
 </html>
+
 
 
