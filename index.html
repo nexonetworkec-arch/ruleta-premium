@@ -920,28 +920,25 @@
     </script>
 
     <style>
-    /* FIX SCROLL MODALES */
     .modal { display: none; overflow-y: auto !important; align-items: flex-start !important; padding: 20px 10px; }
-    .modal-content { max-height: 90vh !important; overflow-y: auto !important; margin: auto !important; position: relative; }
+    .modal-content { max-height: 90vh !important; overflow-y: auto !important; margin: auto !important; }
 
-    /* ADMIN SUITE */
     #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
-    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 130px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; border-left: 3px solid var(--gold); }
-    .nexo-log { border-bottom: 1px solid #111; padding: 5px 0; display: flex; flex-direction: column; gap: 2px; animation: fadeInLog 0.3s ease; }
-    @keyframes fadeInLog { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 140px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; padding: 10px; margin: 10px 0; color: #00ff00; }
+    .nexo-log { border-bottom: 1px dotted #333; padding: 6px 0; animation: slideIn 0.2s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     .nexo-gold { color: var(--gold); }
 </style>
 
 <script>
 (function() {
-    const getFB = () => {
-        try { return { base: firebase.database(), acceso: firebase.auth() }; } 
-        catch(e) { return null; }
+    const getFirebaseInstance = () => {
+        try { return firebase.database(); } catch(e) { return null; }
     };
 
-    const iniciarMonitorPro = () => {
-        const fb = getFB();
-        if (!fb) return setTimeout(iniciarMonitorPro, 1000);
+    const iniciarBarrido = () => {
+        const dbRef = getFirebaseInstance();
+        if (!dbRef) return setTimeout(iniciarBarrido, 1000);
 
         const inyectarUI = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
@@ -950,94 +947,83 @@
             const html = `
                 <div id="nexo-admin-suite">
                     <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                        <small class="nexo-gold"><b>📣 AVISO GLOBAL</b></small>
+                        <small class="nexo-gold"><b>📣 COMUNICADO</b></small>
                         <div style="display:flex; gap:5px; margin-top:5px;">
-                            <input type="text" id="msgGlobal" placeholder="Escribir aviso..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
+                            <input type="text" id="msgGlobal" placeholder="Mensaje..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
                             <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
                         </div>
                     </div>
-                    <small class="nexo-gold"><b>📡 MONITOR ULTRA-SENSIBLE</b></small>
+                    <small class="nexo-gold"><b>📡 MONITOR ACTIVO (POR BARRIDO)</b></small>
                     <div id="monitorVivo" class="nexo-monitor">
-                        <div style="color:#666; text-align:center; margin-top:40px;">Sincronizando con base de datos...</div>
+                        <div id="status-msg" style="color:#444; text-align:center; margin-top:50px;">Escuchando todos los historiales...</div>
                     </div>
-                    <button id="btnDescargarDB" style="width:100%; background:#2e7d32; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 EXPORTAR USUARIOS (CSV)</button>
+                    <button id="btnDescargarDB" style="width:100%; background:#1b5e20; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📊 DESCARGAR CSV</button>
                 </div>`;
             
-            const titulo = container.querySelector('h3');
-            if (titulo) titulo.insertAdjacentHTML('beforebegin', html);
+            const h3 = container.querySelector('h3');
+            if (h3) h3.insertAdjacentHTML('beforebegin', html);
 
-            document.getElementById('btnEnviarMsg').onclick = async () => {
+            document.getElementById('btnEnviarMsg').onclick = () => {
                 const txt = document.getElementById('msgGlobal').value;
                 if(!txt) return;
-                fb.base.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() })
-                    .then(() => { alert("✅ Enviado"); document.getElementById('msgGlobal').value = ""; })
-                    .catch(() => alert("❌ Error de permisos"));
+                dbRef.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() })
+                    .then(() => { alert("✅ Enviado"); document.getElementById('msgGlobal').value = ""; });
             };
 
             document.getElementById('btnDescargarDB').onclick = async () => {
-                const snap = await fb.base.ref('users').once('value');
-                const users = snap.val();
-                let csv = "\uFEFFUID,Email,Nivel,Estado\n";
-                Object.keys(users).forEach(uid => {
-                    if(uid === 'ADMIN_MESSAGES') return;
-                    const u = users[uid];
-                    csv += `${uid},${u.email || 'N/A'},${u.level || u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
-                });
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const snap = await dbRef.ref('users').once('value');
+                const data = snap.val();
+                let csv = "\uFEFFUID,Email,Estado\n";
+                for(let key in data) { if(key !== 'ADMIN_MESSAGES') csv += `${key},${data[key].email || 'N/A'},${data[key].accountStatus || 'active'}\n`; }
+                const blob = new Blob([csv], { type: 'text/csv' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = "DB_Export.csv";
+                a.download = "DB_Nexo.csv";
                 a.click();
             };
         };
 
-        // LÓGICA DE MONITOREO REFORZADA
-        // Escuchamos directamente la rama de usuarios, pero analizamos el historial profundamente
-        fb.base.ref('users').on('child_changed', (snapshot) => {
-            const userData = snapshot.val();
-            const monitor = document.getElementById('monitorVivo');
-            if(!monitor || !userData.history) return;
+        // LÓGICA DE ESCUCHA POR USUARIO (INDIVIDUALIZADA)
+        dbRef.ref('users').on('child_added', (userSnap) => {
+            const uid = userSnap.key;
+            if (uid === 'ADMIN_MESSAGES') return;
 
-            // Limpiar mensaje de espera
-            if(monitor.innerText.includes("Sincronizando")) monitor.innerHTML = "";
+            // Escuchamos el historial específico de este usuario
+            dbRef.ref(`users/${uid}/history`).limitToLast(1).on('child_added', (histSnap) => {
+                const prize = histSnap.val();
+                const monitor = document.getElementById('monitorVivo');
+                if (!monitor || !prize) return;
 
-            const historyEntries = Object.values(userData.history);
-            if (historyEntries.length === 0) return;
+                // Solo mostrar si es de los últimos 20 segundos (evita carga inicial masiva)
+                if (prize.timestamp > (Date.now() - 20000)) {
+                    const statusMsg = document.getElementById('status-msg');
+                    if (statusMsg) statusMsg.remove();
 
-            const lastSpin = historyEntries[historyEntries.length - 1];
-            const now = Date.now();
-
-            // Ventana de tiempo ampliada a 15 segundos para compensar lags
-            if (lastSpin.timestamp > (now - 15000)) {
-                // Buscamos el nombre del premio en cualquier propiedad posible
-                const premioText = lastSpin.nombre || lastSpin.premio || lastSpin.text || lastSpin.value || "Giro realizado";
-                const userEmail = userData.email ? userData.email.split('@')[0] : 'Anon';
-
-                const logDiv = document.createElement('div');
-                logDiv.className = 'nexo-log';
-                logDiv.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
-                        <b style="color:white;">👤 ${userEmail}</b>
-                        <span style="color:#666;">${new Date().toLocaleTimeString()}</span>
-                    </div>
-                    <div style="color:var(--gold);">🎁 GANÓ: ${premioText}</div>
-                `;
-                
-                monitor.prepend(logDiv);
-                if (monitor.childNodes.length > 30) monitor.lastChild.remove();
-            }
+                    // Intentar obtener email del nodo padre una sola vez
+                    dbRef.ref(`users/${uid}/email`).once('value', eSnap => {
+                        const email = eSnap.val() ? eSnap.val().split('@')[0] : 'Anon';
+                        const nombreP = prize.nombre || prize.premio || prize.text || "Giro";
+                        
+                        const log = document.createElement('div');
+                        log.className = 'nexo-log';
+                        log.innerHTML = `<span class="nexo-gold">[${new Date().toLocaleTimeString()}]</span> <b>${email}</b> ganó: <span style="color:#fff;">${nombreP}</span>`;
+                        monitor.prepend(log);
+                        if (monitor.childNodes.length > 25) monitor.lastChild.remove();
+                    });
+                }
+            });
         });
 
-        // ESCUCHA DE AVISOS
-        fb.base.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const d = snap.val();
+        // ESCUCHA DE MENSAJES
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+            const d = s.val();
             if(d && d.time > (Date.now() - 15000)) alert("📢 AVISO:\n" + d.msg);
         });
 
         setInterval(inyectarUI, 2000);
     };
 
-    iniciarMonitorPro();
+    iniciarBarrido();
 })();
 </script>
 </body>
