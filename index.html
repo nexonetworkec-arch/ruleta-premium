@@ -1029,100 +1029,90 @@
 
     <script>
 /**
- * SOLUCIÓN MAESTRA: PANEL DE CONTROL PARALELO
- * Este bloque es inmune a los refrescos del código original.
+ * INYECCIÓN ADITIVA: SEGMENTACIÓN DE NIVELES (AJUSTE DE POSICIÓN)
+ * Este bloque inyecta los niveles directamente al lado del botón sin flotar en la pantalla.
  */
 (function() {
-    // 1. Crear el Panel Flotante (Fuera del modal original)
-    const crearPanelNiveles = () => {
-        if (document.getElementById('pnl-niveles-maestro')) return;
+    const inyectarEnLugarCorrecto = () => {
+        const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
         
-        const pnl = document.createElement('div');
-        pnl.id = 'pnl-niveles-maestro';
-        pnl.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            border: 2px solid var(--gold, #d4af37);
-            padding: 10px 20px;
-            border-radius: 50px;
-            display: none;
-            align-items: center;
-            gap: 15px;
-            z-index: 2000000;
-            box-shadow: 0 0 20px rgba(0,0,0,1);
-            border-top: 4px solid var(--gold, #d4af37);
-        `;
-        
-        pnl.innerHTML = `
-            <span style="color:var(--gold, #d4af37); font-size:10px; font-weight:bold;">ENVIAR A:</span>
-            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" id="masterLvlAll" onchange="window.toggleMasterLevels(this.checked)"> ALL
-            </label>
-            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" class="master-lvl-chk" value="pro"> PRO
-            </label>
-            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" class="master-lvl-chk" value="ppe"> PPE
-            </label>
-            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
-                <input type="checkbox" class="master-lvl-chk" value="free"> FREE
-            </label>
-        `;
-        document.body.appendChild(pnl);
-    };
-
-    // 2. Lógica de visibilidad y captura de envío
-    const monitorearAdmin = () => {
-        const modalAdmin = document.getElementById('modalAdmin');
-        const pnl = document.getElementById('pnl-niveles-maestro');
-        
-        if (modalAdmin && modalAdmin.style.display !== 'none') {
-            if (pnl) pnl.style.display = 'flex';
+        // Solo actuamos si el botón está visible y nuestra inyección aún no existe
+        if (btnEnvio && !document.getElementById('contenedor-niveles-final')) {
             
-            // Secuestrar la función de envío original mientras el panel esté abierto
+            // 1. Preparamos el contenedor del botón
+            const padre = btnEnvio.parentNode;
+            padre.style.display = "flex";
+            padre.style.flexDirection = "row";
+            padre.style.alignItems = "center";
+            padre.style.justifyContent = "center";
+            padre.style.gap = "10px";
+            padre.style.flexWrap = "wrap";
+
+            // 2. Creamos el bloque de niveles
+            const div = document.createElement('div');
+            div.id = 'contenedor-niveles-final';
+            div.style.cssText = "display: flex; align-items: center; gap: 6px; background: #000; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--gold, #d4af37);";
+            
+            div.innerHTML = `
+                <label style="font-size: 10px; color: var(--gold, #d4af37); cursor: pointer; display: flex; align-items: center; gap: 3px; font-weight: bold; margin:0;">
+                    <input type="checkbox" id="chkLvlAllFinal" onchange="window.toggleNivelesFinal(this.checked)" style="width:13px; height:13px;"> ALL
+                </label>
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin:0;">
+                    <input type="checkbox" class="chk-target-final" value="pro" style="width:13px; height:13px;"> PRO
+                </label>
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin:0;">
+                    <input type="checkbox" class="chk-target-final" value="ppe" style="width:13px; height:13px;"> PPE
+                </label>
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px; margin:0;">
+                    <input type="checkbox" class="chk-target-final" value="free" style="width:13px; height:13px;"> FREE
+                </label>
+            `;
+
+            // 3. Insertamos a la IZQUIERDA del botón
+            padre.insertBefore(div, btnEnvio);
+            
+            // Ajuste estético del botón para que no se desborde
+            btnEnvio.style.margin = "0";
+            btnEnvio.style.padding = "8px 15px";
+
+            // 4. Redefinimos la función de envío para capturar los datos
             window.sendGlobalMsg = async () => {
-                const msgInput = document.getElementById('globalMsgInput');
-                const val = msgInput ? msgInput.value.trim() : "";
-                const targets = Array.from(document.querySelectorAll('.master-lvl-chk:checked')).map(i => i.value);
+                const input = document.getElementById('globalMsgInput');
+                const texto = input ? input.value.trim() : "";
+                const seleccion = Array.from(document.querySelectorAll('.chk-target-final:checked')).map(i => i.value);
                 
-                if(!val) return alert("Escribe un mensaje");
-                if(targets.length === 0) return alert("Selecciona niveles de destino");
+                if(!texto) return alert("Escribe un mensaje");
+                if(seleccion.length === 0) return alert("Selecciona niveles");
 
                 try {
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: val,
+                        msg: texto,
                         time: Date.now(),
-                        targets: targets
+                        targets: seleccion
                     });
-                    alert("📢 Enviado con éxito a: " + targets.join(", ").toUpperCase());
-                    msgInput.value = "";
+                    alert("📢 Enviado a: " + seleccion.join(", ").toUpperCase());
+                    input.value = "";
                 } catch(e) { console.error(e); }
             };
-        } else {
-            if (pnl) pnl.style.display = 'none';
         }
     };
 
-    // 3. Funciones Globales
-    window.toggleMasterLevels = (v) => {
-        document.querySelectorAll('.master-lvl-chk').forEach(i => i.checked = v);
+    // Funciones globales
+    window.toggleNivelesFinal = (v) => {
+        document.querySelectorAll('.chk-target-final').forEach(i => i.checked = v);
     };
 
-    // 4. Inicialización y Bucle de Monitoreo
-    crearPanelNiveles();
-    setInterval(monitorearAdmin, 500);
+    // Bucle de monitoreo (Cada 1s) - Solo inyecta si el panel admin está abierto
+    setInterval(inyectarEnLugarCorrecto, 1000);
 
-    // 5. Recepción Filtrada (Para todos los usuarios)
+    // Lógica de Recepción (Para los usuarios)
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
             const d = s.val();
-            const userLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            const nivelUsuario = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(userLvl)) {
+                if(d.targets && d.targets.includes(nivelUsuario)) {
                     alert("📢 AVISO ADMIN:\n" + d.msg);
                 }
             }
