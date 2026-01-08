@@ -1037,91 +1037,131 @@
 })();
 
         /* ==========================================================
-   BLOQUE FINAL: RECONFIGURACIÓN ESTRUCTURAL DEL MENÚ
+   SISTEMA DE INTERFAZ V2: MARCA + OPTIMIZACIÓN MÓVIL
    ========================================================== */
 (function() {
-    // 1. Inyección de Estilos de Alta Prioridad
+    // 1. CSS ADAPTATIVO (Responsive & Orientation Shield)
     const style = document.createElement('style');
     style.innerHTML = `
-        #modalBrandConfig {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.98); z-index: 1000001 !important; 
-            justify-content: center; align-items: center; backdrop-filter: blur(20px);
+        /* Ocultar el menú anterior de forma radical */
+        #nexoMenuBtn, .side-menu, #nexoMenuOverlay { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+
+        /* Estilos del Nuevo Menú V2 */
+        #v2-menu-btn {
+            position: fixed; top: 20px; right: 20px; width: 50px; height: 50px;
+            background: var(--card-bg); border: 1px solid var(--gold); border-radius: 50%;
+            display: none; justify-content: center; align-items: center; z-index: 2000000;
+            cursor: pointer; box-shadow: 0 0 15px rgba(212,175,55,0.3);
         }
-        .brand-panel {
-            background: #111; border: 2px solid #d4af37; padding: 40px; border-radius: 25px;
-            width: 350px; text-align: center; box-shadow: 0 0 60px rgba(212,175,55,0.4);
+        .v2-side-menu {
+            position: fixed; top: 0; right: -100%; width: 300px; height: 100vh;
+            background: rgba(10,10,10,0.98); border-left: 2px solid var(--gold);
+            z-index: 2000001; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; padding: 40px 20px; backdrop-filter: blur(15px);
         }
-        /* Clase especial para evadir performInterfaceCleanup */
-        .brand-access-link {
-            color: #d4af37 !important; border-bottom: 1px solid #222;
-            padding: 15px; cursor: pointer; display: flex !important;
+        .v2-side-menu.active { right: 0; }
+        .v2-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); z-index: 2000000; display: none;
+        }
+        .v2-option {
+            padding: 18px; color: var(--white); border-bottom: 1px solid #222;
+            cursor: pointer; font-family: sans-serif; transition: 0.3s; display: flex; align-items: center;
+        }
+        .v2-option:hover { background: rgba(212,175,55,0.1); color: var(--gold); }
+        
+        /* AJUSTES PARA MÓVIL Y ORIENTACIÓN */
+        @media (max-width: 768px) {
+            .v2-side-menu { width: 85%; } /* Ocupa más espacio en móvil vertical */
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .v2-side-menu { 
+                width: 100%; display: grid; grid-template-columns: 1fr 1fr; 
+                height: auto; min-height: 100vh; overflow-y: auto; padding: 20px;
+            }
+            .v2-option { border: 1px solid #333; margin: 5px; border-radius: 10px; }
+        }
+
+        /* Modal de Marca Premium */
+        #v2-modal-brand {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 3000000; justify-content: center; align-items: center;
+        }
+        .v2-brand-card {
+            background: #111; border: 1px solid var(--gold); padding: 30px; border-radius: 20px;
+            width: 90%; max-width: 380px; text-align: center;
         }
     `;
     document.head.appendChild(style);
 
-    // 2. Creación del Modal de Marca
+    // 2. Elementos de Interfaz
+    const menuBtn = document.createElement('div');
+    menuBtn.id = 'v2-menu-btn';
+    menuBtn.innerHTML = '<span style="color:var(--gold); font-size:24px;">☰</span>';
+    
+    const sideMenu = document.createElement('div');
+    sideMenu.className = 'v2-side-menu';
+    sideMenu.innerHTML = `
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:30px; font-size:18px;">MENÚ PRO</h2>
+        <div class="v2-option" id="opt-brand">🎨 CONFIGURACIÓN DE MARCA</div>
+        <div class="v2-option" onclick="appWheel.showEditPremios()">🎡 EDITAR PREMIOS</div>
+        <div class="v2-option" onclick="appWheel.showHistory()">📜 VER HISTORIAL</div>
+        <div class="v2-option" onclick="location.reload()">🔄 REINICIAR APP</div>
+        <div class="v2-option" onclick="auth.signOut()" style="margin-top:auto; color:var(--danger);">🚪 CERRAR SESIÓN</div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'v2-overlay';
+
     const modal = document.createElement('div');
-    modal.id = 'modalBrandConfig';
+    modal.id = 'v2-modal-brand';
     modal.innerHTML = `
-        <div class="brand-panel">
-            <h2 style="color:#d4af37; font-family:sans-serif; letter-spacing:2px;">SISTEMA DE MARCA</h2>
-            <div style="margin:20px 0;">
-                <label style="color:#888; font-size:12px;">NOMBRE COMERCIAL</label>
-                <input type="text" id="brandValue" style="width:100%; padding:15px; background:#000; border:1px solid #d4af37; color:white; border-radius:10px; margin-top:5px; text-align:center;">
-            </div>
-            <button id="saveBrandAction" style="width:100%; padding:15px; background:#d4af37; color:black; font-weight:bold; border:none; border-radius:10px; cursor:pointer;">APLICAR CAMBIOS</button>
-            <p onclick="document.getElementById('modalBrandConfig').style.display='none'" style="color:#555; cursor:pointer; margin-top:20px; font-size:13px;">Regresar al Panel</p>
+        <div class="v2-brand-card">
+            <h3 style="color:var(--gold);">MARCA DEL SISTEMA</h3>
+            <input type="text" id="v2-brand-input" style="width:100%; padding:15px; margin:20px 0; background:#000; border:1px solid #444; color:white; border-radius:10px;">
+            <button id="v2-save-brand" style="width:100%; padding:15px; background:var(--gold); border:none; border-radius:10px; font-weight:bold; cursor:pointer;">GUARDAR CAMBIOS</button>
+            <p onclick="document.getElementById('v2-modal-brand').style.display='none'" style="color:#666; margin-top:20px; cursor:pointer;">Cerrar</p>
         </div>
     `;
-    document.body.appendChild(modal);
 
-    // 3. INTERCEPTOR DINÁMICO (Sobrescribe la lógica del menú)
-    const monitorMenu = setInterval(() => {
-        const sideMenu = document.querySelector('.side-menu');
-        
-        if (sideMenu) {
-            // Si el menú existe pero no tiene nuestro acceso, lo insertamos agresivamente
-            if (!document.getElementById('brandTrigger')) {
-                const trigger = document.createElement('div');
-                trigger.id = 'brandTrigger';
-                trigger.className = 'menu-option-item brand-access-link';
-                trigger.innerHTML = '✨ CONFIGURACIÓN PREMIUM'; // Nombre camuflado
-                
-                // Lo ponemos al principio del menú
-                sideMenu.prepend(trigger);
+    document.body.append(menuBtn, sideMenu, overlay, modal);
 
-                trigger.onclick = () => {
-                    if(typeof db !== 'undefined') {
-                        db.ref('app/brandName').once('value', s => {
-                            if(s.val()) document.getElementById('brandValue').value = s.val();
-                        });
-                    }
-                    document.getElementById('modalBrandConfig').style.display = 'flex';
-                };
-            }
-            
-            // Forzado de visibilidad (Gana a performInterfaceCleanup)
-            const b = document.getElementById('brandTrigger');
-            if(b) {
-                b.style.setProperty('display', 'flex', 'important');
-                b.style.setProperty('visibility', 'visible', 'important');
-            }
+    // 3. Lógica de Control
+    const toggleMenu = (show) => {
+        sideMenu.classList.toggle('active', show);
+        overlay.style.display = show ? 'block' : 'none';
+    };
+
+    menuBtn.onclick = () => toggleMenu(!sideMenu.classList.contains('active'));
+    overlay.onclick = () => toggleMenu(false);
+
+    // Lógica de Marca
+    document.getElementById('opt-brand').onclick = () => {
+        toggleMenu(false);
+        if(typeof db !== 'undefined') {
+            db.ref('appConfig/brandName').once('value', s => {
+                if(s.val()) document.getElementById('v2-brand-input').value = s.val();
+            });
         }
-    }, 100);
+        document.getElementById('v2-modal-brand').style.display = 'flex';
+    };
 
-    // 4. Lógica de Persistencia en Database
-    document.addEventListener('click', (e) => {
-        if(e.target.id === 'saveBrandAction') {
-            const val = document.getElementById('brandValue').value;
-            if(val && typeof db !== 'undefined') {
-                db.ref('app/brandName').set(val).then(() => {
-                    alert("Marca actualizada en el núcleo del sistema.");
-                    location.reload();
-                });
-            }
+    document.getElementById('v2-save-brand').onclick = () => {
+        const val = document.getElementById('v2-brand-input').value;
+        if(val && typeof db !== 'undefined') {
+            db.ref('appConfig/brandName').set(val).then(() => {
+                alert("Marca actualizada correctamente");
+                location.reload();
+            });
         }
-    });
+    };
+
+    // 4. Asegurar visibilidad según Auth (Referenciación)
+    setInterval(() => {
+        const user = auth.currentUser;
+        menuBtn.style.display = user ? 'flex' : 'none';
+    }, 1000);
+
 })();
     </script>
 </body>
