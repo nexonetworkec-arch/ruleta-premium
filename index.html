@@ -832,47 +832,95 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: REINICIO DINÁMICO (PREMIUM UX) ---
-// Propósito: Eliminar el refresco de página para evitar el parpadeo del login.
+        // --- MEGA-INYECCIÓN ADITIVA: UX PREMIUM & MARCA ---
 (function() {
+    // 1. EFECTOS VISUALES GLOBALES (CSS DINÁMICO)
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .btn, .btn-secondary, .btn-danger, button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer;
+        }
+        .btn:hover, .btn-secondary:hover, button:hover {
+            filter: brightness(1.2);
+            transform: translateY(-1px);
+        }
+        .btn:active, .btn-secondary:active, button:active {
+            transform: scale(0.96) !important;
+        }
+        #btnBrandConfig {
+            border-left: 4px solid var(--gold) !important;
+            color: var(--gold) !important;
+            font-weight: 800;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 2. GESTIÓN DE SESIÓN Y ELIMINACIÓN DE PANTALLAZO
+    auth.onAuthStateChanged(user => {
+        const loader = document.getElementById('premium-loader');
+        if (loader) {
+            setTimeout(() => { 
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+            }, 800); // Tiempo elegante de carga
+        }
+
+        if (user) {
+            // 3. LÓGICA DE BOTÓN DE MARCA (PRO/PPE)
+            db.ref('users/' + user.uid + '/config/level').on('value', snap => {
+                const level = snap.val();
+                const sidebar = document.querySelector('.side-panel');
+                if (!sidebar) return;
+
+                if ((level === 'pro' || level === 'ppe') && !document.getElementById('btnBrandConfig')) {
+                    const btnBrand = document.createElement('button');
+                    btnBrand.id = 'btnBrandConfig';
+                    btnBrand.className = 'btn btn-secondary';
+                    btnBrand.innerHTML = '✨ CONFIG. DE MARCA';
+                    btnBrand.style.marginTop = '10px';
+                    btnBrand.onclick = () => document.getElementById('logoInput').click();
+                    
+                    const btnExit = sidebar.querySelector('button[onclick*="signOut"]');
+                    sidebar.insertBefore(btnBrand, btnExit);
+                }
+            });
+        }
+    });
+
+    // 4. REINICIO DINÁMICO (SIN RECARGA)
     const btnReset = document.getElementById('btnResetApp');
     if (btnReset) {
-        // Sobreescribimos el evento onclick previo mediante referenciación externa
         btnReset.onclick = async function(e) {
-            // Detenemos cualquier otra acción vinculada
             e.preventDefault();
-            
-            const confirmReset = confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?");
-            
-            if (confirmReset && currentUser) {
-                try {
-                    // 1. Limpieza en la base de datos (Persistencia) [cite: 125, 242]
-                    await db.ref('users/' + currentUser.uid + '/history').remove();
-                    
-                    // 2. Restablecimiento de premios por defecto en la nube [cite: 243]
-                    const defaultPrizes = ["OPCIÓN 1", "OPCIÓN 2"];
-                    await db.ref('users/' + currentUser.uid + '/config/prizes').set(defaultPrizes);
-                    
-                    // 3. Reset de variables de estado local (Sin recargar página) [cite: 125]
-                    winnersHistory = [];
-                    config.prizes = defaultPrizes;
-                    
-                    // 4. Actualización inmediata de la Interfaz (UI) [cite: 127, 130]
-                    renderHistory(); // Limpia la lista visual de ganadores
-                    appWheel.draw(); // Redibuja la ruleta con los 2 premios base
-                    
-                    alert("✅ Sistema restablecido correctamente.");
-                    
-                } catch (error) {
-                    console.error("Error en el reinicio dinámico:", error);
-                    alert("❌ Error técnico al restablecer: " + error.message);
-                }
+            if (confirm("⚠️ ¿Restablecer todos los datos de la cuenta?")) {
+                await db.ref('users/' + currentUser.uid + '/history').remove();
+                const defaultPrizes = ["OPCIÓN 1", "OPCIÓN 2"];
+                await db.ref('users/' + currentUser.uid + '/config/prizes').set(defaultPrizes);
+                
+                winnersHistory = [];
+                config.prizes = defaultPrizes;
+                renderHistory();
+                appWheel.draw();
+                alert("✅ Sistema Limpio");
             }
         };
     }
+
+    // 5. PROCESADOR DE LOGO
+    document.getElementById('logoInput')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && currentUser) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                await db.ref('users/' + currentUser.uid + '/config/customLogoURL').set(ev.target.result);
+                alert("✅ LOGO ACTUALIZADO");
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 })();
-// --- FIN DE INYECCIÓN ADITIVA ---
+// --- FIN DE MEGA-INYECCIÓN ---
     </script>
 </body>
 </html>
-
