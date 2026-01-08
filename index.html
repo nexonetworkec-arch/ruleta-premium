@@ -918,13 +918,13 @@
     }
 })();
 
-        // --- INYECCIÓN ADITIVA: SISTEMA DE MENÚ LATERAL PREMIUM + LIMPIEZA DE INTERFAZ ---
+    // --- INYECCIÓN ADITIVA: SISTEMA DE MENÚ LATERAL PREMIUM + CENTRALIZACIÓN DE CONFIGURACIÓN ---
 (function() {
-    // 1. Estilos para el Menú, Panel Lateral y Ocultamiento de Botón Salir original
+    // 1. Estilos para el Menú, Panel Lateral y Ocultamiento de botones redundantes
     const menuStyles = document.createElement('style');
     menuStyles.innerHTML = `
-        /* Ocultar el botón Salir original por ID y Clase de forma agresiva */
-        #btnExit, .btn-exit, button:contains('SALIR') { 
+        /* Ocultar botones originales de la pantalla de inicio */
+        #btnExit, .btn-exit, #btnBranding, .btn-branding { 
             display: none !important; 
             visibility: hidden !important; 
             pointer-events: none !important; 
@@ -951,7 +951,7 @@
         }
         #nexoSideMenu.active { left: 0; }
         
-        /* Overlay de desenfoque */
+        /* Overlay */
         #nexoMenuOverlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
@@ -960,10 +960,10 @@
         #nexoMenuOverlay.active { display: block; opacity: 1; }
 
         /* Opciones del Menú */
-        .menu-options-container { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .menu-options-container { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .menu-option-item {
             padding: 14px 18px; background: rgba(255,255,255,0.03);
-            border-radius: 8px; color: var(--white); font-size: 14px;
+            border-radius: 8px; color: var(--white); font-size: 13px;
             cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease;
             display: flex; align-items: center; gap: 12px;
         }
@@ -971,12 +971,11 @@
             border-color: var(--gold); background: rgba(212, 175, 55, 0.08);
             color: var(--gold); padding-left: 22px;
         }
-        .menu-logout { color: #ff4d4d !important; margin-top: 10px; }
-        .menu-logout:hover { border-color: #ff4d4d; background: rgba(255, 77, 77, 0.1); }
+        .menu-logout { color: #ff4d4d !important; margin-top: 10px; border-top: 1px solid #333; padding-top: 20px; }
     `;
     document.head.appendChild(menuStyles);
 
-    // 2. Creación e inyección de elementos del Menú
+    // 2. Creación del Menú
     const menuBtn = document.createElement('button');
     menuBtn.id = 'nexoMenuBtn';
     menuBtn.innerHTML = '<span></span><span></span><span></span>';
@@ -984,18 +983,16 @@
     const sideMenu = document.createElement('div');
     sideMenu.id = 'nexoSideMenu';
     sideMenu.innerHTML = `
-        <div style="margin-bottom: 35px; text-align: center;">
-            <div style="color: var(--gold); font-size: 1.4rem; font-weight: bold; letter-spacing: 1px;">NEXO®</div>
-            <div style="color: #666; font-size: 0.7rem;">BUSINESS PRO</div>
+        <div style="margin-bottom: 30px; text-align: center;">
+            <div style="color: var(--gold); font-size: 1.3rem; font-weight: bold;">NEXO®</div>
+            <div style="color: #555; font-size: 0.65rem; letter-spacing: 2px;">BUSINESS PRO</div>
         </div>
         <div class="menu-options-container">
-            <div class="menu-option-item" onclick="alert('Módulo Mi Perfil: Próximamente en v1.1')">👤 Mi Perfil</div>
-            <div class="menu-option-item" onclick="toggleConfig(); document.getElementById('nexoMenuOverlay').click();">⚙️ Configuración</div>
-            <div class="menu-option-item" onclick="location.reload()">🔄 Actualizar Sistema</div>
+            <div class="menu-option-item" onclick="alert('Perfil de Usuario: Próximamente')">👤 Mi Perfil</div>
+            <div class="menu-option-item" onclick="toggleBrandingConfig(); document.getElementById('nexoMenuOverlay').click();">🎨 Configuración de Marca</div>
+            <div class="menu-option-item" onclick="toggleConfig(); document.getElementById('nexoMenuOverlay').click();">⚙️ Configuración General</div>
+            <div class="menu-option-item" onclick="location.reload()">🔄 Actualizar App</div>
             <div class="menu-option-item menu-logout" onclick="auth.signOut()">🚪 Cerrar Sesión</div>
-        </div>
-        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #333; font-size: 10px; color: #444; text-align: center;">
-            SISTEMA DE GESTIÓN PREMIUM
         </div>
     `;
 
@@ -1006,34 +1003,35 @@
     document.body.appendChild(sideMenu);
     document.body.appendChild(overlay);
 
-    // 3. Lógica de Interacción y Limpieza Dinámica del botón antiguo
-    const toggleNexoMenu = () => {
+    // 3. Funciones de limpieza y control
+    const closeAll = () => {
+        sideMenu.classList.remove('active');
+        overlay.classList.remove('active');
+    };
+
+    menuBtn.onclick = () => {
         sideMenu.classList.toggle('active');
         overlay.classList.toggle('active');
     };
+    overlay.onclick = closeAll;
 
-    menuBtn.onclick = toggleNexoMenu;
-    overlay.onclick = toggleNexoMenu;
-
-    // Función de limpieza extra para asegurar que el botón original desaparezca
-    const cleanOldExitButton = () => {
-        const buttons = document.querySelectorAll('button, .btn');
-        buttons.forEach(btn => {
-            if (btn.innerText.includes('SALIR')) {
+    const performInterfaceCleanup = () => {
+        const targets = ["SALIR", "CONFIGURACIÓN DE MARCA", "CONFIGURACION DE MARCA"];
+        document.querySelectorAll('button, .btn').forEach(btn => {
+            if (targets.some(t => btn.innerText.toUpperCase().includes(t))) {
                 btn.style.setProperty('display', 'none', 'important');
             }
         });
     };
 
-    // 4. Gestión de visibilidad y ejecución de limpieza
+    // 4. Observador de Auth
     auth.onAuthStateChanged((user) => {
         if (user) {
             menuBtn.style.display = 'flex';
-            cleanOldExitButton(); // Limpiar al entrar
+            setTimeout(performInterfaceCleanup, 500); // Limpieza retardada para asegurar carga
         } else {
             menuBtn.style.display = 'none';
-            sideMenu.classList.remove('active');
-            overlay.classList.remove('active');
+            closeAll();
         }
     });
 })();
