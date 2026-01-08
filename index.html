@@ -920,42 +920,30 @@
     </script>
 
     <style>
-    /* 1. FIX DE SCROLL PARA MODALES (Mejora de Experiencia de Usuario) */
-    .modal {
-        display: none; 
-        overflow-y: auto !important; /* Permite scroll en el fondo si es necesario */
-        align-items: flex-start !important; /* Alinea al inicio para pantallas pequeñas */
-        padding: 20px 10px;
-    }
-    
-    .modal-content {
-        max-height: 90vh !important; /* El modal no pasará del 90% del alto de pantalla */
-        overflow-y: auto !important; /* Habilita scroll interno */
-        margin: auto !important; /* Centra el modal */
-        position: relative;
-    }
+    /* FIX SCROLL MODALES */
+    .modal { display: none; overflow-y: auto !important; align-items: flex-start !important; padding: 20px 10px; }
+    .modal-content { max-height: 90vh !important; overflow-y: auto !important; margin: auto !important; position: relative; }
 
-    /* 2. ESTILOS SUITE DE ADMINISTRACIÓN */
+    /* ADMIN SUITE */
     #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
-    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; }
-    .nexo-log { border-bottom: 1px solid #111; padding: 4px 0; display: flex; justify-content: space-between; }
+    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 130px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; border-left: 3px solid var(--gold); }
+    .nexo-log { border-bottom: 1px solid #111; padding: 5px 0; display: flex; flex-direction: column; gap: 2px; animation: fadeInLog 0.3s ease; }
+    @keyframes fadeInLog { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     .nexo-gold { color: var(--gold); }
 </style>
 
 <script>
 (function() {
-    // FUNCIÓN PARA OBTENER FIREBASE GLOBALMENTE
     const getFB = () => {
         try { return { base: firebase.database(), acceso: firebase.auth() }; } 
         catch(e) { return null; }
     };
 
-    const iniciarTodo = () => {
+    const iniciarMonitorPro = () => {
         const fb = getFB();
-        if (!fb) return setTimeout(iniciarTodo, 1000);
+        if (!fb) return setTimeout(iniciarMonitorPro, 1000);
 
-        // INYECTOR DE INTERFAZ EN EL MODAL ADMIN
-        const inyectarPanel = () => {
+        const inyectarUI = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
             if (!container || document.getElementById('nexo-admin-suite')) return;
 
@@ -968,15 +956,16 @@
                             <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
                         </div>
                     </div>
-                    <small class="nexo-gold"><b>📈 ACTIVIDAD EN TIEMPO REAL</b></small>
-                    <div id="monitorVivo" class="nexo-monitor"></div>
+                    <small class="nexo-gold"><b>📡 MONITOR ULTRA-SENSIBLE</b></small>
+                    <div id="monitorVivo" class="nexo-monitor">
+                        <div style="color:#666; text-align:center; margin-top:40px;">Sincronizando con base de datos...</div>
+                    </div>
                     <button id="btnDescargarDB" style="width:100%; background:#2e7d32; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 EXPORTAR USUARIOS (CSV)</button>
                 </div>`;
             
             const titulo = container.querySelector('h3');
             if (titulo) titulo.insertAdjacentHTML('beforebegin', html);
 
-            // EVENTO: ENVIAR MENSAJE
             document.getElementById('btnEnviarMsg').onclick = async () => {
                 const txt = document.getElementById('msgGlobal').value;
                 if(!txt) return;
@@ -985,59 +974,75 @@
                     .catch(() => alert("❌ Error de permisos"));
             };
 
-            // EVENTO: DESCARGAR CSV
             document.getElementById('btnDescargarDB').onclick = async () => {
                 const snap = await fb.base.ref('users').once('value');
                 const users = snap.val();
-                if(!users) return alert("Sin datos");
-                
                 let csv = "\uFEFFUID,Email,Nivel,Estado\n";
                 Object.keys(users).forEach(uid => {
                     if(uid === 'ADMIN_MESSAGES') return;
                     const u = users[uid];
                     csv += `${uid},${u.email || 'N/A'},${u.level || u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
                 });
-
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = "Nexo_DB_Completa.csv";
+                a.download = "DB_Export.csv";
                 a.click();
             };
         };
 
-        // MONITOR DE ACTIVIDAD GLOBAL
-        fb.base.ref('users').on('child_changed', snap => {
-            const user = snap.val();
+        // LÓGICA DE MONITOREO REFORZADA
+        // Escuchamos directamente la rama de usuarios, pero analizamos el historial profundamente
+        fb.base.ref('users').on('child_changed', (snapshot) => {
+            const userData = snapshot.val();
             const monitor = document.getElementById('monitorVivo');
-            if(!monitor || !user.history) return;
+            if(!monitor || !userData.history) return;
 
-            const hist = Object.values(user.history);
-            const last = hist[hist.length - 1];
-            
-            if(last && last.timestamp > (Date.now() - 10000)) {
-                const div = document.createElement('div');
-                div.className = 'nexo-log';
-                div.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> <span>${user.email?.split('@')[0] || 'User'}: <b>${last.premio || last.nombre || 'Giro'}</b></span>`;
-                monitor.prepend(div);
-                if(monitor.childNodes.length > 20) monitor.lastChild.remove();
+            // Limpiar mensaje de espera
+            if(monitor.innerText.includes("Sincronizando")) monitor.innerHTML = "";
+
+            const historyEntries = Object.values(userData.history);
+            if (historyEntries.length === 0) return;
+
+            const lastSpin = historyEntries[historyEntries.length - 1];
+            const now = Date.now();
+
+            // Ventana de tiempo ampliada a 15 segundos para compensar lags
+            if (lastSpin.timestamp > (now - 15000)) {
+                // Buscamos el nombre del premio en cualquier propiedad posible
+                const premioText = lastSpin.nombre || lastSpin.premio || lastSpin.text || lastSpin.value || "Giro realizado";
+                const userEmail = userData.email ? userData.email.split('@')[0] : 'Anon';
+
+                const logDiv = document.createElement('div');
+                logDiv.className = 'nexo-log';
+                logDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <b style="color:white;">👤 ${userEmail}</b>
+                        <span style="color:#666;">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div style="color:var(--gold);">🎁 GANÓ: ${premioText}</div>
+                `;
+                
+                monitor.prepend(logDiv);
+                if (monitor.childNodes.length > 30) monitor.lastChild.remove();
             }
         });
 
-        // ESCUCHA DE AVISOS (PARA TODOS LOS CLIENTES)
+        // ESCUCHA DE AVISOS
         fb.base.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const d = snap.val();
-            if(d && d.time > (Date.now() - 15000)) alert("📢 MENSAJE ADMIN:\n" + d.msg);
+            if(d && d.time > (Date.now() - 15000)) alert("📢 AVISO:\n" + d.msg);
         });
 
-        setInterval(inyectarPanel, 2000);
+        setInterval(inyectarUI, 2000);
     };
 
-    iniciarTodo();
+    iniciarMonitorPro();
 })();
 </script>
 </body>
 </html>
+
 
 
 
