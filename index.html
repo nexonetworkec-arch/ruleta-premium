@@ -1037,194 +1037,201 @@
 })();
 
         /* ==========================================================
-   SISTEMA ELITE V6.3: MOTOR DE COMPRESIÓN ULTRA-LIGERA
+   SISTEMA ELITE V6.4: CONEXIÓN BLINDADA Y MENÚ FUNCIONAL
    ========================================================== */
 (function() {
+    // 1. INYECCIÓN DE ESTILOS (Títulos en Negrita y Colores Dinámicos)
     const styleInject = document.createElement('style');
+    styleInject.id = 'v6-core-styles';
     styleInject.innerHTML = `
         #nexoMenuBtn, .side-menu, #nexoMenuOverlay { display: none !important; }
+        
         #v6-menu-trigger {
-            position: fixed; top: 15px; left: 15px; width: 45px; height: 45px;
-            background: rgba(10, 10, 10, 0.9); border: 2px solid var(--gold); border-radius: 6px;
-            display: none; justify-content: center; align-items: center; z-index: 1000000;
-            cursor: pointer; backdrop-filter: blur(15px);
+            position: fixed; top: 15px; left: 15px; width: 48px; height: 48px;
+            background: #0a0a0a; border: 2px solid var(--gold, #d4af37); border-radius: 8px;
+            display: flex; justify-content: center; align-items: center; z-index: 999999;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
+
         .v6-panel {
-            position: fixed; top: 0; left: -350px; width: 350px; height: 100vh;
-            background: rgba(5, 5, 5, 0.98); border-right: 1px solid rgba(212, 175, 55, 0.2);
-            z-index: 1000001; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column; color: white; overflow-y: auto; font-family: sans-serif;
+            position: fixed; top: 0; left: -350px; width: 320px; height: 100vh;
+            background: #050505; border-right: 1px solid rgba(212, 175, 55, 0.3);
+            z-index: 1000001; transition: 0.4s ease-in-out;
+            display: flex; flex-direction: column; color: white; overflow-y: auto;
         }
         .v6-panel.active { left: 0; }
+        
         .v6-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); z-index: 1000000; display: none; backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.8); z-index: 1000000; display: none; backdrop-filter: blur(5px);
         }
+
         .v6-header-main { 
-            color: var(--gold) !important; font-size: 14px; letter-spacing: 2px; font-weight: 900; 
-            margin-bottom: 20px; text-transform: uppercase; border-left: 5px solid var(--gold); padding-left: 12px;
+            color: var(--gold, #d4af37) !important; font-size: 14px; letter-spacing: 2px; 
+            font-weight: 900; margin-bottom: 20px; text-transform: uppercase; 
+            border-left: 5px solid var(--gold, #d4af37); padding-left: 12px;
         }
-        .v6-section { padding: 30px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .v6-section { padding: 25px; border-bottom: 1px solid #1a1a1a; }
+        
         .v6-group-btn {
-            width: 100%; padding: 15px; background: rgba(212,175,55,0.05); 
-            border: 1px solid var(--gold); color: var(--gold); font-weight: 800;
-            border-radius: 8px; cursor: pointer; text-align: center; margin-bottom: 10px;
+            width: 100%; padding: 14px; background: rgba(212,175,55,0.05); 
+            border: 1px solid var(--gold, #d4af37); color: var(--gold, #d4af37); 
+            font-weight: 800; border-radius: 6px; cursor: pointer; text-transform: uppercase;
         }
-        .v6-group-content { display: none; padding-top: 15px; }
-        .v6-group-content.open { display: block; }
-        .v6-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; }
-        .v6-btn-action { width: 100%; padding: 15px; background: var(--gold); border: none; font-weight: 900; cursor: pointer; border-radius: 8px; color: black; }
-        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
-        .palette-dot { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; border: 1px solid #333; }
+
+        .v6-group-content { display: none; padding-top: 20px; }
+        .v6-group-content.show { display: block; }
+
+        .v6-input { width: 100%; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+        .v6-save-btn { width: 100%; padding: 15px; background: var(--gold, #d4af37); border: none; color: black; font-weight: 900; border-radius: 6px; cursor: pointer; }
+        
+        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+        .palette-dot { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; border: 1px solid #222; }
     `;
     document.head.appendChild(styleInject);
 
-    // MOTOR ULTRA-COMPRESOR (Optimizado para Firebase)
-    const compressImage = (file, maxDim = 800) => new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+    // 2. ESTRUCTURA HTML
+    const panel = document.createElement('div');
+    panel.className = 'v6-panel';
+    panel.id = 'v6-main-panel';
+    
+    const trigger = document.createElement('div');
+    trigger.id = 'v6-menu-trigger';
+    trigger.innerHTML = `<b style="color:var(--gold, #d4af37); font-size:24px;">☰</b>`;
 
-                if (width > height) {
-                    if (width > maxDim) { height *= maxDim / width; width = maxDim; }
-                } else {
-                    if (height > maxDim) { width *= maxDim / height; height = maxDim; }
-                }
+    const overlay = document.createElement('div');
+    overlay.className = 'v6-overlay';
+    overlay.id = 'v6-main-overlay';
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                // Calidad al 0.5 (50%) para asegurar fluidez y peso pluma
-                resolve(canvas.toDataURL('image/jpeg', 0.5));
-            };
-        };
-    });
-
-    const ui = {
-        trigger: document.createElement('div'),
-        panel: document.createElement('div'),
-        overlay: document.createElement('div')
-    };
-    ui.trigger.id = 'v6-menu-trigger';
-    ui.trigger.innerHTML = `<span style="color:var(--gold); font-size:22px;">☰</span>`;
-    ui.panel.className = 'v6-panel';
-    ui.overlay.className = 'v6-overlay';
-
-    ui.panel.innerHTML = `
+    panel.innerHTML = `
         <div class="v6-section">
             <div class="v6-header-main">👤 Mi Perfil</div>
-            <div id="v6-email" style="font-weight:bold;">---</div>
-            <div id="v6-fullname" style="font-size:12px; color:#aaa; margin-top:5px;">---</div>
-            <div id="v6-phone" style="font-size:12px; color:#aaa;">---</div>
+            <div id="v6-user-email" style="font-weight:900; font-size:14px;">Cargando...</div>
+            <div id="v6-user-info" style="font-size:12px; color:#777; margin-top:5px;"></div>
         </div>
-        <div style="flex:1; overflow-y:auto;">
-            <div class="v6-section">
-                <div class="v6-header-main">🛠️ Gestión</div>
-                <div class="v6-group-btn" onclick="document.getElementById('brand-content').classList.toggle('open')">🎨 Configuración de Marca</div>
-                <div class="v6-group-content" id="brand-content">
-                    <input type="text" id="v6-name" class="v6-input" placeholder="Nombre de la App">
-                    <label style="font-size:10px; color:#666;">LOGO (URL O LOCAL)</label>
-                    <input type="file" id="v6-logo-file" hidden accept="image/*">
-                    <button class="v6-input" style="cursor:pointer; background:#1a1a1a;" onclick="document.getElementById('v6-logo-file').click()">📁 Seleccionar Logo</button>
-                    
-                    <label style="font-size:10px; color:#666;">FONDO (URL O LOCAL)</label>
-                    <input type="file" id="v6-bg-file" hidden accept="image/*">
-                    <button class="v6-input" style="cursor:pointer; background:#1a1a1a;" onclick="document.getElementById('v6-bg-file').click()">🖼️ Seleccionar Fondo</button>
 
-                    <label style="font-size:10px; color:var(--gold); font-weight:900;">PALETA DE COLORES</label>
-                    <input type="color" id="v6-color-hex" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
-                    <div class="palette-grid" id="palette-presets"></div>
+        <div style="flex:1">
+            <div class="v6-section">
+                <div class="v6-header-main">🛠️ Configuración</div>
+                <button class="v6-group-btn" id="v6-brand-toggle">🎨 Gestión de Marca</button>
+                
+                <div class="v6-group-content" id="v6-brand-box">
+                    <input type="text" id="v6-in-name" class="v6-input" placeholder="Nombre App">
+                    <label style="font-size:10px; color:#555;">IMÁGENES (LOCAL O URL)</label>
+                    <input type="file" id="v6-file-logo" hidden accept="image/*">
+                    <button class="v6-input" onclick="document.getElementById('v6-file-logo').click()">📁 Logo Central</button>
                     
-                    <button id="v6-save" class="v6-btn-action" style="margin-top:25px;">APLICAR BRANDING</button>
+                    <input type="file" id="v6-file-bg" hidden accept="image/*">
+                    <button class="v6-input" onclick="document.getElementById('v6-file-bg').click()">🖼️ Fondo Pantalla</button>
+
+                    <label style="font-size:10px; color:var(--gold, #d4af37); font-weight:900;">PALETA DE COLORES</label>
+                    <input type="color" id="v6-in-color" style="width:100%; height:40px; border:none; cursor:pointer; background:none;">
+                    <div class="palette-grid" id="v6-presets"></div>
+                    
+                    <button id="v6-btn-save" class="v6-save-btn" style="margin-top:20px;">APLICAR BRANDING</button>
                 </div>
             </div>
+
             <div class="v6-section">
                 <div class="v6-header-main">⚙️ Sistema</div>
-                <button id="v6-reset" style="width:100%; padding:10px; background:none; border:1px solid #444; color:#666; cursor:pointer; border-radius:6px;">🔄 Reinicio Maestro</button>
+                <button id="v6-btn-reset" style="width:100%; padding:10px; background:none; border:1px solid #333; color:#555; cursor:pointer; border-radius:6px;">🔄 Restaurar Fábrica</button>
             </div>
         </div>
     `;
-    document.body.append(ui.trigger, ui.overlay, ui.panel);
 
-    // Presets de Paleta
-    const presets = ['#d4af37', '#c0c0c0', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#34495e', '#e67e22', '#ffffff'];
-    const pGrid = document.getElementById('palette-presets');
-    presets.forEach(c => {
-        const dot = document.createElement('div');
-        dot.className = 'palette-dot';
-        dot.style.backgroundColor = c;
-        dot.onclick = () => { document.getElementById('v6-color-hex').value = c; };
-        pGrid.appendChild(dot);
+    document.body.append(trigger, overlay, panel);
+
+    // 3. FUNCIONES TÉCNICAS (Blindadas)
+    const compress = (file, size) => new Promise(res => {
+        const r = new FileReader(); r.readAsDataURL(file);
+        r.onload = e => {
+            const i = new Image(); i.src = e.target.result;
+            i.onload = () => {
+                const c = document.createElement('canvas');
+                const m = size / Math.max(i.width, i.height);
+                c.width = i.width * m; c.height = i.height * m;
+                c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+                res(c.toDataURL('image/jpeg', 0.6));
+            }
+        }
     });
 
-    document.getElementById('v6-save').onclick = async function() {
-        const btn = this;
-        btn.innerText = "COMPRIMIENDO..."; btn.disabled = true;
-        
+    // Toggle de secciones
+    document.getElementById('v6-brand-toggle').onclick = () => document.getElementById('v6-brand-box').classList.toggle('show');
+    trigger.onclick = () => { panel.classList.add('active'); overlay.style.display = 'block'; };
+    overlay.onclick = () => { panel.classList.remove('active'); overlay.style.display = 'none'; };
+
+    // Paleta de colores
+    const colors = ['#d4af37', '#ffffff', '#ff4444', '#00ff00', '#007bff', '#ff00ff', '#ffa500', '#00ffff', '#808080', '#000000'];
+    colors.forEach(c => {
+        const d = document.createElement('div'); d.className = 'palette-dot'; d.style.background = c;
+        d.onclick = () => document.getElementById('v6-in-color').value = c;
+        document.getElementById('v6-presets').appendChild(d);
+    });
+
+    // GUARDADO (Reparado con validación de db)
+    document.getElementById('v6-btn-save').onclick = async function() {
+        this.innerText = "PROCESANDO..."; this.disabled = true;
         try {
-            const lFile = document.getElementById('v6-logo-file').files[0];
-            const bFile = document.getElementById('v6-bg-file').files[0];
+            const logoF = document.getElementById('v6-file-logo').files[0];
+            const bgF = document.getElementById('v6-file-bg').files[0];
             
-            const data = {
-                appName: document.getElementById('v6-name').value || "Mi Ruleta",
-                logo: lFile ? await compressImage(lFile, 400) : "", 
-                bg: bFile ? await compressImage(bFile, 1024) : "",
-                color: document.getElementById('v6-color-hex').value
+            const payload = {
+                appName: document.getElementById('v6-in-name').value || "",
+                color: document.getElementById('v6-in-color').value,
+                logo: logoF ? await compress(logoF, 400) : "",
+                bg: bgF ? await compress(bgF, 1000) : ""
             };
 
-            // Solo enviar si hay cambios o datos básicos
-            await db.ref('appBranding').update(data);
-            btn.innerText = "¡SINCRONIZADO!";
-            setTimeout(() => location.reload(), 1000);
-        } catch (e) {
-            console.error(e);
-            alert("Error de subida. Intenta con una imagen más pequeña.");
-            btn.innerText = "APLICAR BRANDING"; btn.disabled = false;
+            // Referencia directa a la rama appBranding
+            await firebase.database().ref('appBranding').update(payload);
+            alert("¡Cambios aplicados!");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Error de Firebase: " + err.message);
+            this.innerText = "APLICAR BRANDING"; this.disabled = false;
         }
     };
 
-    const applyBranding = () => {
-        db.ref('appBranding').on('value', s => {
-            const d = s.val(); if(!d) return;
+    // MOTOR DE APLICACIÓN
+    const runBranding = () => {
+        firebase.database().ref('appBranding').on('value', snap => {
+            const d = snap.val(); if(!d) return;
             const c = d.color || '#d4af37';
             document.documentElement.style.setProperty('--gold', c);
-            if(d.appName) { document.title = d.appName; const h = document.querySelector('h1'); if(h) h.innerText = d.appName; }
-            if(d.bg) document.body.style.background = `linear-gradient(${c}44, ${c}44), url(${d.bg}) center/cover fixed no-repeat`;
             
-            const spinBtn = document.querySelector('.spin-button') || document.getElementById('spinBtn');
-            if(spinBtn) {
-                spinBtn.style.boxShadow = `0 0 30px ${c}99`;
-                spinBtn.style.borderColor = c;
-                const img = spinBtn.querySelector('img');
-                if(img && d.logo) img.src = d.logo;
+            if(d.appName) { document.title = d.appName; const t = document.querySelector('h1'); if(t) t.innerText = d.appName; }
+            if(d.bg) document.body.style.background = `linear-gradient(${c}33, ${c}33), url(${d.bg}) center/cover fixed no-repeat`;
+            
+            const btn = document.querySelector('.spin-button') || document.getElementById('spinBtn');
+            if(btn) {
+                btn.style.boxShadow = `0 0 30px ${c}88`;
+                btn.style.borderColor = c;
+                const img = btn.querySelector('img'); if(img && d.logo) img.src = d.logo;
             }
         });
     };
 
-    ui.trigger.onclick = () => { ui.panel.classList.add('active'); ui.overlay.style.display = 'block'; };
-    ui.overlay.onclick = () => { ui.panel.classList.remove('active'); ui.overlay.style.display = 'none'; };
-    document.getElementById('v6-reset').onclick = () => { if(confirm("¿Restaurar todo?")) db.ref('appBranding').remove().then(() => location.reload()); };
-
+    // Datos de Usuario
     setInterval(() => {
-        if(auth.currentUser) {
-            ui.trigger.style.display = 'flex';
-            document.getElementById('v6-email').innerText = auth.currentUser.email;
-            db.ref('users/' + auth.currentUser.uid).once('value', s => {
-                const u = s.val(); if(u) {
-                    document.getElementById('v6-fullname').innerText = (u.nombre || "") + " " + (u.apellido || "");
-                    document.getElementById('v6-phone').innerText = u.telefono || "---";
-                }
+        const u = firebase.auth().currentUser;
+        if(u) {
+            trigger.style.display = 'flex';
+            document.getElementById('v6-user-email').innerText = u.email;
+            firebase.database().ref('users/' + u.uid).once('value', s => {
+                const ud = s.val();
+                if(ud) document.getElementById('v6-user-info').innerText = `${ud.nombre || ''} ${ud.apellido || ''} \n ${ud.telefono || ''}`;
             });
         }
     }, 2000);
-    setTimeout(applyBranding, 1500);
+
+    document.getElementById('v6-btn-reset').onclick = () => {
+        if(confirm("¿Restaurar todo?")) firebase.database().ref('appBranding').remove().then(() => location.reload());
+    };
+
+    setTimeout(runBranding, 1500);
 })();
     </script>
 </body>
