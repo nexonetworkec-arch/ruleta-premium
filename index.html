@@ -1036,93 +1036,110 @@
     });
 })();
 
-        // --- INYECCIÓN ADITIVA: REGLAS DE ACCESO NEXO® (PERFIL LIBRE / MARCA PREMIUM) ---
+  // --- INYECCIÓN ADITIVA: SINCRONIZADOR DE PERMISOS NEXO® (SOLUCIÓN DE DESBLOQUEO) ---
 (function() {
-    // 1. Estilos de Bloqueo y UI
+    // 1. Estilos de Interfaz
     const accessStyles = document.createElement('style');
     accessStyles.innerHTML = `
-        .locked-feature { opacity: 0.5 !important; cursor: not-allowed !important; position: relative; }
+        .locked-feature { opacity: 0.5 !important; cursor: not-allowed !important; position: relative; pointer-events: all !important; }
         .locked-feature::after { content: '🔒'; position: absolute; top: 10px; right: 15px; font-size: 14px; }
         .branding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .branding-control { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid #333; }
-        .branding-control label { display: block; font-size: 10px; color: #888; margin-bottom: 5px; }
-        .branding-control select, .branding-control input { width: 100%; background: #000; border: 1px solid #444; color: #fff; font-size: 11px; }
     `;
     document.head.appendChild(accessStyles);
 
-    // 2. Validador de Nivel
-    const isPremiumUser = () => {
-        if (typeof currentUserData === 'undefined') return false;
-        const lvl = (currentUserData.level || currentUserData.plan || 'Free').toUpperCase();
-        return lvl === 'PRO' || lvl === 'PPE';
+    // 2. Validador de Nivel con Normalización
+    const checkUserAccess = () => {
+        if (typeof currentUserData === 'undefined' || !currentUserData) return "FREE";
+        const lvl = (currentUserData.level || currentUserData.plan || 'FREE').toString().toUpperCase().trim();
+        return lvl;
     };
 
-    const premiumAlert = () => alert("✨ FUNCIÓN PREMIUM: El diseño de marca es exclusivo para planes Pro y PPE. ¡Mejora tu cuenta en Nexo.com!");
+    const isPremium = () => {
+        const level = checkUserAccess();
+        return level === 'PRO' || level === 'PPE';
+    };
 
-    // 3. Gestión de Menú Lateral (Mi Perfil habilitado / Marca restringida)
-    const syncMenuPermissions = () => {
+    // 3. Aplicar Permisos Dinámicos
+    const applyPermissions = () => {
+        const userLevel = checkUserAccess();
+        const premium = isPremium();
+        
+        console.log(`[NEXO AUTH] Nivel detectado: ${userLevel} | Acceso Premium: ${premium}`);
+
         const menuItems = document.querySelectorAll('.menu-option-item');
         menuItems.forEach(item => {
             const text = item.innerText.toUpperCase();
 
-            // CASO: MI PERFIL (SIEMPRE LIBRE)
+            // MI PERFIL: Siempre habilitado
             if (text.includes('PERFIL')) {
                 item.classList.remove('locked-feature');
-                item.onclick = () => alert("Módulo Mi Perfil: Cargando datos..."); 
+                item.onclick = () => {
+                    // Aquí puedes llamar a tu función de perfil original
+                    alert("Cargando Perfil de Usuario...");
+                };
             }
 
-            // CASO: CONFIGURACIÓN DE MARCA (SOLO PREMIUM)
+            // CONFIGURACIÓN DE MARCA: Solo PRO/PPE
             if (text.includes('MARCA')) {
-                if (!isPremiumUser()) {
-                    item.classList.add('locked-feature');
-                    item.onclick = (e) => { e.stopImmediatePropagation(); premiumAlert(); };
-                } else {
+                if (premium) {
                     item.classList.remove('locked-feature');
-                    // Mantiene la función original de abrir el panel
-                    item.onclick = () => { toggleBrandingConfig(); document.getElementById('nexoMenuOverlay').click(); };
+                    item.onclick = () => {
+                        toggleBrandingConfig();
+                        document.getElementById('nexoMenuOverlay').click();
+                    };
+                } else {
+                    item.classList.add('locked-feature');
+                    item.onclick = (e) => {
+                        e.stopImmediatePropagation();
+                        alert("✨ FUNCIÓN PREMIUM: El diseño de marca es exclusivo para planes Pro y PPE.");
+                    };
                 }
             }
         });
-    };
 
-    // 4. Inyección de Herramientas Avanzadas en el Panel de Marca
-    const injectAdvancedBranding = () => {
+        // Inyectar herramientas si el panel existe
         const brandingPanel = document.getElementById('brandingConfigPanel');
-        if (!brandingPanel || document.getElementById('advancedToolsCont')) return;
-
-        const container = document.createElement('div');
-        container.id = 'advancedToolsCont';
-        container.style.marginTop = "20px";
-        container.innerHTML = `
-            <h4 style="color:var(--gold); font-size:12px; border-top:1px solid #333; pt:15px;">MARCA PREMIUM</h4>
-            <div class="branding-grid">
-                <div class="branding-control"><label>Logo Central</label><input type="file" accept="image/*" id="premiumLogo"></div>
-                <div class="branding-control"><label>Fuente</label><select><option>Classic</option><option>Modern</option></select></div>
-                <div class="branding-control"><label>Fondo App</label><input type="text" placeholder="URL Imagen"></div>
-                <div class="branding-control"><label>Audio</label><select><option>ON</option><option>OFF</option></select></div>
-            </div>
-        `;
-        brandingPanel.appendChild(container);
-
-        // Si es Free, deshabilitamos visualmente los inputs internos también
-        if (!isPremiumUser()) {
-            container.querySelectorAll('input, select').forEach(el => el.disabled = true);
+        if (brandingPanel) {
+            let container = document.getElementById('advancedToolsCont');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'advancedToolsCont';
+                brandingPanel.appendChild(container);
+            }
+            
+            container.innerHTML = `
+                <h4 style="color:var(--gold); font-size:12px; border-top:1px solid #333; margin-top:15px; padding-top:10px;">MARCA PREMIUM</h4>
+                <div class="branding-grid ${premium ? '' : 'locked-feature'}">
+                    <div class="branding-control"><label style="font-size:9px; color:#888;">Logo Central</label><input type="file" ${premium ? '' : 'disabled'}></div>
+                    <div class="branding-control"><label style="font-size:9px; color:#888;">Fuente</label><select ${premium ? '' : 'disabled'}><option>Classic</option><option>Modern</option></select></div>
+                </div>
+            `;
         }
     };
 
-    // Sincronización con Auth
+    // 4. Bucle de Verificación (Espera a que los datos de Firebase lleguen)
+    let checkAttempts = 0;
+    const waitForUserData = setInterval(() => {
+        checkAttempts++;
+        // Si los datos están listos o si ya pasaron 5 segundos
+        if ((typeof currentUserData !== 'undefined' && currentUserData) || checkAttempts > 50) {
+            applyPermissions();
+            clearInterval(waitForUserData);
+        }
+    }, 100);
+
+    // Re-verificar cuando cambie la autenticación
     auth.onAuthStateChanged((user) => {
-        if (user) {
-            // Damos tiempo a que los datos de la DB se carguen en currentUserData
-            setTimeout(() => {
-                syncMenuPermissions();
-                injectAdvancedBranding();
-            }, 1000);
+        if (!user) {
+            const menuBtn = document.getElementById('nexoMenuBtn');
+            if(menuBtn) menuBtn.style.display = 'none';
         }
     });
 })();
     </script>
 </body>
 </html>
+
 
 
