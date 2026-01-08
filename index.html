@@ -1037,93 +1037,85 @@
 })();
 
         /* ==========================================================
-   BLOQUE ADITIVO FINAL: ACCESO TOTAL A CONFIGURACIÓN
+   BLOQUE DE EMERGENCIA: ACCESO FORZADO CONFIGURACIÓN
    ========================================================== */
 (function() {
-    // 1. Estilos forzados (Inyección Aditiva)
+    // 1. Forzado de Estilos Críticos
     const style = document.createElement('style');
     style.innerHTML = `
         #modalConfigMarca {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 99999 !important; justify-content: center; align-items: center;
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.98); z-index: 1000000 !important; justify-content: center; align-items: center;
         }
         .config-card {
-            background: #1a1a1a; padding: 30px; border: 2px solid #d4af37; border-radius: 20px;
-            width: 85%; max-width: 380px; text-align: center; color: white; box-shadow: 0 0 30px rgba(212,175,55,0.2);
+            background: #111; padding: 40px; border: 2px solid #d4af37; border-radius: 15px;
+            text-align: center; width: 320px; box-shadow: 0 0 50px rgba(212,175,55,0.3);
         }
-        #btnOpenConfigMarca { 
-            display: block !important; 
-            visibility: visible !important; 
-            opacity: 1 !important; 
+        /* Forzamos que nuestro botón sea visible sí o sí */
+        #btnForcedConfig {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             color: #d4af37 !important;
-            font-weight: bold !important;
+            border-left: 3px solid #d4af37 !important;
+            background: rgba(212,175,55,0.1) !important;
+            margin: 10px 0 !important;
+            padding: 15px !important;
+            cursor: pointer !important;
         }
     `;
     document.head.appendChild(style);
 
-    // 2. Creación del Modal
+    // 2. Crear Modal de Emergencia
     const modal = document.createElement('div');
     modal.id = 'modalConfigMarca';
     modal.innerHTML = `
         <div class="config-card">
-            <h2 style="color:#d4af37; margin-bottom:15px;">MARCA SISTEMA</h2>
-            <input type="text" id="inputNombreMarca" placeholder="Nombre de la marca" 
-                   style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #333; background:#000; color:white;">
-            <button id="saveMarcaBtn" style="width:100%; padding:12px; background:#d4af37; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">ACTUALIZAR</button>
-            <button onclick="document.getElementById('modalConfigMarca').style.display='none'" 
-                    style="background:none; border:none; color:#888; margin-top:15px; cursor:pointer; text-decoration:underline;">Cerrar</button>
+            <h2 style="color:#d4af37; font-family:sans-serif;">MARCA</h2>
+            <input type="text" id="inputBrand" style="width:100%; padding:10px; margin:20px 0; background:#000; border:1px solid #d4af37; color:white;">
+            <button id="saveBrand" style="width:100%; padding:10px; background:#d4af37; color:black; font-weight:bold; border:none; cursor:pointer;">GUARDAR</button>
+            <p onclick="document.getElementById('modalConfigMarca').style.display='none'" style="color:gray; cursor:pointer; margin-top:20px; font-size:12px;">CERRAR</p>
         </div>
     `;
     document.body.appendChild(modal);
 
-    // 3. Inyector Blindado (Protección contra performInterfaceCleanup)
-    const forceInject = () => {
+    // 3. Función de Inyección Violenta
+    const injectNow = () => {
         const sideMenu = document.querySelector('.side-menu');
         if (!sideMenu) return;
 
-        let btn = document.getElementById('btnOpenConfigMarca');
-        if (!btn) {
-            btn = document.createElement('div');
-            btn.id = 'btnOpenConfigMarca';
+        // Si el botón no existe, lo creamos
+        if (!document.getElementById('btnForcedConfig')) {
+            const btn = document.createElement('div');
+            btn.id = 'btnForcedConfig';
             btn.className = 'menu-option-item';
             btn.innerHTML = '⚙️ CONFIGURACIÓN DE MARCA';
-            const logout = sideMenu.querySelector('.menu-logout');
-            sideMenu.insertBefore(btn, logout);
             
-            btn.onclick = () => {
-                if(typeof db !== 'undefined') {
-                    db.ref('appConfig/brandName').once('value', (s) => {
-                        if(s.val()) document.getElementById('inputNombreMarca').value = s.val();
-                    });
-                }
+            // Insertar al principio del menú para que sea lo primero que veas
+            sideMenu.prepend(btn);
+
+            btn.addEventListener('click', () => {
                 document.getElementById('modalConfigMarca').style.display = 'flex';
-            };
+            });
         }
-        
-        // Forzar visibilidad anulando cualquier 'display: none' del código original
-        btn.style.setProperty('display', 'block', 'important');
     };
 
-    // 4. Observador de Seguridad: Vigila si el código original intenta ocultar el botón
-    const observer = new MutationObserver(() => {
-        forceInject();
-    });
+    // 4. Bucle de ejecución (Ejecuta cada 100ms para ganarle al sistema original)
+    const interceptor = setInterval(() => {
+        injectNow();
+        // Si ya estamos logueados y el botón está, bajamos la frecuencia pero no lo detenemos
+        if(document.getElementById('btnForcedConfig')) {
+            document.getElementById('btnForcedConfig').style.setProperty('display', 'flex', 'important');
+        }
+    }, 100);
 
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    // Ejecución inmediata y retardada para asegurar captura
-    forceInject();
-    setTimeout(forceInject, 1000);
-    setTimeout(forceInject, 3000);
-
-    // 5. Lógica de Guardado (Referenciación)
+    // 5. Guardado en DB
     document.addEventListener('click', (e) => {
-        if (e.target.id === 'saveMarcaBtn') {
-            const val = document.getElementById('inputNombreMarca').value;
-            if (val && typeof db !== 'undefined') {
+        if(e.target.id === 'saveBrand') {
+            const val = document.getElementById('inputBrand').value;
+            if(val && typeof db !== 'undefined') {
                 db.ref('appConfig/brandName').set(val).then(() => {
-                    alert('Marca guardada: ' + val);
+                    alert("Marca actualizada");
                     location.reload();
                 });
             }
