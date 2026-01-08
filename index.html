@@ -1036,127 +1036,93 @@
     });
 })();
 
-        /* --- INYECCIÓN ADITIVA: RECTIFICACIÓN DINÁMICA DE INTERFAZ MÓVIL --- */
+        /* --- INYECCIÓN ADITIVA: RE-ESTRUCTURACIÓN INTUITIVA FINAL --- */
 (function() {
-    // 1. Estilos de Fuerza Bruta para reubicar elementos
     const style = document.createElement('style');
     style.innerHTML = `
         @media (max-width: 800px) {
-            /* Forzar el Título a la parte superior izquierda */
-            header {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 70% !important;
-                height: 50px !important;
-                z-index: 9999 !important;
-                background: none !important;
-                display: flex !important;
-                align-items: center !important;
-                padding-left: 15px !important;
-            }
-            header h1 { font-size: 1rem !important; color: var(--gold) !important; }
-
-            /* BOTONES: Ubicación absoluta arriba a la derecha */
+            /* 1. FORZAR BOTONES ARRIBA A LA DERECHA */
             .controls {
                 position: fixed !important;
-                top: 5px !important;
-                right: 5px !important;
+                top: env(safe-area-inset-top, 10px) !important;
+                right: 10px !important;
                 bottom: auto !important;
                 left: auto !important;
-                flex-direction: row !important;
                 display: flex !important;
-                gap: 5px !important;
-                z-index: 10000 !important;
-                width: auto !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                z-index: 100000 !important;
                 background: transparent !important;
+                width: auto !important;
             }
             .btn {
-                padding: 5px 10px !important;
-                font-size: 10px !important;
-                height: 32px !important;
-                width: auto !important;
-                min-width: 60px !important;
+                padding: 8px 15px !important;
+                font-size: 11px !important;
+                height: 38px !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
             }
 
-            /* RULETA Y CONFIGURACIÓN: Reorganización de espacio */
+            /* 2. ASEGURAR VISIBILIDAD DE TÍTULO Y AUTO-ELIMINAR */
             .app-container {
-                padding-top: 55px !important; /* Baja todo para que no lo tapen los botones */
-                height: 100vh !important;
-                overflow: hidden !important;
-            }
-            .main-content {
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: space-between !important;
-                height: calc(100vh - 60px) !important;
+                height: 100vh !important;
+                padding-top: 60px !important; /* Espacio para botones */
             }
-            .wheel-container {
+            .main-content {
                 flex: 1 !important;
                 display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                transform: scale(0.8) !important; /* Espacio vital */
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                overflow: hidden !important;
             }
-            canvas#wheel {
-                max-width: 80vw !important;
-                max-height: 50vh !important;
+            .wheel-container {
+                max-height: 45vh !important; /* Limita la ruleta para dar espacio */
+                transform: scale(0.85) !important;
+                margin: 0 auto !important;
             }
-
-            /* RESCATE DE "AUTO-ELIMINAR": Ubicación prioritaria abajo */
+            
+            /* Rescate del cuadro de configuración (Auto-eliminar) */
             .setup-container {
                 position: relative !important;
-                width: 95% !important;
-                margin: 0 auto 10px auto !important;
-                background: rgba(22, 22, 22, 0.9) !important;
-                border: 1px solid #333 !important;
-                border-radius: 8px !important;
-                padding: 10px !important;
-                z-index: 9998 !important;
+                z-index: 9999 !important;
+                background: rgba(15, 15, 15, 0.95) !important;
+                margin-top: 5px !important;
+                padding: 15px !important;
+                border: 1px solid var(--gold) !important;
                 display: block !important;
             }
 
-            /* MENÚ LATERAL: Scroll infinito garantizado */
+            /* 3. MENU SCROLEABLE */
             #nexoSideMenu {
                 position: fixed !important;
-                top: 0 !important;
-                right: 0 !important;
-                width: 280px !important;
                 height: 100vh !important;
                 max-height: 100vh !important;
                 overflow-y: auto !important;
-                overflow-x: hidden !important;
-                background: #111 !important;
-                z-index: 10001 !important;
-                padding-bottom: 80px !important;
                 -webkit-overflow-scrolling: touch !important;
+                padding-bottom: 120px !important; /* Para que nada se corte al final */
+                z-index: 100001 !important;
             }
         }
 
-        /* Ajuste para modo Horizontal */
+        /* Ajuste para cuando se gira el móvil (Landscape) */
         @media (orientation: landscape) and (max-height: 500px) {
-            .wheel-container { transform: scale(0.5) !important; margin-top: -50px !important; }
-            .setup-container { width: 50% !important; margin: 0 auto !important; }
+            .wheel-container { transform: scale(0.5) !important; margin-top: -60px !important; }
+            .setup-container { padding: 5px !important; font-size: 0.7rem !important; }
         }
     `;
     document.head.appendChild(style);
 
-    // 2. Script de apoyo para asegurar el scroll en dispositivos táctiles
-    const preventOverscroll = () => {
-        const menu = document.getElementById('nexoSideMenu');
-        if (menu) {
-            menu.addEventListener('touchstart', function() {
-                const top = menu.scrollTop, totalScroll = menu.scrollHeight, currentScroll = top + menu.offsetHeight;
-                if (top === 0) menu.scrollTop = 1;
-                else if (currentScroll === totalScroll) menu.scrollTop = top - 1;
-            });
-        }
+    // Ajuste de altura real para móviles
+    const vhFix = () => {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
+    window.addEventListener('resize', vhFix);
+    window.addEventListener('orientationchange', () => setTimeout(vhFix, 400));
+    vhFix();
 
-    // Ejecución
-    setTimeout(preventOverscroll, 1000);
-    window.scrollTo(0, 0);
-    console.log("NEXO® Pro: Rectificación total aplicada.");
+    console.log("NEXO® Pro: Rectificación Intuitiva aplicada.");
 })();
 /* --- FIN DEL BLOQUE --- */
     </script>
