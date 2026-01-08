@@ -1035,9 +1035,68 @@
         }
     });
 })();
+
+        // ==========================================
+// REPARACIÓN E INYECCIÓN ADITIVA: ADMIN MASTER
+// ==========================================
+(function() {
+    const fixAdminIntegration = () => {
+        const sideMenu = document.getElementById('nexoSideMenu');
+        const originalBtn = document.getElementById('btnAdminMaster');
+        
+        // Si el menú existe y no hemos inyectado el botón aún
+        if (sideMenu && !document.getElementById('menuOptionAdminMaster')) {
+            const adminOption = document.createElement('div');
+            adminOption.id = 'menuOptionAdminMaster';
+            adminOption.className = 'menu-option-item'; // Clase original de tus items
+            adminOption.style.display = 'none'; 
+            adminOption.style.borderLeft = '4px solid var(--gold)'; // Distintivo VIP
+            adminOption.innerHTML = `👑 ADMIN MASTER`;
+            
+            adminOption.onclick = () => {
+                if (originalBtn) originalBtn.click();
+                // Cerrar menú usando tu función original
+                if (typeof closeAll === 'function') closeAll();
+            };
+
+            // Insertar al final del menú pero antes del botón de salida
+            const logoutBtn = sideMenu.querySelector('.menu-logout');
+            if (logoutBtn) {
+                sideMenu.insertBefore(adminOption, logoutBtn);
+            } else {
+                sideMenu.appendChild(adminOption);
+            }
+        }
+    };
+
+    // Ejecutar la integración y validar seguridad
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // Reintentar inyección por si el DOM tarda en renderizar
+            setTimeout(fixAdminIntegration, 500);
+            setTimeout(fixAdminIntegration, 1500);
+
+            // Escuchar cambios de privilegios
+            db.ref('admins/' + user.uid).on('value', (s) => {
+                const isAdmin = s.val();
+                const menuAdmin = document.getElementById('menuOptionAdminMaster');
+                const oldBtn = document.getElementById('btnAdminMaster');
+
+                if (isAdmin) {
+                    if (menuAdmin) menuAdmin.style.display = 'flex';
+                    // Forzar ocultamiento del botón viejo que está fuera del menú
+                    if (oldBtn) {
+                        oldBtn.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            });
+        }
+    });
+})();
     </script>
 </body>
 </html>
+
 
 
 
