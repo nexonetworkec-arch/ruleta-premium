@@ -1036,116 +1036,103 @@
     });
 })();
     </script>
-    
     <style>
     @media screen and (orientation: landscape) and (max-width: 950px) {
-        /* 1. Contenedor Principal: Centrado absoluto */
+        /* 1. Forzar el contenedor a ser un escenario limpio */
         .app-container {
+            display: flex !important;
             flex-direction: row !important;
-            justify-content: center !important;
-            align-items: center !important;
+            justify-content: center !important; /* Centrado horizontal */
+            align-items: center !important;     /* Centrado vertical */
             height: 100vh !important;
+            width: 100vw !important;
             padding: 0 !important;
             overflow: hidden !important;
             position: relative !important;
         }
 
-        /* 2. Sección de la Ruleta: Al centro */
+        /* 2. Ruleta: Asegurar centro absoluto */
         .wheel-section {
-            flex: 0 1 auto !important;
+            position: relative !important;
+            margin: 0 auto !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            margin: 0 auto !important;
-            z-index: 1;
+            z-index: 5 !important;
+            transform: scale(0.9) !important;
         }
 
         .wheel-wrapper {
-            width: 75vh !important; /* Ajuste basado en altura para no desbordar */
-            height: 75vh !important;
             margin: 0 !important;
+            width: 78vh !important; /* Ajuste dinámico a la altura del móvil */
+            height: 78vh !important;
         }
 
-        /* 3. Panel de Botones: Superior Derecha en Columna */
+        /* 3. Panel de Botones: Superior Derecha y SIN MARCO */
         .side-panel {
             position: absolute !important;
-            top: 15px !important;
-            right: 15px !important;
-            width: 180px !important;
-            height: auto !important;
+            top: 10px !important;
+            right: 15px !important; /* Posición derecha */
+            left: auto !important;  /* Anula cualquier empuje a la izquierda */
+            width: 170px !important;
             display: flex !important;
-            flex-direction: column !important; /* Orden de la Web */
+            flex-direction: column !important;
             gap: 8px !important;
-            background: rgba(22, 22, 22, 0.8) !important;
-            padding: 10px !important;
-            border-radius: 12px !important;
-            border: 1px solid var(--gold) !important;
+            
+            /* Eliminación de marco y fondo */
+            background: transparent !important; 
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
             z-index: 100 !important;
-            bottom: auto !important; /* Anula posición de móvil vertical */
         }
 
         .side-panel .btn {
             width: 100% !important;
             font-size: 0.7rem !important;
-            padding: 8px !important;
+            padding: 8px 5px !important;
             margin: 0 !important;
+            background: rgba(22, 22, 22, 0.9) !important; /* Solo fondo al botón */
+            border: 1px solid var(--gold) !important;
         }
 
-        /* 4. Auto-eliminar: Debajo de la ruleta */
+        /* 4. Auto-eliminar: Justo debajo de la ruleta */
         .auto-delete-container {
-            margin-top: 10px !important;
-            background: rgba(0,0,0,0.5) !important;
-            padding: 5px 15px !important;
+            margin-top: 5px !important;
+            background: rgba(0,0,0,0.6) !important;
+            padding: 4px 12px !important;
             border-radius: 20px !important;
-            border: 1px solid rgba(212, 175, 55, 0.3) !important;
-            order: 10 !important; /* Asegura que vaya después del wrapper */
+            border: 1px solid var(--gold) !important;
+            white-space: nowrap !important;
         }
 
-        /* Ajustes de elementos secundarios */
-        #mainTitle {
-            position: absolute !important;
-            top: 10px !important;
-            left: 20px !important;
-            font-size: 1rem !important;
-            margin: 0 !important;
-            pointer-events: none;
-        }
-
-        .logo-container {
-            position: absolute !important;
-            bottom: 10px !important;
-            left: 20px !important;
-            margin: 0 !important;
-        }
-
-        .logo-container img {
-            max-height: 35px !important;
+        /* Ocultar títulos/logos que quiten espacio al centro */
+        #mainTitle, .logo-container {
+            display: none !important; 
         }
     }
 </style>
 
 <script>
     (function() {
-        /**
-         * Referenciación: Mantenemos la integridad del dibujo del canvas
-         * al cambiar el tamaño del viewport.
-         */
-        const fixLayout = () => {
+        const updateLayout = () => {
             if (window.appWheel && typeof window.appWheel.draw === 'function') {
-                // Pequeño delay para que el CSS se aplique antes de redibujar
                 setTimeout(() => {
-                    window.appWheel.draw();
-                }, 250);
+                    // Recalcular dimensiones del canvas para que no se vea ovalada
+                    const canvas = document.getElementById('wheelCanvas');
+                    if (canvas) {
+                        appWheel.draw();
+                    }
+                }, 300);
             }
         };
 
-        window.addEventListener("resize", fixLayout);
-        window.addEventListener("orientationchange", fixLayout);
+        window.addEventListener("resize", updateLayout);
+        window.addEventListener("orientationchange", updateLayout);
         
-        // Ejecución inicial por si carga directamente en horizontal
-        if (window.matchMedia("(orientation: landscape)").matches) {
-            fixLayout();
+        if (window.innerWidth > window.innerHeight) {
+            updateLayout();
         }
     })();
 </script>
