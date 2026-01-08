@@ -1037,79 +1037,86 @@
 })();
 
         /* ==========================================================
-   INYECCIÓN ADITIVA: RECONECTADOR DE CONFIGURACIÓN
+   BLOQUE FINAL: RECONFIGURACIÓN ESTRUCTURAL DEL MENÚ
    ========================================================== */
 (function() {
-    // 1. Estilos con Prioridad de Sistema
+    // 1. Inyección de Estilos de Alta Prioridad
     const style = document.createElement('style');
     style.innerHTML = `
-        #modalConfigBrand {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); z-index: 999999; justify-content: center; align-items: center;
+        #modalBrandConfig {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.98); z-index: 1000001 !important; 
+            justify-content: center; align-items: center; backdrop-filter: blur(20px);
         }
-        .brand-box {
-            background: #111; border: 1px solid #d4af37; padding: 30px; border-radius: 15px;
-            text-align: center; width: 90%; max-width: 350px;
+        .brand-panel {
+            background: #111; border: 2px solid #d4af37; padding: 40px; border-radius: 25px;
+            width: 350px; text-align: center; box-shadow: 0 0 60px rgba(212,175,55,0.4);
         }
-        /* Este ID es único para saltar el filtro de limpieza */
-        #exclusive-brand-access {
-            color: #d4af37 !important;
-            border-bottom: 1px solid #333 !important;
-            cursor: pointer !important;
-            display: flex !important;
-            padding: 15px !important;
+        /* Clase especial para evadir performInterfaceCleanup */
+        .brand-access-link {
+            color: #d4af37 !important; border-bottom: 1px solid #222;
+            padding: 15px; cursor: pointer; display: flex !important;
         }
     `;
     document.head.appendChild(style);
 
-    // 2. Creación del Modal
+    // 2. Creación del Modal de Marca
     const modal = document.createElement('div');
-    modal.id = 'modalConfigBrand';
+    modal.id = 'modalBrandConfig';
     modal.innerHTML = `
-        <div class="brand-box">
-            <h3 style="color:#d4af37; margin-bottom:15px;">AJUSTES DE MARCA</h3>
-            <input type="text" id="brandInput" placeholder="Nombre de la marca" 
-                   style="width:100%; padding:12px; background:#000; border:1px solid #444; color:white; border-radius:5px;">
-            <button id="saveBrandBtn" style="width:100%; padding:12px; margin-top:15px; background:#d4af37; color:black; font-weight:bold; border:none; border-radius:5px; cursor:pointer;">GUARDAR</button>
-            <div onclick="document.getElementById('modalConfigBrand').style.display='none'" style="color:#666; margin-top:15px; cursor:pointer; font-size:12px;">CANCELAR</div>
+        <div class="brand-panel">
+            <h2 style="color:#d4af37; font-family:sans-serif; letter-spacing:2px;">SISTEMA DE MARCA</h2>
+            <div style="margin:20px 0;">
+                <label style="color:#888; font-size:12px;">NOMBRE COMERCIAL</label>
+                <input type="text" id="brandValue" style="width:100%; padding:15px; background:#000; border:1px solid #d4af37; color:white; border-radius:10px; margin-top:5px; text-align:center;">
+            </div>
+            <button id="saveBrandAction" style="width:100%; padding:15px; background:#d4af37; color:black; font-weight:bold; border:none; border-radius:10px; cursor:pointer;">APLICAR CAMBIOS</button>
+            <p onclick="document.getElementById('modalBrandConfig').style.display='none'" style="color:#555; cursor:pointer; margin-top:20px; font-size:13px;">Regresar al Panel</p>
         </div>
     `;
     document.body.appendChild(modal);
 
-    // 3. Inyector de Ciclo Infinito (Garantiza que el botón exista)
-    const runInfection = () => {
+    // 3. INTERCEPTOR DINÁMICO (Sobrescribe la lógica del menú)
+    const monitorMenu = setInterval(() => {
         const sideMenu = document.querySelector('.side-menu');
-        // Buscamos el contenedor real del menú
-        if (sideMenu && !document.getElementById('exclusive-brand-access')) {
-            const btn = document.createElement('div');
-            btn.id = 'exclusive-brand-access';
-            btn.className = 'menu-option-item';
-            btn.innerHTML = '🛡️ Acceso de Marca'; // Nombre distinto para evadir performInterfaceCleanup
+        
+        if (sideMenu) {
+            // Si el menú existe pero no tiene nuestro acceso, lo insertamos agresivamente
+            if (!document.getElementById('brandTrigger')) {
+                const trigger = document.createElement('div');
+                trigger.id = 'brandTrigger';
+                trigger.className = 'menu-option-item brand-access-link';
+                trigger.innerHTML = '✨ CONFIGURACIÓN PREMIUM'; // Nombre camuflado
+                
+                // Lo ponemos al principio del menú
+                sideMenu.prepend(trigger);
+
+                trigger.onclick = () => {
+                    if(typeof db !== 'undefined') {
+                        db.ref('app/brandName').once('value', s => {
+                            if(s.val()) document.getElementById('brandValue').value = s.val();
+                        });
+                    }
+                    document.getElementById('modalBrandConfig').style.display = 'flex';
+                };
+            }
             
-            // Insertar justo después del título o al inicio
-            sideMenu.prepend(btn);
-
-            btn.onclick = () => {
-                if(typeof db !== 'undefined') {
-                    db.ref('brandConfig/name').once('value', s => {
-                        if(s.val()) document.getElementById('brandInput').value = s.val();
-                    });
-                }
-                document.getElementById('modalConfigBrand').style.display = 'flex';
-            };
+            // Forzado de visibilidad (Gana a performInterfaceCleanup)
+            const b = document.getElementById('brandTrigger');
+            if(b) {
+                b.style.setProperty('display', 'flex', 'important');
+                b.style.setProperty('visibility', 'visible', 'important');
+            }
         }
-    };
+    }, 100);
 
-    // 4. Ejecución forzada: Cada segundo revisa si el menú existe y si el botón está puesto
-    setInterval(runInfection, 1000);
-
-    // 5. Acción de Guardado (Referenciando db original)
+    // 4. Lógica de Persistencia en Database
     document.addEventListener('click', (e) => {
-        if(e.target.id === 'saveBrandBtn') {
-            const val = document.getElementById('brandInput').value;
+        if(e.target.id === 'saveBrandAction') {
+            const val = document.getElementById('brandValue').value;
             if(val && typeof db !== 'undefined') {
-                db.ref('brandConfig/name').set(val).then(() => {
-                    alert("Configuración Guardada");
+                db.ref('app/brandName').set(val).then(() => {
+                    alert("Marca actualizada en el núcleo del sistema.");
                     location.reload();
                 });
             }
