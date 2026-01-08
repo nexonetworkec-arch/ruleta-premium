@@ -832,120 +832,83 @@
             });
         })();
 
-        // --- BLOQUE DE REPARACIÓN FINAL V2: CON BOTÓN DE MENÚ ---
+        // --- ETAPA 1: LIMPIEZA Y ESTÉTICA UNIFICADA ---
 (function() {
-    // 1. CSS CORRECTIVO: ESTILO ADMIN & EXCEPCIONES
-    const repairStyle = document.createElement('style');
-    repairStyle.innerHTML = `
-        .btn, .btn-secondary, .btn-danger, .side-panel button {
-            background: rgba(0,0,0,0.8) !important;
+    // 1. CSS PARA BOTONES CON EFECTO DORADO (Admin Master Style)
+    const adminStyle = document.createElement('style');
+    adminStyle.innerHTML = `
+        /* Estilo base para botones del panel y otros */
+        .side-panel .btn, .side-panel button, #btnBrandConfig {
+            background: rgba(0,0,0,0) !important; /* Transparente por defecto */
             border: 1px solid #d4af37 !important;
             color: #d4af37 !important;
             border-radius: 12px !important;
             font-weight: 800 !important;
+            transition: all 0.3s ease-in-out !important;
+            padding: 10px !important;
+            margin-bottom: 8px !important;
+            width: 100% !important;
             text-transform: uppercase !important;
-            transition: all 0.3s ease !important;
-            padding: 10px 15px !important;
-            margin-bottom: 5px;
         }
 
-        /* EXCEPCIÓN: BOTÓN GIRAR (Debe ser circular) */
-        #spin-button, .wheel-center button, [id*="spin"] {
-            border-radius: 50% !important;
-            aspect-ratio: 1 / 1 !important;
-            height: 90px !important;
-            width: 90px !important;
-            border: 4px solid #fff !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
+        /* Efecto al pasar el mouse: De transparente a Dorado */
+        .side-panel .btn:hover, .side-panel button:hover, #btnBrandConfig:hover {
+            background: #d4af37 !important;
+            color: #000 !important;
+            cursor: pointer;
         }
 
-        #dynamic-menu-container {
-            border-top: 1px solid rgba(212, 175, 55, 0.3);
-            margin-top: 15px;
-            padding-top: 10px;
-            display: flex;
-            flex-direction: column;
+        /* EXCEPCIÓN TOTAL: Proteger el botón de Girar original */
+        #btnSpinCenter, #btnSpinCenter * {
+            background: unset !important;
+            border: unset !important;
+            color: unset !important;
+            border-radius: unset !important;
+            transition: unset !important;
+            width: unset !important;
         }
     `;
-    document.head.appendChild(repairStyle);
+    document.head.appendChild(adminStyle);
 
+    // 2. LÓGICA DE LIMPIEZA Y CREACIÓN ÚNICA
     auth.onAuthStateChanged(user => {
-        const loader = document.getElementById('premium-loader');
-        
-        // Limpieza de duplicados
-        document.querySelectorAll('#btnMenuMaster, #btnBrandConfig').forEach(el => el.remove());
-
         if (user) {
+            // Eliminar CUALQUIER botón de marca existente para evitar duplicados
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.innerText.includes("MARCA") || btn.id === "btnBrandConfig") {
+                    btn.remove();
+                }
+            });
+
             db.ref('users/' + user.uid + '/config/level').on('value', snap => {
                 const level = snap.val();
                 const sidebar = document.querySelector('.side-panel');
                 if (!sidebar) return;
 
-                // 2.5 CREACIÓN DEL BOTÓN DE MENÚ PRINCIPAL
-                if (!document.getElementById('btnMenuMaster')) {
-                    const btnMenu = document.createElement('button');
-                    btnMenu.id = 'btnMenuMaster';
-                    btnMenu.innerHTML = '☰ MENÚ DE GESTIÓN';
-                    btnMenu.style.background = 'linear-gradient(45deg, #000, #222) !important';
-                    // Insertar al principio del panel
-                    sidebar.prepend(btnMenu);
-                }
-
-                // Contenedor para futuras opciones
-                let menuRack = document.getElementById('dynamic-menu-container');
-                if (!menuRack) {
-                    menuRack = document.createElement('div');
-                    menuRack.id = 'dynamic-menu-container';
-                    const btnExit = sidebar.querySelector('button[onclick*="signOut"]');
-                    sidebar.insertBefore(menuRack, btnExit);
-                }
-
-                // Botón de Marca (Solo PRO/PPE)
-                if ((level === 'pro' || level === 'ppe') && !document.getElementById('btnBrandConfig')) {
+                // Insertar el único botón de marca si es PRO/PPE
+                if (level === 'pro' || level === 'ppe') {
                     const btnBrand = document.createElement('button');
                     btnBrand.id = 'btnBrandConfig';
                     btnBrand.innerHTML = '✨ CONFIG. MARCA';
+                    
                     btnBrand.onclick = () => {
-                        const choice = confirm("CONFIGURACIÓN DE MARCA:\n\nOK: Subir archivo\nCANCELAR: Usar URL");
-                        choice ? document.getElementById('logoInput').click() : saveFromURL();
+                        const choice = confirm("CONFIGURACIÓN DE MARCA:\n\nOK: Subir desde dispositivo\nCANCELAR: Usar URL Web");
+                        if (choice) {
+                            document.getElementById('logoInput').click();
+                        } else {
+                            const url = prompt("Pegue la URL de la imagen:");
+                            if (url) db.ref('users/' + user.uid + '/config/customLogoURL').set(url);
+                        }
                     };
-                    menuRack.appendChild(btnBrand);
+
+                    // Insertar antes del botón de Cerrar Sesión
+                    const btnExit = sidebar.querySelector('button[onclick*="signOut"]');
+                    sidebar.insertBefore(btnBrand, btnExit);
                 }
             });
-        }
-        
-        setTimeout(() => { 
-            if(loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 600);
-            }
-        }, 1500);
-    });
-
-    async function saveFromURL() {
-        const url = prompt("Ingrese URL del logo:");
-        if (url) saveLogo(url);
-    }
-
-    async function saveLogo(data) {
-        try {
-            await db.ref('users/' + currentUser.uid + '/config/customLogoURL').set(data);
-            alert("✅ MARCA ACTUALIZADA");
-        } catch (e) { alert("Error: " + e.message); }
-    }
-
-    document.getElementById('logoInput')?.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (ev) => saveLogo(ev.target.result);
-            reader.readAsDataURL(file);
         }
     });
 })();
     </script>
 </body>
 </html>
-
