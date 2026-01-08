@@ -1037,73 +1037,84 @@
 })();
 
         // ==========================================
-// INYECCIÓN ADITIVA: FIX NAVEGACIÓN ADMIN
+// INYECCIÓN DEFINITIVA: HOOK DE MENÚ ADMIN
 // ==========================================
 (function() {
-    const INJECT_ID = 'menuOptionAdminMaster_v3';
+    // 1. Inyectar CSS de alta prioridad para ocultar el botón viejo y dar estilo al nuevo
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #btnAdminMaster { display: none !important; } 
+        .admin-hook-item { 
+            color: var(--gold) !important; 
+            border: 1px solid var(--gold) !important;
+            margin-top: 10px !important;
+            font-weight: 900 !important;
+            box-shadow: inset 0 0 10px rgba(212,175,55,0.1);
+        }
+    `;
+    document.head.appendChild(style);
 
-    const performInjection = () => {
+    const injectAdminNow = () => {
         const sideMenu = document.getElementById('nexoSideMenu');
         const originalBtn = document.getElementById('btnAdminMaster');
         
-        if (sideMenu && !document.getElementById(INJECT_ID)) {
-            const adminOption = document.createElement('div');
-            adminOption.id = INJECT_ID;
-            adminOption.className = 'menu-option-item'; 
-            adminOption.style.display = 'none'; 
-            adminOption.style.borderLeft = '4px solid var(--gold)';
-            adminOption.style.color = 'var(--gold)';
-            adminOption.innerHTML = `👑 ADMIN MASTER`;
+        // Si el menú existe y no tiene ya mi botón
+        if (sideMenu && !document.getElementById('adminHookBtn')) {
+            const adminBtn = document.createElement('div');
+            adminBtn.id = 'adminHookBtn';
+            adminBtn.className = 'menu-option-item admin-hook-item';
+            adminBtn.innerHTML = `👑 ADMIN MASTER`;
             
-            adminOption.onclick = (e) => {
-                e.preventDefault(); // Evitar cualquier redirección por defecto
-                if (originalBtn) {
-                    originalBtn.click(); // Disparar la función original
-                }
-                // Retraso mínimo para cerrar el menú sin interferir con la apertura del panel
-                setTimeout(() => {
-                    if (typeof closeAll === 'function') closeAll();
-                }, 100);
+            adminBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (originalBtn) originalBtn.click(); // Ejecuta la función original
+                if (typeof closeAll === 'function') closeAll(); // Cierra el menú
             };
 
+            // Insertar justo antes del botón de Cerrar Sesión
             const logoutBtn = sideMenu.querySelector('.menu-logout');
             if (logoutBtn) {
-                sideMenu.insertBefore(adminOption, logoutBtn);
+                sideMenu.insertBefore(adminBtn, logoutBtn);
             } else {
-                sideMenu.appendChild(adminOption);
+                sideMenu.appendChild(adminBtn);
             }
-        }
-
-        // Ocultar botón original del cuerpo de la página
-        if (originalBtn) {
-            originalBtn.style.setProperty('display', 'none', 'important');
         }
     };
 
-    const observer = new MutationObserver(() => performInjection());
+    // 2. Usar un observador persistente para combatir la sobreescritura de tu código original
+    const observer = new MutationObserver(() => {
+        // Cada vez que tu código original reescriba el menú, yo vuelvo a meter el botón
+        injectAdminNow();
+    });
+
     observer.observe(document.body, { childList: true, subtree: true });
 
+    // 3. Verificación de permisos con Firebase
     auth.onAuthStateChanged((user) => {
         if (user) {
-            db.ref('admins/' + user.uid).on('value', (s) => {
-                const isAdmin = s.val();
-                const checkVisibility = setInterval(() => {
-                    const menuAdmin = document.getElementById(INJECT_ID);
-                    if (menuAdmin) {
-                        menuAdmin.style.display = isAdmin ? 'flex' : 'none';
-                        clearInterval(checkVisibility);
+            db.ref('admins/' + user.uid).on('value', (snapshot) => {
+                const isAdmin = snapshot.val();
+                // Usamos un intervalo para forzar la visibilidad según el permiso
+                const forceVisible = setInterval(() => {
+                    const btn = document.getElementById('adminHookBtn');
+                    if (btn) {
+                        btn.style.setProperty('display', isAdmin ? 'flex' : 'none', 'important');
+                        if (isAdmin) clearInterval(forceVisible);
                     }
-                }, 100);
-                setTimeout(() => clearInterval(checkVisibility), 3000);
+                }, 200);
+                setTimeout(() => clearInterval(forceVisible), 4000);
             });
         }
     });
-
-    performInjection();
 })();
+// ==========================================
+// FIN DE LA INYECCIÓN
+// ==========================================
     </script>
 </body>
 </html>
+
 
 
 
