@@ -1037,112 +1037,94 @@
 })();
     </script>
     <style>
-    @media screen and (orientation: landscape) and (max-width: 950px) {
-        /* 1. Contenedor: Forzar altura fija para evitar scroll */
+    /* Solo se activa si el ancho es mayor al alto (Horizontal) */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+        /* Ajustamos el contenedor para que no use Flex vertical */
         .app-container {
-            display: flex !important;
-            flex-direction: column !important; /* Columna para alinear Título + Ruleta verticalmente */
-            justify-content: center !important;
-            align-items: center !important;
+            display: block !important; /* Cambiamos a block para posicionamiento manual */
             height: 100vh !important;
-            width: 100vw !important;
-            padding: 5px 0 !important;
             overflow: hidden !important;
-            position: relative !important;
         }
 
-        /* 2. Título: Visible pero compacto en la parte superior */
+        /* Título pequeño arriba a la izquierda */
         #mainTitle {
-            display: block !important;
-            font-size: 0.9rem !important;
-            margin: 0 0 5px 0 !important;
-            text-align: center !important;
-            color: var(--gold) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
+            position: absolute !important;
+            top: 5px !important;
+            left: 10px !important;
+            font-size: 0.8rem !important;
+            z-index: 10;
         }
 
-        /* 3. Sección de la Ruleta: Máximo ajuste vertical */
+        /* Ruleta: Centrada usando transform para no romper el layout */
         .wheel-section {
-            position: relative !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            flex: 1 !important; /* Toma el espacio disponible entre título y auto-delete */
-            width: 100% !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) scale(0.85) !important;
+            width: auto !important;
+            margin: 0 !important;
         }
 
         .wheel-wrapper {
-            /* Prioridad: que la ruleta no supere la altura de la pantalla */
-            width: 65vh !important; 
-            height: 65vh !important;
-            margin: 0 auto !important;
-            max-width: 90vw !important;
+            width: 70vh !important;
+            height: 70vh !important;
         }
 
-        /* 4. Panel de Botones: Superior Derecha, Flotante y Sin Marco */
+        /* Botones: Flotando a la derecha sin marco */
         .side-panel {
             position: absolute !important;
-            top: 10px !important;
-            right: 15px !important;
-            width: 150px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 6px !important;
+            top: 5px !important;
+            right: 10px !important;
+            width: 140px !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 5px !important;
             z-index: 100 !important;
         }
 
         .side-panel .btn {
-            font-size: 0.65rem !important;
-            padding: 6px !important;
+            font-size: 0.6rem !important;
+            padding: 5px !important;
+            margin: 0 !important;
             background: rgba(22, 22, 22, 0.9) !important;
             border: 1px solid var(--gold) !important;
-            margin: 0 !important;
         }
 
-        /* 5. Auto-eliminar: Debajo de la ruleta */
+        /* Auto-eliminar: Debajo de la ruleta */
         .auto-delete-container {
-            margin-top: 5px !important;
-            background: rgba(0,0,0,0.6) !important;
-            padding: 3px 10px !important;
-            border-radius: 15px !important;
+            position: absolute !important;
+            bottom: 5px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            font-size: 0.65rem !important;
+            background: rgba(0,0,0,0.7) !important;
             border: 1px solid var(--gold) !important;
-            font-size: 0.7rem !important;
+            padding: 2px 10px !important;
+            border-radius: 10px !important;
+            z-index: 20;
         }
 
-        /* Ocultar logo para maximizar espacio vertical */
-        .logo-container {
-            display: none !important;
-        }
+        /* Ocultar Logo para limpiar la pantalla */
+        .logo-container { display: none !important; }
     }
 </style>
 
 <script>
     (function() {
-        /**
-         * Referenciación: Mantenemos el motor original intacto 
-         * pero forzamos el redibujado para ajustar el canvas al nuevo vh.
-         */
-        const adjustLayout = () => {
+        const resetWheel = () => {
             if (window.appWheel && typeof window.appWheel.draw === 'function') {
-                setTimeout(() => {
-                    window.appWheel.draw();
-                }, 200);
+                setTimeout(() => { window.appWheel.draw(); }, 300);
             }
         };
-
-        window.addEventListener("resize", adjustLayout);
-        window.addEventListener("orientationchange", adjustLayout);
-        
-        // Ejecución inicial
-        if (window.innerWidth > window.innerHeight) {
-            adjustLayout();
-        }
+        window.addEventListener("orientationchange", resetWheel);
+        window.addEventListener("resize", () => {
+            if (window.innerWidth > window.innerHeight) resetWheel();
+        });
     })();
 </script>
 </body>
 </html>
+
