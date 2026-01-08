@@ -1037,7 +1037,7 @@
 })();
 
         /* ==========================================================
-   SISTEMA ELITE V6.1: REPARACIÓN DE MOTOR Y COLOR TOTAL
+   SISTEMA ELITE V6.2: COMPRESOR DE IMAGEN & PALETA PRO
    ========================================================== */
 (function() {
     const styleInject = document.createElement('style');
@@ -1072,11 +1072,33 @@
         }
         .v6-group-content { display: none; padding-top: 15px; }
         .v6-group-content.open { display: block; }
-        .v6-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+        .v6-input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; font-size: 13px; }
         .v6-btn-action { width: 100%; padding: 15px; background: var(--gold); border: none; font-weight: 900; cursor: pointer; border-radius: 8px; color: black; }
-        .v6-btn-action:disabled { opacity: 0.5; cursor: wait; }
+        
+        /* Paleta de Colores */
+        .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
+        .palette-dot { width: 100%; aspect-ratio: 1; border-radius: 4px; cursor: pointer; border: 1px solid #333; }
     `;
     document.head.appendChild(styleInject);
+
+    // Motor de Compresión de Imagen
+    const optimizeImage = (file, maxWidth = 1000) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ratio = maxWidth / img.width;
+                canvas.width = maxWidth;
+                canvas.height = img.height * ratio;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7)); // Comprimido al 70%
+            };
+        };
+    });
 
     const ui = {
         trigger: document.createElement('div'),
@@ -1100,16 +1122,22 @@
                 <div class="v6-header-main">🛠️ Gestión</div>
                 <div class="v6-group-btn" onclick="document.getElementById('brand-content').classList.toggle('open')">🎨 Configuración de Marca</div>
                 <div class="v6-group-content" id="brand-content">
-                    <input type="text" id="v6-name" class="v6-input" placeholder="Nombre del sistema">
-                    <input type="text" id="v6-logo-url" class="v6-input" placeholder="URL Logo...">
-                    <button class="v6-input" style="cursor:pointer" onclick="document.getElementById('v6-logo-file').click()">📁 Logo Local</button>
+                    <input type="text" id="v6-name" class="v6-input" placeholder="Nombre de la App">
+                    <label style="font-size:10px; color:#666;">LOGO (URL O LOCAL)</label>
+                    <input type="text" id="v6-logo-url" class="v6-input" placeholder="https://...">
                     <input type="file" id="v6-logo-file" hidden accept="image/*">
-                    <input type="text" id="v6-bg-url" class="v6-input" placeholder="URL Fondo...">
-                    <button class="v6-input" style="cursor:pointer" onclick="document.getElementById('v6-bg-file').click()">🖼️ Fondo Local</button>
+                    <button class="v6-btn-action" style="background:#222; color:#fff; font-size:11px; margin-bottom:15px;" onclick="document.getElementById('v6-logo-file').click()">SUBIR ARCHIVO LOCAL</button>
+                    
+                    <label style="font-size:10px; color:#666;">FONDO (URL O LOCAL)</label>
+                    <input type="text" id="v6-bg-url" class="v6-input" placeholder="https://...">
                     <input type="file" id="v6-bg-file" hidden accept="image/*">
-                    <label style="font-size:10px; color:var(--gold); font-weight:bold;">COLOR GLOBAL APP</label>
-                    <input type="color" id="v6-color" style="width:100%; height:45px; border:none; background:none; cursor:pointer;">
-                    <button id="v6-save" class="v6-btn-action" style="margin-top:15px;">APLICAR BRANDING</button>
+                    <button class="v6-btn-action" style="background:#222; color:#fff; font-size:11px; margin-bottom:15px;" onclick="document.getElementById('v6-bg-file').click()">SUBIR ARCHIVO LOCAL</button>
+
+                    <label style="font-size:10px; color:var(--gold); font-weight:900;">PALETA DE COLORES COMPLETA</label>
+                    <input type="color" id="v6-color-hex" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
+                    <div class="palette-grid" id="palette-presets"></div>
+                    
+                    <button id="v6-save" class="v6-btn-action" style="margin-top:25px;">APLICAR BRANDING</button>
                 </div>
             </div>
             <div class="v6-section">
@@ -1120,56 +1148,51 @@
     `;
     document.body.append(ui.trigger, ui.overlay, ui.panel);
 
-    const toBase64 = file => file ? new Promise((res) => {
-        const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file);
-    }) : Promise.resolve(null);
+    // Presets de Paleta
+    const presets = ['#d4af37', '#c0c0c0', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#34495e', '#e67e22', '#ffffff'];
+    const pGrid = document.getElementById('palette-presets');
+    presets.forEach(c => {
+        const dot = document.createElement('div');
+        dot.className = 'palette-dot';
+        dot.style.backgroundColor = c;
+        dot.onclick = () => { document.getElementById('v6-color-hex').value = c; };
+        pGrid.appendChild(dot);
+    });
 
-    // FUNCIÓN DE GUARDADO CORREGIDA
     document.getElementById('v6-save').onclick = async function() {
         const btn = this;
-        btn.disabled = true; btn.innerText = "PROCESANDO...";
+        btn.innerText = "OPTIMIZANDO..."; btn.disabled = true;
         
         try {
             const lFile = document.getElementById('v6-logo-file').files[0];
             const bFile = document.getElementById('v6-bg-file').files[0];
             
-            const logoRes = await toBase64(lFile);
-            const bgRes = await toBase64(bFile);
-
             const data = {
-                appName: document.getElementById('v6-name').value || "",
-                logo: logoRes || document.getElementById('v6-logo-url').value || "",
-                bg: bgRes || document.getElementById('v6-bg-url').value || "",
-                color: document.getElementById('v6-color').value || "#d4af37"
+                appName: document.getElementById('v6-name').value,
+                logo: lFile ? await optimizeImage(lFile, 500) : document.getElementById('v6-logo-url').value,
+                bg: bFile ? await optimizeImage(bFile, 1200) : document.getElementById('v6-bg-url').value,
+                color: document.getElementById('v6-color-hex').value
             };
 
             await db.ref('appBranding').update(data);
-            alert("¡Branding aplicado con éxito!");
+            alert("¡Branding Guardado!");
             location.reload();
         } catch (e) {
-            console.error(e);
-            alert("Error al guardar. Verifica la conexión.");
-        } finally {
-            btn.disabled = false; btn.innerText = "APLICAR BRANDING";
+            alert("Error: Imagen muy pesada o sin conexión.");
+            btn.innerText = "APLICAR BRANDING"; btn.disabled = false;
         }
     };
 
-    // APLICACIÓN DE COLOR EXTENDIDA
     const applyBranding = () => {
         db.ref('appBranding').on('value', s => {
             const d = s.val(); if(!d) return;
-            const themeCol = d.color || "#d4af37";
-            
-            document.documentElement.style.setProperty('--gold', themeCol);
-            
+            const c = d.color || '#d4af37';
+            document.documentElement.style.setProperty('--gold', c);
             if(d.appName) { document.title = d.appName; const h = document.querySelector('h1'); if(h) h.innerText = d.appName; }
-            if(d.bg) document.body.style.background = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${d.bg}) center/cover fixed no-repeat`;
-            else document.body.style.backgroundColor = themeCol + "22"; // 22 es transparencia sutil
-
+            if(d.bg) document.body.style.background = `linear-gradient(${c}33, ${c}33), url(${d.bg}) center/cover fixed no-repeat`;
             const spinBtn = document.querySelector('.spin-button') || document.getElementById('spinBtn');
             if(spinBtn) {
-                spinBtn.style.boxShadow = `0 0 30px ${themeCol}66`;
-                spinBtn.style.borderColor = themeCol;
+                spinBtn.style.boxShadow = `0 0 25px ${c}88`;
                 const img = spinBtn.querySelector('img');
                 if(img && d.logo) img.src = d.logo;
             }
