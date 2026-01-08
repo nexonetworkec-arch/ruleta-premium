@@ -920,126 +920,132 @@
     </script>
 
     <style>
-    /* Estilos Aditivos: No afectan el diseño global */
     .admin-notif-bar { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; }
     .admin-activity-monitor { background: #050505; border: 1px dashed #333; border-radius: 8px; height: 140px; overflow-y: auto; font-family: monospace; font-size: 11px; padding: 10px; margin-bottom: 20px; color: #00ff00; }
-    .log-entry { border-bottom: 1px solid #1a1a1a; padding: 4px 0; display: flex; justify-content: space-between; }
+    .log-entry { border-bottom: 1px solid #1a1a1a; padding: 4px 0; display: flex; justify-content: space-between; font-size: 10px; }
     .log-time { color: var(--gold); margin-right: 8px; }
-    .remote-edit-container { background: #111; border: 1px solid var(--gold); padding: 12px; margin: 8px 0; border-radius: 8px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; position: relative; }
-    .remote-edit-container input { width: 100%; background: #000; color: var(--gold); border: 1px solid #444; padding: 10px; margin-bottom: 8px; border-radius: 5px; font-size: 13px; }
-    .btn-ban-action { background: #721c24 !important; color: #f8d7da !important; font-size: 10px !important; }
-    .suspended-msg { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+    .remote-edit-container { background: #111; border: 1px solid var(--gold); padding: 12px; margin: 8px 0; border-radius: 8px; display: none; }
+    .btn-ban-action { background: #721c24 !important; color: white !important; }
+    .suspended-msg { position: fixed; inset: 0; background: #000; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 </style>
 
 <script>
 (function() {
-    // 1. AUTO-INYECCIÓN DE INTERFAZ
-    const injectAdminUI = () => {
-        const adminModalContent = document.querySelector('#modalAdmin .modal-content');
-        if (!adminModalContent || document.getElementById('extra-admin-tools')) return;
+    // Asegurar que Firebase esté listo antes de ejecutar
+    const initMasterAdmin = () => {
+        if (typeof db === 'undefined') return setTimeout(initMasterAdmin, 500);
 
-        const toolsHtml = `
-            <div id="extra-admin-tools" style="border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px;">
-                <div class="admin-notif-bar">
-                    <small style="color:var(--gold); font-weight:800; letter-spacing:1px;">📢 AVISO GLOBAL (POP-UP)</small>
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <input type="text" id="globalMsgInput" placeholder="Mensaje para todos..." style="flex:1; background:#111; border:1px solid #333; color:white; padding:8px; border-radius:5px;">
-                        <button onclick="sendGlobalNotice()" class="btn-action-mini" style="background:var(--gold); color:black; width:80px; height:38px;">ENVIAR</button>
+        // 1. INYECTOR DE INTERFAZ MEJORADO
+        const injectUI = () => {
+            const container = document.querySelector('#modalAdmin .modal-content');
+            if (!container || document.getElementById('admin-tools-v2')) return;
+
+            const html = `
+                <div id="admin-tools-v2" style="border-bottom: 2px solid #333; margin-bottom: 20px;">
+                    <div class="admin-notif-bar">
+                        <small style="color:var(--gold); font-weight:bold;">📢 AVISO GLOBAL</small>
+                        <div style="display:flex; gap:8px; margin-top:8px;">
+                            <input type="text" id="inputGlobalNotice" placeholder="Mensaje..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
+                            <button id="btnSendNotice" class="btn-action-mini" style="background:var(--gold); color:black; width:80px; cursor:pointer;">ENVIAR</button>
+                        </div>
                     </div>
-                </div>
-                <small style="color:var(--gold); font-weight:700;">📡 MONITOR DE ACTIVIDAD</small>
-                <div id="adminActivityLog" class="admin-activity-monitor"><div class="log-entry">Esperando eventos...</div></div>
-                <button onclick="exportDatabaseToCSV()" class="btn" style="width:100%; background:#1b5e20; color:white; margin-bottom:15px; font-size:12px; height:45px;">📊 EXPORTAR BASE DE DATOS (CSV)</button>
-            </div>`;
-        
-        const title = adminModalContent.querySelector('h3');
-        if (title) title.insertAdjacentHTML('afterend', toolsHtml);
-    };
+                    <small style="color:var(--gold); font-weight:bold;">📡 MONITOR EN VIVO</small>
+                    <div id="logMonitor" class="admin-activity-monitor"></div>
+                    <button id="btnExportCSV" class="btn" style="width:100%; background:#1b5e20; color:white; margin-bottom:15px; height:40px; cursor:pointer;">📊 DESCARGAR EXCEL (CSV)</button>
+                </div>`;
+            
+            const title = container.querySelector('h3');
+            if (title) title.insertAdjacentHTML('afterend', html);
 
-    // 2. LÓGICA DE NOTIFICACIONES Y MONITOR
-    window.sendGlobalNotice = async () => {
-        const msg = document.getElementById('globalMsgInput').value;
-        if(!msg) return;
-        await db.ref('global_announcement').set({ message: msg, timestamp: Date.now() });
-        document.getElementById('globalMsgInput').value = "";
-        alert("Aviso Global enviado correctamente.");
-    };
+            // Asignar eventos manualmente para evitar errores de Scope
+            document.getElementById('btnSendNotice').onclick = actionSendNotice;
+            document.getElementById('btnExportCSV').onclick = actionExportCSV;
+        };
 
-    db.ref('global_announcement').on('value', snap => {
-        const data = snap.val();
-        if(data && (Date.now() - data.timestamp < 15000)) alert("🔔 NEXO ADMIN:\n" + data.message);
-    });
-
-    window.addLogToMonitor = (msg) => {
-        const log = document.getElementById('adminActivityLog');
-        if(!log) return;
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span> <span>${msg}</span>`;
-        log.prepend(entry);
-        if(log.childNodes.length > 30) log.lastChild.remove();
-    };
-
-    db.ref('users').on('child_changed', snap => {
-        const u = snap.val();
-        if(u.history) {
-            const last = Object.values(u.history).pop();
-            if(last && last.timestamp > (Date.now() - 5000)) 
-                addLogToMonitor(`GIRO: ${u.email || 'Usuario'} ganó [${last.premio || last.nombre}]`);
+        // 2. LÓGICA DE FUNCIONES (Scope Protegido)
+        async function actionSendNotice() {
+            const input = document.getElementById('inputGlobalNotice');
+            if(!input.value) return;
+            try {
+                await db.ref('global_announcement').set({ message: input.value, timestamp: Date.now() });
+                input.value = "";
+                alert("✅ Enviado");
+            } catch(e) { alert("Error al enviar"); }
         }
-    });
 
-    // 3. CONTROL DE USUARIOS (EXTENSIÓN)
-    window.toggleUserStatus = async (uid, current) => {
-        const next = current === 'suspended' ? 'active' : 'suspended';
-        if(confirm(`¿Confirmar cambio a ${next.toUpperCase()}?`)) {
-            await db.ref(`users/${uid}/accountStatus`).set(next);
-            addLogToMonitor(`SISTEMA: Usuario ${uid.substring(0,5)} cambiado a ${next}`);
+        async function actionExportCSV() {
+            const snap = await db.ref('users').once('value');
+            const data = snap.val();
+            if(!data) return alert("No hay datos");
+
+            let rows = [["UID", "Email", "Nivel", "Estado", "Premios"]];
+            for (let uid in data) {
+                let u = data[uid];
+                rows.push([
+                    uid,
+                    u.email || "Sin email",
+                    (u.config && u.config.level) ? u.config.level : "free",
+                    u.accountStatus || "active",
+                    u.config && u.config.prizes ? `"${u.config.prizes.join(' | ')}"` : ""
+                ]);
+            }
+
+            let csvContent = "\uFEFF" + rows.map(e => e.join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Usuarios_Nexo_${new Date().toLocaleDateString()}.csv`;
+            link.click();
         }
-    };
 
-    window.toggleRemoteEditor = (uid) => {
-        const el = document.getElementById(`remote-edit-${uid}`);
-        if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    };
+        // 3. MONITOR DE ACTIVIDAD REAL (Escuchando Historiales)
+        db.ref('users').on('child_changed', snap => {
+            const user = snap.val();
+            const logDiv = document.getElementById('logMonitor');
+            if(!logDiv) return;
 
-    window.saveRemotePrizes = async (uid) => {
-        const val = document.getElementById(`input-prizes-${uid}`).value;
-        const prizes = val.split(',').map(p => p.trim()).filter(p => p !== "");
-        await db.ref(`users/${uid}/config/prizes`).set(prizes);
-        alert("Lista de premios actualizada para el usuario.");
-        toggleRemoteEditor(uid);
-    };
-
-    window.exportDatabaseToCSV = async () => {
-        const snap = await db.ref('users').once('value');
-        const users = snap.val();
-        let csv = "UID,Email,Nivel,Estado\n";
-        Object.keys(users).forEach(uid => {
-            const u = users[uid];
-            csv += `${uid},${u.email || 'N/A'},${u.config?.level || 'free'},${u.accountStatus || 'active'}\n`;
-        });
-        const link = document.createElement("a");
-        link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
-        link.download = "Usuarios_Nexo.csv";
-        link.click();
-    };
-
-    // 4. SEGURIDAD DE SUSPENSIÓN
-    auth.onAuthStateChanged(user => {
-        if(user) {
-            db.ref(`users/${user.uid}/accountStatus`).on('value', snap => {
-                if(snap.val() === 'suspended') {
-                    document.body.innerHTML = `<div class="suspended-msg"><h1 style="color:var(--danger)">CUENTA SUSPENDIDA</h1><p>Contacte al administrador.</p><button onclick="auth.signOut().then(()=>location.reload())" class="btn btn-primary">SALIR</button></div>`;
+            if(user.history) {
+                const historyArr = Object.values(user.history);
+                const last = historyArr[historyArr.length - 1];
+                
+                // Solo loguear si es muy reciente (evitar logs viejos al cargar)
+                if(last && last.timestamp > (Date.now() - 10000)) {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    entry.innerHTML = `<span class="log-time">[${new Date().toLocaleTimeString()}]</span> <span><b>${user.email?.split('@')[0] || 'User'}</b> ganó: ${last.premio || last.nombre}</span>`;
+                    logDiv.prepend(entry);
+                    if(logDiv.childNodes.length > 20) logDiv.lastChild.remove();
                 }
-            });
-        }
-    });
+            }
+        });
 
-    // Lanzar inyectores
-    setInterval(injectAdminUI, 3000);
+        // 4. ESCUCHA DE AVISOS (Para el usuario)
+        db.ref('global_announcement').on('value', snap => {
+            const val = snap.val();
+            if(val && val.timestamp > (Date.now() - 15000)) {
+                alert("📢 MENSAJE DE ADMINISTRACIÓN:\n\n" + val.message);
+            }
+        });
+
+        // 5. PROTECCIÓN DE BANEO
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                db.ref(`users/${user.uid}/accountStatus`).on('value', s => {
+                    if(s.val() === 'suspended') {
+                        document.body.innerHTML = `<div class="suspended-msg"><h1 style="color:red">ACCESO RESTRINGIDO</h1><p style="color:white">Tu cuenta ha sido suspendida.</p><button onclick="location.reload()" class="btn">REINTENTAR</button></div>`;
+                    }
+                });
+            }
+        });
+
+        // Ejecutar inyector cada vez que se abra el modal o cambie la vista
+        setInterval(injectUI, 2000);
+    };
+
+    initMasterAdmin();
 })();
 </script>
 </body>
 </html>
+
 
