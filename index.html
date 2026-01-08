@@ -920,6 +920,22 @@
     </script>
 
     <style>
+    /* 1. FIX DE SCROLL PARA MODALES (Mejora de Experiencia de Usuario) */
+    .modal {
+        display: none; 
+        overflow-y: auto !important; /* Permite scroll en el fondo si es necesario */
+        align-items: flex-start !important; /* Alinea al inicio para pantallas pequeñas */
+        padding: 20px 10px;
+    }
+    
+    .modal-content {
+        max-height: 90vh !important; /* El modal no pasará del 90% del alto de pantalla */
+        overflow-y: auto !important; /* Habilita scroll interno */
+        margin: auto !important; /* Centra el modal */
+        position: relative;
+    }
+
+    /* 2. ESTILOS SUITE DE ADMINISTRACIÓN */
     #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
     .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 120px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 10px; margin: 10px 0; color: #00ff00; }
     .nexo-log { border-bottom: 1px solid #111; padding: 4px 0; display: flex; justify-content: space-between; }
@@ -928,20 +944,17 @@
 
 <script>
 (function() {
-    // FUNCIÓN PARA OBTENER DB Y AUTH GLOBALMENTE (Saltando el scope local)
-    const getFirebase = () => {
-        try {
-            return {
-                base: firebase.database(),
-                acceso: firebase.auth()
-            };
-        } catch(e) { return null; }
+    // FUNCIÓN PARA OBTENER FIREBASE GLOBALMENTE
+    const getFB = () => {
+        try { return { base: firebase.database(), acceso: firebase.auth() }; } 
+        catch(e) { return null; }
     };
 
-    const iniciarAdminFix = () => {
-        const fb = getFirebase();
-        if (!fb) return setTimeout(iniciarAdminFix, 1000);
+    const iniciarTodo = () => {
+        const fb = getFB();
+        if (!fb) return setTimeout(iniciarTodo, 1000);
 
+        // INYECTOR DE INTERFAZ EN EL MODAL ADMIN
         const inyectarPanel = () => {
             const container = document.querySelector('#modalAdmin .modal-content');
             if (!container || document.getElementById('nexo-admin-suite')) return;
@@ -963,15 +976,16 @@
             const titulo = container.querySelector('h3');
             if (titulo) titulo.insertAdjacentHTML('beforebegin', html);
 
+            // EVENTO: ENVIAR MENSAJE
             document.getElementById('btnEnviarMsg').onclick = async () => {
                 const txt = document.getElementById('msgGlobal').value;
                 if(!txt) return;
-                // Ruta alternativa por si la raíz está bloqueada
                 fb.base.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() })
                     .then(() => { alert("✅ Enviado"); document.getElementById('msgGlobal').value = ""; })
-                    .catch(e => alert("❌ Error: Verifica reglas de Firebase"));
+                    .catch(() => alert("❌ Error de permisos"));
             };
 
+            // EVENTO: DESCARGAR CSV
             document.getElementById('btnDescargarDB').onclick = async () => {
                 const snap = await fb.base.ref('users').once('value');
                 const users = snap.val();
@@ -987,7 +1001,7 @@
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = "Nexo_DB.csv";
+                a.download = "Nexo_DB_Completa.csv";
                 a.click();
             };
         };
@@ -1010,7 +1024,7 @@
             }
         });
 
-        // ESCUCHA DE AVISOS PARA TODOS
+        // ESCUCHA DE AVISOS (PARA TODOS LOS CLIENTES)
         fb.base.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const d = snap.val();
             if(d && d.time > (Date.now() - 15000)) alert("📢 MENSAJE ADMIN:\n" + d.msg);
@@ -1019,7 +1033,7 @@
         setInterval(inyectarPanel, 2000);
     };
 
-    iniciarAdminFix();
+    iniciarTodo();
 })();
 </script>
 </body>
