@@ -1029,100 +1029,100 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA FINAL: SEGMENTACIÓN DE NIVELES (ANCLAJE LOCAL)
- * Este bloque inserta los niveles solo cuando el panel administrativo está activo.
+ * INYECCIÓN ADITIVA: LOCALIZADOR POR TEXTO (SOLUCIÓN FINAL)
+ * Este bloque busca el texto "ENVIAR AVISO" para inyectar la interfaz.
  */
 (function() {
-    const sincronizarNivelesAdmin = () => {
-        // Buscamos el botón de envío original dentro del panel
-        const btnEnvio = document.querySelector('button[onclick*="sendGlobalMsg"]');
-        
-        // Si el botón existe y nuestra interfaz aún no ha sido inyectada
-        if (btnEnvio && !document.getElementById('contenedor-niveles-local')) {
-            
-            // 1. Configuramos el contenedor del botón para que acepte elementos a su izquierda
-            const padre = btnEnvio.parentNode;
-            padre.style.display = "flex";
-            padre.style.flexDirection = "row";
-            padre.style.alignItems = "center";
-            padre.style.justifyContent = "center";
-            padre.style.gap = "10px";
-            padre.style.flexWrap = "wrap";
-            padre.style.marginTop = "10px";
+    const localizarEInyectar = () => {
+        // Buscamos todos los botones en el documento
+        const botones = document.querySelectorAll('button');
+        let btnEncontrado = null;
 
-            // 2. Creamos el bloque de niveles con diseño integrado
+        // Filtramos para encontrar el que dice exactamente ENVIAR AVISO
+        for (let b of botones) {
+            if (b.innerText.includes("ENVIAR AVISO")) {
+                btnEncontrado = b;
+                break;
+            }
+        }
+
+        // Si lo encontramos y no hemos inyectado los niveles aún
+        if (btnEncontrado && !document.getElementById('filtro-niveles-texto')) {
+            const padre = btnEncontrado.parentNode;
+
+            // Creamos el contenedor de niveles
             const div = document.createElement('div');
-            div.id = 'contenedor-niveles-local';
-            div.style.cssText = "display: flex; align-items: center; gap: 8px; background: #000; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--gold, #d4af37);";
+            div.id = 'filtro-niveles-texto';
+            div.style.cssText = `
+                display: flex !important;
+                align-items: center !important;
+                gap: 5px !important;
+                background: #000 !important;
+                padding: 5px 10px !important;
+                border-radius: 8px !important;
+                border: 1px solid #d4af37 !important;
+                margin-bottom: 8px !important;
+                width: fit-content !important;
+            `;
             
             div.innerHTML = `
-                <span style="font-size: 9px; color: var(--gold, #d4af37); font-weight: bold; margin-right: 5px;">PARA:</span>
-                <label style="font-size: 10px; color: var(--gold, #d4af37); cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; margin:0;">
-                    <input type="checkbox" id="chkLvlAllLocal" onchange="window.toggleNivelesLocal(this.checked)" style="width:13px; height:13px;"> ALL
+                <span style="font-size: 9px; color: #d4af37; font-weight: bold;">DESTINO:</span>
+                <label style="font-size: 10px; color: #d4af37; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    <input type="checkbox" id="chkAllFinal" onchange="window.toggleAllFinal(this.checked)"> ALL
                 </label>
-                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0;">
-                    <input type="checkbox" class="chk-target-local" value="pro" style="width:13px; height:13px;"> PRO
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    <input type="checkbox" class="chk-item-final" value="pro"> PRO
                 </label>
-                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0;">
-                    <input type="checkbox" class="chk-target-local" value="ppe" style="width:13px; height:13px;"> PPE
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    <input type="checkbox" class="chk-item-final" value="ppe"> PPE
                 </label>
-                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 4px; margin:0;">
-                    <input type="checkbox" class="chk-target-local" value="free" style="width:13px; height:13px;"> FREE
+                <label style="font-size: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    <input type="checkbox" class="chk-item-final" value="free"> FREE
                 </label>
             `;
 
-            // 3. Insertamos el bloque JUSTO ANTES del botón "ENVIAR AVISO"
-            padre.insertBefore(div, btnEnvio);
-            
-            // Ajustamos el botón para que mantenga su estética original en la nueva fila
-            btnEnvio.style.margin = "0";
-            btnEnvio.style.flex = "none";
+            // Insertamos los niveles JUSTO ARRIBA del botón (para máxima visibilidad)
+            padre.insertBefore(div, btnEncontrado);
 
-            // 4. Redefinición ADITIVA de la función de envío (Captura los niveles)
+            // Redefinimos la función de envío para usar los niveles marcados
             window.sendGlobalMsg = async () => {
-                const msgInput = document.getElementById('globalMsgInput');
-                const texto = msgInput ? msgInput.value.trim() : "";
-                const checks = Array.from(document.querySelectorAll('.chk-target-local:checked')).map(i => i.value);
+                const input = document.getElementById('globalMsgInput');
+                const msg = input ? input.value.trim() : "";
+                const targets = Array.from(document.querySelectorAll('.chk-item-final:checked')).map(i => i.value);
                 
-                if(!texto) return alert("Escribe un mensaje.");
-                if(checks.length === 0) return alert("Selecciona al menos un nivel de destino.");
+                if(!msg) return alert("Escribe un mensaje.");
+                if(targets.length === 0) return alert("Selecciona niveles.");
 
                 try {
-                    // Referenciación a dbRef (Firebase) y envío de objeto segmentado
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: texto,
+                        msg: msg,
                         time: Date.now(),
-                        targets: checks
+                        targets: targets
                     });
-                    alert("📢 Aviso enviado con éxito a: " + checks.join(", ").toUpperCase());
-                    msgInput.value = "";
-                } catch(e) { console.error("Error envío segmentado:", e); }
+                    alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
+                    input.value = "";
+                } catch (e) { console.error(e); }
             };
         }
     };
 
-    // Funciones globales de apoyo
-    window.toggleNivelesLocal = (v) => {
-        document.querySelectorAll('.chk-target-local').forEach(i => i.checked = v);
+    // Funciones Globales
+    window.toggleAllFinal = (v) => {
+        document.querySelectorAll('.chk-item-final').forEach(i => i.checked = v);
     };
 
-    // MOTOR DE PERSISTENCIA: Se sincroniza con tu código de 1031 líneas
-    setInterval(sincronizarNivelesAdmin, 800);
+    // Escaneo constante cada 800ms
+    setInterval(localizarEInyectar, 800);
 
-    // LÓGICA DE RECEPCIÓN (Filtro en el lado del usuario)
+    // Lógica de Recepción con Filtro
     if (window.dbRef) {
-        // Anulamos la escucha anterior para evitar alertas duplicadas
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
-        
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const data = snap.val();
-            // Referenciación al objeto 'config' para obtener el nivel del usuario actual
-            const userLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            
-            if(data && data.time > (Date.now() - 15000)) {
-                // Solo muestra la alerta si el nivel del usuario está en el array de targets
-                if(data.targets && data.targets.includes(userLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + data.msg);
+            const d = snap.val();
+            const miNivel = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            if(d && d.time > (Date.now() - 15000)) {
+                if(d.targets && d.targets.includes(miNivel)) {
+                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
                 }
             }
         });
