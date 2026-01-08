@@ -1036,15 +1036,15 @@
     });
 })();
 
-        // --- INYECCIÓN ADITIVA: SINCRONIZADOR DE PERMISOS NEXO® (SOLUCIÓN DE DESBLOQUEO) ---
-// Insertar después del bloque anterior o al final del archivo principal.
+ // --- INYECCIÓN ADITIVA: SINCRONIZADOR DE PERMISOS NEXO® (v2.2) ---
+// NOTA: Basado en la lógica funcional de descargas y límites del motor principal.
 (function() {
-    // 1. Estilos de Interfaz (Se mantienen para asegurar la visualización correcta)
+    // 1. Estilos de Interfaz
     if (!document.getElementById('nexo-access-styles')) {
         const accessStyles = document.createElement('style');
         accessStyles.id = 'nexo-access-styles';
         accessStyles.innerHTML = `
-            .locked-feature { opacity: 0.5 !important; cursor: not-allowed !important; position: relative; pointer-events: none !important; }
+            .locked-feature { opacity: 0.5 !important; cursor: not-allowed !important; position: relative; pointer-events: all !important; }
             .locked-feature::after { content: '🔒'; position: absolute; top: 10px; right: 15px; font-size: 14px; }
             .branding-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
             .branding-control { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border: 1px solid #333; }
@@ -1052,48 +1052,36 @@
         document.head.appendChild(accessStyles);
     }
 
-    // 2. Validador Robusto: Evita el falso "FREE" durante la carga
-    const checkUserAccess = () => {
-        if (typeof currentUserData === 'undefined' || !currentUserData) return "LOADING";
-        // Buscamos nivel en múltiples ubicaciones posibles del objeto
-        const lvl = (currentUserData.level || currentUserData.plan || currentUserData.role || 'FREE').toString().toUpperCase().trim();
-        return lvl;
-    };
-
-    const isPremium = () => {
-        const level = checkUserAccess();
-        return level === 'PRO' || level === 'PPE';
-    };
-
-    // 3. Aplicar Permisos Dinámicos (Forzado para Pro/PPE)
+    // 2. Aplicar Permisos Basados en Referencia (Igual que descargas/logos)
     const applyPermissions = () => {
-        const userLevel = checkUserAccess();
-        if (userLevel === "LOADING") return; // No actuar hasta tener datos reales
+        // Referencia directa al objeto de usuario que ya usas en la app
+        const userData = (typeof currentUserData !== 'undefined') ? currentUserData : null;
+        if (!userData) return;
 
-        const premium = isPremium();
-        console.log(`[NEXO AUTH] Sincronizando estado: ${userLevel}`);
+        // Normalizamos el nivel (PRO/PPE = Acceso total)
+        const userLevel = (userData.level || userData.plan || userData.rank || 'FREE').toString().toUpperCase().trim();
+        const hasPremiumAccess = (userLevel === 'PRO' || userLevel === 'PPE');
+
+        console.log(`[NEXO LOGIC] Validando acceso para nivel: ${userLevel}`);
 
         const menuItems = document.querySelectorAll('.menu-option-item');
         menuItems.forEach(item => {
             const text = item.innerText.toUpperCase();
 
-            // Lógica para MI PERFIL
-            if (text.includes('PERFIL')) {
-                item.classList.remove('locked-feature');
-                item.style.pointerEvents = 'all';
-            }
-
-            // Lógica para CONFIGURACIÓN DE MARCA
+            // Lógica de acceso a CONFIGURACIÓN DE MARCA
             if (text.includes('MARCA')) {
-                if (premium) {
+                if (hasPremiumAccess) {
+                    // DESBLOQUEADO PARA PRO/PPE
                     item.classList.remove('locked-feature');
-                    item.style.pointerEvents = 'all';
                     item.onclick = () => {
-                        if (typeof toggleBrandingConfig === 'function') toggleBrandingConfig();
+                        if (typeof toggleBrandingConfig === 'function') {
+                            toggleBrandingConfig();
+                        }
                         const overlay = document.getElementById('nexoMenuOverlay');
                         if (overlay) overlay.click();
                     };
                 } else {
+                    // BLOQUEADO PARA FREE
                     item.classList.add('locked-feature');
                     item.onclick = (e) => {
                         e.preventDefault();
@@ -1102,27 +1090,29 @@
                     };
                 }
             }
+            
+            // PERFIL siempre abierto
+            if (text.includes('PERFIL')) {
+                item.classList.remove('locked-feature');
+            }
         });
     };
 
-    // 4. Bucle de Verificación Persistente
-    // Ejecuta múltiples veces para asegurar que el cambio de DOM no "pise" el desbloqueo
-    let syncInterval = setInterval(() => {
-        const level = checkUserAccess();
-        if (level !== "LOADING") {
-            applyPermissions();
-        }
+    // 3. Bucle de Sincronización (Para detectar el cambio de FREE a PRO en tiempo real)
+    let syncAttempts = 0;
+    const syncLoop = setInterval(() => {
+        applyPermissions();
+        syncAttempts++;
+        // Detener después de 15 segundos para optimizar, pero asegurar el estado final
+        if (syncAttempts > 30) clearInterval(syncLoop);
     }, 500);
 
-    // Detener el bucle pesado tras 10 segundos para ahorrar recursos, 
-    // pero dejar el estado final establecido.
-    setTimeout(() => clearInterval(syncInterval), 10000);
-
-    // Re-verificar en cambios de Auth
+    // 4. Listener de Seguridad (Firebase Auth)
     if (typeof auth !== 'undefined') {
         auth.onAuthStateChanged((user) => {
             if (user) {
-                setTimeout(applyPermissions, 1000);
+                // Pequeño delay para asegurar que currentUserData se haya actualizado
+                setTimeout(applyPermissions, 1500);
             }
         });
     }
@@ -1130,6 +1120,7 @@
     </script>
 </body>
 </html>
+
 
 
 
