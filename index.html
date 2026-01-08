@@ -1036,6 +1036,88 @@
     });
 })();
     </script>
+    <style>
+    @media screen and (orientation: landscape) and (max-width: 950px) {
+        /* Reajuste del contenedor principal para emular vista de escritorio */
+        .app-container {
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-around !important;
+            padding: 10px !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        /* Ajuste de la sección de la ruleta */
+        .wheel-section {
+            flex: 1.2 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            transform: scale(0.85); /* Escala para ajustar a la altura de pantalla */
+        }
+
+        /* Transformación del panel lateral (Mobile Bottom -> Web Side) */
+        .side-panel {
+            position: relative !important;
+            width: 220px !important;
+            height: auto !important;
+            flex-direction: column !important;
+            background: rgba(22, 22, 22, 0.9) !important;
+            border-left: 1px solid var(--gold) !important;
+            border-radius: 15px !important;
+            padding: 15px !important;
+            margin-left: 10px !important;
+            display: flex !important;
+            gap: 10px !important;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5) !important;
+        }
+
+        /* Ajuste de botones en el panel */
+        .side-panel .btn {
+            width: 100% !important;
+            margin: 0 !important;
+            font-size: 0.75rem !important;
+            padding: 12px 5px !important;
+        }
+
+        /* Ocultar elementos que estorben en vista horizontal reducida */
+        #mainTitle {
+            font-size: 1.1rem !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .logo-container img {
+            max-height: 40px !important;
+        }
+    }
+</style>
+
+<script>
+    (function() {
+        /**
+         * Lógica de Redibujado: Referenciación al objeto appWheel existente.
+         * Se activa al detectar cambios de orientación o tamaño.
+         */
+        const handleOrientationChange = () => {
+            setTimeout(() => {
+                if (window.appWheel && typeof window.appWheel.draw === 'function') {
+                    // Forzamos el redibujado para que el canvas no se pixele o deforme
+                    window.appWheel.draw();
+                }
+            }, 300); // Delay para permitir que el DOM se asiente
+        };
+
+        window.addEventListener("resize", handleOrientationChange);
+        window.addEventListener("orientationchange", handleOrientationChange);
+        
+        // Ejecución inmediata por si carga en horizontal
+        if (window.innerWidth > window.innerHeight) {
+            handleOrientationChange();
+        }
+    })();
+</script>
 </body>
 </html>
+
 
