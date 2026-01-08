@@ -1029,67 +1029,93 @@
 
     <script>
 /**
- * RECONSTRUCCIÓN ADITIVA: FUNCIÓN INYECTAR PANEL ADMIN
- * Esta versión sobreescribe la original para integrar los niveles de forma nativa.
+ * SOLUCIÓN MAESTRA: PANEL DE CONTROL PARALELO
+ * Este bloque es inmune a los refrescos del código original.
  */
 (function() {
-    // Sobrescribimos la función original para que el setInterval use esta versión
-    window.inyectarPanelAdmin = function() {
-        const modal = document.getElementById('modalAdmin');
-        if (!modal) return;
-
-        // Integramos los niveles directamente en la construcción del HTML
-        modal.innerHTML = `
-            <div style="background:rgba(0,0,0,0.95); padding:20px; border-radius:15px; border:2px solid var(--gold); max-width:500px; width:90%; position:relative; box-shadow: 0 0 20px var(--gold);">
-                <span onclick="cerrarAdmin()" style="position:absolute; top:10px; right:15px; color:#fff; cursor:pointer; font-size:20px;">&times;</span>
-                <h2 style="color:var(--gold); text-align:center; margin-top:0;">PANEL ADMINISTRADOR</h2>
-                
-                <div style="max-height:400px; overflow-y:auto; padding-right:10px;">
-                    <div style="background:#111; padding:15px; border-radius:12px; border:1px solid #333; margin-bottom:15px;">
-                        <h3 style="color:var(--gold); font-size:0.9rem; margin-top:0;">📢 ENVIAR AVISO GLOBAL</h3>
-                        <textarea id="globalMsgInput" placeholder="Escribe el mensaje para los usuarios..." style="width:100%; height:60px; background:#222; border:1px solid #444; color:#fff; border-radius:8px; padding:10px; margin-bottom:10px; resize:none;"></textarea>
-                        
-                        <div id="contenedor-niveles-aviso" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px; background:#0a0a0a; padding:8px; border-radius:8px; border:1px solid #222;">
-                            <label style="font-size:0.7rem; color:var(--gold); cursor:pointer;"><input type="checkbox" id="chkLvlAll" onchange="window.toggleAllLevels(this.checked)"> TODOS</label>
-                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="pro"> PRO</label>
-                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="ppe"> PPE</label>
-                            <label style="font-size:0.7rem; color:#fff; cursor:pointer;"><input type="checkbox" class="chk-lvl-target" value="free"> FREE</label>
-                        </div>
-
-                        <button onclick="sendGlobalMsg()" style="width:100%; padding:10px; background:linear-gradient(135deg, var(--gold), #b8860b); border:none; border-radius:8px; color:#000; font-weight:bold; cursor:pointer;">ENVIAR AVISO</button>
-                    </div>
-
-                    <div id="listaUsuariosAdmin" style="color:#fff; font-size:0.8rem;">Cargando usuarios...</div>
-                </div>
-            </div>
-        `;
-        // Llamada a tu función original de cargar usuarios si existe
-        if(typeof cargarUsuariosAdmin === 'function') cargarUsuariosAdmin();
-    };
-
-    // Lógica de Envío con Targets
-    window.sendGlobalMsg = async () => {
-        const msgInput = document.getElementById('globalMsgInput');
-        const msg = msgInput ? msgInput.value.trim() : "";
-        const targets = Array.from(document.querySelectorAll('.chk-lvl-target:checked')).map(i => i.value);
+    // 1. Crear el Panel Flotante (Fuera del modal original)
+    const crearPanelNiveles = () => {
+        if (document.getElementById('pnl-niveles-maestro')) return;
         
-        if(!msg) return alert("Escribe un mensaje.");
-        if(targets.length === 0) return alert("Selecciona niveles.");
-
-        try {
-            await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                msg: msg,
-                time: Date.now(),
-                targets: targets
-            });
-            alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
-            msgInput.value = "";
-        } catch (e) { console.error(e); }
+        const pnl = document.createElement('div');
+        pnl.id = 'pnl-niveles-maestro';
+        pnl.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            border: 2px solid var(--gold, #d4af37);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            z-index: 2000000;
+            box-shadow: 0 0 20px rgba(0,0,0,1);
+            border-top: 4px solid var(--gold, #d4af37);
+        `;
+        
+        pnl.innerHTML = `
+            <span style="color:var(--gold, #d4af37); font-size:10px; font-weight:bold;">ENVIAR A:</span>
+            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <input type="checkbox" id="masterLvlAll" onchange="window.toggleMasterLevels(this.checked)"> ALL
+            </label>
+            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <input type="checkbox" class="master-lvl-chk" value="pro"> PRO
+            </label>
+            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <input type="checkbox" class="master-lvl-chk" value="ppe"> PPE
+            </label>
+            <label style="color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <input type="checkbox" class="master-lvl-chk" value="free"> FREE
+            </label>
+        `;
+        document.body.appendChild(pnl);
     };
 
-    window.toggleAllLevels = (v) => document.querySelectorAll('.chk-lvl-target').forEach(i => i.checked = v);
+    // 2. Lógica de visibilidad y captura de envío
+    const monitorearAdmin = () => {
+        const modalAdmin = document.getElementById('modalAdmin');
+        const pnl = document.getElementById('pnl-niveles-maestro');
+        
+        if (modalAdmin && modalAdmin.style.display !== 'none') {
+            if (pnl) pnl.style.display = 'flex';
+            
+            // Secuestrar la función de envío original mientras el panel esté abierto
+            window.sendGlobalMsg = async () => {
+                const msgInput = document.getElementById('globalMsgInput');
+                const val = msgInput ? msgInput.value.trim() : "";
+                const targets = Array.from(document.querySelectorAll('.master-lvl-chk:checked')).map(i => i.value);
+                
+                if(!val) return alert("Escribe un mensaje");
+                if(targets.length === 0) return alert("Selecciona niveles de destino");
 
-    // Recepción Filtrada para Usuarios
+                try {
+                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                        msg: val,
+                        time: Date.now(),
+                        targets: targets
+                    });
+                    alert("📢 Enviado con éxito a: " + targets.join(", ").toUpperCase());
+                    msgInput.value = "";
+                } catch(e) { console.error(e); }
+            };
+        } else {
+            if (pnl) pnl.style.display = 'none';
+        }
+    };
+
+    // 3. Funciones Globales
+    window.toggleMasterLevels = (v) => {
+        document.querySelectorAll('.master-lvl-chk').forEach(i => i.checked = v);
+    };
+
+    // 4. Inicialización y Bucle de Monitoreo
+    crearPanelNiveles();
+    setInterval(monitorearAdmin, 500);
+
+    // 5. Recepción Filtrada (Para todos los usuarios)
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
