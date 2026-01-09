@@ -1026,44 +1026,66 @@
     iniciarMonitorForzado();
 })();
 
-    // --- INYECCIÓN ADITIVA: CONFIGURACIÓN DE AVISOS EN MODAL SEGMENTO ---
+    // --- INYECCIÓN ADITIVA: PANEL DE CONTROL DE AVISOS INDEPENDIENTE ---
 (function() {
-    // Extendemos la función de abrir modal mediante un interceptor
-    const originalAbrirModal = window.abrirModalSegmento; 
-    
-    window.abrirModalSegmento = function() {
-        // Ejecutamos la función original primero
-        if (typeof originalAbrirModal === 'function') originalAbrirModal();
+    // 1. Crear el botón flotante (Solo visible para Admin o según tu criterio)
+    const btnFlotante = document.createElement('div');
+    btnFlotante.id = 'btn-control-avisos';
+    btnFlotante.innerHTML = '📢';
+    btnFlotante.style = "position:fixed; bottom:20px; right:20px; width:50px; height:50px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; z-index:999999; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 2px solid #fff;";
+    document.body.appendChild(btnFlotante);
 
-        // Esperamos un instante a que el DOM del modal esté listo
-        setTimeout(() => {
-            const modalBody = document.querySelector('.modal-content') || document.getElementById('modal-segmento');
-            if (modalBody && !document.getElementById('seccion-avisos-admin')) {
-                const divAvisos = document.createElement('div');
-                divAvisos.id = 'seccion-avisos-admin';
-                divAvisos.style = "margin-top:20px; padding:15px; border-top:2px dashed var(--gold); background:rgba(212,175,55,0.05);";
-                divAvisos.innerHTML = `
-                    <h3 style="color:var(--gold); font-size:0.9rem; margin-bottom:10px;">📢 CONFIGURACIÓN DE AVISOS GLOBALES</h3>
-                    <p style="font-size:0.7rem; color:#aaa; margin-bottom:10px;">Selecciona qué nivel recibirá los mensajes del Admin:</p>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
-                        <button onclick="setAvisoTarget('free')" class="btn-admin-min" style="background:#444;">FREE</button>
-                        <button onclick="setAvisoTarget('pro')" class="btn-admin-min" style="background:#0055ff;">PRO</button>
-                        <button onclick="setAvisoTarget('ppe')" class="btn-admin-min" style="background:#d4af37; color:black;">PPE</button>
-                    </div>
-                    <button onclick="setAvisoTarget('all')" style="width:100%; margin-top:5px; padding:5px; font-size:0.7rem;">🌐 ENVIAR A TODOS</button>
-                `;
-                modalBody.appendChild(divAvisos);
-            }
-        }, 300);
+    // 2. Crear el menú de opciones
+    const menuAvisos = document.createElement('div');
+    menuAvisos.id = 'menu-avisos-admin';
+    menuAvisos.style = "position:fixed; bottom:80px; right:20px; width:220px; background:#161616; border:2px solid var(--gold); border-radius:12px; padding:15px; display:none; z-index:999999; color:white; font-family:sans-serif; box-shadow: 0 0 20px rgba(0,0,0,0.8);";
+    menuAvisos.innerHTML = `
+        <h4 style="margin:0 0 10px 0; font-size:0.8rem; color:var(--gold); text-align:center;">FILTRAR AVISO GLOBAL</h4>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <button onclick="configurarAviso('all')" style="padding:8px; cursor:pointer; background:#333; color:white; border:none; border-radius:4px;">🌐 TODOS</button>
+            <button onclick="configurarAviso('free')" style="padding:8px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px;">👤 FREE</button>
+            <button onclick="configurarAviso('pro')" style="padding:8px; cursor:pointer; background:#0055ff; color:white; border:none; border-radius:4px;">⭐ PRO</button>
+            <button onclick="configurarAviso('ppe')" style="padding:8px; cursor:pointer; background:#d4af37; color:black; border:none; border-radius:4px; font-weight:bold;">💎 PPE</button>
+        </div>
+        <p id="status-aviso" style="font-size:0.6rem; margin-top:10px; text-align:center; color:#888;">Selecciona nivel</p>
+    `;
+    document.body.appendChild(menuAvisos);
+
+    // 3. Lógica de apertura/cierre
+    btnFlotante.onclick = () => {
+        menuAvisos.style.display = menuAvisos.style.display === 'none' ? 'block' : 'none';
     };
 
-    // Función global para guardar la configuración
-    window.setAvisoTarget = function(level) {
+    // 4. Función de configuración (Referenciando dbRef de tu línea 1027)
+    window.configurarAviso = function(nivel) {
+        const status = document.getElementById('status-aviso');
+        status.innerText = "Actualizando...";
+        
         dbRef.ref('users/ADMIN_MESSAGES/target_config').set({
-            active_level: level,
-            updatedAt: Date.now()
-        }).then(() => alert("Configuración actualizada: Avisos para " + level.toUpperCase()));
+            level: nivel,
+            time: Date.now()
+        }).then(() => {
+            status.innerText = "✅ Filtro: " + nivel.toUpperCase();
+            setTimeout(() => { menuAvisos.style.display = 'none'; }, 1000);
+        });
     };
+
+    // 5. RECEPCIÓN FILTRADA (Sobrescribe la alerta original de la línea 1027)
+    dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
+    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
+        const msgData = snap.val();
+        if (msgData && msgData.time > (Date.now() - 15000)) {
+            // Consultamos el filtro actual antes de mostrar
+            dbRef.ref('users/ADMIN_MESSAGES/target_config/level').once('value', targetSnap => {
+                const targetLevel = targetSnap.val() || 'all';
+                const miNivel = (typeof config !== 'undefined') ? config.level : 'free';
+
+                if (targetLevel === 'all' || targetLevel === miNivel) {
+                    alert("📢 AVISO (" + targetLevel.toUpperCase() + "):\n\n" + msgData.msg);
+                }
+            });
+        }
+    });
 })();
 </script>
 </body>
