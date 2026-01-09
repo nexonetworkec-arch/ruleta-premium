@@ -832,135 +832,140 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: CENTRO DE CONTROL UNIFICADO (INTEGRACIÓN CON appWheel) ---
-        // Este bloque se conecta a las variables 'db', 'auth' y 'appWheel' de tus 836 líneas originales.
+        // --- INYECCIÓN ADITIVA: HUB ADMIN (VERSIÓN DE PERSISTENCIA TOTAL) ---
+        // Este bloque sobrevive a las limpiezas de DOM de las 836 líneas originales.
         (function() {
-            const setupNexoAdmin = (user) => {
-                // 1. Evitar duplicidad
-                if (document.getElementById('nexo-admin-hub')) return;
+            const ID_HUB = 'nexo-persist-hub';
+            
+            const crearInterfazAdmin = () => {
+                // Si ya existe, no hacer nada
+                if (document.getElementById(ID_HUB)) return;
 
-                // 2. Estilos con los colores de la marca (Nexo Gold/Black)
+                // 1. Estilos con Prioridad Absoluta (Z-INDEX MÁXIMO POSIBLE)
                 const style = document.createElement('style');
+                style.id = 'nexo-styles-persist';
                 style.innerHTML = `
-                    #nexo-admin-hub {
-                        position: fixed; bottom: 20px; right: 20px;
-                        display: flex; flex-direction: column; gap: 10px;
-                        z-index: 2147483647;
+                    #${ID_HUB} {
+                        position: fixed !important;
+                        bottom: 20px !important;
+                        right: 20px !important;
+                        z-index: 2147483647 !important; 
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
                     }
-                    .nexo-fab {
-                        width: 55px; height: 55px; border-radius: 50%;
-                        background: #d4af37; color: black; border: 2px solid black;
-                        display: flex; align-items: center; justify-content: center;
-                        cursor: pointer; font-size: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    .nexo-fab-master {
+                        width: 60px; height: 60px; border-radius: 50%;
+                        background: #d4af37 !important; color: black !important;
+                        border: 3px solid black !important; display: flex;
+                        align-items: center; justify-content: center;
+                        font-size: 25px; cursor: pointer;
+                        box-shadow: 0 0 20px rgba(0,0,0,0.8);
                         transition: 0.3s;
                     }
-                    .nexo-fab:hover { transform: scale(1.1); background: white; }
-                    .nexo-modal {
+                    .nexo-fab-master:hover { transform: scale(1.1); background: white !important; }
+                    
+                    /* Modal de Mensajería */
+                    #nexo-modal-msg {
                         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                        background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
-                        display: none; justify-content: center; align-items: center; z-index: 2147483648;
+                        background: rgba(0,0,0,0.95); backdrop-filter: blur(10px);
+                        display: none; justify-content: center; align-items: center;
+                        z-index: 2147483647;
                     }
-                    .nexo-box {
+                    .nexo-modal-card {
                         background: #161616; border: 2px solid #d4af37;
-                        width: 90%; max-width: 400px; border-radius: 15px; padding: 25px; color: white;
+                        padding: 25px; border-radius: 20px; width: 90%; max-width: 400px;
+                        color: white; font-family: sans-serif; text-align: center;
                     }
-                    .nexo-btn-send {
-                        width: 100%; background: #d4af37; color: black; border: none;
-                        padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;
-                        text-transform: uppercase; margin-top: 10px;
-                    }
+                    .nexo-area { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; margin: 15px 0; }
+                    .nexo-btn-gold { background: #d4af37; color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; }
                 `;
                 document.head.appendChild(style);
 
-                // 3. Estructura del Hub
+                // 2. HTML del Hub
                 const hub = document.createElement('div');
-                hub.id = 'nexo-admin-hub';
+                hub.id = ID_HUB;
                 hub.innerHTML = `
-                    <div class="nexo-fab" title="Mensajes" onclick="document.getElementById('nexo-m-modal').style.display='flex'">📢</div>
-                    <div class="nexo-fab" title="Admin Master" id="fuerza-admin-nexo" style="background:#000; color:#d4af37;">⚙️</div>
-                    
-                    <div class="nexo-modal" id="nexo-m-modal">
-                        <div class="nexo-box">
-                            <h2 style="color:#d4af37; text-align:center; font-size:18px;">AVISOS GLOBALES</h2>
-                            <textarea id="nx-msg-in" style="width:100%; background:#000; color:white; border:1px solid #333; border-radius:8px; padding:10px; margin:15px 0;" rows="4" placeholder="Escribe el mensaje..."></textarea>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; font-size:12px;">
-                                <label><input type="checkbox" class="nx-l" value="FREE"> FREE</label>
-                                <label><input type="checkbox" class="nx-l" value="PRO"> PRO</label>
-                                <label><input type="checkbox" class="nx-l" value="PPE"> PPE</label>
-                                <label style="color:#d4af37;"><input type="checkbox" id="nx-all"> TODOS</label>
-                            </div>
-                            <button class="nexo-btn-send" id="nx-send">ENVIAR AHORA</button>
-                            <button onclick="document.getElementById('nexo-m-modal').style.display='none'" style="background:none; border:none; color:#666; width:100%; margin-top:10px; cursor:pointer;">CERRAR</button>
-                        </div>
-                    </div>
+                    <div class="nexo-fab-master" title="Enviar Aviso" onclick="document.getElementById('nexo-modal-msg').style.display='flex'">📢</div>
+                    <div class="nexo-fab-master" title="Panel Master" style="background:black !important; color:#d4af37 !important;" id="nexo-btn-master-force">⚙️</div>
                 `;
                 document.body.appendChild(hub);
 
-                // 4. Lógica de los botones
-                document.getElementById('nx-all').onchange = (e) => {
-                    document.querySelectorAll('.nx-l').forEach(c => c.checked = e.target.checked);
+                // 3. HTML del Modal
+                const modal = document.createElement('div');
+                modal.id = 'nexo-modal-msg';
+                modal.innerHTML = `
+                    <div class="nexo-modal-card">
+                        <h2 style="color:#d4af37; margin-top:0;">NEXO® MESSENGER</h2>
+                        <textarea id="nexo-input-text" class="nexo-area" rows="4" placeholder="Escribe el mensaje global..."></textarea>
+                        <div style="display:flex; justify-content:space-around; margin-bottom:15px; font-size:12px;">
+                            <label><input type="checkbox" class="n-lv" value="FREE"> FREE</label>
+                            <label><input type="checkbox" class="n-lv" value="PRO"> PRO</label>
+                            <label><input type="checkbox" class="n-lv" value="PPE"> PPE</label>
+                        </div>
+                        <button class="nexo-btn-gold" id="nexo-send-final">PUBLICAR AHORA</button>
+                        <button onclick="document.getElementById('nexo-modal-msg').style.display='none'" style="background:none; border:none; color:gray; margin-top:15px; cursor:pointer;">CERRAR</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // 4. Lógica de Envío (Usando tus variables db y auth)
+                document.getElementById('nexo-send-final').onclick = async () => {
+                    const text = document.getElementById('nexo-input-text').value.trim();
+                    const levels = Array.from(document.querySelectorAll('.n-lv:checked')).map(c => c.value);
+                    if (!text || levels.length === 0) return alert("Faltan datos");
+
+                    try {
+                        const snap = await db.ref('users').once('value');
+                        const updates = {};
+                        snap.forEach(u => {
+                            if (levels.includes(u.val().level)) {
+                                updates[`users/${u.key}/globalMessage`] = { text, time: Date.now() };
+                            }
+                        });
+                        await db.ref().update(updates);
+                        alert("¡Enviado a Firebase!");
+                        document.getElementById('nexo-modal-msg').style.display = 'none';
+                    } catch(e) { alert("Error: " + e.message); }
                 };
 
-                document.getElementById('nx-send').onclick = async () => {
-                    const text = document.getElementById('nx-msg-in').value.trim();
-                    const levels = Array.from(document.querySelectorAll('.nx-l:checked')).map(c => c.value);
-                    if (!text || levels.length === 0) return alert("Completa los campos");
-
-                    // Usamos el objeto 'db' de tu código original
-                    const snap = await db.ref('users').once('value');
-                    const updates = {};
-                    snap.forEach(u => {
-                        if (levels.includes(u.val().level)) {
-                            updates[`users/${u.key}/globalMessage`] = { text, time: Date.now() };
-                        }
-                    });
-                    await db.ref().update(updates);
-                    alert("Aviso enviado.");
-                    document.getElementById('nexo-m-modal').style.display = 'none';
-                };
-
-                document.getElementById('fuerza-admin-nexo').onclick = () => {
-                    // Referencia a tu función original 'showAdminPanel' o scroll al contenedor
-                    const panel = document.querySelector('.admin-controls') || document.getElementById('admin-panel');
-                    if(panel) {
-                        panel.style.display = 'block';
-                        panel.scrollIntoView({behavior: 'smooth'});
+                // Lógica de Botón Master (Scroll a tu panel original)
+                document.getElementById('nexo-btn-master-force').onclick = () => {
+                    const originalPanel = document.querySelector('.admin-controls') || document.getElementById('admin-panel');
+                    if(originalPanel) {
+                        originalPanel.style.display = 'block';
+                        originalPanel.scrollIntoView({behavior: 'smooth'});
                     } else {
-                        // Intento de disparo de la función de tu línea 715
-                        if(typeof showAdminPanel === 'function') showAdminPanel();
-                        else alert("Panel Admin Master no detectado en el DOM.");
+                        alert("Panel Admin Master no renderizado aún. Ve a la sección de administración.");
                     }
                 };
             };
 
-            // RECEPTOR: Este siempre debe estar activo para mostrar los banners
-            const setupBannerListener = (uid) => {
-                db.ref(`users/${uid}/globalMessage`).on('value', snap => {
-                    const data = snap.val();
-                    if (data && data.text) {
-                        let banner = document.getElementById('nexo-global-banner');
-                        if (!banner) {
-                            banner = document.createElement('div');
-                            banner.id = 'nexo-global-banner';
-                            banner.style = "position:fixed; top:0; left:0; width:100%; background:#d4af37; color:black; padding:15px; text-align:center; z-index:2147483649; font-weight:bold; box-shadow:0 2px 10px rgba(0,0,0,0.5);";
-                            banner.innerHTML = `<span id="nx-txt-b"></span> <span onclick="this.parentElement.remove()" style="margin-left:20px; cursor:pointer; background:black; color:white; padding:2px 8px; border-radius:50%;">✕</span>`;
-                            document.body.prepend(banner);
-                        }
-                        document.getElementById('nx-txt-b').innerText = data.text;
-                    }
-                });
-            };
-
-            // ESCANEO DEL ESTADO DE AUTH USANDO TU VARIABLE 'auth'
-            auth.onAuthStateChanged(user => {
+            // --- EL "LATIDO" DE PERSISTENCIA ---
+            // Ejecutamos cada 1.5 segundos para re-inyectar si tu código original limpia el DOM
+            setInterval(() => {
+                const user = auth.currentUser;
                 if (user) {
-                    setupBannerListener(user.uid);
-                    // Verificación de Admin para mostrar el HUB
-                    db.ref(`users/${user.uid}/isAdmin`).on('value', snap => {
+                    db.ref(`users/${user.uid}/isAdmin`).once('value', snap => {
                         if (snap.val() === true) {
-                            setupNexoAdmin(user);
+                            crearInterfazAdmin();
                         }
                     });
+                }
+            }, 1500);
+
+            // Listener de mensajes para el usuario
+            let listenerActivo = false;
+            auth.onAuthStateChanged(user => {
+                if(user && !listenerActivo) {
+                    db.ref(`users/${user.uid}/globalMessage`).on('value', snap => {
+                        const d = snap.val();
+                        if(d && d.text) {
+                            alert("📢 AVISO DE ADMINISTRACIÓN:\n\n" + d.text);
+                            db.ref(`users/${user.uid}/globalMessage`).set(null); // Limpiar tras mostrar
+                        }
+                    });
+                    listenerActivo = true;
                 }
             });
         })();
