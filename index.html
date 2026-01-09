@@ -1027,55 +1027,43 @@
 })();
 
     // ================================================================
-// --- INYECCIÓN ADITIVA: INTERCEPTOR DEL PANEL ADMINISTRADOR ---
+// --- INYECCIÓN ADITIVA: FUERZA BRUTA PARA PANEL ADMIN (ESTILO NEXO) ---
 // ================================================================
 (function() {
-    // 1. Guardar una referencia a la función original de la línea 1030
-    const originalInyectarPanel = window.inyectarPanel;
-
-    // 2. Redefinir la función para extender su comportamiento
-    window.inyectarPanel = function() {
-        // Ejecutar primero la lógica original (Integridad Estructural)
-        if (typeof originalInyectarPanel === 'function') {
-            originalInyectarPanel();
-        }
-
-        // Inmediatamente después, inyectamos nuestras casillas de segmentación
+    // 1. EL VIGILANTE: Se ejecuta cada 500ms para asegurar que el panel no "borre" nuestra inyección
+    setInterval(() => {
+        // Buscamos el panel por su ID único
         const panel = document.getElementById('admin-master-panel');
+        
+        // Si el panel existe y aún no tiene nuestras casillas, las inyectamos
         if (panel && !document.getElementById('wrapper-segmentacion')) {
-            
+            const textArea = panel.querySelector('textarea');
+            if (!textArea) return; // Esperar a que el panel esté cargado
+
             const wrapper = document.createElement('div');
             wrapper.id = 'wrapper-segmentacion';
-            wrapper.style = "margin: 10px 0; padding: 12px; border: 1px solid var(--gold); background: #000; border-radius: 8px; border-left: 4px solid var(--gold);";
+            wrapper.style = "margin: 8px 0; padding: 10px; border: 1.5px solid var(--gold); background: #000; border-radius: 6px; box-shadow: 0 0 10px rgba(212,175,55,0.2);";
             
             wrapper.innerHTML = `
-                <div style="color:var(--gold); font-size:0.7rem; font-weight:900; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px; font-family:sans-serif;">
-                    🎯 Segmentar Aviso Global:
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background:#111; padding:8px; border-radius:5px;">
-                    <label style="cursor:pointer; color:#aaa; font-size:0.75rem; display:flex; align-items:center; gap:4px;">
-                        <input type="checkbox" id="chk-free" checked style="accent-color:#666;"> FREE
-                    </label>
-                    <label style="cursor:pointer; color:#00e5ff; font-size:0.75rem; display:flex; align-items:center; gap:4px; font-weight:bold;">
-                        <input type="checkbox" id="chk-pro" checked style="accent-color:#00e5ff;"> PRO
-                    </label>
-                    <label style="cursor:pointer; color:var(--gold); font-size:0.75rem; display:flex; align-items:center; gap:4px; font-weight:bold;">
-                        <input type="checkbox" id="chk-ppe" checked style="accent-color:var(--gold);"> PPE
-                    </label>
+                <div style="color:var(--gold); font-size:0.6rem; font-weight:900; margin-bottom:8px; text-transform:uppercase; font-family:sans-serif; text-align:center;">Segmentar Audiencia</div>
+                <div style="display: flex; justify-content: space-around; background:#111; padding:6px; border-radius:4px;">
+                    <label style="cursor:pointer; color:#888; font-size:0.7rem; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="chk-free" checked> FREE</label>
+                    <label style="cursor:pointer; color:#00e5ff; font-size:0.7rem; display:flex; align-items:center; gap:4px; font-weight:bold;"><input type="checkbox" id="chk-pro" checked> PRO</label>
+                    <label style="cursor:pointer; color:var(--gold); font-size:0.7rem; display:flex; align-items:center; gap:4px; font-weight:bold;"><input type="checkbox" id="chk-ppe" checked> PPE</label>
                 </div>
             `;
 
-            // Buscamos el textarea para posicionar el control justo encima
-            const textArea = panel.querySelector('textarea');
-            if (textArea) {
-                textArea.parentNode.insertBefore(wrapper, textArea);
-            }
+            // Inyectar antes del textarea
+            textArea.parentNode.insertBefore(wrapper, textArea);
 
-            // 3. Vincular la nueva lógica al botón de envío
+            // 2. RE-VINCULACIÓN AGRESIVA DEL BOTÓN
             const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.innerText.includes('AVISO'));
             if (btnSend) {
-                btnSend.onclick = null; // Desvincular el onclick original
-                btnSend.addEventListener('click', function() {
+                // Removemos cualquier listener previo para evitar duplicidad
+                const newBtn = btnSend.cloneNode(true);
+                btnSend.parentNode.replaceChild(newBtn, btnSend);
+                
+                newBtn.onclick = function() {
                     const msg = textArea.value.trim();
                     const targets = [];
                     if(document.getElementById('chk-free').checked) targets.push('free');
@@ -1089,32 +1077,34 @@
                             targetArray: targets
                         }).then(() => {
                             textArea.value = "";
-                            alert("🚀 Aviso segmentado enviado con éxito.");
+                            alert("🚀 Aviso enviado a: " + targets.join(', ').toUpperCase());
                         });
-                    } else if (targets.length === 0) {
-                        alert("Debes seleccionar al menos un nivel.");
+                    } else {
+                        alert("Escribe un mensaje y selecciona al menos un nivel.");
                     }
-                });
+                };
             }
         }
-    };
+    }, 500); // Revisión rápida cada medio segundo
 
-    // 4. Recepción Filtrada (Escucha constante en segundo plano)
-    if(typeof dbRef !== 'undefined') {
-        dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const data = snap.val();
-            if (data && data.time > (Date.now() - 15000)) {
-                const myLevel = config.level || 'free';
-                const allowed = data.targetArray || ['free', 'pro', 'ppe'];
-                if (allowed.includes(myLevel)) {
-                    alert("📢 AVISO GLOBAL:\n\n" + data.msg);
+    // 3. RECEPCIÓN FILTRADA (Sobrescribe la línea 1027 de forma persistente)
+    const setupReceiver = () => {
+        if(typeof dbRef !== 'undefined') {
+            dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
+            dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
+                const data = snap.val();
+                if (data && data.time > (Date.now() - 15000)) {
+                    const myLevel = (typeof config !== 'undefined') ? config.level : 'free';
+                    const allowed = data.targetArray || ['free', 'pro', 'ppe'];
+                    if (allowed.includes(myLevel)) {
+                        alert("📢 AVISO GLOBAL:\n\n" + data.msg);
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
+    };
+    setupReceiver();
 })();
-// --- FIN DE LA INYECCIÓN ---
 </script>
 </body>
 </html>
