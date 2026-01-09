@@ -832,58 +832,73 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: GESTIÓN DE NOTIFICACIONES Y MENSAJES GLOBALES ---
+        // --- INYECCIÓN ADITIVA: GESTIÓN DE NOTIFICACIONES (VERSIÓN CORREGIDA) ---
         (function() {
-            // 1. CSS ADITIVO PARA LA INTERFAZ DE NOTIFICACIONES
+            // 1. CSS ADITIVO
             const style = document.createElement('style');
             style.innerHTML = `
-                .admin-notif-panel { background: #1a1a1a; border: 1px solid var(--gold); border-radius: 8px; padding: 15px; margin-top: 20px; color: white; }
-                .admin-notif-panel h3 { color: var(--gold); margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-                .notif-segments { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
-                .segment-item { display: flex; align-items: center; gap: 5px; font-size: 12px; background: #222; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+                .admin-notif-panel { background: #1a1a1a; border: 1px solid var(--gold); border-radius: 8px; padding: 15px; margin: 20px auto; color: white; max-width: 500px; }
+                .admin-notif-panel h3 { color: var(--gold); margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; text-align: center; }
+                .notif-segments { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; justify-content: center; }
+                .segment-item { display: flex; align-items: center; gap: 5px; font-size: 12px; background: #222; padding: 5px 10px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; }
+                .segment-item:hover { border-color: var(--gold); }
                 .admin-notif-panel textarea { width: 100%; background: #000; border: 1px solid #444; color: white; border-radius: 4px; padding: 8px; font-family: inherit; resize: none; margin-bottom: 10px; }
-                .btn-send-notif { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-                .btn-send-notif:hover { opacity: 0.8; }
+                .btn-send-notif { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
                 
-                /* Banner del Cliente */
-                #global-announcement-banner { position: fixed; top: 0; left: 0; width: 100%; background: var(--gold); color: black; padding: 10px; text-align: center; font-weight: bold; z-index: 9999; display: none; animation: slideDown 0.5s ease; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+                #global-announcement-banner { position: fixed; top: 0; left: 0; width: 100%; background: var(--gold); color: black; padding: 12px; text-align: center; font-weight: bold; z-index: 10000; display: none; animation: slideDown 0.5s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
                 @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
-                .close-banner { margin-left: 15px; cursor: pointer; border: 1px solid black; padding: 0 5px; border-radius: 3px; }
+                .close-banner { margin-left: 20px; cursor: pointer; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 10px; font-size: 14px; }
             `;
             document.head.appendChild(style);
 
-            // 2. LÓGICA DEL ADMINISTRADOR (INYECCIÓN EN EL PANEL)
-            const injectAdminNotifUI = () => {
-                const adminPanel = document.querySelector('.admin-controls'); // Busca el contenedor del panel admin
-                if (!adminPanel || document.getElementById('notif-manager')) return;
+            // 2. LÓGICA DE INYECCIÓN
+            const injectUI = () => {
+                // Intentamos buscar el contenedor del Admin Master o lo agregamos al final del body
+                let container = document.getElementById('admin-master-section') || document.querySelector('.admin-controls');
+                
+                if (!container) {
+                    // Si no encuentra el panel admin, crea un contenedor flotante temporal para pruebas
+                    container = document.createElement('div');
+                    container.style.padding = "20px";
+                    document.body.appendChild(container);
+                }
+
+                if (document.getElementById('notif-manager')) return;
 
                 const notifDiv = document.createElement('div');
                 notifDiv.id = 'notif-manager';
                 notifDiv.className = 'admin-notif-panel';
                 notifDiv.innerHTML = `
-                    <h3>📢 Enviar Notificación Global</h3>
-                    <textarea id="notif-text" placeholder="Escribe el mensaje aquí..." rows="3"></textarea>
+                    <h3>📢 NOTIFICACIONES SEGMENTADAS</h3>
+                    <textarea id="notif-text" placeholder="Escribe el aviso para los usuarios..." rows="3"></textarea>
                     <div class="notif-segments">
                         <label class="segment-item"><input type="checkbox" class="seg-check" value="FREE"> FREE</label>
                         <label class="segment-item"><input type="checkbox" class="seg-check" value="PRO"> PRO</label>
                         <label class="segment-item"><input type="checkbox" class="seg-check" value="PPE"> PPE</label>
                         <label class="segment-item" style="border: 1px solid var(--gold)">
-                            <input type="checkbox" id="seg-all" onchange="document.querySelectorAll('.seg-check').forEach(c => c.checked = this.checked)"> TODOS
+                            <input type="checkbox" id="seg-all"> TODOS
                         </label>
                     </div>
-                    <button class="btn-send-notif" id="btn-broadcast">PUBLICAR MENSAJE</button>
+                    <button class="btn-send-notif" id="btn-broadcast">ENVIAR A SELECCIONADOS</button>
                 `;
-                adminPanel.appendChild(notifDiv);
+                container.appendChild(notifDiv);
 
+                // Checkbox "TODOS"
+                document.getElementById('seg-all').addEventListener('change', (e) => {
+                    document.querySelectorAll('.seg-check').forEach(c => c.checked = e.target.checked);
+                });
+
+                // Evento de Envío
                 document.getElementById('btn-broadcast').addEventListener('click', async () => {
                     const msg = document.getElementById('notif-text').value.trim();
                     const selectedLevels = Array.from(document.querySelectorAll('.seg-check:checked')).map(c => c.value);
 
-                    if (!msg) return alert("Escribe un mensaje");
-                    if (selectedLevels.length === 0) return alert("Selecciona al menos un nivel");
+                    if (!msg) return alert("Por favor, escribe un mensaje.");
+                    if (selectedLevels.length === 0) return alert("Selecciona al menos un nivel.");
 
-                    if (confirm(`¿Enviar mensaje a niveles: ${selectedLevels.join(', ')}?`)) {
+                    try {
                         const usersSnap = await db.ref('users').once('value');
+                        let count = 0;
                         const updates = {};
                         
                         usersSnap.forEach(userSnap => {
@@ -893,49 +908,47 @@
                                     text: msg,
                                     timestamp: Date.now()
                                 };
+                                count++;
                             }
                         });
 
                         await db.ref().update(updates);
-                        alert("Mensaje enviado con éxito");
+                        alert(`¡Éxito! Mensaje enviado a ${count} usuarios.`);
                         document.getElementById('notif-text').value = '';
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error al enviar: " + err.message);
                     }
                 });
             };
 
-            // 3. LÓGICA DEL CLIENTE (RECEPTOR)
+            // 3. RECEPTOR DEL CLIENTE
             const initClientListener = (uid) => {
-                // Crear el banner en el DOM si no existe
                 if (!document.getElementById('global-announcement-banner')) {
                     const banner = document.createElement('div');
                     banner.id = 'global-announcement-banner';
-                    banner.innerHTML = `<span id="banner-text"></span> <span class="close-banner" onclick="this.parentElement.style.display='none'">✕</span>`;
+                    banner.innerHTML = `<span id="banner-text"></span> <span class="close-banner" onclick="this.parentElement.style.display='none'">CERRAR ✕</span>`;
                     document.body.prepend(banner);
                 }
 
-                const msgRef = db.ref(`users/${uid}/globalMessage`);
-                msgRef.on('value', (snapshot) => {
-                    const data = snapshot.val();
+                db.ref(`users/${uid}/globalMessage`).on('value', snap => {
+                    const data = snap.val();
                     if (data && data.text) {
                         const banner = document.getElementById('global-announcement-banner');
                         document.getElementById('banner-text').innerText = data.text;
                         banner.style.display = 'block';
-                        
-                        // Auto-ocultar después de 15 segundos
-                        setTimeout(() => { banner.style.display = 'none'; }, 15000);
                     }
                 });
             };
 
-            // 4. INTEGRACIÓN CON EL ESTADO DE AUTENTICACIÓN
+            // 4. EJECUCIÓN SEGÚN AUTH
             auth.onAuthStateChanged(user => {
                 if (user) {
                     initClientListener(user.uid);
-                    // Si el usuario es admin, inyectar el panel (validación por UID de Admin Master)
+                    // Verificamos si es admin para mostrar el panel de control
                     db.ref(`users/${user.uid}/isAdmin`).once('value', snap => {
                         if (snap.val() === true) {
-                            // Pequeño delay para asegurar que el panel admin original ya cargó
-                            setTimeout(injectAdminNotifUI, 2000);
+                            injectUI();
                         }
                     });
                 }
