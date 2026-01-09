@@ -1029,101 +1029,119 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: FORZADO ESTRUCTURAL (DEFINITIVO)
- * Utiliza CSS prioritario para asegurar que el cuadro de texto ceda espacio.
+ * INYECCIÓN ADITIVA: PESTAÑA DE ESQUINA DESPLEGABLE
+ * Se ancla a la sección "Aviso Global" y se auto-oculta tras la acción.
  */
 (function() {
-    // 1. Inyectamos estilos prioritarios para forzar el ajuste de altura
-    const style = document.createElement('style');
-    style.innerHTML = `
-        #globalMsgInput {
-            height: 80px !important; 
-            min-height: 80px !important;
-            max-height: 80px !important;
-            margin-bottom: 10px !important;
-        }
-        #wrapper-niveles-final {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 10px !important;
-            background: rgba(20, 20, 20, 0.9) !important;
-            border: 1px solid #d4af37 !important;
-            padding: 8px !important;
-            border-radius: 8px !important;
-            margin-bottom: 10px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-    `;
-    document.head.appendChild(style);
+    let timerInactividad;
 
-    const inyectarConFuerza = () => {
+    const crearPestañaNivel = () => {
         const modal = document.getElementById('modalAdmin');
-        if (!modal) return;
+        if (!modal || getComputedStyle(modal).display === 'none') return;
 
-        // Buscamos el botón de enviar para saber dónde insertar
-        const botones = Array.from(modal.querySelectorAll('button'));
-        const btnEnviar = botones.find(b => b.innerText.includes('ENVIAR AVISO') || b.onclick?.toString().includes('sendGlobalMsg'));
+        // Intentamos localizar el área de "Aviso Global"
+        // Buscamos un contenedor que tenga el textarea o el título
+        const areaMensaje = document.getElementById('globalMsgInput')?.parentNode;
+        
+        if (areaMensaje && !document.getElementById('btn-despliegue-nivel')) {
+            // Aseguramos que el contenedor sea relativo para posicionar la pestaña
+            areaMensaje.style.position = 'relative';
 
-        if (btnEnviar && !document.getElementById('wrapper-niveles-final')) {
-            // Creamos el HTML de los niveles
-            const htmlNiveles = `
-                <div id="wrapper-niveles-final">
-                    <span style="font-size:9px; color:#d4af37; font-weight:bold;">DESTINO:</span>
-                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                        <input type="checkbox" id="fAll" onchange="window.fToggle(this.checked)"> ALL
-                    </label>
-                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                        <input type="checkbox" class="f-chk" value="pro"> PRO
-                    </label>
-                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                        <input type="checkbox" class="f-chk" value="ppe"> PPE
-                    </label>
-                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                        <input type="checkbox" class="f-chk" value="free"> FREE
-                    </label>
-                </div>
+            // 1. Crear el botón de activación (Pestaña)
+            const btn = document.createElement('div');
+            btn.id = 'btn-despliegue-nivel';
+            btn.innerHTML = '⚙️ NIVEL';
+            btn.style.cssText = `
+                position: absolute; top: 5px; right: 5px;
+                background: #d4af37; color: #000; font-size: 9px;
+                font-weight: bold; padding: 2px 6px; border-radius: 4px;
+                cursor: pointer; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
             `;
 
-            // Insertamos justo antes del botón
-            btnEnviar.insertAdjacentHTML('beforebegin', htmlNiveles);
+            // 2. Crear el Menú Desplegable (Oculto inicialmente)
+            const menu = document.createElement('div');
+            menu.id = 'menu-niveles-desplegable';
+            menu.style.cssText = `
+                position: absolute; top: 25px; right: 5px;
+                background: #111; border: 1px solid #d4af37;
+                padding: 10px; border-radius: 8px; display: none;
+                flex-direction: column; gap: 5px; z-index: 11;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.8); min-width: 100px;
+            `;
+            menu.innerHTML = `
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" id="dropAll" onchange="window.toggleDrop(this.checked)"> TODOS
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" class="drop-chk" value="pro"> PRO
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" class="drop-chk" value="ppe"> PPE
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" class="drop-chk" value="free"> FREE
+                </label>
+            `;
 
-            // Redefinimos el envío
-            window.sendGlobalMsg = async () => {
-                const input = document.getElementById('globalMsgInput');
-                const msg = input ? input.value.trim() : "";
-                const targets = Array.from(document.querySelectorAll('.f-chk:checked')).map(i => i.value);
-                
-                if(!msg) return alert("Escribe un mensaje.");
-                if(targets.length === 0) return alert("Selecciona niveles.");
-
-                try {
-                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: msg, time: Date.now(), targets: targets
-                    });
-                    alert("📢 Enviado correctamente.");
-                    if(input) input.value = "";
-                } catch(e) { console.error(e); }
+            // Eventos de apertura y cierre
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const isVisible = menu.style.display === 'flex';
+                menu.style.display = isVisible ? 'none' : 'flex';
+                if (!isVisible) iniciarTimerInactividad();
             };
+
+            areaMensaje.appendChild(btn);
+            areaMensaje.appendChild(menu);
+
+            // 3. Interceptar el envío para auto-ocultar
+            const btnOriginal = Array.from(modal.querySelectorAll('button')).find(b => b.innerText.includes('ENVIAR AVISO'));
+            if (btnOriginal) {
+                const funcOriginal = window.sendGlobalMsg;
+                window.sendGlobalMsg = async () => {
+                    // Primero ejecutamos nuestra lógica de segmentación
+                    const msgInput = document.getElementById('globalMsgInput');
+                    const texto = msgInput ? msgInput.value.trim() : "";
+                    const niveles = Array.from(document.querySelectorAll('.drop-chk:checked')).map(i => i.value);
+
+                    if(!texto) return alert("Escribe un mensaje.");
+                    if(niveles.length === 0) return alert("Selecciona niveles en la pestaña ⚙️");
+
+                    try {
+                        await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                            msg: texto, time: Date.now(), targets: niveles
+                        });
+                        alert("📢 Enviado con éxito.");
+                        if(msgInput) msgInput.value = "";
+                        // AUTO-OCULTAR AL ENVIAR
+                        menu.style.display = 'none';
+                    } catch(e) { console.error(e); }
+                };
+            }
         }
     };
 
-    window.fToggle = (v) => document.querySelectorAll('.f-chk').forEach(i => i.checked = v);
+    const iniciarTimerInactividad = () => {
+        clearTimeout(timerInactividad);
+        timerInactividad = setTimeout(() => {
+            const menu = document.getElementById('menu-niveles-desplegable');
+            if (menu) menu.style.display = 'none';
+        }, 8000); // 8 segundos de gracia
+    };
 
-    // Ejecución agresiva cada 400ms para ganarle al código original
-    setInterval(inyectarConFuerza, 400);
+    window.toggleDrop = (v) => document.querySelectorAll('.drop-chk').forEach(i => i.checked = v);
 
-    // Receptor de avisos
+    // Vigilancia constante
+    setInterval(crearPestañaNivel, 500);
+
+    // Lógica de recepción filtrada
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const d = snap.val();
-            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            const uLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(miLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
+                if(d.targets && d.targets.includes(uLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
             }
         });
     }
