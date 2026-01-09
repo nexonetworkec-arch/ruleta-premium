@@ -830,56 +830,36 @@
                     });
                 }
             });
-        })(); 
-    </script>
-
-    <style>
-        /* Ocultar barras de scroll manteniendo funcionalidad */
-        #adminModal .modal-content,
-        #admin-panel-content,
-        .admin-table-wrapper,
-        #adminUsersTableContainer {
-            overflow-y: auto !important;
-            scrollbar-width: none !important; /* Firefox */
-            -ms-overflow-style: none !important;  /* IE/Edge */
-        }
-
-        #adminModal .modal-content::-webkit-scrollbar,
-        #admin-panel-content::-webkit-scrollbar,
-        .admin-table-wrapper::-webkit-scrollbar,
-        #adminUsersTableContainer::-webkit-scrollbar {
-            display: none !important; /* Chrome, Safari, Opera */
-        }
-
-        /* Ajuste para asegurar que el contenido sea scrolleable */
-        #admin-panel-content {
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
-
-    <script>
-        (function() {
-            // Referenciación: Asegurar que el contenedor de la tabla permita el scroll infinito
-            const adjustAdminScroll = () => {
-                const tableContainer = document.getElementById('adminUsersTableContainer');
-                if (tableContainer) {
-                    tableContainer.style.maxHeight = '70vh';
-                    tableContainer.style.overflowY = 'auto';
-                }
-            };
-
-            // Ejecutar ajuste cuando se abra el panel de administración
-            const originalShowAdminPanel = window.showAdminPanel;
-            if (originalShowAdminPanel) {
-                window.showAdminPanel = function() {
-                    originalShowAdminPanel.apply(this, arguments);
-                    setTimeout(adjustAdminScroll, 100);
-                };
-            }
         })();
+
+        // --- INYECCIÓN ADITIVA: PANEL ADMIN ESCROLEABLE (SIN BARRAS) ---
+// Propósito: Ocultar barras de desplazamiento en el contenedor de la tabla admin.
+(function() {
+    const style = document.createElement('style');
+    style.id = 'adminScrollPolicy';
+    style.innerHTML = `
+        /* Selecciona el contenedor con max-height definido en la línea 86 */
+        #modalAdmin .modal-content div[style*="max-height: 380px"],
+        #adminUserList {
+            -ms-overflow-style: none !important;  /* IE y Edge */
+            scrollbar-width: none !important;     /* Firefox */
+            overflow-y: auto !important;
+        }
+
+        /* Ocultar barra en motores Webkit (Chrome, Safari, Brave) */
+        #modalAdmin .modal-content div[style*="max-height: 380px"]::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* Optimización de scroll para dispositivos móviles */
+        .admin-table {
+            -webkit-overflow-scrolling: touch !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
     </script>
 </body>
 </html>
-
