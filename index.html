@@ -1026,74 +1026,76 @@
     iniciarMonitorForzado();
 })();
 
-    // --- INYECCIÓN ADITIVA: SELECTOR DE NIVEL REFORZADO ---
+    // ================================================================
+// --- INYECCIÓN ADITIVA: SELECTOR DE NIVEL (SISTEMA DE ESCUCHA ACTIVA) ---
+// ================================================================
 (function() {
-    console.log("Inyección de Selector Iniciada...");
+    // 1. FUNCIÓN DE INYECCIÓN
+    const inyectarSelectorNivel = (panel) => {
+        if (document.getElementById('msgTargetLevel')) return; // Evitar duplicados
 
-    const monitorPanel = setInterval(() => {
-        // Buscamos el panel por ID o por clase si el ID falla
-        const panel = document.getElementById('admin-master-panel') || document.querySelector('.admin-panel');
-        
-        if (panel && !document.getElementById('msgTargetLevel')) {
-            console.log("Panel detectado. Inyectando selector...");
-            
-            const container = document.createElement('div');
-            container.style = "margin: 15px 0; padding: 12px; border: 1px solid var(--gold); background: #000; border-radius: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);";
-            container.innerHTML = `
-                <label style="color:var(--gold); font-size:0.7rem; font-weight:800; display:block; margin-bottom:8px; text-transform:uppercase;">🎯 Dirigido a:</label>
-                <select id="msgTargetLevel" style="width:100%; background:#111; color:#fff; border:1px solid #444; border-radius:4px; font-size:0.8rem; padding:10px; cursor:pointer; font-weight:bold;">
-                    <option value="all" style="color:white;">🌐 TODOS LOS USUARIOS</option>
-                    <option value="pro" style="color:#00e5ff;">⭐ SOLO USUARIOS PRO</option>
-                    <option value="ppe" style="color:#d4af37;">💎 SOLO USUARIOS PPE</option>
-                    <option value="free" style="color:#aaa;">👤 SOLO USUARIOS FREE</option>
-                </select>
-            `;
-            
-            // Localizamos el área de texto original
-            const textArea = panel.querySelector('textarea');
-            if (textArea) {
-                textArea.parentNode.insertBefore(container, textArea);
-            }
+        const container = document.createElement('div');
+        container.style = "margin: 10px 0; padding: 12px; border: 1px solid var(--gold); background: #000; border-radius: 8px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);";
+        container.innerHTML = `
+            <label style="color:var(--gold); font-size:0.7rem; font-weight:900; display:block; margin-bottom:8px; font-family:sans-serif; text-align:left;">🎯 ENVIAR AVISO A:</label>
+            <select id="msgTargetLevel" style="width:100%; background:#111; color:#fff; border:1px solid #444; border-radius:4px; font-size:0.85rem; padding:10px; cursor:pointer; font-weight:bold;">
+                <option value="all">🌐 TODOS LOS USUARIOS</option>
+                <option value="pro">⭐ SOLO USUARIOS PRO</option>
+                <option value="ppe">💎 SOLO USUARIOS PPE</option>
+                <option value="free">👤 SOLO USUARIOS FREE</option>
+            </select>
+        `;
 
-            // Sobrescribimos la lógica del botón de envío original
-            const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.innerText.includes('AVISO'));
-            if (btnSend) {
-                btnSend.onclick = function(e) {
-                    e.preventDefault();
-                    const msg = textArea.value.trim();
-                    const target = document.getElementById('msgTargetLevel').value;
-                    
-                    if (msg) {
-                        // Usamos dbRef que es la variable definida en tu línea 1027
-                        dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                            msg: msg,
-                            time: Date.now(),
-                            target: target 
-                        }).then(() => {
-                            textArea.value = "";
-                            alert("🚀 Aviso enviado exitosamente a: " + target.toUpperCase());
-                        });
-                    }
-                };
+        const textArea = panel.querySelector('textarea');
+        if (textArea) {
+            textArea.parentNode.insertBefore(container, textArea);
+            console.log("✅ Selector de nivel inyectado con éxito.");
+        }
+
+        // 2. RE-VINCULAR BOTÓN DE ENVÍO
+        const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.innerText.includes('AVISO'));
+        if (btnSend) {
+            btnSend.onclick = null; // Limpiar rastro previo
+            btnSend.addEventListener('click', function(e) {
+                const msg = textArea.value.trim();
+                const target = document.getElementById('msgTargetLevel').value;
+                if (msg) {
+                    dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                        msg: msg,
+                        time: Date.now(),
+                        target: target
+                    }).then(() => {
+                        textArea.value = "";
+                        alert("🚀 Mensaje enviado a: " + target.toUpperCase());
+                    });
+                }
+            });
+        }
+    };
+
+    // 3. OBSERVADOR DE MUTACIONES (Detecta el panel aunque se cree dinámicamente)
+    const observer = new MutationObserver((mutations) => {
+        const panel = document.getElementById('admin-master-panel');
+        if (panel) inyectarSelectorNivel(panel);
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // 4. FILTRO DE RECEPCIÓN (Sobrescribe línea 1027)
+    dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
+    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+        const d = s.val();
+        if (d && d.time > (Date.now() - 20000)) {
+            const target = d.target || 'all';
+            const miNivel = (typeof config !== 'undefined') ? config.level : 'free';
+            
+            if (target === 'all' || target === miNivel) {
+                alert("📢 AVISO (" + target.toUpperCase() + "):\n\n" + d.msg);
             }
         }
-    }, 1000);
-
-    // Re-configuración de la Escucha de Recepción (Filtro)
-    if(typeof dbRef !== 'undefined') {
-        dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); // Apaga la alerta simple original
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
-            const d = s.val();
-            if (d && d.time > (Date.now() - 20000)) {
-                const target = d.target || 'all';
-                // Comparamos con config.level que es tu variable global
-                if (target === 'all' || target === config.level) {
-                    alert("📢 MENSAJE GLOBAL PARA " + target.toUpperCase() + ":\n\n" + d.msg);
-                }
-            }
-        });
-    }
+    });
 })();
+// --- FIN DE LA INYECCIÓN ---
 </script>
 </body>
 </html>
