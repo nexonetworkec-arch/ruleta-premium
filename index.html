@@ -1025,6 +1025,71 @@
 
     iniciarMonitorForzado();
 })();
+
+    // ================================================================
+// --- INYECCIÓN ADITIVA: SELECTOR DE NIVEL PARA AVISO GLOBAL ---
+// ================================================================
+(function() {
+    // Monitor que inyecta el selector apenas detecta que el panel se dibuja
+    const monitorPanel = setInterval(() => {
+        const panel = document.getElementById('admin-master-panel');
+        if (panel && !document.getElementById('msgTargetLevel')) {
+            // Crear el contenedor del selector
+            const container = document.createElement('div');
+            container.style = "margin: 10px 0; padding: 10px; border: 1px solid #333; background: #000; border-radius: 8px; border-left: 3px solid var(--gold);";
+            container.innerHTML = `
+                <label style="color:var(--gold); font-size:0.65rem; font-weight:800; display:block; margin-bottom:5px;">DIRIGIDO A:</label>
+                <select id="msgTargetLevel" style="width:100%; background:#111; color:#fff; border:1px solid #444; border-radius:4px; font-size:0.75rem; padding:8px; outline:none;">
+                    <option value="all">🌐 TODOS LOS NIVELES</option>
+                    <option value="pro">⭐ SOLO PRO</option>
+                    <option value="ppe">💎 SOLO PPE</option>
+                    <option value="free">👤 SOLO FREE</option>
+                </select>
+            `;
+            
+            // Insertar arriba del textarea de avisos
+            const areaMsg = panel.querySelector('textarea');
+            if(areaMsg) areaMsg.parentNode.insertBefore(container, areaMsg);
+
+            // Re-vincular el botón de envío para que use el selector
+            const btnEnviar = Array.from(panel.querySelectorAll('button')).find(b => b.textContent.includes('ENVIAR AVISO'));
+            if(btnEnviar) {
+                btnEnviar.onclick = null; // Limpiar evento previo
+                btnEnviar.onclick = function() {
+                    const msg = areaMsg.value.trim();
+                    const target = document.getElementById('msgTargetLevel').value;
+                    if(msg) {
+                        db.ref('users/ADMIN_MESSAGES/current').set({
+                            msg: msg,
+                            time: Date.now(),
+                            target: target // Inyectamos el filtro en la DB
+                        }).then(() => {
+                            areaMsg.value = "";
+                            alert("✅ Enviado a: " + target.toUpperCase());
+                        });
+                    }
+                };
+            }
+        }
+    }, 1000); // Revisa cada segundo para asegurar la inyección
+
+    // Sobrescribir la escucha de recepción (Referenciando db del código original)
+    db.ref('users/ADMIN_MESSAGES/current').off('value'); 
+    db.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+        const d = s.val();
+        if(d && d.time > (Date.now() - 15000)) {
+            const target = d.target || 'all';
+            const userLevel = config.level; // Accede a la config global del código original
+            
+            // Si el mensaje es para todos o coincide con el nivel del usuario actual
+            if(target === 'all' || target === userLevel) {
+                alert("📢 AVISO GLOBAL (" + target.toUpperCase() + "):\n" + d.msg);
+            }
+        }
+    });
+})();
+// --- FIN DE LA INYECCIÓN ---
 </script>
 </body>
 </html>
+
