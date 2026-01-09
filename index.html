@@ -1007,90 +1007,118 @@
 })();
 
         /* ==========================================================
-   BLOQUE: EVOLUCIÓN LOGIN NEXO® - TRADUCCIÓN Y VISOR
-   Reemplaza PIN por Contraseña e Inyecta Visores (Ojo)
+   BLOQUE: REESTRUCTURACIÓN DE LOGIN/REGISTRO NEXO®
+   Reordenamiento, Obligatoriedad y Visor de Contraseña
    ========================================================== */
 
 (function() {
-    // 1. ESTILOS PARA EL VISOR Y OBLIGATORIEDAD
+    // 1. ESTILOS PARA VISORES Y ORDEN
     const loginExtStyles = `
-        .nx-pwd-container { position: relative; width: 100%; display: flex; align-items: center; }
-        .nx-view-toggle {
+        #authForm { display: flex; flex-direction: column; gap: 10px; }
+        .input-group { display: flex; flex-direction: column; }
+        .nx-pwd-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
+        .nx-eye {
             position: absolute; right: 15px; cursor: pointer; color: var(--gold);
-            font-size: 1.2rem; z-index: 10; user-select: none;
+            font-size: 1.2rem; z-index: 10;
         }
-        .nx-required-label::after { content: " *"; color: var(--danger); font-weight: bold; }
-        #authForm { display: flex; flex-direction: column; }
+        .nx-req::after { content: " *"; color: var(--danger); font-weight: bold; }
+        
+        /* Prioridad de orden visual */
+        #group-nombres { order: 1; }
+        #group-apellidos { order: 2; }
+        #group-telefono { order: 3; }
+        #group-correo { order: 4; }
+        #group-pass { order: 5; }
+        #group-conf { order: 6; }
     `;
     const styleSheet = document.createElement("style");
     styleSheet.innerText = loginExtStyles;
     document.head.appendChild(styleSheet);
 
-    // 2. REEMPLAZO DE TEXTO Y CONFIGURACIÓN DE CAMPOS
-    const pinInput = document.getElementById('authPin');
-    const pinConfInput = document.getElementById('authPinConfirm');
-    
-    // Cambiar etiquetas de PIN a Contraseña
-    if(pinInput) {
-        pinInput.placeholder = "MÍNIMO 6 CARACTERES";
-        const labelPin = pinInput.parentElement.querySelector('label');
-        if(labelPin) labelPin.innerText = "Contraseña";
-    }
-    if(pinConfInput) {
-        pinConfInput.placeholder = "REPITE TU CONTRASEÑA";
-        const labelConf = pinConfInput.parentElement.querySelector('label');
-        if(labelConf) labelConf.innerText = "Confirmar Contraseña";
+    // 2. IDENTIFICACIÓN Y REORGANIZACIÓN
+    const authForm = document.getElementById('authForm');
+    if (!authForm) return;
+
+    // Asignar IDs a los contenedores originales para el reordenamiento
+    const inputGroups = authForm.querySelectorAll('.input-group');
+    inputGroups.forEach(group => {
+        const input = group.querySelector('input');
+        if (input) {
+            if (input.id === 'authFullName') group.id = 'group-nombres';
+            if (input.id === 'authPhone') group.id = 'group-telefono';
+            if (input.id === 'authEmail') group.id = 'group-correo';
+            if (input.id === 'authPin') group.id = 'group-pass';
+            if (input.id === 'authPinConfirm') group.id = 'group-conf';
+        }
+    });
+
+    // Inyección del campo Apellidos
+    if (!document.getElementById('authLastName')) {
+        const lastNameHTML = `
+            <div class="input-group" id="group-apellidos">
+                <label>Apellidos</label>
+                <input type="text" id="authLastName" class="input-pin" placeholder="TUS APELLIDOS">
+            </div>`;
+        document.getElementById('group-nombres').insertAdjacentHTML('afterend', lastNameHTML);
     }
 
-    // 3. INYECCIÓN DE VISORES (OJO)
-    const setupEye = (inputEl) => {
-        if (!inputEl) return;
+    // 3. CAMBIO DE PIN A CONTRASEÑA Y VISORES
+    const configInput = (id, labelText) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        
+        // Cambiar Label
+        const label = input.parentElement.querySelector('label');
+        if (label) label.innerText = labelText;
+
+        // Crear Wrapper para el Ojo
         const wrapper = document.createElement('div');
-        wrapper.className = 'nx-pwd-container';
-        inputEl.parentNode.insertBefore(wrapper, inputEl);
-        wrapper.appendChild(inputEl);
+        wrapper.className = 'nx-pwd-wrapper';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
 
+        // Crear Ojo
         const eye = document.createElement('span');
-        eye.className = 'nx-view-toggle';
+        eye.className = 'nx-eye';
         eye.innerHTML = '👁️';
         eye.onclick = () => {
-            inputEl.type = inputEl.type === 'password' ? 'text' : 'password';
-            eye.style.opacity = inputEl.type === 'password' ? '1' : '0.5';
+            input.type = input.type === 'password' ? 'text' : 'password';
+            eye.style.opacity = input.type === 'password' ? '1' : '0.5';
         };
         wrapper.appendChild(eye);
     };
 
-    setupEye(pinInput);
-    setupEye(pinConfInput);
+    configInput('authPin', 'Contraseña');
+    configInput('authPinConfirm', 'Confirmar Contraseña');
 
-    // 4. LÓGICA DE OBLIGATORIEDAD SEGÚN MODO (Login vs Registro)
-    const observer = new MutationObserver(() => {
+    // 4. LÓGICA DE OBLIGATORIEDAD (OBSERVADOR)
+    const updateRequirements = () => {
         const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-        const allFields = [
-            'authFullName', 'authLastName', 'authPhone', 
-            'authEmail', 'authPin', 'authPinConfirm'
-        ];
+        const fields = ['authFullName', 'authLastName', 'authPhone', 'authEmail', 'authPin', 'authPinConfirm'];
 
-        allFields.forEach(id => {
-            const field = document.getElementById(id);
-            if (field) {
-                const label = field.closest('.input-group')?.querySelector('label');
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                const label = el.closest('.input-group')?.querySelector('label');
                 if (isRegister) {
-                    field.required = true;
-                    label?.classList.add('nx-required-label');
+                    el.required = true;
+                    label?.classList.add('nx-req');
                 } else {
-                    // En Iniciar Sesión solo Correo y Contraseña son obligatorios
-                    field.required = (id === 'authEmail' || id === 'authPin');
-                    label?.classList.remove('nx-required-label');
+                    el.required = (id === 'authEmail' || id === 'authPin');
+                    label?.classList.remove('nx-req');
                 }
             }
         });
-    });
+    };
 
-    const targetNode = document.getElementById('confirmGroup');
-    if (targetNode) observer.observe(targetNode, { attributes: true, attributeFilter: ['style'] });
+    const observer = new MutationObserver(updateRequirements);
+    const target = document.getElementById('confirmGroup');
+    if (target) observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+    
+    // Ejecutar al inicio
+    updateRequirements();
 
-    console.log("NEXO: Sistema de contraseñas y obligatoriedad activado.");
+    console.log("NEXO: Login reestructurado y campos obligatorios configurados.");
 })();
     </script>
 </body>
