@@ -1026,64 +1026,83 @@
     iniciarMonitorForzado();
 })();
 
-    // --- INYECCIÓN ADITIVA: PANEL DE CONTROL DE AVISOS INDEPENDIENTE ---
+    // ================================================================
+// --- INYECCIÓN ADITIVA: SEGMENTACIÓN DE AVISOS (ESTILO PREMIUM) ---
+// ================================================================
 (function() {
-    // 1. Crear el botón flotante (Solo visible para Admin o según tu criterio)
-    const btnFlotante = document.createElement('div');
-    btnFlotante.id = 'btn-control-avisos';
-    btnFlotante.innerHTML = '📢';
-    btnFlotante.style = "position:fixed; bottom:20px; right:20px; width:50px; height:50px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; z-index:999999; box-shadow: 0 0 15px rgba(0,0,0,0.5); border: 2px solid #fff;";
-    document.body.appendChild(btnFlotante);
+    // 1. Monitor de Inyección: Detecta la apertura del Panel Admin
+    const monitorAdmin = setInterval(() => {
+        const panel = document.getElementById('admin-master-panel');
+        if (panel && !document.getElementById('wrapper-segmentacion')) {
+            
+            // Contenedor principal con estilo de marca
+            const wrapper = document.createElement('div');
+            wrapper.id = 'wrapper-segmentacion';
+            wrapper.style = "margin: 15px 0; padding: 12px; border: 1px solid var(--gold); background: #000; border-radius: 8px; box-shadow: 0 0 10px rgba(212,175,55,0.15); font-family: sans-serif;";
+            
+            wrapper.innerHTML = `
+                <label style="color:var(--gold); font-size:0.65rem; font-weight:900; display:block; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">🎯 Segmentación de Audiencia:</label>
+                <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+                    
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#aaa; font-size:0.75rem;">
+                        <input type="checkbox" id="chk-free" checked style="accent-color:#666;"> FREE
+                    </label>
+                    
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#00e5ff; font-size:0.75rem; font-weight:bold;">
+                        <input type="checkbox" id="chk-pro" checked style="accent-color:#00e5ff;"> PRO
+                    </label>
+                    
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:var(--gold); font-size:0.75rem; font-weight:bold;">
+                        <input type="checkbox" id="chk-ppe" checked style="accent-color:var(--gold);"> PPE
+                    </label>
+                </div>
+            `;
 
-    // 2. Crear el menú de opciones
-    const menuAvisos = document.createElement('div');
-    menuAvisos.id = 'menu-avisos-admin';
-    menuAvisos.style = "position:fixed; bottom:80px; right:20px; width:220px; background:#161616; border:2px solid var(--gold); border-radius:12px; padding:15px; display:none; z-index:999999; color:white; font-family:sans-serif; box-shadow: 0 0 20px rgba(0,0,0,0.8);";
-    menuAvisos.innerHTML = `
-        <h4 style="margin:0 0 10px 0; font-size:0.8rem; color:var(--gold); text-align:center;">FILTRAR AVISO GLOBAL</h4>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-            <button onclick="configurarAviso('all')" style="padding:8px; cursor:pointer; background:#333; color:white; border:none; border-radius:4px;">🌐 TODOS</button>
-            <button onclick="configurarAviso('free')" style="padding:8px; cursor:pointer; background:#444; color:white; border:none; border-radius:4px;">👤 FREE</button>
-            <button onclick="configurarAviso('pro')" style="padding:8px; cursor:pointer; background:#0055ff; color:white; border:none; border-radius:4px;">⭐ PRO</button>
-            <button onclick="configurarAviso('ppe')" style="padding:8px; cursor:pointer; background:#d4af37; color:black; border:none; border-radius:4px; font-weight:bold;">💎 PPE</button>
-        </div>
-        <p id="status-aviso" style="font-size:0.6rem; margin-top:10px; text-align:center; color:#888;">Selecciona nivel</p>
-    `;
-    document.body.appendChild(menuAvisos);
+            // Insertar antes del área de texto (textarea)
+            const textArea = panel.querySelector('textarea');
+            if (textArea) textArea.parentNode.insertBefore(wrapper, textArea);
 
-    // 3. Lógica de apertura/cierre
-    btnFlotante.onclick = () => {
-        menuAvisos.style.display = menuAvisos.style.display === 'none' ? 'block' : 'none';
-    };
+            // 2. Interceptar botón de envío original
+            const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.innerText.includes('AVISO'));
+            if (btnSend) {
+                btnSend.onclick = null; // Limpiar evento original
+                btnSend.addEventListener('click', function() {
+                    const msg = textArea.value.trim();
+                    
+                    // Recopilar niveles seleccionados
+                    const targets = [];
+                    if(document.getElementById('chk-free').checked) targets.push('free');
+                    if(document.getElementById('chk-pro').checked) targets.push('pro');
+                    if(document.getElementById('chk-ppe').checked) targets.push('ppe');
 
-    // 4. Función de configuración (Referenciando dbRef de tu línea 1027)
-    window.configurarAviso = function(nivel) {
-        const status = document.getElementById('status-aviso');
-        status.innerText = "Actualizando...";
-        
-        dbRef.ref('users/ADMIN_MESSAGES/target_config').set({
-            level: nivel,
-            time: Date.now()
-        }).then(() => {
-            status.innerText = "✅ Filtro: " + nivel.toUpperCase();
-            setTimeout(() => { menuAvisos.style.display = 'none'; }, 1000);
-        });
-    };
+                    if (msg && targets.length > 0) {
+                        dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                            msg: msg,
+                            time: Date.now(),
+                            targetArray: targets // Guardamos como array para el filtro
+                        }).then(() => {
+                            textArea.value = "";
+                            alert("✅ Aviso enviado a: " + targets.join(', ').toUpperCase());
+                        });
+                    } else if (targets.length === 0) {
+                        alert("Selecciona al menos un nivel de destino.");
+                    }
+                });
+            }
+        }
+    }, 1500);
 
-    // 5. RECEPCIÓN FILTRADA (Sobrescribe la alerta original de la línea 1027)
-    dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
-    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-        const msgData = snap.val();
-        if (msgData && msgData.time > (Date.now() - 15000)) {
-            // Consultamos el filtro actual antes de mostrar
-            dbRef.ref('users/ADMIN_MESSAGES/target_config/level').once('value', targetSnap => {
-                const targetLevel = targetSnap.val() || 'all';
-                const miNivel = (typeof config !== 'undefined') ? config.level : 'free';
-
-                if (targetLevel === 'all' || targetLevel === miNivel) {
-                    alert("📢 AVISO (" + targetLevel.toUpperCase() + "):\n\n" + msgData.msg);
-                }
-            });
+    // 3. Lógica de Recepción con Filtro de Array (Sobrescribe línea 1027)
+    dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
+    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+        const d = s.val();
+        if (d && d.time > (Date.now() - 15000)) {
+            const userLevel = (typeof config !== 'undefined') ? config.level : 'free';
+            const allowed = d.targetArray || ['free', 'pro', 'ppe']; // Si no hay array, por defecto todos
+            
+            if (allowed.includes(userLevel)) {
+                alert("📢 AVISO GLOBAL:\n\n" + d.msg);
+            }
         }
     });
 })();
