@@ -833,126 +833,164 @@
         })();
 
         // ================================================================
-// --- FASE 1 (CORRECCIÓN): UNIFICACIÓN DE BORDES Y EFECTO GLOW ---
+// --- FASE 1: UNIFICACIÓN TOTAL - ESTÉTICA INTEGRAL NEXO® ---
 // ================================================================
 (function() {
-    // 1. ESTILOS MAESTROS (Efecto Login Aplicado a Todo)
-    const nexoStyleFinal = document.createElement('style');
-    nexoStyleFinal.innerHTML = `
-        /* Clase Maestra de Resplandor (Réplica exacta de tu Login) */
+    // 1. ESTILOS MAESTROS DE ALTA PRECISIÓN
+    const nexoTotalStyle = document.createElement('style');
+    nexoTotalStyle.innerHTML = `
+        /* Reset y Scroll Invisible Global del Admin */
+        #modalAdmin .modal-content {
+            overflow-y: auto !important;
+            scrollbar-width: none !important;
+        }
+        #modalAdmin .modal-content::-webkit-scrollbar { display: none !important; }
+
+        /* Efecto Glow Maestro (Réplica Login) */
+        .nexo-glow-applied, 
+        #modalAdmin input[type="text"], 
+        #modalAdmin select,
+        .admin-controls button,
         .nexo-glow-module {
             background: #000 !important;
             border: 1px solid var(--gold) !important;
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 5px rgba(212, 175, 55, 0.2);
-            padding: 15px;
-            margin-bottom: 15px;
-            position: relative;
+            border-radius: 10px !important;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.3), inset 0 0 4px rgba(212, 175, 55, 0.1) !important;
+            color: #fff !important;
+            transition: 0.3s all ease;
         }
 
-        /* Títulos de cada cuadro */
-        .nexo-header-title {
+        /* Enfoque en Búsqueda e Inputs */
+        #modalAdmin input[type="text"]:focus {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6) !important;
+            outline: none;
+        }
+
+        /* Títulos de Sección Estilizados */
+        .nexo-label-title {
             color: var(--gold);
             font-size: 0.6rem;
             font-weight: 900;
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 10px;
-            display: block;
+            margin: 15px 0 8px 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* Ajuste de la Tabla Original de Usuarios */
-        .admin-table-wrapper {
-            max-height: 230px !important; /* Aproximadamente 4 usuarios */
+        /* Layout de la Tabla (4 Usuarios Max) */
+        .nexo-user-wrapper {
+            max-height: 225px !important;
             overflow-y: auto !important;
             scrollbar-width: none;
+            margin-bottom: 20px;
         }
-        .admin-table-wrapper::-webkit-scrollbar { display: none; }
-        .admin-table { width: 100%; border-collapse: collapse; }
+        .nexo-user-wrapper::-webkit-scrollbar { display: none; }
 
-        /* Grid Simétrico para Monitor y Mensajería */
-        .nexo-main-grid {
+        /* Grid Simétrico Inferior */
+        .nexo-grid-bottom {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-top: 10px;
         }
 
-        /* Scroll invisible para todos los contenedores */
-        .nexo-scroll-stealth {
-            overflow-y: auto !important;
+        /* Contenedor de Mensaje y Monitor */
+        .nexo-inner-box {
+            height: 110px;
+            padding: 10px;
+            overflow-y: auto;
             scrollbar-width: none;
         }
-        .nexo-scroll-stealth::-webkit-scrollbar { display: none; }
+        .nexo-inner-box::-webkit-scrollbar { display: none; }
 
-        /* Selectores dentro del cuadro de mensaje */
-        .nexo-float-tags {
+        /* Selectores de Segmento */
+        .nexo-tag-group {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             display: flex;
-            gap: 8px;
-            z-index: 5;
+            gap: 6px;
         }
-        .nexo-tag { color: var(--gold); font-size: 0.55rem; font-weight: bold; display: flex; align-items: center; gap: 3px; }
-        .nexo-tag input { accent-color: var(--gold); transform: scale(0.75); }
-    `;
-    document.head.appendChild(nexoStyleFinal);
+        .nexo-tag-item { color: var(--gold); font-size: 0.5rem; font-weight: bold; display: flex; align-items: center; gap: 2px; }
+        .nexo-tag-item input { accent-color: var(--gold); transform: scale(0.7); }
 
-    // 2. INYECCIÓN Y RE-ESTRUCTURACIÓN VISUAL
-    const applyNexoInterface = () => {
+        /* Ajuste de Botones Originales */
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .admin-controls button {
+            padding: 8px 15px !important;
+            font-size: 0.7rem !important;
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(nexoTotalStyle);
+
+    // 2. INYECTOR DE ESTRUCTURA Y ESTILOS DINÁMICOS
+    const unifyNexoAdmin = () => {
         const panel = document.querySelector('#modalAdmin .modal-content');
         if (!panel) return;
 
-        // A. Aplicar borde y efecto a la Tabla de Usuarios
-        const rawTable = panel.querySelector('.admin-table');
-        if (rawTable && !rawTable.parentElement.classList.contains('admin-table-wrapper')) {
-            const tableBox = document.createElement('div');
-            tableBox.className = 'nexo-glow-module';
-            tableBox.innerHTML = `<span class="nexo-header-title">◈ Gestión de Usuarios</span>`;
-            
-            const scrollArea = document.createElement('div');
-            scrollArea.className = 'admin-table-wrapper';
-            
-            rawTable.parentNode.insertBefore(tableBox, rawTable);
-            scrollArea.appendChild(rawTable);
-            tableBox.appendChild(scrollArea);
+        // A. Envolver Barra de Búsqueda y Botones si existen
+        const searchInput = panel.querySelector('input[type="text"]');
+        if (searchInput && !searchInput.classList.contains('nexo-glow-ready')) {
+            searchInput.classList.add('nexo-glow-ready');
+            searchInput.placeholder = " Buscar usuario...";
         }
 
-        // B. Crear el Grid Inferior (Si no existe)
-        if (!document.getElementById('nexo-grid-system')) {
+        // B. Envolver Tabla de Usuarios
+        const table = panel.querySelector('.admin-table');
+        if (table && !table.parentElement.classList.contains('nexo-user-wrapper')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'nexo-glow-module nexo-user-wrapper';
+            const title = document.createElement('div');
+            title.className = 'nexo-label-title';
+            title.innerHTML = '◈ Gestión de Usuarios';
+            
+            table.parentNode.insertBefore(title, table);
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        }
+
+        // C. Crear el Grid de Monitor y Mensajería (Si no existe)
+        if (!document.getElementById('nexo-final-grid')) {
             const grid = document.createElement('div');
-            grid.id = 'nexo-grid-system';
-            grid.className = 'nexo-main-grid';
+            grid.id = 'nexo-final-grid';
+            grid.className = 'nexo-grid-bottom';
             grid.innerHTML = `
                 <div class="nexo-col">
                     <div class="nexo-glow-module">
-                        <span class="nexo-header-title">◈ Monitor de Actividad</span>
-                        <div id="live-monitor-box" class="nexo-scroll-stealth" style="height:100px; font-family:monospace; font-size:0.65rem; color:#666; line-height:1.4;">
-                            > Iniciando monitor...
+                        <div class="nexo-label-title" style="margin:0 0 10px 0;">◈ Monitor Actividad</div>
+                        <div id="live-feed" class="nexo-inner-box" style="font-family:monospace; font-size:0.6rem; color:#777;">
+                            > Esperando eventos del servidor...
                         </div>
                     </div>
-                    <button class="btn btn-primary" id="nexo-dl-btn" style="width:100%; font-size:0.7rem; background:#000; color:var(--gold); border:1px solid var(--gold);">Descargar Usuarios</button>
+                    <button id="nexo-export-csv" class="nexo-glow-applied" style="width:100%; margin-top:8px; padding:8px; font-weight:bold; font-size:0.65rem; cursor:pointer;">Descargar Base de Datos</button>
                 </div>
 
                 <div class="nexo-col">
-                    <div class="nexo-glow-module" style="height:132px;">
-                        <span class="nexo-header-title">◈ Mensaje Global</span>
-                        <div class="nexo-float-tags">
-                            <label class="nexo-tag"><input type="checkbox" id="check-f" checked> F</label>
-                            <label class="nexo-tag"><input type="checkbox" id="check-p" checked> P</label>
-                            <label class="nexo-tag"><input type="checkbox" id="check-pp" checked> PP</label>
+                    <div class="nexo-glow-module" style="position:relative;">
+                        <div class="nexo-label-title" style="margin:0 0 10px 0;">◈ Mensaje Global</div>
+                        <div class="nexo-tag-group">
+                            <label class="nexo-tag-item"><input type="checkbox" id="check-f" checked> F</label>
+                            <label class="nexo-tag-item"><input type="checkbox" id="check-p" checked> P</label>
+                            <label class="nexo-tag-item"><input type="checkbox" id="check-pp" checked> PP</label>
                         </div>
-                        <textarea id="nexo-global-txt" class="nexo-scroll-stealth" placeholder="Escribir aviso..." style="width:100%; height:80px; background:transparent; border:none; color:#fff; resize:none; font-size:0.8rem;"></textarea>
+                        <textarea id="nexo-msg-input" class="nexo-inner-box" placeholder="Escribir mensaje..." style="width:100%; background:transparent; border:none; color:#fff; resize:none; font-size:0.8rem;"></textarea>
                     </div>
-                    <button class="btn btn-primary" id="nexo-send-btn" style="width:100%; font-size:0.7rem; font-weight:900;">Enviar Mensaje</button>
+                    <button id="nexo-send-btn" class="nexo-glow-applied" style="width:100%; margin-top:8px; padding:8px; font-weight:900; font-size:0.65rem; background:var(--gold) !important; color:#000 !important; cursor:pointer;">Enviar Aviso</button>
                 </div>
             `;
             panel.appendChild(grid);
         }
     };
 
-    setInterval(applyNexoInterface, 1000);
+    setInterval(unifyNexoAdmin, 1000);
 })();
     </script>
 </body>
