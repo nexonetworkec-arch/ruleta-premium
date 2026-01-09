@@ -1029,92 +1029,101 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: AJUSTE ESTRUCTURAL DINÁMICO
- * Inserta niveles sobre el botón y ajusta la altura del mensaje automáticamente.
+ * INYECCIÓN ADITIVA: FORZADO ESTRUCTURAL (DEFINITIVO)
+ * Utiliza CSS prioritario para asegurar que el cuadro de texto ceda espacio.
  */
 (function() {
-    const ajustarEInyectar = () => {
+    // 1. Inyectamos estilos prioritarios para forzar el ajuste de altura
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #globalMsgInput {
+            height: 80px !important; 
+            min-height: 80px !important;
+            max-height: 80px !important;
+            margin-bottom: 10px !important;
+        }
+        #wrapper-niveles-final {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            background: rgba(20, 20, 20, 0.9) !important;
+            border: 1px solid #d4af37 !important;
+            padding: 8px !important;
+            border-radius: 8px !important;
+            margin-bottom: 10px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    const inyectarConFuerza = () => {
         const modal = document.getElementById('modalAdmin');
-        if (!modal || getComputedStyle(modal).display === 'none') return;
+        if (!modal) return;
 
-        // 1. Localizar elementos clave
-        const msgInput = document.getElementById('globalMsgInput');
-        const btnEnviar = Array.from(modal.querySelectorAll('button')).find(b => b.innerText.includes('ENVIAR AVISO'));
+        // Buscamos el botón de enviar para saber dónde insertar
+        const botones = Array.from(modal.querySelectorAll('button'));
+        const btnEnviar = botones.find(b => b.innerText.includes('ENVIAR AVISO') || b.onclick?.toString().includes('sendGlobalMsg'));
 
-        if (btnEnviar && !document.getElementById('wrapper-niveles-ajustado')) {
-            
-            // 2. Ajustar altura del input de mensaje para que no desborde
-            if (msgInput) {
-                msgInput.style.height = "80px"; // Reducimos la altura original
-                msgInput.style.marginBottom = "10px";
-            }
-
-            // 3. Crear contenedor de niveles
-            const wrapper = document.createElement('div');
-            wrapper.id = 'wrapper-niveles-ajustado';
-            wrapper.style.cssText = `
-                display: flex; align-items: center; justify-content: center;
-                gap: 10px; background: rgba(212, 175, 55, 0.1);
-                border: 1px solid #d4af37; padding: 8px; border-radius: 8px;
-                margin-bottom: 12px; width: 100%; box-sizing: border-box;
+        if (btnEnviar && !document.getElementById('wrapper-niveles-final')) {
+            // Creamos el HTML de los niveles
+            const htmlNiveles = `
+                <div id="wrapper-niveles-final">
+                    <span style="font-size:9px; color:#d4af37; font-weight:bold;">DESTINO:</span>
+                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                        <input type="checkbox" id="fAll" onchange="window.fToggle(this.checked)"> ALL
+                    </label>
+                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                        <input type="checkbox" class="f-chk" value="pro"> PRO
+                    </label>
+                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                        <input type="checkbox" class="f-chk" value="ppe"> PPE
+                    </label>
+                    <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                        <input type="checkbox" class="f-chk" value="free"> FREE
+                    </label>
+                </div>
             `;
 
-            wrapper.innerHTML = `
-                <span style="font-size:9px; color:#d4af37; font-weight:bold;">DESTINATARIOS:</span>
-                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                    <input type="checkbox" id="adjAll" onchange="window.adjToggle(this.checked)"> ALL
-                </label>
-                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                    <input type="checkbox" class="adj-chk" value="pro"> PRO
-                </label>
-                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                    <input type="checkbox" class="adj-chk" value="ppe"> PPE
-                </label>
-                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
-                    <input type="checkbox" class="adj-chk" value="free"> FREE
-                </label>
-            `;
+            // Insertamos justo antes del botón
+            btnEnviar.insertAdjacentHTML('beforebegin', htmlNiveles);
 
-            // 4. Inserción física: justo antes del botón enviar
-            btnEnviar.parentNode.insertBefore(wrapper, btnEnviar);
-
-            // 5. Sobrescribir función de envío para usar estos nuevos campos
+            // Redefinimos el envío
             window.sendGlobalMsg = async () => {
-                const texto = msgInput ? msgInput.value.trim() : "";
-                const niveles = Array.from(document.querySelectorAll('.adj-chk:checked')).map(i => i.value);
-
-                if(!texto) return alert("Escribe un mensaje.");
-                if(niveles.length === 0) return alert("Selecciona niveles de destino.");
+                const input = document.getElementById('globalMsgInput');
+                const msg = input ? input.value.trim() : "";
+                const targets = Array.from(document.querySelectorAll('.f-chk:checked')).map(i => i.value);
+                
+                if(!msg) return alert("Escribe un mensaje.");
+                if(targets.length === 0) return alert("Selecciona niveles.");
 
                 try {
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: texto,
-                        time: Date.now(),
-                        targets: niveles
+                        msg: msg, time: Date.now(), targets: targets
                     });
-                    alert("📢 Enviado a: " + niveles.join(", ").toUpperCase());
-                    if(msgInput) msgInput.value = "";
+                    alert("📢 Enviado correctamente.");
+                    if(input) input.value = "";
                 } catch(e) { console.error(e); }
             };
         }
     };
 
-    // Funciones globales de apoyo
-    window.adjToggle = (v) => document.querySelectorAll('.adj-chk').forEach(i => i.checked = v);
+    window.fToggle = (v) => document.querySelectorAll('.f-chk').forEach(i => i.checked = v);
 
-    // Ejecución continua para combatir el refresco del modal original
-    setInterval(ajustarEInyectar, 500);
+    // Ejecución agresiva cada 400ms para ganarle al código original
+    setInterval(inyectarConFuerza, 400);
 
-    // Receptor de avisos para los usuarios (con filtro de nivel)
+    // Receptor de avisos
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const d = snap.val();
             const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(miLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
-                }
+                if(d.targets && d.targets.includes(miLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
             }
         });
     }
