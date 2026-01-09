@@ -860,6 +860,51 @@
     `;
     document.head.appendChild(style);
 })();
+
+        // --- INYECCIÓN ADITIVA: RESPLANDOR DORADO EN TARJETAS DE ESTADÍSTICAS (ADMIN) ---
+(function() {
+    const style = document.createElement('style');
+    style.id = 'adminStatsGlowStyles';
+    style.innerHTML = `
+        /* Localización de las 4 tarjetas superiores en el Panel Admin */
+        #modalAdmin .modal-content div[style*="display: grid"] > div {
+            border: 1px solid var(--gold) !important;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.4) !important;
+            background: rgba(212, 175, 55, 0.05) !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+            transition: all 0.3s ease !important;
+            text-align: center !important;
+        }
+
+        /* Efecto de intensidad al pasar el ratón o tocar */
+        #modalAdmin .modal-content div[style*="display: grid"] > div:hover {
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.7) !important;
+            transform: translateY(-2px);
+            background: rgba(212, 175, 55, 0.1) !important;
+        }
+
+        /* Ajuste de los textos (Usuarios, Activos, Pro, PPE) */
+        #modalAdmin .modal-content div[style*="display: grid"] > div span {
+            color: var(--gold) !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        /* Ajuste de los números de las estadísticas */
+        #modalAdmin .modal-content div[style*="display: grid"] > div h3,
+        #modalAdmin .modal-content div[style*="display: grid"] > div div {
+            margin: 5px 0 0 0 !important;
+            font-size: 1.4rem !important;
+            color: var(--white) !important;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+    `;
+    document.head.appendChild(style);
+})();
     </script>
 </body>
 </html>
+
