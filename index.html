@@ -1029,86 +1029,92 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: PANEL DINÁMICO AUTO-EXTINGUIBLE
- * Se oculta agresivamente si no detecta el Panel Admin abierto.
+ * INYECCIÓN ADITIVA: AJUSTE ESTRUCTURAL DINÁMICO
+ * Inserta niveles sobre el botón y ajusta la altura del mensaje automáticamente.
  */
 (function() {
-    const ID_GHOST = 'panel-segmentacion-ghost';
-
-    const crearPanel = () => {
-        if (document.getElementById(ID_GHOST)) return;
-        const pnl = document.createElement('div');
-        pnl.id = ID_GHOST;
-        pnl.style.cssText = `
-            position: fixed; top: 20px; left: 50%;
-            transform: translateX(-50%); z-index: 2147483647;
-            display: none; background: #000; border: 2px solid #d4af37;
-            padding: 10px; border-radius: 12px; width: 260px;
-            box-shadow: 0 0 30px rgba(0,0,0,1); text-align: center;
-        `;
-        pnl.innerHTML = `
-            <div style="color:#d4af37; font-size:10px; font-weight:bold; margin-bottom:5px;">DESTINATARIOS DEL AVISO</div>
-            <div style="display:flex; justify-content:center; gap:8px;">
-                <label style="color:#fff; font-size:10px;"><input type="checkbox" id="gAll" onchange="window.tGhost(this.checked)"> ALL</label>
-                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="pro"> PRO</label>
-                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="ppe"> PPE</label>
-                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="free"> FREE</label>
-            </div>
-        `;
-        document.body.appendChild(pnl);
-    };
-
-    const monitorSeguro = () => {
+    const ajustarEInyectar = () => {
         const modal = document.getElementById('modalAdmin');
-        const miPanel = document.getElementById(ID_GHOST);
-        if(!miPanel) return;
+        if (!modal || getComputedStyle(modal).display === 'none') return;
 
-        // CONDICIÓN DE VISIBILIDAD ESTRICTA:
-        // El modal debe existir, tener contenido y NO tener el display en 'none'
-        const estaAbierto = modal && 
-                           modal.innerHTML.trim() !== "" && 
-                           getComputedStyle(modal).display !== 'none' &&
-                           modal.offsetHeight > 0;
+        // 1. Localizar elementos clave
+        const msgInput = document.getElementById('globalMsgInput');
+        const btnEnviar = Array.from(modal.querySelectorAll('button')).find(b => b.innerText.includes('ENVIAR AVISO'));
 
-        if (estaAbierto) {
-            miPanel.style.display = 'block';
+        if (btnEnviar && !document.getElementById('wrapper-niveles-ajustado')) {
             
-            // Vinculamos la función de envío solo cuando está abierto
+            // 2. Ajustar altura del input de mensaje para que no desborde
+            if (msgInput) {
+                msgInput.style.height = "80px"; // Reducimos la altura original
+                msgInput.style.marginBottom = "10px";
+            }
+
+            // 3. Crear contenedor de niveles
+            const wrapper = document.createElement('div');
+            wrapper.id = 'wrapper-niveles-ajustado';
+            wrapper.style.cssText = `
+                display: flex; align-items: center; justify-content: center;
+                gap: 10px; background: rgba(212, 175, 55, 0.1);
+                border: 1px solid #d4af37; padding: 8px; border-radius: 8px;
+                margin-bottom: 12px; width: 100%; box-sizing: border-box;
+            `;
+
+            wrapper.innerHTML = `
+                <span style="font-size:9px; color:#d4af37; font-weight:bold;">DESTINATARIOS:</span>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                    <input type="checkbox" id="adjAll" onchange="window.adjToggle(this.checked)"> ALL
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                    <input type="checkbox" class="adj-chk" value="pro"> PRO
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                    <input type="checkbox" class="adj-chk" value="ppe"> PPE
+                </label>
+                <label style="color:#fff; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:3px;">
+                    <input type="checkbox" class="adj-chk" value="free"> FREE
+                </label>
+            `;
+
+            // 4. Inserción física: justo antes del botón enviar
+            btnEnviar.parentNode.insertBefore(wrapper, btnEnviar);
+
+            // 5. Sobrescribir función de envío para usar estos nuevos campos
             window.sendGlobalMsg = async () => {
-                const input = document.getElementById('globalMsgInput');
-                const msg = input ? input.value.trim() : "";
-                const targets = Array.from(document.querySelectorAll('.g-chk:checked')).map(i => i.value);
-                
-                if(!msg) return alert("Escribe el mensaje.");
-                if(targets.length === 0) return alert("Selecciona niveles arriba.");
+                const texto = msgInput ? msgInput.value.trim() : "";
+                const niveles = Array.from(document.querySelectorAll('.adj-chk:checked')).map(i => i.value);
+
+                if(!texto) return alert("Escribe un mensaje.");
+                if(niveles.length === 0) return alert("Selecciona niveles de destino.");
 
                 try {
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: msg, time: Date.now(), targets: targets
+                        msg: texto,
+                        time: Date.now(),
+                        targets: niveles
                     });
-                    alert("📢 Enviado.");
-                    if(input) input.value = "";
+                    alert("📢 Enviado a: " + niveles.join(", ").toUpperCase());
+                    if(msgInput) msgInput.value = "";
                 } catch(e) { console.error(e); }
             };
-        } else {
-            // Si no se cumple la condición, desaparece por completo
-            miPanel.style.display = 'none';
         }
     };
 
-    window.tGhost = (v) => document.querySelectorAll('.g-chk').forEach(i => i.checked = v);
+    // Funciones globales de apoyo
+    window.adjToggle = (v) => document.querySelectorAll('.adj-chk').forEach(i => i.checked = v);
 
-    crearPanel();
-    setInterval(monitorSeguro, 300); // Revisión rápida cada 300ms
+    // Ejecución continua para combatir el refresco del modal original
+    setInterval(ajustarEInyectar, 500);
 
-    // Lógica de Recepción (para todos)
+    // Receptor de avisos para los usuarios (con filtro de nivel)
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
-            const d = s.val();
-            const uLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
+            const d = snap.val();
+            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(uLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
+                if(d.targets && d.targets.includes(miLvl)) {
+                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
+                }
             }
         });
     }
