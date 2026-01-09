@@ -1135,36 +1135,5 @@
     }
 })();
 </script>
-
-    /**
- * MONITOR DE TRÁFICO FIREBASE (DEBUG)
- * Captura qué datos está enviando el modal administrativo.
- */
-(function() {
-    if (!window.dbRef) {
-        console.error("❌ No se detectó dbRef (Firebase).");
-        return;
-    }
-
-    console.log("🚀 Monitor de Segmentación activado. Presiona 'ENVIAR AVISO' en tu panel...");
-
-    // Interceptamos la escritura en la base de datos
-    const originalSet = dbRef.ref().constructor.prototype.set;
-    
-    dbRef.ref().constructor.prototype.set = function(data) {
-        // Si los datos contienen un mensaje o texto, los analizamos
-        if (data && (data.msg || data.texto || data.message)) {
-            console.warn("📢 ¡DATOS DETECTADOS!");
-            console.table({
-                "Mensaje": data.msg || data.texto,
-                "Segmento/Nivel": data.targets || data.level || "NO DEFINIDO",
-                "Ruta de DB": this.toString()
-            });
-            console.log("Estructura completa enviada:", data);
-        }
-        return originalSet.apply(this, arguments);
-    };
-})();
 </body>
 </html>
-
