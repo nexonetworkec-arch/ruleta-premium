@@ -1029,97 +1029,89 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: PANEL FANTASMA SINCRONIZADO
- * Solo es visible cuando el modal administrativo está abierto.
- * No ensucia la página de inicio.
+ * INYECCIÓN ADITIVA: PANEL DINÁMICO AUTO-EXTINGUIBLE
+ * Se oculta agresivamente si no detecta el Panel Admin abierto.
  */
 (function() {
-    // 1. Crear el panel (Invisible por defecto)
-    const crearPanelSincronizado = () => {
-        if (document.getElementById('panel-segmentacion-ghost')) return;
+    const ID_GHOST = 'panel-segmentacion-ghost';
 
+    const crearPanel = () => {
+        if (document.getElementById(ID_GHOST)) return;
         const pnl = document.createElement('div');
-        pnl.id = 'panel-segmentacion-ghost';
-        // Diseño flotante que se posicionará sobre el modal
+        pnl.id = ID_GHOST;
         pnl.style.cssText = `
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -180px); 
-            z-index: 2147483647; display: none;
-            background: rgba(0,0,0,0.95); border: 1px solid #d4af37;
-            padding: 10px; border-radius: 10px; width: 280px;
-            box-shadow: 0 0 20px rgba(0,0,0,1);
+            position: fixed; top: 20px; left: 50%;
+            transform: translateX(-50%); z-index: 2147483647;
+            display: none; background: #000; border: 2px solid #d4af37;
+            padding: 10px; border-radius: 12px; width: 260px;
+            box-shadow: 0 0 30px rgba(0,0,0,1); text-align: center;
         `;
-
         pnl.innerHTML = `
-            <div style="color:#d4af37; font-size:10px; font-weight:bold; text-align:center; margin-bottom:8px;">SEGMENTACIÓN DE NIVEL</div>
-            <div style="display:flex; justify-content:center; gap:10px; background:#111; padding:5px; border-radius:5px;">
-                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" id="ghostAll" onchange="window.toggleGhost(this.checked)"> ALL</label>
-                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="pro"> PRO</label>
-                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="ppe"> PPE</label>
-                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="free"> FREE</label>
+            <div style="color:#d4af37; font-size:10px; font-weight:bold; margin-bottom:5px;">DESTINATARIOS DEL AVISO</div>
+            <div style="display:flex; justify-content:center; gap:8px;">
+                <label style="color:#fff; font-size:10px;"><input type="checkbox" id="gAll" onchange="window.tGhost(this.checked)"> ALL</label>
+                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="pro"> PRO</label>
+                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="ppe"> PPE</label>
+                <label style="color:#fff; font-size:10px;"><input type="checkbox" class="g-chk" value="free"> FREE</label>
             </div>
-            <p style="color:#888; font-size:8px; margin:5px 0 0 0; text-align:center;">Configura aquí antes de pulsar "ENVIAR AVISO"</p>
         `;
-
         document.body.appendChild(pnl);
     };
 
-    // 2. Monitor de Visibilidad
-    const vigilarModal = () => {
-        const modalOriginal = document.getElementById('modalAdmin');
-        const miPanel = document.getElementById('panel-segmentacion-ghost');
-        
-        if (modalOriginal && modalOriginal.style.display !== 'none') {
-            // Si el modal admin está abierto, mostramos nuestro panel
-            if (miPanel) miPanel.style.display = 'block';
+    const monitorSeguro = () => {
+        const modal = document.getElementById('modalAdmin');
+        const miPanel = document.getElementById(ID_GHOST);
+        if(!miPanel) return;
+
+        // CONDICIÓN DE VISIBILIDAD ESTRICTA:
+        // El modal debe existir, tener contenido y NO tener el display en 'none'
+        const estaAbierto = modal && 
+                           modal.innerHTML.trim() !== "" && 
+                           getComputedStyle(modal).display !== 'none' &&
+                           modal.offsetHeight > 0;
+
+        if (estaAbierto) {
+            miPanel.style.display = 'block';
             
-            // Re-vinculamos la función de envío para que lea nuestros checks
+            // Vinculamos la función de envío solo cuando está abierto
             window.sendGlobalMsg = async () => {
                 const input = document.getElementById('globalMsgInput');
                 const msg = input ? input.value.trim() : "";
-                const targets = Array.from(document.querySelectorAll('.ghost-chk:checked')).map(i => i.value);
+                const targets = Array.from(document.querySelectorAll('.g-chk:checked')).map(i => i.value);
                 
-                if(!msg) return alert("Escribe el mensaje en el panel original.");
-                if(targets.length === 0) return alert("Selecciona niveles en el panel superior.");
+                if(!msg) return alert("Escribe el mensaje.");
+                if(targets.length === 0) return alert("Selecciona niveles arriba.");
 
                 try {
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: msg,
-                        time: Date.now(),
-                        targets: targets
+                        msg: msg, time: Date.now(), targets: targets
                     });
-                    alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
+                    alert("📢 Enviado.");
                     if(input) input.value = "";
                 } catch(e) { console.error(e); }
             };
         } else {
-            // Si el modal admin se cierra, ocultamos todo
-            if (miPanel) miPanel.style.display = 'none';
+            // Si no se cumple la condición, desaparece por completo
+            miPanel.style.display = 'none';
         }
     };
 
-    // Funciones globales
-    window.toggleGhost = (v) => document.querySelectorAll('.ghost-chk').forEach(i => i.checked = v);
+    window.tGhost = (v) => document.querySelectorAll('.g-chk').forEach(i => i.checked = v);
 
-    // 3. Recepción de Mensajes (Lado Usuario)
-    const receptor = () => {
-        if (!window.dbRef) return;
+    crearPanel();
+    setInterval(monitorSeguro, 300); // Revisión rápida cada 300ms
+
+    // Lógica de Recepción (para todos)
+    if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
             const d = s.val();
             const uLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(uLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
-                }
+                if(d.targets && d.targets.includes(uLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
             }
         });
-    };
-
-    // Inicialización y bucle de vigilancia
-    crearPanelSincronizado();
-    setInterval(vigilarModal, 500);
-    setTimeout(receptor, 2000);
+    }
 })();
 </script>
 </body>
