@@ -832,95 +832,182 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: INFRAESTRUCTURA DE MENÚ "LIENZO BLANCO" ---
-        (function() {
-            // 1. CONFIGURACIÓN DE IDENTIFICADORES
-            const MENU_ID = 'nexo-nav-menu';
-            const OVERLAY_ID = 'nexo-nav-overlay';
+        /* ==========================================================
+   NEXO® ALL-IN-ONE NAVIGATION SYSTEM
+   ID ADMIN: 8TRGX7yjVJP5KFM0Gg3Eq0cKpX42
+   ========================================================== */
 
-            // 2. INYECCIÓN DE ESTILOS (Arquitectura Visual NEXO®)
-            const injectBaseStyles = () => {
-                if (document.getElementById('nexo-nav-styles')) return;
-                const style = document.createElement('style');
-                style.id = 'nexo-nav-styles';
-                style.innerHTML = `
-                    #nexo-nav-trigger {
-                        position: fixed; top: 20px; left: 20px; width: 40px; height: 40px;
-                        background: #000; border: 1.5px solid #d4af37; border-radius: 6px;
-                        display: flex; flex-direction: column; justify-content: center; align-items: center;
-                        gap: 4px; cursor: pointer; z-index: 2147483640; transition: 0.3s;
-                    }
-                    #nexo-nav-trigger span { width: 20px; height: 2px; background: #d4af37; transition: 0.3s; }
-                    
-                    #${MENU_ID} {
-                        position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
-                        background: #111; border-right: 1px solid #d4af37;
-                        z-index: 2147483642; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-                        display: flex; flex-direction: column; padding: 20px 0;
-                    }
-                    #${MENU_ID}.active { left: 0; }
+(function() {
+    // 1. ESTILOS GLOBALES (Negro & Oro)
+    const nexoStyles = `
+    :root {
+        --nx-gold: #d4af37;
+        --nx-gold-glow: rgba(212, 175, 55, 0.4);
+        --nx-black: #161616;
+        --nx-black-pure: #000000;
+        --nx-white: #ffffff;
+    }
 
-                    #${OVERLAY_ID} {
-                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-                        display: none; z-index: 2147483641; opacity: 0; transition: 0.3s;
-                    }
-                    #${OVERLAY_ID}.active { display: block; opacity: 1; }
+    /* Ocultar botón de marca anterior (Ajustar selector si es necesario) */
+    #botonMarca, .boton-marca, [onclick*="abrirMenu"] { display: none !important; }
 
-                    .nexo-menu-content { flex: 1; overflow-y: auto; padding-top: 50px; }
-                    
-                    /* Estilo base para futuros items */
-                    .nexo-link {
-                        padding: 15px 25px; color: #fff; font-family: 'Segoe UI', sans-serif;
-                        text-transform: uppercase; font-size: 13px; letter-spacing: 1px;
-                        cursor: pointer; border-bottom: 1px solid #222; transition: 0.2s;
-                    }
-                    .nexo-link:hover { background: #d4af37; color: #000; }
-                `;
-                document.head.appendChild(style);
-            };
+    /* Botón de Apertura (Trigger) */
+    #nx-trigger {
+        position: fixed; top: 20px; left: 20px; width: 45px; height: 45px;
+        background: var(--nx-black); border: 2px solid var(--nx-gold);
+        border-radius: 8px; color: var(--nx-gold); display: flex;
+        align-items: center; justify-content: center; font-size: 24px;
+        cursor: pointer; z-index: 999997; transition: 0.3s;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    #nx-trigger:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--nx-gold-glow); }
 
-            // 3. CONSTRUCCIÓN DEL MENÚ
-            const buildMenu = () => {
-                if (document.getElementById(MENU_ID)) return;
-                injectBaseStyles();
+    /* Sidebar Principal */
+    #nexo-sidebar {
+        position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+        background: var(--nx-black); border-right: 1px solid var(--nx-gold);
+        z-index: 999999; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex; flex-direction: column; font-family: sans-serif;
+    }
+    #nexo-sidebar.active { left: 0; }
 
-                // Crear Trigger (Botón Hamburguesa)
-                const trigger = document.createElement('div');
-                trigger.id = 'nexo-nav-trigger';
-                trigger.innerHTML = '<span></span><span></span><span></span>';
-                document.body.appendChild(trigger);
+    #nexo-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        display: none; z-index: 999998;
+    }
 
-                // Crear Overlay
-                const overlay = document.createElement('div');
-                overlay.id = OVERLAY_ID;
-                document.body.appendChild(overlay);
+    /* Header & Avatar */
+    .nx-header { padding: 40px 20px; text-align: center; background: var(--nx-black-pure); }
+    .nx-avatar-wrapper {
+        position: relative; width: 90px; height: 90px; margin: 0 auto 15px;
+        border-radius: 50%; border: 2px solid var(--nx-gold); padding: 3px;
+    }
+    .nx-avatar-wrapper img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .nx-avatar-edit {
+        position: absolute; bottom: 0; right: 0; background: var(--nx-gold);
+        width: 26px; height: 26px; border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: 2px solid var(--nx-black);
+    }
 
-                // Crear Panel Lateral
-                const menu = document.createElement('nav');
-                menu.id = MENU_ID;
-                menu.innerHTML = `
-                    <div class="nexo-menu-content" id="nexo-items-container">
-                        </div>
-                    <div style="padding: 20px; color: #333; font-size: 9px; text-align: center; font-family: monospace;">
-                        NEXO SYSTEM v5.0 | LIENZO BLANCO
-                    </div>
-                `;
-                document.body.appendChild(menu);
+    /* Cuerpo y Links */
+    .nx-body { flex: 1; padding: 10px 0; }
+    .nx-link {
+        padding: 15px 25px; color: var(--nx-white); cursor: pointer;
+        display: flex; align-items: center; gap: 15px; transition: 0.3s;
+        border-left: 4px solid transparent; text-transform: uppercase; font-size: 12px; font-weight: 600;
+    }
+    .nx-link:hover { background: rgba(212, 175, 55, 0.1); border-left-color: var(--nx-gold); color: var(--nx-gold); }
+    .nx-link i { font-style: normal; font-size: 18px; }
 
-                // Lógica de Apertura/Cierre
-                const toggle = () => {
-                    menu.classList.toggle('active');
-                    overlay.classList.toggle('active');
-                };
+    /* Footer */
+    .nx-footer { padding: 20px; background: var(--nx-black-pure); text-align: center; border-top: 1px solid #222; }
+    .nx-footer p { margin: 2px 0; font-size: 9px; color: #666; letter-spacing: 1px; }
+    .nx-footer a { color: var(--nx-gold); text-decoration: none; font-size: 10px; }
 
-                trigger.onclick = toggle;
-                overlay.onclick = toggle;
-            };
+    /* Estilo del Modal de Perfil */
+    .nx-modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000000;
+    }
+    .nx-modal-content {
+        background: var(--nx-black); border: 2px solid var(--nx-gold); padding: 25px;
+        width: 85%; max-width: 350px; border-radius: 15px; color: white; text-align: center;
+    }
+    `;
 
-            // 4. INICIALIZACIÓN POR PERSISTENCIA (Asegura que no sea borrado por el código original)
-            setInterval(buildMenu, 2000);
-        })();
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = nexoStyles;
+    document.head.appendChild(styleSheet);
+
+    // 2. ESTRUCTURA HTML
+    const nexoHTML = `
+    <div id="nx-trigger" onclick="NexoNav.toggle()">☰</div>
+    <div id="nexo-overlay" onclick="NexoNav.toggle()"></div>
+    <div id="nexo-sidebar">
+        <div class="nx-header">
+            <div class="nx-avatar-wrapper">
+                <img src="https://via.placeholder.com/100" id="nx-avatar-img">
+                <div class="nx-avatar-edit" onclick="document.getElementById('nx-upload').click()">✏️</div>
+                <input type="file" id="nx-upload" style="display:none" onchange="window.nxHandleImage(this)">
+            </div>
+            <div style="color:var(--nx-gold); font-size:14px; font-weight:bold;">NEXO MASTER</div>
+        </div>
+        <div class="nx-body" id="nx-menu-items"></div>
+        <div class="nx-footer">
+            <p>PROPIETARIO: NEXO MASTER</p>
+            <p>© 2026 DERECHOS RESERVADOS</p>
+            <a href="mailto:admin@nexo.com">admin@nexo.com</a>
+        </div>
+    </div>
+    <div id="nx-profile-modal" class="nx-modal" onclick="this.style.display='none'">
+        <div class="nx-modal-content" onclick="event.stopPropagation()">
+            <h3 style="color:var(--nx-gold)">MI PERFIL</h3>
+            <hr border="0" style="border-top:1px solid #333; margin:15px 0;">
+            <div id="nx-profile-data" style="text-align:left; font-size:13px; line-height:2;"></div>
+            <button onclick="document.getElementById('nx-profile-modal').style.display='none'" 
+                    style="margin-top:20px; background:var(--nx-gold); border:none; padding:10px 20px; width:100%; font-weight:bold; cursor:pointer;">CERRAR</button>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', nexoHTML);
+
+    // 3. LÓGICA DE CONTROL
+    const adminUID = "8TRGX7yjVJP5KFM0Gg3Eq0cKpX42";
+
+    window.NexoNav = {
+        toggle: function() {
+            const side = document.getElementById('nexo-sidebar');
+            const over = document.getElementById('nexo-overlay');
+            const isActive = side.classList.toggle('active');
+            over.style.display = isActive ? 'block' : 'none';
+        },
+        addBtn: function(label, icon, action) {
+            const container = document.getElementById('nx-menu-items');
+            const div = document.createElement('div');
+            div.className = 'nx-link';
+            div.innerHTML = `<i>${icon}</i> <span>${label}</span>`;
+            div.onclick = action;
+            container.appendChild(div);
+        }
+    };
+
+    window.nxHandleImage = function(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => document.getElementById('nx-avatar-img').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    // 4. INICIALIZACIÓN DE BOTONES
+    // Mi Perfil
+    NexoNav.addBtn('Mi Perfil', '👤', () => {
+        const modal = document.getElementById('nx-profile-modal');
+        const dataBox = document.getElementById('nx-profile-data');
+        dataBox.innerHTML = "Cargando datos...";
+        modal.style.display = 'flex';
+        
+        // Simulación de carga de DB (Conectar con tu objeto 'db' de Firebase si existe)
+        setTimeout(() => {
+            dataBox.innerHTML = `
+                <b>ID:</b> ${adminUID.substring(0,10)}...<br>
+                <b>USUARIO:</b> Administrador Master<br>
+                <b>RANGO:</b> Dueño de Marca<br>
+                <b>ESTADO:</b> Verificado
+            `;
+        }, 800);
+    });
+
+    // Mi Marca
+    NexoNav.addBtn('Mi Marca', '💎', () => alert("Configuración de Mi Marca (Próximamente)"));
+
+    // Reiniciar Sistema
+    NexoNav.addBtn('Reiniciar Sistema', '🔄', () => {
+        if(confirm("⚠️ ¿Deseas reiniciar la aplicación ahora?")) window.location.reload();
+    });
+
+})();
     </script>
 </body>
 </html>
