@@ -833,12 +833,12 @@
         })();
 
         /* ==========================================================
-   NEXO® ALL-IN-ONE NAVIGATION SYSTEM
+   NEXO® NAVIGATION SYSTEM - PRO EDITION
    ID ADMIN: 8TRGX7yjVJP5KFM0Gg3Eq0cKpX42
    ========================================================== */
 
 (function() {
-    // 1. ESTILOS GLOBALES (Negro & Oro)
+    // 1. ESTILOS GLOBALES (Negro, Oro y Formularios)
     const nexoStyles = `
     :root {
         --nx-gold: #d4af37;
@@ -848,10 +848,8 @@
         --nx-white: #ffffff;
     }
 
-    /* Ocultar botón de marca anterior (Ajustar selector si es necesario) */
     #botonMarca, .boton-marca, [onclick*="abrirMenu"] { display: none !important; }
 
-    /* Botón de Apertura (Trigger) */
     #nx-trigger {
         position: fixed; top: 20px; left: 20px; width: 45px; height: 45px;
         background: var(--nx-black); border: 2px solid var(--nx-gold);
@@ -860,14 +858,12 @@
         cursor: pointer; z-index: 999997; transition: 0.3s;
         box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-    #nx-trigger:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--nx-gold-glow); }
 
-    /* Sidebar Principal */
     #nexo-sidebar {
         position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
         background: var(--nx-black); border-right: 1px solid var(--nx-gold);
         z-index: 999999; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        display: flex; flex-direction: column; font-family: sans-serif;
+        display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif;
     }
     #nexo-sidebar.active { left: 0; }
 
@@ -877,43 +873,47 @@
         display: none; z-index: 999998;
     }
 
-    /* Header & Avatar */
-    .nx-header { padding: 40px 20px; text-align: center; background: var(--nx-black-pure); }
+    /* Header & Subscription */
+    .nx-header { padding: 30px 20px; text-align: center; background: var(--nx-black-pure); }
     .nx-avatar-wrapper {
-        position: relative; width: 90px; height: 90px; margin: 0 auto 15px;
+        position: relative; width: 90px; height: 90px; margin: 0 auto 10px;
         border-radius: 50%; border: 2px solid var(--nx-gold); padding: 3px;
     }
     .nx-avatar-wrapper img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-    .nx-avatar-edit {
-        position: absolute; bottom: 0; right: 0; background: var(--nx-gold);
-        width: 26px; height: 26px; border-radius: 50%; display: flex;
-        align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: 2px solid var(--nx-black);
+    .nx-sub-tag { 
+        color: var(--nx-gold); font-size: 11px; font-weight: bold; 
+        letter-spacing: 2px; text-transform: uppercase; margin-top: 5px;
     }
 
-    /* Cuerpo y Links */
+    /* Links */
     .nx-body { flex: 1; padding: 10px 0; }
     .nx-link {
         padding: 15px 25px; color: var(--nx-white); cursor: pointer;
         display: flex; align-items: center; gap: 15px; transition: 0.3s;
-        border-left: 4px solid transparent; text-transform: uppercase; font-size: 12px; font-weight: 600;
+        border-left: 4px solid transparent; text-transform: uppercase; font-size: 12px;
     }
-    .nx-link:hover { background: rgba(212, 175, 55, 0.1); border-left-color: var(--nx-gold); color: var(--nx-gold); }
-    .nx-link i { font-style: normal; font-size: 18px; }
+    .nx-link:hover { background: rgba(212, 175, 55, 0.1); border-left-color: var(--nx-gold); }
 
     /* Footer */
     .nx-footer { padding: 20px; background: var(--nx-black-pure); text-align: center; border-top: 1px solid #222; }
-    .nx-footer p { margin: 2px 0; font-size: 9px; color: #666; letter-spacing: 1px; }
-    .nx-footer a { color: var(--nx-gold); text-decoration: none; font-size: 10px; }
+    .nx-footer p { margin: 2px 0; font-size: 9px; color: #555; }
 
-    /* Estilo del Modal de Perfil */
+    /* Modal Editable */
     .nx-modal {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000000;
     }
     .nx-modal-content {
         background: var(--nx-black); border: 2px solid var(--nx-gold); padding: 25px;
-        width: 85%; max-width: 350px; border-radius: 15px; color: white; text-align: center;
+        width: 85%; max-width: 380px; border-radius: 15px; color: white;
     }
+    .nx-input-group { margin-bottom: 15px; }
+    .nx-input-group label { display: block; color: var(--nx-gold); font-size: 10px; margin-bottom: 5px; text-transform: uppercase; }
+    .nx-input-group input { 
+        width: 100%; background: #222; border: 1px solid #444; color: white; 
+        padding: 8px; border-radius: 5px; outline: none; box-sizing: border-box;
+    }
+    .nx-input-group input:focus { border-color: var(--nx-gold); }
     `;
 
     const styleSheet = document.createElement("style");
@@ -928,51 +928,70 @@
         <div class="nx-header">
             <div class="nx-avatar-wrapper">
                 <img src="https://via.placeholder.com/100" id="nx-avatar-img">
-                <div class="nx-avatar-edit" onclick="document.getElementById('nx-upload').click()">✏️</div>
+                <div class="nx-avatar-edit" onclick="document.getElementById('nx-upload').click()" 
+                     style="position:absolute; bottom:0; right:0; background:var(--nx-gold); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; border:2px solid black;">✏️</div>
                 <input type="file" id="nx-upload" style="display:none" onchange="window.nxHandleImage(this)">
             </div>
-            <div style="color:var(--nx-gold); font-size:14px; font-weight:bold;">NEXO MASTER</div>
+            <div class="nx-sub-tag" id="nx-sub-level">Suscripción: GOLD</div>
         </div>
         <div class="nx-body" id="nx-menu-items"></div>
         <div class="nx-footer">
             <p>PROPIETARIO: NEXO MASTER</p>
             <p>© 2026 DERECHOS RESERVADOS</p>
-            <a href="mailto:admin@nexo.com">admin@nexo.com</a>
         </div>
     </div>
-    <div id="nx-profile-modal" class="nx-modal" onclick="this.style.display='none'">
-        <div class="nx-modal-content" onclick="event.stopPropagation()">
-            <h3 style="color:var(--nx-gold)">MI PERFIL</h3>
-            <hr border="0" style="border-top:1px solid #333; margin:15px 0;">
-            <div id="nx-profile-data" style="text-align:left; font-size:13px; line-height:2;"></div>
-            <button onclick="document.getElementById('nx-profile-modal').style.display='none'" 
-                    style="margin-top:20px; background:var(--nx-gold); border:none; padding:10px 20px; width:100%; font-weight:bold; cursor:pointer;">CERRAR</button>
+
+    <div id="nx-profile-modal" class="nx-modal">
+        <div class="nx-modal-content">
+            <h3 style="color:var(--nx-gold); text-align:center; margin-top:0;">EDITAR PERFIL</h3>
+            <div class="nx-input-group"><label>Nombres</label><input type="text" id="edit-name"></div>
+            <div class="nx-input-group"><label>Apellidos</label><input type="text" id="edit-lastname"></div>
+            <div class="nx-input-group"><label>Teléfono</label><input type="tel" id="edit-phone"></div>
+            <div class="nx-input-group"><label>Correo Electrónico</label><input type="email" id="edit-email"></div>
+            <button onclick="NexoProfile.save()" style="background:var(--nx-gold); border:none; padding:12px; width:100%; font-weight:bold; cursor:pointer; margin-bottom:10px;">GUARDAR CAMBIOS</button>
+            <button onclick="document.getElementById('nx-profile-modal').style.display='none'" style="background:transparent; border:1px solid #444; color:#888; padding:8px; width:100%; cursor:pointer;">CANCELAR</button>
         </div>
     </div>
     `;
     document.body.insertAdjacentHTML('beforeend', nexoHTML);
 
-    // 3. LÓGICA DE CONTROL
+    // 3. LÓGICA DE DATOS
     const adminUID = "8TRGX7yjVJP5KFM0Gg3Eq0cKpX42";
 
     window.NexoNav = {
-        toggle: function() {
+        toggle: () => {
             const side = document.getElementById('nexo-sidebar');
             const over = document.getElementById('nexo-overlay');
-            const isActive = side.classList.toggle('active');
-            over.style.display = isActive ? 'block' : 'none';
+            const active = side.classList.toggle('active');
+            over.style.display = active ? 'block' : 'none';
         },
-        addBtn: function(label, icon, action) {
+        addBtn: (label, icon, action) => {
             const container = document.getElementById('nx-menu-items');
             const div = document.createElement('div');
             div.className = 'nx-link';
-            div.innerHTML = `<i>${icon}</i> <span>${label}</span>`;
+            div.innerHTML = `<span style="font-size:18px;">${icon}</span> <span>${label}</span>`;
             div.onclick = action;
             container.appendChild(div);
         }
     };
 
-    window.nxHandleImage = function(input) {
+    window.NexoProfile = {
+        open: function() {
+            // Aquí se cargan los datos (Simulación de DB)
+            document.getElementById('edit-name').value = "Admin";
+            document.getElementById('edit-lastname').value = "Master";
+            document.getElementById('edit-phone').value = "+593 999 999 999";
+            document.getElementById('edit-email').value = "admin@nexo.com";
+            document.getElementById('nx-profile-modal').style.display = 'flex';
+        },
+        save: function() {
+            // Lógica de guardado en Firebase (Placeholder)
+            alert("NEXO: Datos actualizados correctamente.");
+            document.getElementById('nx-profile-modal').style.display = 'none';
+        }
+    };
+
+    window.nxHandleImage = (input) => {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => document.getElementById('nx-avatar-img').src = e.target.result;
@@ -980,32 +999,10 @@
         }
     };
 
-    // 4. INICIALIZACIÓN DE BOTONES
-    // Mi Perfil
-    NexoNav.addBtn('Mi Perfil', '👤', () => {
-        const modal = document.getElementById('nx-profile-modal');
-        const dataBox = document.getElementById('nx-profile-data');
-        dataBox.innerHTML = "Cargando datos...";
-        modal.style.display = 'flex';
-        
-        // Simulación de carga de DB (Conectar con tu objeto 'db' de Firebase si existe)
-        setTimeout(() => {
-            dataBox.innerHTML = `
-                <b>ID:</b> ${adminUID.substring(0,10)}...<br>
-                <b>USUARIO:</b> Administrador Master<br>
-                <b>RANGO:</b> Dueño de Marca<br>
-                <b>ESTADO:</b> Verificado
-            `;
-        }, 800);
-    });
-
-    // Mi Marca
-    NexoNav.addBtn('Mi Marca', '💎', () => alert("Configuración de Mi Marca (Próximamente)"));
-
-    // Reiniciar Sistema
-    NexoNav.addBtn('Reiniciar Sistema', '🔄', () => {
-        if(confirm("⚠️ ¿Deseas reiniciar la aplicación ahora?")) window.location.reload();
-    });
+    // 4. INICIALIZACIÓN
+    NexoNav.addBtn('Mi Perfil', '👤', () => NexoProfile.open());
+    NexoNav.addBtn('Mi Marca', '💎', () => alert("Módulo Mi Marca en desarrollo..."));
+    NexoNav.addBtn('Reiniciar Sistema', '🔄', () => { if(confirm("¿Reiniciar app?")) window.location.reload(); });
 
 })();
     </script>
