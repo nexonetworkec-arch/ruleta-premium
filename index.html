@@ -833,121 +833,122 @@
         })();
 
         // ================================================================
-// --- INYECCIÓN ADITIVA: NEXO ADMIN EVOLUTION V2 (PRIVACY & LIVE) ---
+// --- NEXO® ADMIN SYSTEM V3: SOLUCIÓN DEFINITIVA ---
 // ================================================================
 (function() {
-    // 1. ESTILOS DE INTERFAZ PREMIUM
-    const styleAddon = document.createElement('style');
-    styleAddon.innerHTML = `
-        #modalAdmin .modal-content { max-height: 90vh; overflow-y: auto !important; padding-top: 60px; }
-        .nexo-msg-wrapper { background: #000; border: 1px solid #222; border-radius: 12px; padding: 15px; margin: 15px 0; text-align: center; }
-        .nexo-textarea { width: 100%; background: #050505; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; font-size: 0.85rem; min-height: 80px; resize: none; margin-bottom: 10px; }
-        .nexo-textarea:focus { border-color: var(--gold); }
-        .btn-send-small { background: var(--gold); color: #000; border: none; padding: 6px 20px; border-radius: 20px; font-weight: 900; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; margin-bottom: 12px; }
-        .nexo-segments { display: flex; justify-content: center; gap: 15px; border-top: 1px solid #111; padding-top: 10px; }
-        .nexo-seg-label { color: var(--gold); font-size: 0.65rem; font-weight: bold; display: flex; align-items: center; gap: 5px; cursor: pointer; opacity: 0.8; }
-        .nexo-seg-label input { accent-color: var(--gold); }
-        .live-monitor { background: #080808; border-left: 3px solid var(--gold); padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 0.7rem; color: #888; max-height: 100px; overflow-y: auto; }
-        #nexo-modal-global { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 1000000; }
-        .download-btn-top { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-size: 0.6rem; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    // 1. ESTILOS DE INTERFAZ (Scroll, Diseño y Privacidad)
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #modalAdmin .modal-content { max-height: 85vh; overflow-y: auto !important; position: relative; padding-top: 50px; }
+        .nexo-admin-box { background: #000; border: 1px solid #222; border-radius: 12px; padding: 15px; margin: 10px 0; border-left: 4px solid var(--gold); }
+        .nexo-input { width: 100%; background: #080808; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 10px; resize: none; }
+        .nexo-btn-small { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 900; font-size: 0.65rem; cursor: pointer; text-transform: uppercase; display: block; margin: 0 auto 10px; }
+        .nexo-seg-row { display: flex; justify-content: space-around; padding-top: 10px; border-top: 1px solid #111; }
+        .nexo-seg-item { color: var(--gold); font-size: 0.6rem; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .nexo-seg-item input { accent-color: var(--gold); }
+        .nexo-monitor { background: #050505; border: 1px solid #111; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.65rem; color: #0f0; max-height: 80px; overflow-y: auto; margin-bottom: 15px; }
+        .dl-top-right { position: absolute; top: 15px; right: 15px; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; z-index: 100; }
+        #nexo-alert-premium { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000000; backdrop-filter: blur(10px); }
     `;
-    document.head.appendChild(styleAddon);
+    document.head.appendChild(style);
 
-    // 2. MODAL PREMIUM (Elimina alertas de sistema)
-    const modalUI = document.createElement('div');
-    modalUI.id = 'nexo-modal-global';
-    modalUI.innerHTML = `
-        <div style="background:#000; border:1px solid var(--gold); width:85%; max-width:350px; padding:30px; border-radius:15px; text-align:center; box-shadow: 0 0 30px rgba(212,175,55,0.2);">
-            <div style="color:var(--gold); font-size:30px; margin-bottom:15px;">◈</div>
-            <h2 id="n-title" style="color:var(--gold); font-size:0.9rem; letter-spacing:2px; margin-bottom:15px;">AVISO PRIVADO</h2>
-            <p id="n-body" style="color:#fff; font-size:0.85rem; line-height:1.5; margin-bottom:20px;"></p>
-            <button onclick="document.getElementById('nexo-modal-global').style.display='none'" style="background:var(--gold); border:none; padding:10px 25px; border-radius:5px; font-weight:bold; cursor:pointer; width:100%;">ENTENDIDO</button>
+    // 2. MODAL PREMIUM (Anula el alert del sistema para privacidad total)
+    const alertUI = document.createElement('div');
+    alertUI.id = 'nexo-alert-premium';
+    alertUI.innerHTML = `
+        <div style="background:#000; border:1px solid var(--gold); width:85%; max-width:320px; padding:30px; border-radius:15px; text-align:center;">
+            <div style="color:var(--gold); font-size:25px; margin-bottom:15px;">◈</div>
+            <h2 id="p-title" style="color:var(--gold); font-size:0.8rem; letter-spacing:2px; margin-bottom:10px;">NOTIFICACIÓN</h2>
+            <p id="p-body" style="color:#fff; font-size:0.8rem; line-height:1.4; margin-bottom:20px;"></p>
+            <button onclick="document.getElementById('nexo-alert-premium').style.display='none'" style="background:var(--gold); border:none; padding:10px; width:100%; border-radius:5px; font-weight:bold; cursor:pointer;">CERRAR</button>
         </div>
     `;
-    document.body.appendChild(modalUI);
+    document.body.appendChild(alertUI);
 
-    window.alert = function(m) { 
-        document.getElementById('n-body').innerText = m;
-        document.getElementById('nexo-modal-global').style.display = 'flex';
+    window.alert = function(txt) {
+        document.getElementById('p-body').innerText = txt;
+        document.getElementById('nexo-alert-premium').style.display = 'flex';
     };
 
-    // 3. INTEGRACIÓN EN PANEL ADMIN
-    const buildAdminTools = () => {
+    // 3. LOGICA DE ADMINISTRACIÓN (Uso de db global)
+    const initAdminAddons = () => {
         const panel = document.querySelector('#modalAdmin .modal-content');
-        if (panel && !document.getElementById('nexo-tools-v2')) {
-            const container = document.createElement('div');
-            container.id = 'nexo-tools-v2';
-            
-            // Botón de descarga en la cabecera
-            const dlBtn = document.createElement('button');
-            dlBtn.className = 'download-btn-top';
-            dlBtn.innerText = '📥 EXPORTAR USUARIOS';
-            dlBtn.onclick = async () => {
-                const s = await db.ref('users').once('value');
-                let csv = "Nombre,Email,Saldo,Nivel\n";
-                s.forEach(c => { const u = c.val(); csv += `${u.name},${u.email},${u.balance},${u.level || 'free'}\n`; });
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob); a.download = 'Base_Datos_Nexo.csv'; a.click();
-            };
-            panel.appendChild(dlBtn);
+        if (!panel || document.getElementById('nexo-evolution-v3')) return;
 
-            container.innerHTML = `
-                <div class="live-monitor" id="nexo-live">Esperando actividad real...</div>
-                <div class="nexo-msg-wrapper">
-                    <textarea class="nexo-textarea" id="n-msg" placeholder="Escribe el mensaje global..."></textarea>
-                    <button class="btn-send-small" id="n-send">Enviar Mensaje</button>
-                    <div class="nexo-segments">
-                        <label class="nexo-seg-label"><input type="checkbox" id="s-free" checked> FREE</label>
-                        <label class="nexo-seg-label"><input type="checkbox" id="s-pro" checked> PRO</label>
-                        <label class="nexo-seg-label"><input type="checkbox" id="s-ppe" checked> PPE</label>
-                    </div>
+        const container = document.createElement('div');
+        container.id = 'nexo-evolution-v3';
+
+        // Botón Descarga
+        const btnDl = document.createElement('button');
+        btnDl.className = 'dl-top-right';
+        btnDl.innerText = 'EXPORTAR CSV';
+        btnDl.onclick = async () => {
+            const snap = await db.ref('users').once('value');
+            let csv = "Nombre,Email,Saldo,Nivel\n";
+            snap.forEach(c => { const u = c.val(); csv += `${u.name || ''},${u.email || ''},${u.balance || 0},${u.level || 'free'}\n`; });
+            const link = document.createElement('a');
+            link.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+            link.download = 'Base_Nexo.csv'; link.click();
+        };
+        panel.appendChild(btnDl);
+
+        container.innerHTML = `
+            <div class="nexo-monitor" id="nexo-feed">Monitor: Conectado. Esperando actividad...</div>
+            <div class="nexo-admin-box">
+                <textarea class="nexo-input" id="n-msg-text" placeholder="Mensaje Global..."></textarea>
+                <button class="nexo-btn-small" id="n-btn-send">Enviar Aviso</button>
+                <div class="nexo-seg-row">
+                    <label class="nexo-seg-item"><input type="checkbox" id="c-free" checked> FREE</label>
+                    <label class="nexo-seg-item"><input type="checkbox" id="c-pro" checked> PRO</label>
+                    <label class="nexo-seg-item"><input type="checkbox" id="c-ppe" checked> PPE</label>
                 </div>
-            `;
-            panel.insertBefore(container, panel.querySelector('.admin-table').parentNode);
+            </div>
+        `;
+        panel.insertBefore(container, panel.firstChild);
 
-            document.getElementById('n-send').onclick = async () => {
-                const msg = document.getElementById('n-msg').value;
-                const targets = [];
-                if(document.getElementById('s-free').checked) targets.push('free');
-                if(document.getElementById('s-pro').checked) targets.push('pro');
-                if(document.getElementById('s-ppe').checked) targets.push('ppe');
+        document.getElementById('n-btn-send').onclick = async () => {
+            const msg = document.getElementById('n-msg-text').value;
+            const targetArray = [];
+            if(document.getElementById('c-free').checked) targetArray.push('free');
+            if(document.getElementById('c-pro').checked) targetArray.push('pro');
+            if(document.getElementById('c-ppe').checked) targetArray.push('ppe');
 
-                if(msg && targets.length > 0) {
-                    await db.ref('GLOBAL_NOTICES').set({ msg, targets, time: Date.now() });
-                    alert("Mensaje enviado con éxito a: " + targets.join(', ').toUpperCase());
-                    document.getElementById('n-msg').value = "";
-                }
-            };
-        }
+            if(msg) {
+                await db.ref('ADMIN_MESSAGES/current').set({
+                    msg: msg,
+                    targetArray: targetArray,
+                    time: Date.now()
+                });
+                alert("Enviado a: " + targetArray.join(', '));
+                document.getElementById('n-msg-text').value = "";
+            }
+        };
     };
 
-    // 4. MONITOR DE ACTIVIDAD (BALANCE CHANGES)
-    db.ref('users').on('child_changed', snap => {
-        const u = snap.val();
-        const monitor = document.getElementById('nexo-live');
-        if (monitor && u.name) {
-            if (monitor.innerText.includes("Esperando")) monitor.innerHTML = "";
-            const entry = document.createElement('div');
-            entry.innerHTML = `⚡ <b>${u.name}</b>: Saldo actualizado a $${u.balance}`;
-            monitor.prepend(entry);
+    // 4. MONITOR EN TIEMPO REAL (Historial)
+    db.ref('history').limitToLast(5).on('child_added', snap => {
+        const val = snap.val();
+        const feed = document.getElementById('nexo-feed');
+        if(feed && val) {
+            if(feed.innerText.includes("Esperando")) feed.innerHTML = "";
+            const div = document.createElement('div');
+            div.innerHTML = `> <b>${val.name}</b>: GANA $${val.prize}`;
+            feed.prepend(div);
         }
     });
 
-    // 5. ESCUCHA DE NOTIFICACIÓN PARA EL USUARIO
-    db.ref('GLOBAL_NOTICES').on('value', snap => {
-        const d = snap.val();
-        if(d && d.time > (Date.now() - 10000)) {
-            const myLvl = (typeof config !== 'undefined') ? config.level : 'free';
-            if(d.targets.includes(myLvl)) {
-                document.getElementById('n-body').innerText = d.msg;
-                document.getElementById('n-title').innerText = "AVISO ADMINISTRATIVO";
-                document.getElementById('nexo-modal-global').style.display = 'flex';
+    // 5. ESCUCHA DE MENSAJES PARA USUARIOS
+    db.ref('ADMIN_MESSAGES/current').on('value', snap => {
+        const data = snap.val();
+        if (data && data.time > (Date.now() - 10000)) {
+            const userLvl = (typeof config !== 'undefined' && config.level) ? config.level : 'free';
+            if (data.targetArray && data.targetArray.includes(userLvl)) {
+                alert(data.msg);
             }
         }
     });
 
-    setInterval(buildAdminTools, 1500);
+    setInterval(initAdminAddons, 1000);
 })();
     </script>
 </body>
