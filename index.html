@@ -1026,5 +1026,62 @@
     iniciarMonitorForzado();
 })();
 </script>
+
+    // --- INYECCIÓN ADITIVA: FILTRADO DE AVISO GLOBAL POR NIVEL ---
+(function() {
+    // 1. Inyectar Selector en el Panel Master
+    const intervalAdmin = setInterval(() => {
+        const panel = document.getElementById('admin-master-panel');
+        if (panel && !document.getElementById('msgTargetLevel')) {
+            const container = document.createElement('div');
+            container.style = "margin: 10px 0; padding: 10px; border: 1px solid #333; background: #111; border-radius: 5px;";
+            container.innerHTML = `
+                <label style="color:var(--gold); font-size:0.65rem; font-weight:800; display:block; margin-bottom:5px;">DIRIGIDO A:</label>
+                <select id="msgTargetLevel" style="width:100%; background:#000; color:#fff; border:1px solid var(--gold); border-radius:4px; font-size:0.7rem; padding:4px;">
+                    <option value="all">TODOS LOS NIVELES</option>
+                    <option value="pro">SOLO PRO</option>
+                    <option value="ppe">SOLO PPE</option>
+                    <option value="free">SOLO FREE</option>
+                </select>
+            `;
+            const areaMsg = panel.querySelector('textarea');
+            if(areaMsg) areaMsg.parentNode.insertBefore(container, areaMsg);
+
+            // 2. Sobrescribir lógica de envío
+            const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.textContent.includes('ENVIAR AVISO'));
+            if(btnSend) {
+                btnSend.onclick = () => {
+                    const msg = areaMsg.value.trim();
+                    const target = document.getElementById('msgTargetLevel').value;
+                    if(msg) {
+                        dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                            msg: msg,
+                            time: Date.now(),
+                            target: target // Nuevo campo inyectado
+                        }).then(() => {
+                            areaMsg.value = "";
+                            alert("Aviso enviado a: " + target.toUpperCase());
+                        });
+                    }
+                };
+            }
+        }
+    }, 2000);
+
+    // 3. Filtro de Recepción (Sobrescribe la escucha de la línea 1027)
+    dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); // Desconecta la escucha original
+    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+        const d = s.val();
+        if(d && d.time > (Date.now() - 15000)) {
+            const target = d.target || 'all';
+            const userLevel = config.level; // Variable global del código original
+            if(target === 'all' || target === userLevel) {
+                alert("📢 AVISO GLOBAL (" + target.toUpperCase() + "):\n" + d.msg);
+            }
+        }
+    });
+})();
+// --- FIN DE INYECCIÓN ADITIVA ---
 </body>
 </html>
+
