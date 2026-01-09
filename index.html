@@ -832,124 +832,94 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: MENÚ LATERAL NEXO® (ESTRUCTURA ESCALABLE) ---
+        // --- INYECCIÓN ADITIVA: INFRAESTRUCTURA DE MENÚ "LIENZO BLANCO" ---
         (function() {
-            const ID_MENU = 'nexo-sidebar';
-            const ID_OVERLAY = 'nexo-overlay';
+            // 1. CONFIGURACIÓN DE IDENTIFICADORES
+            const MENU_ID = 'nexo-nav-menu';
+            const OVERLAY_ID = 'nexo-nav-overlay';
 
-            const injectSidebar = () => {
-                if (document.getElementById(ID_MENU)) return;
-
-                // 1. ESTILOS MODULARES (Escalables)
+            // 2. INYECCIÓN DE ESTILOS (Arquitectura Visual NEXO®)
+            const injectBaseStyles = () => {
+                if (document.getElementById('nexo-nav-styles')) return;
                 const style = document.createElement('style');
-                style.id = 'nexo-menu-styles';
+                style.id = 'nexo-nav-styles';
                 style.innerHTML = `
-                    /* Botón Hamburguesa */
-                    #nexo-hamburger {
-                        position: fixed; top: 20px; left: 20px; width: 45px; height: 45px;
-                        background: #000; border: 1px solid #d4af37; border-radius: 8px;
+                    #nexo-nav-trigger {
+                        position: fixed; top: 20px; left: 20px; width: 40px; height: 40px;
+                        background: #000; border: 1.5px solid #d4af37; border-radius: 6px;
                         display: flex; flex-direction: column; justify-content: center; align-items: center;
-                        gap: 5px; cursor: pointer; z-index: 2147483645; box-shadow: 0 0 10px rgba(212,175,55,0.3);
+                        gap: 4px; cursor: pointer; z-index: 2147483640; transition: 0.3s;
                     }
-                    #nexo-hamburger span { width: 25px; height: 2px; background: #d4af37; transition: 0.3s; }
-
-                    /* Sidebar */
-                    #${ID_MENU} {
-                        position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
-                        background: #161616; border-right: 2px solid #d4af37;
-                        transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2147483647;
-                        padding-top: 80px; display: flex; flex-direction: column;
-                    }
-                    #${ID_MENU}.active { left: 0; }
-
-                    /* Overlay (Fondo oscuro) */
-                    #${ID_OVERLAY} {
-                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                        background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-                        display: none; z-index: 2147483646;
-                    }
-
-                    /* Ítems del Menú */
-                    .menu-section-title { color: #555; font-size: 11px; padding: 10px 25px; text-transform: uppercase; letter-spacing: 2px; }
-                    .menu-item {
-                        padding: 15px 25px; color: #fff; font-family: sans-serif;
-                        cursor: pointer; display: flex; align-items: center; gap: 15px;
-                        transition: 0.2s; border-left: 3px solid transparent;
-                    }
-                    .menu-item:hover { background: rgba(212,175,55,0.1); border-left: 3px solid #d4af37; color: #d4af37; }
-                    .menu-item i { font-size: 18px; width: 25px; text-align: center; }
+                    #nexo-nav-trigger span { width: 20px; height: 2px; background: #d4af37; transition: 0.3s; }
                     
-                    /* Admin Badge */
-                    .badge-admin { background: #d4af37; color: #000; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: auto; }
+                    #${MENU_ID} {
+                        position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
+                        background: #111; border-right: 1px solid #d4af37;
+                        z-index: 2147483642; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                        display: flex; flex-direction: column; padding: 20px 0;
+                    }
+                    #${MENU_ID}.active { left: 0; }
+
+                    #${OVERLAY_ID} {
+                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+                        display: none; z-index: 2147483641; opacity: 0; transition: 0.3s;
+                    }
+                    #${OVERLAY_ID}.active { display: block; opacity: 1; }
+
+                    .nexo-menu-content { flex: 1; overflow-y: auto; padding-top: 50px; }
+                    
+                    /* Estilo base para futuros items */
+                    .nexo-link {
+                        padding: 15px 25px; color: #fff; font-family: 'Segoe UI', sans-serif;
+                        text-transform: uppercase; font-size: 13px; letter-spacing: 1px;
+                        cursor: pointer; border-bottom: 1px solid #222; transition: 0.2s;
+                    }
+                    .nexo-link:hover { background: #d4af37; color: #000; }
                 `;
                 document.head.appendChild(style);
-
-                // 2. ESTRUCTURA HTML
-                const overlay = document.createElement('div');
-                overlay.id = ID_OVERLAY;
-                document.body.appendChild(overlay);
-
-                const hamburger = document.createElement('div');
-                hamburger.id = 'nexo-hamburger';
-                hamburger.innerHTML = '<span></span><span></span><span></span>';
-                document.body.appendChild(hamburger);
-
-                const sidebar = document.createElement('div');
-                sidebar.id = ID_MENU;
-                sidebar.innerHTML = `
-                    <div class="menu-section-title">Navegación Principal</div>
-                    <div class="menu-item" onclick="location.reload()"><i>🏠</i> Inicio</div>
-                    <div class="menu-item" onclick="alert('Próximamente: Mi Perfil')"><i>👤</i> Mi Perfil</div>
-                    
-                    <div id="admin-section" style="display:none; border-top: 1px solid #333; margin-top: 20px;">
-                        <div class="menu-section-title">Administración</div>
-                        <div class="menu-item" onclick="abrirAdminMaster()"><i>⚙️</i> Admin Master <span class="badge-admin">PRO</span></div>
-                        <div class="menu-item" onclick="abrirNotificaciones()"><i>📢</i> Enviar Mensaje</div>
-                    </div>
-
-                    <div style="margin-top: auto; padding: 20px; font-size: 10px; color: #444; text-align: center;">
-                        NEXO® Business Pro v5.0
-                    </div>
-                `;
-                document.body.appendChild(sidebar);
-
-                // 3. LÓGICA DE CONTROL
-                const toggleMenu = () => {
-                    const isOpen = sidebar.classList.toggle('active');
-                    overlay.style.display = isOpen ? 'block' : 'none';
-                };
-
-                hamburger.onclick = toggleMenu;
-                overlay.onclick = toggleMenu;
-
-                // Funciones Globales para los Items
-                window.abrirAdminMaster = () => {
-                    toggleMenu();
-                    const panel = document.querySelector('.admin-controls') || document.getElementById('admin-panel');
-                    if(panel) { panel.style.display = 'block'; panel.scrollIntoView(); }
-                    else { if(typeof showAdminPanel === 'function') showAdminPanel(); }
-                };
-
-                window.abrirNotificaciones = () => {
-                    toggleMenu();
-                    // Dispara el modal que creamos en el bloque anterior
-                    const modal = document.getElementById('nx-mod') || document.getElementById('nexo-modal-msg');
-                    if(modal) modal.style.display = 'flex';
-                };
             };
 
-            // 4. PERSISTENCIA Y SEGURIDAD
-            setInterval(() => {
-                const user = auth.currentUser;
-                if (user) {
-                    injectSidebar();
-                    db.ref(`users/${user.uid}/isAdmin`).once('value', snap => {
-                        const isAdmin = snap.val() === true;
-                        const adminSec = document.getElementById('admin-section');
-                        if (adminSec) adminSec.style.display = isAdmin ? 'block' : 'none';
-                    });
-                }
-            }, 1500);
+            // 3. CONSTRUCCIÓN DEL MENÚ
+            const buildMenu = () => {
+                if (document.getElementById(MENU_ID)) return;
+                injectBaseStyles();
+
+                // Crear Trigger (Botón Hamburguesa)
+                const trigger = document.createElement('div');
+                trigger.id = 'nexo-nav-trigger';
+                trigger.innerHTML = '<span></span><span></span><span></span>';
+                document.body.appendChild(trigger);
+
+                // Crear Overlay
+                const overlay = document.createElement('div');
+                overlay.id = OVERLAY_ID;
+                document.body.appendChild(overlay);
+
+                // Crear Panel Lateral
+                const menu = document.createElement('nav');
+                menu.id = MENU_ID;
+                menu.innerHTML = `
+                    <div class="nexo-menu-content" id="nexo-items-container">
+                        </div>
+                    <div style="padding: 20px; color: #333; font-size: 9px; text-align: center; font-family: monospace;">
+                        NEXO SYSTEM v5.0 | LIENZO BLANCO
+                    </div>
+                `;
+                document.body.appendChild(menu);
+
+                // Lógica de Apertura/Cierre
+                const toggle = () => {
+                    menu.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                };
+
+                trigger.onclick = toggle;
+                overlay.onclick = toggle;
+            };
+
+            // 4. INICIALIZACIÓN POR PERSISTENCIA (Asegura que no sea borrado por el código original)
+            setInterval(buildMenu, 2000);
         })();
     </script>
 </body>
