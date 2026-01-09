@@ -832,106 +832,131 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: GESTIÓN DE AVISOS (VERSIÓN CON OBSERVADOR DINÁMICO) ---
+        // --- INYECCIÓN ADITIVA: ACCESO RÁPIDO A MENSAJES (FLOTANTE ADMIN) ---
         (function() {
-            const CONFIG = {
-                stylesInjected: false,
-                modalCreated: false
-            };
+            // 1. ESTILOS DEL BOTÓN FLOTANTE Y MODAL
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .admin-fab {
+                    position: fixed; bottom: 30px; right: 30px;
+                    width: 60px; height: 60px; background: var(--gold);
+                    border-radius: 50%; display: none; justify-content: center; align-items: center;
+                    font-size: 24px; cursor: pointer; z-index: 25000;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(212, 175, 55, 0.4);
+                    transition: 0.3s; animation: pulseGold 2s infinite;
+                }
+                .admin-fab:hover { transform: scale(1.1); background: white; }
+                @keyframes pulseGold { 
+                    0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+                    70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+                }
 
-            // 1. ESTILOS DE MARCA
-            const injectStyles = () => {
-                if(CONFIG.stylesInjected) return;
-                const style = document.createElement('style');
-                style.innerHTML = `
-                    .modal-notif-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 30000; }
-                    .modal-notif-content { background: var(--card-bg); border: 1px solid var(--gold); width: 90%; max-width: 400px; border-radius: 12px; padding: 25px; color: var(--white); box-shadow: 0 10px 40px rgba(0,0,0,0.8); font-family: sans-serif; }
-                    .modal-notif-header h2 { color: var(--gold); margin: 0 0 20px 0; font-size: 18px; text-align: center; letter-spacing: 1px; }
-                    .notif-textarea { width: 100%; background: #000; border: 1px solid #333; color: white; border-radius: 8px; padding: 12px; resize: none; margin-bottom: 20px; font-size: 14px; }
-                    .notif-grid-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-                    .level-card { background: #1a1a1a; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 11px; border: 1px solid #222; }
-                    .level-card input { accent-color: var(--gold); }
-                    .btn-notif-main { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
-                    .btn-admin-trigger-notif { background: #d4af3722; border: 1px solid var(--gold); color: var(--gold); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 10px 0; width: 100%; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-                    .btn-admin-trigger-notif:hover { background: var(--gold); color: #000; }
-                `;
-                document.head.appendChild(style);
-                CONFIG.stylesInjected = true;
-            };
+                .modal-notif-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+                    display: none; justify-content: center; align-items: center; z-index: 30000;
+                }
+                .modal-notif-content {
+                    background: var(--card-bg); border: 2px solid var(--gold);
+                    width: 90%; max-width: 400px; border-radius: 20px; padding: 25px;
+                    color: white; font-family: sans-serif; position: relative;
+                }
+                .modal-notif-header h2 { color: var(--gold); font-size: 18px; text-align: center; margin-bottom: 20px; letter-spacing: 1px; }
+                .notif-textarea { width: 100%; background: #000; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; resize: none; margin-bottom: 20px; }
+                .notif-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+                .seg-card { background: #222; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+                .seg-card input { accent-color: var(--gold); }
+                .btn-pub { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; text-transform: uppercase; }
+                .btn-clr { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 8px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; font-size: 11px; }
+            `;
+            document.head.appendChild(style);
 
-            // 2. CREACIÓN DEL MODAL
-            const createModal = () => {
-                if (document.getElementById('notifModal')) return;
-                const modalMarkup = `
+            // 2. CONSTRUCCIÓN DEL MODAL Y EL BOTÓN (FAB)
+            const setupAdminUI = () => {
+                // Crear Botón Flotante
+                const fab = document.createElement('div');
+                fab.id = 'admin-msg-fab';
+                fab.className = 'admin-fab';
+                fab.innerHTML = '📢';
+                fab.onclick = () => document.getElementById('notifModal').style.display = 'flex';
+                document.body.appendChild(fab);
+
+                // Crear Modal
+                const modal = `
                     <div class="modal-notif-overlay" id="notifModal">
                         <div class="modal-notif-content">
-                            <div class="modal-notif-header"><h2>📢 GESTIÓN DE AVISOS</h2></div>
-                            <textarea id="modal-notif-text" class="notif-textarea" rows="4" placeholder="Mensaje para los usuarios..."></textarea>
-                            <div class="notif-grid-levels">
-                                <label class="level-card"><input type="checkbox" class="m-seg" value="FREE"> FREE</label>
-                                <label class="level-card"><input type="checkbox" class="m-seg" value="PRO"> PRO</label>
-                                <label class="level-card"><input type="checkbox" class="m-seg" value="PPE"> PPE</label>
-                                <label class="level-card" style="border-color: var(--gold)"><input type="checkbox" id="m-seg-all"> TODOS</label>
+                            <div class="modal-notif-header"><h2>📢 DIFUSIÓN GLOBAL</h2></div>
+                            <textarea id="m-text" class="notif-textarea" rows="4" placeholder="Escribe el mensaje..."></textarea>
+                            <div class="notif-grid">
+                                <label class="seg-card"><input type="checkbox" class="m-lv" value="FREE"> FREE</label>
+                                <label class="seg-card"><input type="checkbox" class="m-lv" value="PRO"> PRO</label>
+                                <label class="seg-card"><input type="checkbox" class="m-lv" value="PPE"> PPE</label>
+                                <label class="seg-card" style="border: 1px dashed var(--gold)"><input type="checkbox" id="m-all"> TODOS</label>
                             </div>
-                            <button class="btn-notif-main" id="btn-modal-send">PUBLICAR AVISO</button>
-                            <button onclick="document.getElementById('notifModal').style.display='none'" style="background:none; border:none; color:#666; cursor:pointer; width:100%; margin-top:15px; font-size:11px;">CANCELAR</button>
+                            <button class="btn-pub" id="btn-m-send">ENVIAR AHORA</button>
+                            <button class="btn-clr" id="btn-m-clear">BORRAR TODOS LOS AVISOS</button>
+                            <button onclick="document.getElementById('notifModal').style.display='none'" style="background:none; border:none; color:#777; width:100%; margin-top:15px; cursor:pointer;">CERRAR</button>
                         </div>
                     </div>`;
-                document.body.insertAdjacentHTML('beforeend', modalMarkup);
-                document.getElementById('m-seg-all').onchange = (e) => { document.querySelectorAll('.m-seg').forEach(c => c.checked = e.target.checked); };
-                document.getElementById('btn-modal-send').onclick = async () => {
-                    const msg = document.getElementById('modal-notif-text').value.trim();
-                    const levels = Array.from(document.querySelectorAll('.m-seg:checked')).map(c => c.value);
-                    if(!msg || levels.length === 0) return alert("Faltan datos");
+                document.body.insertAdjacentHTML('beforeend', modal);
+
+                // Lógica de "Marcar Todos"
+                document.getElementById('m-all').onchange = (e) => {
+                    document.querySelectorAll('.m-lv').forEach(c => c.checked = e.target.checked);
+                };
+
+                // Lógica de Envío
+                document.getElementById('btn-m-send').onclick = async () => {
+                    const text = document.getElementById('m-text').value.trim();
+                    const levels = Array.from(document.querySelectorAll('.m-lv:checked')).map(c => c.value);
+                    if(!text || levels.length === 0) return alert("Completa los datos");
+
                     const snap = await db.ref('users').once('value');
                     const updates = {};
-                    snap.forEach(u => { if(levels.includes(u.val().level)) updates[`users/${u.key}/globalMessage`] = { text: msg, time: Date.now() }; });
+                    snap.forEach(u => {
+                        if(levels.includes(u.val().level)) updates[`users/${u.key}/globalMessage`] = { text, time: Date.now() };
+                    });
                     await db.ref().update(updates);
-                    alert("Aviso publicado.");
+                    alert("Aviso publicado correctamente.");
                     document.getElementById('notifModal').style.display = 'none';
+                    document.getElementById('m-text').value = '';
+                };
+
+                // Lógica de Borrado
+                document.getElementById('btn-m-clear').onclick = async () => {
+                    if(!confirm("¿Eliminar avisos de todos los usuarios?")) return;
+                    const snap = await db.ref('users').once('value');
+                    const updates = {};
+                    snap.forEach(u => { updates[`users/${u.key}/globalMessage`] = null; });
+                    await db.ref().update(updates);
+                    alert("Avisos eliminados.");
                 };
             };
 
-            // 3. INYECTOR INTELIGENTE (OBSERVADOR)
-            const findAndInject = () => {
-                const adminControls = document.querySelector('.admin-controls'); // Busca el contenedor original
-                if (adminControls && !document.getElementById('trigger-notif-modal')) {
-                    injectStyles();
-                    createModal();
-                    const btn = document.createElement('button');
-                    btn.id = 'trigger-notif-modal';
-                    btn.className = 'btn-admin-trigger-notif';
-                    btn.innerHTML = `📢 GESTIONAR AVISOS GLOBALES`;
-                    btn.onclick = () => document.getElementById('notifModal').style.display = 'flex';
-                    adminControls.prepend(btn);
-                    console.log("NEXO: Panel de avisos inyectado correctamente.");
-                }
-            };
-
-            // 4. LÓGICA DE ACTIVACIÓN POR AUTH Y ROL
+            // 3. INICIALIZACIÓN SEGURA
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // Receptor para todos
+                    // Receptor para mostrar avisos al usuario logueado
                     db.ref(`users/${user.uid}/globalMessage`).on('value', snap => {
-                        const d = snap.val();
-                        if (d && d.text) {
-                            if(!document.getElementById('gb-banner')){
+                        const data = snap.val();
+                        if (data && data.text) {
+                            if(!document.getElementById('n-banner')){
                                 const b = document.createElement('div');
-                                b.id = 'gb-banner';
-                                b.style = "position:fixed; top:0; left:0; width:100%; background:var(--gold); color:black; padding:15px; text-align:center; z-index:99999; font-weight:bold; box-shadow: 0 2px 10px rgba(0,0,0,0.5);";
-                                b.innerHTML = `<span id="btxt"></span> <span onclick="this.parentElement.remove()" style="margin-left:20px; cursor:pointer; background:black; color:white; padding:2px 8px; border-radius:50%;">✕</span>`;
+                                b.id = 'n-banner';
+                                b.style = "position:fixed; top:0; left:0; width:100%; background:var(--gold); color:black; padding:15px; text-align:center; z-index:99999; font-weight:bold; font-family:sans-serif;";
+                                b.innerHTML = `<span id="n-txt"></span> <span onclick="this.parentElement.remove()" style="margin-left:20px; cursor:pointer; background:black; color:white; padding:2px 8px; border-radius:50%;">✕</span>`;
                                 document.body.prepend(b);
                             }
-                            document.getElementById('btxt').innerText = d.text;
+                            document.getElementById('n-txt').innerText = data.text;
                         }
                     });
 
-                    // Solo si es Admin, vigilar el DOM para inyectar el botón
+                    // Validación para mostrar el Botón Flotante (Solo Admin)
                     db.ref(`users/${user.uid}/isAdmin`).once('value', snap => {
                         if (snap.val() === true) {
-                            findAndInject(); // Intento inmediato
-                            const observer = new MutationObserver(() => findAndInject());
-                            observer.observe(document.body, { childList: true, subtree: true });
+                            setupAdminUI();
+                            document.getElementById('admin-msg-fab').style.display = 'flex';
                         }
                     });
                 }
