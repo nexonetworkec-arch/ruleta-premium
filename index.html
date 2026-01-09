@@ -832,128 +832,136 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: MODAL DE GESTIÓN DE AVISOS (ESTILO PREMIUM) ---
+        // --- INYECCIÓN ADITIVA: MODAL DE AVISOS (SOLO PARA ADMINISTRADORES) ---
         (function() {
-            // 1. ESTILOS DE MARCA PARA EL MODAL
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .modal-notif-overlay {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
-                    display: none; justify-content: center; align-items: center; z-index: 20000;
-                }
-                .modal-notif-content {
-                    background: var(--card-bg); border: 2px solid var(--gold);
-                    width: 90%; max-width: 450px; border-radius: 15px; padding: 25px;
-                    color: var(--white); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
-                    position: relative; animation: modalFadeIn 0.3s ease;
-                }
-                @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-                
-                .modal-notif-header { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
-                .modal-notif-header h2 { color: var(--gold); margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
-                
-                .notif-input-group { margin-bottom: 20px; }
-                .notif-input-group label { display: block; margin-bottom: 8px; color: var(--gold); font-size: 12px; font-weight: bold; }
-                .notif-textarea { width: 100%; background: #000; border: 1px solid #444; color: white; border-radius: 8px; padding: 12px; resize: none; font-family: inherit; }
-                .notif-textarea:focus { border-color: var(--gold); }
+            // 1. ESTILOS DE MARCA (Se cargan solo si es admin para ahorrar recursos)
+            const injectStyles = () => {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    .modal-notif-overlay {
+                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                        background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+                        display: none; justify-content: center; align-items: center; z-index: 30000;
+                    }
+                    .modal-notif-content {
+                        background: var(--card-bg); border: 1px solid var(--gold);
+                        width: 90%; max-width: 400px; border-radius: 12px; padding: 25px;
+                        color: var(--white); box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+                        position: relative; font-family: sans-serif;
+                    }
+                    .modal-notif-header h2 { color: var(--gold); margin: 0 0 20px 0; font-size: 18px; text-align: center; letter-spacing: 1px; }
+                    .notif-textarea { width: 100%; background: #000; border: 1px solid #333; color: white; border-radius: 8px; padding: 12px; resize: none; margin-bottom: 20px; font-size: 14px; }
+                    .notif-textarea:focus { border-color: var(--gold); }
+                    .notif-grid-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+                    .level-card { background: #1a1a1a; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; border: 1px solid #222; }
+                    .level-card input { accent-color: var(--gold); }
+                    .btn-notif-main { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; margin-bottom: 10px; }
+                    .btn-notif-delete { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 11px; }
+                    
+                    /* Botón de activación en el Panel Admin */
+                    .btn-admin-trigger-notif { 
+                        background: #d4af3722; border: 1px solid var(--gold); color: var(--gold); 
+                        padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; 
+                        margin: 10px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+                        transition: 0.3s;
+                    }
+                    .btn-admin-trigger-notif:hover { background: var(--gold); color: #000; }
+                `;
+                document.head.appendChild(style);
+            };
 
-                .notif-grid-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-                .level-card { background: #222; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-                .level-card:hover { background: #282828; border-color: var(--gold); }
-                .level-card input { accent-color: var(--gold); width: 18px; height: 18px; }
-
-                .modal-notif-actions { display: flex; flex-direction: column; gap: 10px; }
-                .btn-notif-main { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
-                .btn-notif-delete { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
-                
-                .btn-admin-trigger { background: #1a1a1a; border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; margin: 10px; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-                .btn-admin-trigger:hover { background: var(--gold); color: black; }
-            `;
-            document.head.appendChild(style);
-
-            // 2. CREACIÓN DEL MODAL EN EL DOM
-            const modalMarkup = `
-                <div class="modal-notif-overlay" id="notifModal">
-                    <div class="modal-notif-content">
-                        <div class="modal-notif-header">
-                            <h2>📢 AVISO GLOBAL</h2>
-                        </div>
-                        <div class="notif-input-group">
-                            <label>MENSAJE DEL ADMINISTRADOR</label>
-                            <textarea id="modal-notif-text" class="notif-textarea" rows="4" placeholder="Escribe el anuncio aquí..."></textarea>
-                        </div>
-                        <label style="color: var(--gold); font-size: 12px; font-weight: bold; display: block; margin-bottom: 8px;">ENVIAR A:</label>
-                        <div class="notif-grid-levels">
-                            <label class="level-card"><input type="checkbox" class="m-seg" value="FREE"> FREE</label>
-                            <label class="level-card"><input type="checkbox" class="m-seg" value="PRO"> PRO</label>
-                            <label class="level-card"><input type="checkbox" class="m-seg" value="PPE"> PPE</label>
-                            <label class="level-card" style="border-style: dashed; border-color: var(--gold);">
-                                <input type="checkbox" id="m-seg-all"> TODOS
-                            </label>
-                        </div>
-                        <div class="modal-notif-actions">
-                            <button class="btn-notif-main" id="btn-modal-send">PUBLICAR AHORA</button>
-                            <button class="btn-notif-delete" id="btn-modal-clear">ELIMINAR AVISOS ACTIVOS</button>
-                            <button onclick="document.getElementById('notifModal').style.display='none'" style="background:none; border:none; color:#888; cursor:pointer; font-size:12px; margin-top:5px;">CANCELAR</button>
+            // 2. CONSTRUCCIÓN DEL MODAL
+            const createModal = () => {
+                if (document.getElementById('notifModal')) return;
+                const modalMarkup = `
+                    <div class="modal-notif-overlay" id="notifModal">
+                        <div class="modal-notif-content">
+                            <div class="modal-notif-header"><h2>📢 GESTIÓN DE AVISOS</h2></div>
+                            <textarea id="modal-notif-text" class="notif-textarea" rows="4" placeholder="Escribe el mensaje..."></textarea>
+                            <div class="notif-grid-levels">
+                                <label class="level-card"><input type="checkbox" class="m-seg" value="FREE"> FREE</label>
+                                <label class="level-card"><input type="checkbox" class="m-seg" value="PRO"> PRO</label>
+                                <label class="level-card"><input type="checkbox" class="m-seg" value="PPE"> PPE</label>
+                                <label class="level-card" style="border-color: var(--gold)"><input type="checkbox" id="m-seg-all"> TODOS</label>
+                            </div>
+                            <button class="btn-notif-main" id="btn-modal-send">ENVIAR AVISO</button>
+                            <button class="btn-notif-delete" id="btn-modal-clear">LIMPIAR TODOS LOS AVISOS</button>
+                            <button onclick="document.getElementById('notifModal').style.display='none'" style="background:none; border:none; color:#666; cursor:pointer; width:100%; margin-top:10px; font-size:11px;">CERRAR VENTANA</button>
                         </div>
                     </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalMarkup);
-
-            // 3. LÓGICA DE INYECCIÓN DEL BOTÓN Y FUNCIONES
-            const initAdminNotifSystem = () => {
-                const adminPanel = document.querySelector('.admin-controls') || document.body;
-                if (document.getElementById('trigger-notif-modal')) return;
-
-                const btnTrigger = document.createElement('button');
-                btnTrigger.id = 'trigger-notif-modal';
-                btnTrigger.className = 'btn-admin-trigger';
-                btnTrigger.innerHTML = `<span>📢</span> GESTIONAR AVISOS`;
-                btnTrigger.onclick = () => document.getElementById('notifModal').style.display = 'flex';
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalMarkup);
                 
-                adminPanel.prepend(btnTrigger);
-
-                // Lógica "Todos"
+                // Eventos del Modal
                 document.getElementById('m-seg-all').onchange = (e) => {
                     document.querySelectorAll('.m-seg').forEach(c => c.checked = e.target.checked);
                 };
-
-                // Botón Enviar
+                
                 document.getElementById('btn-modal-send').onclick = async () => {
                     const msg = document.getElementById('modal-notif-text').value.trim();
                     const levels = Array.from(document.querySelectorAll('.m-seg:checked')).map(c => c.value);
-                    
-                    if(!msg || levels.length === 0) return alert("Escribe un mensaje y selecciona niveles");
+                    if(!msg || levels.length === 0) return alert("Faltan datos");
 
                     const snap = await db.ref('users').once('value');
                     const updates = {};
                     snap.forEach(u => {
-                        if(levels.includes(u.val().level)) {
-                            updates[`users/${u.key}/globalMessage`] = { text: msg, time: Date.now() };
-                        }
+                        if(levels.includes(u.val().level)) updates[`users/${u.key}/globalMessage`] = { text: msg, time: Date.now() };
                     });
                     await db.ref().update(updates);
-                    alert("¡Publicado con éxito!");
+                    alert("Aviso enviado.");
                     document.getElementById('notifModal').style.display = 'none';
                 };
 
-                // Botón Limpiar
                 document.getElementById('btn-modal-clear').onclick = async () => {
-                    if(!confirm("¿Eliminar todos los avisos de todos los usuarios?")) return;
+                    if(!confirm("¿Eliminar avisos de todos los usuarios?")) return;
                     const snap = await db.ref('users').once('value');
                     const updates = {};
                     snap.forEach(u => { updates[`users/${u.key}/globalMessage`] = null; });
                     await db.ref().update(updates);
-                    alert("Avisos eliminados");
-                    document.getElementById('notifModal').style.display = 'none';
+                    alert("Avisos borrados.");
                 };
             };
 
-            // Ejecución según Auth (Modo Prueba: Visible siempre)
+            // 3. INYECCIÓN SEGURA (SOLO PARA ADMINS)
             auth.onAuthStateChanged(user => {
-                initAdminNotifSystem(); 
+                if (user) {
+                    // El receptor del mensaje siempre se activa para todos los usuarios
+                    db.ref(`users/${user.uid}/globalMessage`).on('value', snap => {
+                        const data = snap.val();
+                        if (data && data.text) {
+                            // Si no existe el banner, se crea (usando los estilos dorados existentes)
+                            if(!document.getElementById('global-banner')){
+                                const b = document.createElement('div');
+                                b.id = 'global-banner';
+                                b.style = "position:fixed; top:0; left:0; width:100%; background:var(--gold); color:black; padding:15px; text-align:center; z-index:99999; font-weight:bold;";
+                                b.innerHTML = `<span id="btxt"></span> <span onclick="this.parentElement.remove()" style="margin-left:20px; cursor:pointer;">✕</span>`;
+                                document.body.prepend(b);
+                            }
+                            document.getElementById('btxt').innerText = data.text;
+                        }
+                    });
+
+                    // VALIDACIÓN DE ROL DE ADMINISTRADOR
+                    db.ref(`users/${user.uid}/isAdmin`).once('value', snap => {
+                        if (snap.val() === true) {
+                            injectStyles();
+                            createModal();
+                            
+                            // Insertar botón específicamente en el panel de administrador
+                            setTimeout(() => {
+                                const adminControls = document.querySelector('.admin-controls');
+                                if (adminControls && !document.getElementById('trigger-notif-modal')) {
+                                    const btn = document.createElement('button');
+                                    btn.id = 'trigger-notif-modal';
+                                    btn.className = 'btn-admin-trigger-notif';
+                                    btn.innerHTML = `📢 GESTIONAR AVISOS GLOBALES`;
+                                    btn.onclick = () => document.getElementById('notifModal').style.display = 'flex';
+                                    adminControls.prepend(btn); // Lo pone al inicio del panel admin
+                                }
+                            }, 2000);
+                        }
+                    });
+                }
             });
         })();
     </script>
