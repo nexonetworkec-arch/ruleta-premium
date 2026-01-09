@@ -917,195 +917,46 @@
         };
     }
 })();
-    </script>
 
-    <style>
-    .modal { display: none; overflow-y: auto !important; align-items: flex-start !important; padding: 20px 10px; }
-    .modal-content { max-height: 90vh !important; overflow-y: auto !important; margin: auto !important; }
-
-    #nexo-admin-suite { background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--gold); margin-bottom: 20px; color: white; }
-    .nexo-monitor { background: #050505; border: 1px solid #222; border-radius: 8px; height: 160px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; padding: 10px; margin: 10px 0; color: #00ff00; }
-    .nexo-log { border-bottom: 1px dotted #333; padding: 6px 0; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .nexo-gold { color: var(--gold); }
-</style>
-
-<script>
+        // --- INYECCIÓN ADITIVA: CONFIGURACIÓN DE AVISOS EN MODAL SEGMENTO ---
 (function() {
-    const getDB = () => { try { return firebase.database(); } catch(e) { return null; } };
+    // Extendemos la función de abrir modal mediante un interceptor
+    const originalAbrirModal = window.abrirModalSegmento; 
+    
+    window.abrirModalSegmento = function() {
+        // Ejecutamos la función original primero
+        if (typeof originalAbrirModal === 'function') originalAbrirModal();
 
-    const iniciarMonitorForzado = () => {
-        const dbRef = getDB();
-        if (!dbRef) return setTimeout(iniciarMonitorForzado, 1000);
-
-        const inyectarPanel = () => {
-            const container = document.querySelector('#modalAdmin .modal-content');
-            if (!container || document.getElementById('nexo-admin-suite')) return;
-
-            container.insertAdjacentHTML('afterbegin', `
-                <div id="nexo-admin-suite">
-                    <div style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                        <small class="nexo-gold"><b>📣 AVISO GLOBAL</b></small>
-                        <div style="display:flex; gap:5px; margin-top:5px;">
-                            <input type="text" id="msgGlobal" placeholder="Mensaje..." style="flex:1; background:#111; border:1px solid #444; color:white; padding:8px; border-radius:5px;">
-                            <button id="btnEnviarMsg" style="background:var(--gold); color:black; border:none; padding:0 15px; border-radius:5px; cursor:pointer; font-weight:bold;">ENVIAR</button>
-                        </div>
+        // Esperamos un instante a que el DOM del modal esté listo
+        setTimeout(() => {
+            const modalBody = document.querySelector('.modal-content') || document.getElementById('modal-segmento');
+            if (modalBody && !document.getElementById('seccion-avisos-admin')) {
+                const divAvisos = document.createElement('div');
+                divAvisos.id = 'seccion-avisos-admin';
+                divAvisos.style = "margin-top:20px; padding:15px; border-top:2px dashed var(--gold); background:rgba(212,175,55,0.05);";
+                divAvisos.innerHTML = `
+                    <h3 style="color:var(--gold); font-size:0.9rem; margin-bottom:10px;">📢 CONFIGURACIÓN DE AVISOS GLOBALES</h3>
+                    <p style="font-size:0.7rem; color:#aaa; margin-bottom:10px;">Selecciona qué nivel recibirá los mensajes del Admin:</p>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+                        <button onclick="setAvisoTarget('free')" class="btn-admin-min" style="background:#444;">FREE</button>
+                        <button onclick="setAvisoTarget('pro')" class="btn-admin-min" style="background:#0055ff;">PRO</button>
+                        <button onclick="setAvisoTarget('ppe')" class="btn-admin-min" style="background:#d4af37; color:black;">PPE</button>
                     </div>
-                    <small class="nexo-gold"><b>📡 MONITOR DE ACTIVIDAD (TEST)</b></small>
-                    <div id="monitorVivo" class="nexo-monitor">
-                        <div id="status-wait" style="color:#444; text-align:center; margin-top:50px;">Buscando registros en historiales...</div>
-                    </div>
-                    <button id="btnDescargarDB" style="width:100%; background:#1b5e20; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">📊 DESCARGAR EXCEL (CSV)</button>
-                </div>`);
-
-            document.getElementById('btnEnviarMsg').onclick = () => {
-                const txt = document.getElementById('msgGlobal').value;
-                if(!txt) return;
-                dbRef.ref('users/ADMIN_MESSAGES/current').set({ msg: txt, time: Date.now() }).then(() => alert("✅ Enviado"));
-            };
-
-            document.getElementById('btnDescargarDB').onclick = async () => {
-                const snap = await dbRef.ref('users').once('value');
-                const data = snap.val();
-                let csv = "\uFEFFUID,Email,Nivel\n";
-                for(let k in data) { if(k !== 'ADMIN_MESSAGES') csv += `${k},${data[k].email || 'N/A'},${data[k].config?.level || 'free'}\n`; }
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = "DB_Nexo.csv";
-                a.click();
-            };
-        };
-
-        // LÓGICA DE DETECCIÓN SIN FILTRO DE TIEMPO
-        dbRef.ref('users').on('child_added', (uSnap) => {
-            const uid = uSnap.key;
-            if (uid === 'ADMIN_MESSAGES') return;
-
-            // Escuchamos el último cambio en el historial de cada usuario
-            dbRef.ref(`users/${uid}/history`).limitToLast(1).on('value', (hSnap) => {
-                const histData = hSnap.val();
-                if (!histData) return;
-
-                const monitor = document.getElementById('monitorVivo');
-                if (!monitor) return;
-
-                // Limpiar mensaje de espera
-                const wait = document.getElementById('status-wait');
-                if (wait) wait.remove();
-
-                // Obtener el objeto del premio (Firebase lo devuelve como objeto con un ID único)
-                const prizeID = Object.keys(histData)[0];
-                const prize = histData[prizeID];
-
-                // Obtener email y mostrar
-                dbRef.ref(`users/${uid}/email`).once('value', eSnap => {
-                    const email = eSnap.val() ? eSnap.val().split('@')[0] : 'Usuario';
-                    const nombreP = prize.nombre || prize.premio || prize.text || "Giro Detectado";
-                    const fecha = prize.fecha || new Date().toLocaleTimeString();
-                    
-                    const log = document.createElement('div');
-                    log.className = 'nexo-log';
-                    log.innerHTML = `<span class="nexo-gold">[${fecha}]</span> <b>${email}</b>: ${nombreP}`;
-                    
-                    monitor.prepend(log);
-                    if (monitor.childNodes.length > 40) monitor.lastChild.remove();
-                });
-            });
-        });
-
-        // ESCUCHA DE AVISOS
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
-            const d = s.val();
-            if(d && d.time > (Date.now() - 15000)) alert("📢 AVISO ADMIN:\n" + d.msg);
-        });
-
-        setInterval(inyectarPanel, 2000);
+                    <button onclick="setAvisoTarget('all')" style="width:100%; margin-top:5px; padding:5px; font-size:0.7rem;">🌐 ENVIAR A TODOS</button>
+                `;
+                modalBody.appendChild(divAvisos);
+            }
+        }, 300);
     };
 
-    iniciarMonitorForzado();
+    // Función global para guardar la configuración
+    window.setAvisoTarget = function(level) {
+        dbRef.ref('users/ADMIN_MESSAGES/target_config').set({
+            active_level: level,
+            updatedAt: Date.now()
+        }).then(() => alert("Configuración actualizada: Avisos para " + level.toUpperCase()));
+    };
 })();
-
-    // ================================================================
-// --- INYECCIÓN ADITIVA: SEGMENTACIÓN DE AVISOS (ESTILO PREMIUM) ---
-// ================================================================
-(function() {
-    // 1. Monitor de Inyección: Detecta la apertura del Panel Admin
-    const monitorAdmin = setInterval(() => {
-        const panel = document.getElementById('admin-master-panel');
-        if (panel && !document.getElementById('wrapper-segmentacion')) {
-            
-            // Contenedor principal con estilo de marca
-            const wrapper = document.createElement('div');
-            wrapper.id = 'wrapper-segmentacion';
-            wrapper.style = "margin: 15px 0; padding: 12px; border: 1px solid var(--gold); background: #000; border-radius: 8px; box-shadow: 0 0 10px rgba(212,175,55,0.15); font-family: sans-serif;";
-            
-            wrapper.innerHTML = `
-                <label style="color:var(--gold); font-size:0.65rem; font-weight:900; display:block; margin-bottom:10px; text-transform:uppercase; letter-spacing:1px;">🎯 Segmentación de Audiencia:</label>
-                <div style="display: flex; justify-content: space-around; align-items: center; gap: 10px;">
-                    
-                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#aaa; font-size:0.75rem;">
-                        <input type="checkbox" id="chk-free" checked style="accent-color:#666;"> FREE
-                    </label>
-                    
-                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:#00e5ff; font-size:0.75rem; font-weight:bold;">
-                        <input type="checkbox" id="chk-pro" checked style="accent-color:#00e5ff;"> PRO
-                    </label>
-                    
-                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; color:var(--gold); font-size:0.75rem; font-weight:bold;">
-                        <input type="checkbox" id="chk-ppe" checked style="accent-color:var(--gold);"> PPE
-                    </label>
-                </div>
-            `;
-
-            // Insertar antes del área de texto (textarea)
-            const textArea = panel.querySelector('textarea');
-            if (textArea) textArea.parentNode.insertBefore(wrapper, textArea);
-
-            // 2. Interceptar botón de envío original
-            const btnSend = Array.from(panel.querySelectorAll('button')).find(b => b.innerText.includes('AVISO'));
-            if (btnSend) {
-                btnSend.onclick = null; // Limpiar evento original
-                btnSend.addEventListener('click', function() {
-                    const msg = textArea.value.trim();
-                    
-                    // Recopilar niveles seleccionados
-                    const targets = [];
-                    if(document.getElementById('chk-free').checked) targets.push('free');
-                    if(document.getElementById('chk-pro').checked) targets.push('pro');
-                    if(document.getElementById('chk-ppe').checked) targets.push('ppe');
-
-                    if (msg && targets.length > 0) {
-                        dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                            msg: msg,
-                            time: Date.now(),
-                            targetArray: targets // Guardamos como array para el filtro
-                        }).then(() => {
-                            textArea.value = "";
-                            alert("✅ Aviso enviado a: " + targets.join(', ').toUpperCase());
-                        });
-                    } else if (targets.length === 0) {
-                        alert("Selecciona al menos un nivel de destino.");
-                    }
-                });
-            }
-        }
-    }, 1500);
-
-    // 3. Lógica de Recepción con Filtro de Array (Sobrescribe línea 1027)
-    dbRef.ref('users/ADMIN_MESSAGES/current').off('value'); 
-    dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
-        const d = s.val();
-        if (d && d.time > (Date.now() - 15000)) {
-            const userLevel = (typeof config !== 'undefined') ? config.level : 'free';
-            const allowed = d.targetArray || ['free', 'pro', 'ppe']; // Si no hay array, por defecto todos
-            
-            if (allowed.includes(userLevel)) {
-                alert("📢 AVISO GLOBAL:\n\n" + d.msg);
-            }
-        }
-    });
-})();
-</script>
+    </script>
 </body>
 </html>
