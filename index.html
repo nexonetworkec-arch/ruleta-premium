@@ -1007,162 +1007,259 @@
 })();
 
         /* ==========================================================
-   BLOQUE DEFINITIVO: NÚCLEO DE AUTENTICACIÓN NEXO®
-   Reescritura de Interfaz y Lógica de Registro/Recuperación
+   BLOQUE: CAPTURA DINÁMICA VINCULADA A "MI MARCA" NEXO®
+   Logo y Colores sincronizados con la identidad del usuario
    ========================================================== */
 
 (function() {
-    // 1. FORZAR ESTILOS (Prioridad de Sistema)
-    const styleId = 'nx-core-styles';
+    // 1. ESTILOS DINÁMICOS (Se inyectan pero dependen de las variables de marca)
+    const styleId = 'nx-brand-lead-styles';
     if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
         style.innerHTML = `
-            #authForm { display: flex !important; flex-direction: column !important; }
-            .input-group { display: flex !important; flex-direction: column !important; width: 100% !important; }
-            .nx-pwd-container { position: relative; width: 100%; display: flex; align-items: center; }
-            .nx-eye { position: absolute; right: 15px; cursor: pointer; color: #d4af37; z-index: 100; font-size: 1.2rem; }
-            .nx-forgot { font-size: 11px; color: #d4af37; text-align: right; margin-top: -5px; cursor: pointer; text-decoration: underline; order: 5 !important; }
-            .nx-mandatory::after { content: " *"; color: #ff4d4d; font-weight: bold; }
-            
-            /* ORDEN NEXO® ACTUALIZADO */
-            #group-n { order: 1 !important; }
-            #group-a { order: 2 !important; }
-            #group-t { order: 3 !important; }
-            #group-c { order: 4 !important; }
-            #nx-forgot-pass { order: 5 !important; }
-            #group-p { order: 6 !important; }
-            #group-cp { order: 7 !important; }
+            .nx-lead-overlay {
+                position: fixed; top:0; left:0; width:100%; height:100%;
+                background: rgba(0,0,0,0.96); display: none;
+                align-items: center; justify-content: center; z-index: 30000;
+                backdrop-filter: blur(8px);
+            }
+            .nx-lead-card {
+                background: #000; padding: 30px; border-radius: 20px;
+                border: 2px solid var(--gold, #d4af37); width: 90%; max-width: 400px; text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            }
+            #nx-lead-logo {
+                max-width: 150px; max-height: 80px; margin-bottom: 20px; object-fit: contain;
+                display: none; /* Se muestra solo si hay logo */
+            }
+            .nx-lead-field {
+                width: 100%; padding: 14px; margin-bottom: 12px;
+                background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 10px;
+            }
+            .nx-btn-brand {
+                background: var(--gold, #d4af37); color: black; font-weight: bold; width: 100%;
+                padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px;
+            }
         `;
         document.head.appendChild(style);
     }
 
-    // 2. FUNCIÓN DE REESTRUCTURACIÓN PROFUNDA
-    const aplicarCirugiaNexo = () => {
-        const form = document.getElementById('authForm');
-        if (!form) return;
+    // 2. MODAL CON ESPACIO PARA LOGO DE MARCA
+    if (!document.getElementById('nxLeadModal')) {
+        const modalHTML = `
+            <div id="nxLeadModal" class="nx-lead-overlay">
+                <div class="nx-lead-card">
+                    <img id="nx-lead-logo" src="" alt="Logo Marca">
+                    <h2 id="nx-lead-title" style="color:var(--gold, #d4af37); margin-bottom:5px;">REGISTRO</h2>
+                    <p style="color:#888; font-size:13px; margin-bottom:20px;">Ingresa tus datos para girar la ruleta</p>
+                    <input type="text" id="ldName" class="nx-lead-field" placeholder="Nombres">
+                    <input type="text" id="ldLast" class="nx-lead-field" placeholder="Apellidos">
+                    <input type="tel" id="ldPhone" class="nx-lead-field" placeholder="WhatsApp / Teléfono">
+                    <input type="email" id="ldEmail" class="nx-lead-field" placeholder="Correo Electrónico">
+                    <button class="nx-btn-brand" id="btnRegAndSpin">REGISTRAR Y GIRAR</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
 
-        // Asignar IDs de grupo para el orden Flex
-        const n = document.getElementById('authFullName');
-        const t = document.getElementById('authPhone');
-        const c = document.getElementById('authEmail');
-        const p = document.getElementById('authPin');
-        const cp = document.getElementById('authPinConfirm');
-
-        if (n) n.parentElement.id = 'group-n';
-        if (t) t.parentElement.id = 'group-t';
-        if (c) c.parentElement.id = 'group-c';
-        if (p) p.parentElement.id = 'group-p';
-        if (cp) cp.parentElement.id = 'group-cp';
-
-        // Inyectar Campo de Apellidos (Si no existe)
-        if (!document.getElementById('authLastName')) {
-            const groupA = document.createElement('div');
-            groupA.className = 'input-group';
-            groupA.id = 'group-a';
-            groupA.innerHTML = `<label>Apellidos</label><input type="text" id="authLastName" class="input-pin" placeholder="TUS APELLIDOS">`;
-            document.getElementById('group-n').after(groupA);
-        }
-
-        // Traducir PIN a Contraseña e inyectar Ojos
-        const configurarPass = (el, texto) => {
-            if (!el || el.dataset.nxDone) return;
-            el.parentElement.querySelector('label').innerText = texto;
-            const wrap = document.createElement('div');
-            wrap.className = 'nx-pwd-container';
-            el.parentNode.insertBefore(wrap, el);
-            wrap.appendChild(el);
-            const eye = document.createElement('span');
-            eye.className = 'nx-eye'; eye.innerHTML = '👁️';
-            eye.onclick = () => { el.type = el.type === 'password' ? 'text' : 'password'; };
-            wrap.appendChild(eye);
-            el.dataset.nxDone = "true";
-        };
-
-        configurarPass(p, "Contraseña");
-        configurarPass(cp, "Confirmar Contraseña");
-
-        // Recuperación de Contraseña
-        if (!document.getElementById('nx-forgot-pass')) {
-            const link = document.createElement('div');
-            link.id = 'nx-forgot-pass'; link.className = 'nx-forgot';
-            link.innerText = "¿Olvidaste tu contraseña?";
-            link.onclick = async () => {
-                const mail = c.value;
-                if (!mail) return alert("Ingresa tu correo.");
-                try { await auth.sendPasswordResetEmail(mail); alert("Correo enviado."); } catch(e) { alert(e.message); }
-            };
-            document.getElementById('group-c').after(link);
-        }
-
-        // Ajustar visibilidad según modo (Login / Registro)
-        const isReg = document.getElementById('confirmGroup').style.display === 'block';
-        document.getElementById('group-a').style.display = isReg ? 'flex' : 'none';
-        document.getElementById('nx-forgot-pass').style.display = isReg ? 'none' : 'flex';
-        
-        const labels = form.querySelectorAll('label');
-        labels.forEach(l => isReg ? l.classList.add('nx-mandatory') : l.classList.remove('nx-mandatory'));
-    };
-
-    // 3. SOBRESCRIBIR LÓGICA DE BOTONES ORIGINALES
-    const hijackButtons = () => {
-        // Interceptar el cambio entre Login y Registro
-        const toggleBtn = document.getElementById('toggleAuth');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => setTimeout(aplicarCirugiaNexo, 10));
-        }
-
-        // Interceptar la acción de Firebase
-        const actionBtn = document.getElementById('btnAuthAction');
-        if (actionBtn) {
-            actionBtn.onclick = async () => {
-                const isReg = document.getElementById('confirmGroup').style.display === 'block';
-                const email = document.getElementById('authEmail').value;
-                const pass = document.getElementById('authPin').value;
-                const name = document.getElementById('authFullName').value;
-                const last = document.getElementById('authLastName').value;
-                const phone = document.getElementById('authPhone').value;
-
-                try {
-                    if (isReg) {
-                        if (pass !== document.getElementById('authPinConfirm').value) return alert("Las contraseñas no coinciden.");
-                        if (!name || !last) return alert("Nombres y Apellidos son obligatorios.");
-                        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                        await db.ref(`users/${cred.user.uid}/config`).set({
-                            email, fullName: `${name} ${last}`.toUpperCase(),
-                            firstName: name.toUpperCase(), lastName: last.toUpperCase(),
-                            phone, level: 'FREE', createdAt: new Date().toLocaleDateString()
-                        });
-                    } else {
-                        await auth.signInWithEmailAndPassword(email, pass);
-                    }
-                } catch (e) { alert(e.message); }
-            };
-        }
-    };
-
-    // 4. SUSCRIPCIÓN DINÁMICA BAJO FOTO
+    // 3. SINCRONIZACIÓN CON "MI MARCA" (Firebase)
+    // Escuchamos los cambios en la configuración de marca del usuario actual
     auth.onAuthStateChanged(user => {
         if (user) {
-            db.ref(`users/${user.uid}/config/level`).on('value', snap => {
-                const el = document.getElementById('nx-sub-level');
-                if (el) {
-                    const l = (snap.val() || 'FREE').toUpperCase();
-                    el.innerText = `Suscripción: ${l}`;
-                    el.style.color = l === 'GOLD' ? '#d4af37' : '#888';
+            db.ref(`users/${user.uid}/brand`).on('value', (snapshot) => {
+                const brandData = snapshot.val();
+                if (brandData) {
+                    const logoImg = document.getElementById('nx-lead-logo');
+                    if (brandData.logoUrl && logoImg) {
+                        logoImg.src = brandData.logoUrl;
+                        logoImg.style.display = 'inline-block';
+                        // Si hay logo, ocultamos el título de texto "REGISTRO" para estética
+                        document.getElementById('nx-lead-title').style.display = 'none';
+                    }
                 }
             });
         }
     });
 
-    // Iniciar con observador persistente
-    const observer = new MutationObserver(() => aplicarCirugiaNexo());
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    setTimeout(() => {
-        aplicarCirugiaNexo();
-        hijackButtons();
-    }, 100);
+    // 4. LÓGICA DE CONTROL Y GUARDADO (Mantiene funcionalidad anterior)
+    let registroActivo = true;
+    db.ref('app_settings/registro_giro_activo').on('value', (snap) => {
+        registroActivo = snap.val() !== null ? snap.val() : true;
+    });
+
+    // Interceptar Giro
+    const btnSpin = document.querySelector('.spin-btn') || document.getElementById('spin-button');
+    if (btnSpin) {
+        const originalSpin = btnSpin.onclick;
+        btnSpin.onclick = (e) => {
+            if (registroActivo) {
+                e.stopImmediatePropagation();
+                document.getElementById('nxLeadModal').style.display = 'flex';
+            } else if (originalSpin) {
+                originalSpin.apply(btnSpin, [e]);
+            }
+        };
+    }
+
+    document.getElementById('btnRegAndSpin').onclick = async () => {
+        const lead = {
+            n: document.getElementById('ldName').value,
+            a: document.getElementById('ldLast').value,
+            t: document.getElementById('ldPhone').value,
+            e: document.getElementById('ldEmail').value,
+            f: new Date().toLocaleString()
+        };
+
+        if (!lead.n || !lead.a || !lead.t || !lead.e) return alert("Completa todos los campos.");
+
+        try {
+            await db.ref('leads_ruleta').push(lead);
+            document.getElementById('nxLeadModal').style.display = 'none';
+            // Trigger del giro
+            if (btnSpin) {
+                const currentStatus = registroActivo;
+                registroActivo = false;
+                btnSpin.click();
+                registroActivo = currentStatus;
+            }
+        } catch (e) { alert(e.message); }
+    };
+
+})();
+
+        /* ==========================================================
+   BLOQUE: CAPTURA DINÁMICA BRANDED NEXO®
+   Personalización de Logo, Colores y Mensajes desde Mi Marca
+   ========================================================== */
+
+(function() {
+    // 1. ESTILOS VINCULADOS A LA IDENTIDAD DE MARCA
+    const styleId = 'nx-brand-dynamic-styles';
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = `
+            .nx-lead-overlay {
+                position: fixed; top:0; left:0; width:100%; height:100%;
+                background: rgba(0,0,0,0.97); display: none;
+                align-items: center; justify-content: center; z-index: 30000;
+                backdrop-filter: blur(10px);
+            }
+            .nx-lead-card {
+                background: #000; padding: 35px; border-radius: 25px;
+                border: 2px solid var(--gold, #d4af37); width: 90%; max-width: 420px; text-align: center;
+                box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            }
+            #nx-lead-logo {
+                max-width: 180px; max-height: 90px; margin-bottom: 20px; 
+                object-fit: contain; display: none;
+            }
+            .nx-lead-title { color: var(--gold, #d4af37); font-size: 1.5rem; margin-bottom: 10px; text-transform: uppercase; }
+            .nx-lead-welcome { color: #aaa; font-size: 14px; margin-bottom: 25px; line-height: 1.4; }
+            .nx-lead-field {
+                width: 100%; padding: 14px; margin-bottom: 12px;
+                background: #151515; border: 1px solid #333; color: white; 
+                border-radius: 12px; font-size: 15px;
+            }
+            .nx-btn-brand {
+                background: var(--gold, #d4af37); color: black; font-weight: bold; width: 100%;
+                padding: 16px; border: none; border-radius: 12px; cursor: pointer; 
+                font-size: 17px; text-transform: uppercase; transition: 0.3s;
+            }
+            .nx-btn-brand:hover { transform: scale(1.03); filter: brightness(1.1); }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 2. MODAL DINÁMICO
+    if (!document.getElementById('nxLeadModal')) {
+        const modalHTML = `
+            <div id="nxLeadModal" class="nx-lead-overlay">
+                <div class="nx-lead-card">
+                    <img id="nx-lead-logo" src="" alt="Marca">
+                    <h2 class="nx-lead-title" id="nx-txt-title">BIENVENIDO</h2>
+                    <p class="nx-lead-welcome" id="nx-txt-welcome">Completa tus datos para participar en el sorteo.</p>
+                    <input type="text" id="ldName" class="nx-lead-field" placeholder="Nombres">
+                    <input type="text" id="ldLast" class="nx-lead-field" placeholder="Apellidos">
+                    <input type="tel" id="ldPhone" class="nx-lead-field" placeholder="WhatsApp / Teléfono">
+                    <input type="email" id="ldEmail" class="nx-lead-field" placeholder="Correo Electrónico">
+                    <button class="nx-btn-brand" id="btnRegAndSpin">REGISTRAR Y GIRAR</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    // 3. SINCRONIZACIÓN EN TIEMPO REAL CON "MI MARCA"
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // Escuchar configuración de marca del usuario
+            db.ref(`users/${user.uid}/brand`).on('value', (snap) => {
+                const brand = snap.val() || {};
+                const logoImg = document.getElementById('nx-lead-logo');
+                const titleH2 = document.getElementById('nx-txt-title');
+                const welcomeP = document.getElementById('nx-txt-welcome');
+
+                if (brand.logoUrl) {
+                    logoImg.src = brand.logoUrl;
+                    logoImg.style.display = 'inline-block';
+                    titleH2.style.display = 'none'; // Oculta título si hay logo
+                } else {
+                    logoImg.style.display = 'none';
+                    titleH2.style.display = 'block';
+                    titleH2.innerText = brand.formTitle || "REGISTRO";
+                }
+
+                if (brand.welcomeMsg) {
+                    welcomeP.innerText = brand.welcomeMsg;
+                }
+            });
+        }
+    });
+
+    // 4. LÓGICA DE ACTIVACIÓN (Respetando el Switch del Menú)
+    let registroActivo = true;
+    db.ref('app_settings/registro_giro_activo').on('value', (s) => registroActivo = s.val() !== false);
+
+    const btnSpin = document.querySelector('.spin-btn') || document.getElementById('spin-button');
+    if (btnSpin) {
+        const originalSpin = btnSpin.onclick;
+        btnSpin.onclick = (e) => {
+            if (registroActivo) {
+                e.stopImmediatePropagation();
+                document.getElementById('nxLeadModal').style.display = 'flex';
+            } else if (originalSpin) {
+                originalSpin.apply(btnSpin, [e]);
+            }
+        };
+    }
+
+    // 5. GUARDADO DE DATOS
+    document.getElementById('btnRegAndSpin').onclick = async () => {
+        const lead = {
+            n: document.getElementById('ldName').value,
+            a: document.getElementById('ldLast').value,
+            t: document.getElementById('ldPhone').value,
+            e: document.getElementById('ldEmail').value,
+            f: new Date().toLocaleString()
+        };
+
+        if (!lead.n || !lead.a || !lead.t || !lead.e) return alert("Por favor, llena todos los campos.");
+
+        try {
+            await db.ref('leads_ruleta').push(lead);
+            document.getElementById('nxLeadModal').style.display = 'none';
+            // Ejecutar el giro
+            if (btnSpin) {
+                const tempState = registroActivo;
+                registroActivo = false; 
+                btnSpin.click();
+                setTimeout(() => { registroActivo = tempState; }, 1000);
+            }
+        } catch (e) { alert("Error: " + e.message); }
+    };
 })();
     </script>
 </body>
