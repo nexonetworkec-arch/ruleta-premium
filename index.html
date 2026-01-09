@@ -1029,113 +1029,107 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: ANCLAJE POR TEXTO (ESQUINA SUPERIOR DERECHA)
- * Busca el texto "Aviso Global" para posicionar la pestaña de niveles.
+ * INYECCIÓN ADITIVA: EL GUARDIÁN DEL DOM (ESTABILIZADOR TOTAL)
+ * Criterio: Inyección persistente mediante MutationObserver.
+ * Objetivo: Evitar que los controles desaparezcan por el refresco del script original.
  */
 (function() {
-    let menuTimer;
+    const ID_CONTENEDOR = 'wrapper-segmentacion-estable';
 
-    const inyectarPestañaPorTexto = () => {
+    // 1. Función que inyecta/restaura los controles
+    const restaurarControles = () => {
         const modal = document.getElementById('modalAdmin');
         if (!modal || getComputedStyle(modal).display === 'none') return;
 
-        // 1. Buscar el elemento que contiene el título "Aviso Global"
-        const todosLosElementos = modal.querySelectorAll('div, span, h3, h4, p');
-        let contenedorAviso = null;
-
-        for (let el of todosLosElementos) {
+        // Buscamos el anclaje: el área donde está el título "Aviso Global"
+        const elementos = modal.querySelectorAll('div, span, h3, h4, b');
+        let seccionAviso = null;
+        for (let el of elementos) {
             if (el.innerText.includes('Aviso Global') && el.children.length === 0) {
-                // Subimos al contenedor principal de esa sección
-                contenedorAviso = el.parentElement;
+                seccionAviso = el.parentElement;
                 break;
             }
         }
 
-        if (contenedorAviso && !document.getElementById('btn-nivel-esquina')) {
-            contenedorAviso.style.position = 'relative';
+        // Si encontramos la sección y nuestro control no está, lo ponemos
+        if (seccionAviso && !document.getElementById(ID_CONTENEDOR)) {
+            seccionAviso.style.position = 'relative';
 
-            // 2. Crear Botón "⚙️ NIVEL"
-            const btn = document.createElement('div');
-            btn.id = 'btn-nivel-esquina';
-            btn.innerHTML = '⚙️ NIVEL';
-            btn.style.cssText = `
+            const wrapper = document.createElement('div');
+            wrapper.id = ID_CONTENEDOR;
+            wrapper.style.cssText = `
                 position: absolute; top: 0; right: 0;
-                background: #d4af37; color: #000; font-size: 10px;
-                font-weight: bold; padding: 4px 8px; border-radius: 0 5px 0 5px;
-                cursor: pointer; z-index: 9999; box-shadow: -2px 2px 5px rgba(0,0,0,0.5);
+                display: flex; align-items: center; gap: 5px;
+                background: #d4af37; padding: 3px 8px;
+                border-radius: 0 5px 0 10px; z-index: 1000;
+                box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
             `;
 
-            // 3. Crear Menú Desplegable
-            const menu = document.createElement('div');
-            menu.id = 'menu-desplegable-niveles';
-            menu.style.cssText = `
-                position: absolute; top: 25px; right: 0;
-                background: #0a0a0a; border: 1px solid #d4af37;
-                padding: 12px; border-radius: 8px; display: none;
-                flex-direction: column; gap: 8px; z-index: 10000;
-                box-shadow: 0 5px 20px rgba(0,0,0,1); min-width: 120px;
+            wrapper.innerHTML = `
+                <span style="font-size:9px; color:#000; font-weight:bold;">NIVEL:</span>
+                <select id="select-lvl-segmento" style="background:#000; color:#d4af37; border:1px solid #000; font-size:9px; border-radius:3px; cursor:pointer;">
+                    <option value="all">TODOS</option>
+                    <option value="pro">PRO</option>
+                    <option value="ppe">PPE</option>
+                    <option value="free">FREE</option>
+                </select>
             `;
-            menu.innerHTML = `
-                <div style="font-size:9px; color:#d4af37; margin-bottom:5px; border-bottom:1px solid #333;">DESTINO:</div>
-                <label style="color:#fff; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="chkAll" onchange="window.tglAll(this.checked)"> TODOS</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="c-lvl" value="pro"> PRO</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="c-lvl" value="ppe"> PPE</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="c-lvl" value="free"> FREE</label>
-            `;
+            seccionAviso.appendChild(wrapper);
 
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const visible = menu.style.display === 'flex';
-                menu.style.display = visible ? 'none' : 'flex';
-                if (!visible) {
-                    clearTimeout(menuTimer);
-                    menuTimer = setTimeout(() => { menu.style.display = 'none'; }, 10000);
-                }
-            };
-
-            contenedorAviso.appendChild(btn);
-            contenedorAviso.appendChild(menu);
-
-            // 4. Interceptación del Botón Enviar
-            const btnOriginal = Array.from(modal.querySelectorAll('button')).find(b => b.innerText.includes('ENVIAR AVISO'));
-            if (btnOriginal) {
-                btnOriginal.onclick = async () => {
+            // Re-vincular el botón de envío para que lea nuestro selector
+            const btnEnviar = Array.from(modal.querySelectorAll('button')).find(b => b.innerText.includes('ENVIAR AVISO'));
+            if (btnEnviar) {
+                btnEnviar.onclick = async () => {
                     const input = document.getElementById('globalMsgInput');
-                    const texto = input ? input.value.trim() : "";
-                    const lvls = Array.from(document.querySelectorAll('.c-lvl:checked')).map(i => i.value);
-
-                    if(!texto) return alert("Escribe el mensaje.");
-                    if(lvls.length === 0) {
-                        menu.style.display = 'flex';
-                        return alert("Selecciona niveles en la pestaña dorada.");
-                    }
+                    const msg = input ? input.value.trim() : "";
+                    const target = document.getElementById('select-lvl-segmento').value;
+                    
+                    if(!msg) return alert("Escribe un mensaje.");
+                    
+                    // Definimos los targets según la selección
+                    const finalTargets = (target === 'all') ? ['pro', 'ppe', 'free'] : [target];
 
                     try {
                         await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                            msg: texto, time: Date.now(), targets: lvls
+                            msg: msg, time: Date.now(), targets: finalTargets
                         });
-                        alert("📢 Enviado correctamente.");
+                        alert("📢 Enviado a: " + target.toUpperCase());
                         if(input) input.value = "";
-                        menu.style.display = 'none';
-                    } catch(e) { console.error(e); }
+                        // Auto-reset del selector si lo deseas
+                        document.getElementById('select-lvl-segmento').value = 'all';
+                    } catch(e) { console.error("Error envío:", e); }
                 };
             }
         }
     };
 
-    window.tglAll = (v) => document.querySelectorAll('.c-lvl').forEach(i => i.checked = v);
+    // 2. EL GUARDIÁN: MutationObserver
+    // Observa si el modal cambia su contenido y dispara la restauración
+    const observer = new MutationObserver((mutations) => {
+        restaurarControles();
+    });
 
-    // Bucle de búsqueda (cada 500ms)
-    setInterval(inyectarPestañaPorTexto, 500);
+    const configObserver = { childList: true, subtree: true };
+    const modalTarget = document.getElementById('modalAdmin');
 
-    // Receptor Filtrado
+    if (modalTarget) {
+        observer.observe(modalTarget, configObserver);
+    }
+
+    // Ejecución inicial y respaldo por intervalo (doble seguridad)
+    restaurarControles();
+    setInterval(restaurarControles, 1000);
+
+    // 3. Lógica de Recepción (para los usuarios)
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const d = snap.val();
-            const uLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(uLvl)) alert("📢 AVISO ADMIN:\n\n" + d.msg);
+            const data = snap.val();
+            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            if (data && data.time > (Date.now() - 15000)) {
+                if (data.targets && data.targets.includes(miLvl)) {
+                    alert("📢 AVISO ADMIN:\n\n" + data.msg);
+                }
             }
         });
     }
@@ -1143,4 +1137,3 @@
 </script>
 </body>
 </html>
-
