@@ -833,103 +833,138 @@
         })();
 
         // ================================================================
-// --- INYECCIÓN ADITIVA: PANEL EVOLUTION & PREMIUM NOTIFICATIONS ---
+// --- INYECCIÓN ADITIVA: SISTEMA ADMIN EVOLUTION & EXPORT V1 ---
 // ================================================================
 (function() {
-    // 1. AJUSTE DE ESCROLL Y DISEÑO (Integridad Estructural)
-    const evolutionStyle = document.createElement('style');
-    evolutionStyle.innerHTML = `
-        .app-container { overflow-y: auto !important; align-items: flex-start !important; }
-        .activity-gauge { background: #000; border: 1px solid #333; padding: 15px; border-radius: 15px; margin: 10px 0; display: flex; align-items: center; justify-content: space-between; }
-        .gauge-bar { width: 100px; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
-        .gauge-fill { height: 100%; background: var(--gold); box-shadow: 0 0 10px var(--gold); transition: 0.5s; }
-        #nexo-modal-global { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(10px); }
+    // 1. ESTILOS DE INTERFAZ Y SCROLL
+    const styleAddon = document.createElement('style');
+    styleAddon.innerHTML = `
+        /* Asegurar scroll en el panel admin si el contenido crece */
+        #modalAdmin .modal-content { 
+            max-height: 85vh; 
+            overflow-y: auto !important; 
+            scrollbar-width: thin; 
+            scrollbar-color: var(--gold) #000;
+        }
+        .live-feed-container { 
+            background: #000; border: 1px solid #222; 
+            border-radius: 10px; padding: 10px; margin: 10px 0;
+            max-height: 150px; overflow-y: auto; font-family: monospace;
+        }
+        .feed-item { font-size: 0.7rem; border-bottom: 1px solid #111; padding: 4px 0; color: #aaa; }
+        .feed-item b { color: var(--gold); }
+        .export-btn { 
+            background: #111; color: var(--gold); border: 1px solid var(--gold);
+            padding: 8px; border-radius: 5px; cursor: pointer; width: 100%;
+            font-weight: bold; margin-top: 10px; transition: 0.3s;
+        }
+        .export-btn:hover { background: var(--gold); color: #000; }
+        #nexo-modal-global { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000000; backdrop-filter: blur(8px); }
     `;
-    document.head.appendChild(evolutionStyle);
+    document.head.appendChild(styleAddon);
 
-    // 2. MODAL PREMIUM (OPCIÓN 3)
+    // 2. ESTRUCTURA DEL MODAL PREMIUM (OPCIÓN 3)
     const modalUI = document.createElement('div');
     modalUI.id = 'nexo-modal-global';
     modalUI.innerHTML = `
-        <div style="background:#000; border:2px solid var(--gold); width:90%; max-width:380px; padding:30px; border-radius:20px; text-align:center; box-shadow:0 0 50px rgba(212,175,55,0.3);">
-            <div style="width:50px; height:50px; border:2px solid var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:var(--gold); font-size:24px;">!</div>
-            <h2 id="modal-global-title" style="color:var(--gold); margin:0 0 10px 0; font-size:1.1rem; letter-spacing:2px;">COMUNICADO</h2>
-            <p id="modal-global-body" style="color:#ccc; font-size:0.9rem; line-height:1.6;"></p>
-            <button onclick="document.getElementById('nexo-modal-global').style.display='none'" style="background:var(--gold); color:black; border:none; width:100%; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; text-transform:uppercase; margin-top:20px;">ENTENDIDO</button>
+        <div style="background:#000; border:2px solid var(--gold); width:90%; max-width:380px; padding:35px 25px; border-radius:20px; text-align:center; box-shadow:0 0 50px rgba(212,175,55,0.4);">
+            <div style="width:50px; height:50px; border:2px solid var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; color:var(--gold); font-size:24px; font-weight:bold;">!</div>
+            <h2 id="modal-global-title" style="color:var(--gold); margin:0 0 15px 0; font-size:1.2rem; letter-spacing:2px; text-transform:uppercase;">Comunicado Nexo</h2>
+            <p id="modal-global-body" style="color:#eee; font-size:0.95rem; line-height:1.6; margin-bottom:25px;"></p>
+            <button onclick="document.getElementById('nexo-modal-global').style.display='none'" style="background:var(--gold); color:#000; border:none; width:100%; padding:14px; border-radius:10px; font-weight:900; cursor:pointer; text-transform:uppercase; letter-spacing:1px;">Entendido</button>
         </div>
     `;
     document.body.appendChild(modalUI);
 
-    // 3. MEDIDOR DE ACTIVIDAD Y SELECTOR (Inyección en Panel)
-    const injectAdminAddons = () => {
+    // 3. INYECCIÓN DE FUNCIONALIDADES AL PANEL ADMIN
+    const injectEvolution = () => {
         const adminPanel = document.querySelector('#modalAdmin .modal-content');
-        if (adminPanel && !document.getElementById('addon-activity')) {
-            const addons = document.createElement('div');
-            addons.id = 'addon-activity';
-            addons.innerHTML = `
-                <div class="activity-gauge">
-                    <div style="text-align:left;"><small style="color:#666; font-size:0.6rem; display:block;">ACTIVIDAD REAL</small><b id="activity-percent" style="color:var(--gold);">0%</b></div>
-                    <div class="gauge-bar"><div id="activity-fill" class="gauge-fill" style="width: 0%"></div></div>
+        if (adminPanel && !document.getElementById('evolution-tools')) {
+            const tools = document.createElement('div');
+            tools.id = 'evolution-tools';
+            tools.innerHTML = `
+                <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+                <h3 style="color:var(--gold); font-size:0.8rem; letter-spacing:1px;">MONITOR LIVE & EXPORT</h3>
+                
+                <div class="live-feed-container" id="admin-live-feed">
+                    <div class="feed-item">Esperando actividad en ruleta...</div>
                 </div>
-                <div style="background:#111; padding:15px; border-radius:15px; border:1px solid #222; margin-top:10px;">
-                    <label style="color:var(--gold); font-size:0.7rem; font-weight:800; display:block; margin-bottom:10px;">ENVIAR AVISO SEGMENTADO:</label>
-                    <textarea id="global-msg-text" placeholder="Escribe el mensaje aquí..." style="width:100%; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:10px; font-size:0.8rem;"></textarea>
-                    <div style="display:flex; justify-content:space-around; margin:10px 0;">
-                        <label style="font-size:0.7rem;"><input type="checkbox" id="seg-free" checked> FREE</label>
-                        <label style="font-size:0.7rem;"><input type="checkbox" id="seg-pro" checked> PRO</label>
-                        <label style="font-size:0.7rem;"><input type="checkbox" id="seg-ppe" checked> PPE</label>
-                    </div>
-                    <button id="btnSendGlobal" class="btn btn-primary" style="width:100%; padding:10px;">ENVIAR AHORA</button>
-                </div>
-            `;
-            adminPanel.insertBefore(addons, adminPanel.querySelector('.admin-table').parentNode);
 
-            // Lógica de Envío
-            document.getElementById('btnSendGlobal').onclick = async () => {
-                const msg = document.getElementById('global-msg-text').value;
+                <div style="background:#0a0a0a; border:1px solid #333; padding:12px; border-radius:10px; margin-top:10px;">
+                    <textarea id="msg-input" placeholder="Mensaje para usuarios..." style="width:100%; background:#000; border:1px solid #222; color:#fff; padding:8px; font-size:0.8rem; border-radius:5px;"></textarea>
+                    <div style="display:flex; justify-content:space-around; margin:10px 0; color:#fff; font-size:0.7rem;">
+                        <label><input type="checkbox" id="t-free" checked> FREE</label>
+                        <label><input type="checkbox" id="t-pro" checked> PRO</label>
+                        <label><input type="checkbox" id="t-ppe" checked> PPE</label>
+                    </div>
+                    <button id="send-global-btn" class="btn btn-primary" style="width:100%;">ENVIAR MENSAJE</button>
+                </div>
+
+                <button id="export-users-btn" class="export-btn">⬇️ DESCARGAR BASE DE DATOS (CSV)</button>
+            `;
+            adminPanel.appendChild(tools);
+
+            // Lógica: Envío de Mensaje
+            document.getElementById('send-global-btn').onclick = async () => {
+                const msg = document.getElementById('msg-input').value;
                 const targets = [];
-                if(document.getElementById('seg-free').checked) targets.push('free');
-                if(document.getElementById('seg-pro').checked) targets.push('pro');
-                if(document.getElementById('seg-ppe').checked) targets.push('ppe');
+                if(document.getElementById('t-free').checked) targets.push('free');
+                if(document.getElementById('t-pro').checked) targets.push('pro');
+                if(document.getElementById('t-ppe').checked) targets.push('ppe');
 
                 if(msg && targets.length > 0) {
-                    await db.ref('ADMIN_GLOBAL_MSG').set({ msg, targets, time: Date.now() });
-                    alert("Aviso enviado con éxito.");
-                    document.getElementById('global-msg-text').value = "";
+                    await db.ref('ADMIN_NOTIFICATIONS').set({ msg, targets, time: Date.now() });
+                    alert("Aviso enviado correctamente.");
+                    document.getElementById('msg-input').value = "";
                 }
+            };
+
+            // Lógica: Exportar CSV
+            document.getElementById('export-users-btn').onclick = async () => {
+                const snap = await db.ref('users').once('value');
+                let csv = "ID,Nombre,Email,Nivel,Saldo,Registrado\n";
+                snap.forEach(child => {
+                    const u = child.val();
+                    csv += `${child.key},${u.name || 'N/A'},${u.email || 'N/A'},${u.level || 'free'},${u.balance || 0},${u.status?.last_changed || 'N/A'}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `Usuarios_Nexo_${Date.now()}.csv`;
+                a.click();
             };
         }
     };
 
-    // 4. ESCUCHA DE ACTIVIDAD Y MENSAJES
-    setInterval(() => {
-        if(document.getElementById('modalAdmin').style.display === 'flex') {
-            injectAdminAddons();
-            db.ref('users').once('value', snap => {
-                let total = 0, online = 0;
-                snap.forEach(u => { total++; if(u.val().status?.state === 'online') online++; });
-                const percent = total > 0 ? Math.round((online / total) * 100) : 0;
-                if(document.getElementById('activity-percent')) {
-                    document.getElementById('activity-percent').innerText = percent + "%";
-                    document.getElementById('activity-fill').style.width = percent + "%";
-                }
-            });
+    // 4. MONITOR DE GANADORES EN TIEMPO REAL
+    // Escucha el historial para mostrar quién gana en el panel
+    db.ref('history').limitToLast(5).on('child_added', snap => {
+        const win = snap.val();
+        const feed = document.getElementById('admin-live-feed');
+        if (feed && win) {
+            if (feed.innerText.includes("Esperando")) feed.innerHTML = "";
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            item.innerHTML = `🎯 <b>${win.name || 'Usuario'}</b> ganó <b>$${win.prize}</b>`;
+            feed.prepend(item);
         }
-    }, 2000);
+    });
 
-    // 5. RECEPCIÓN DE NOTIFICACIÓN PREMIUM
-    db.ref('ADMIN_GLOBAL_MSG').on('value', snap => {
+    // 5. ESCUCHA DE MENSAJES (Para el Usuario)
+    db.ref('ADMIN_NOTIFICATIONS').on('value', snap => {
         const data = snap.val();
-        if(data && data.time > (Date.now() - 10000)) {
-            const myLvl = config.level || 'free';
+        if(data && data.time > (Date.now() - 15000)) {
+            const myLvl = (typeof config !== 'undefined') ? config.level : 'free';
             if(data.targets.includes(myLvl)) {
                 document.getElementById('modal-global-body').innerText = data.msg;
                 document.getElementById('nexo-modal-global').style.display = 'flex';
             }
         }
     });
+
+    // Vigilante para activar herramientas al abrir el panel
+    setInterval(injectEvolution, 2000);
 })();
     </script>
 </body>
 </html>
-
