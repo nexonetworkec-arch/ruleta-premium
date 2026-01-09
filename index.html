@@ -832,136 +832,84 @@
             });
         })();
 
-                            // ================================================================
-// --- FASE 1: ESTÉTICA INTEGRAL NEXO® (GLOW & STEALTH SCROLL) ---
+        // ================================================================
+// --- FASE 1: REFINAMIENTO (BARRA FIJA Y ELIMINACIÓN DE FONDOS) ---
 // ================================================================
 (function() {
-    // 1. EL "LENGUAJE" VISUAL (CSS)
-    const nexoStyleTotal = document.createElement('style');
-    nexoStyleTotal.innerHTML = `
-        /* --- SCROLL INVISIBLE UNIVERSAL --- */
-        #modalAdmin .modal-content, 
-        .nexo-scroll-v, 
-        .admin-table-scroll,
-        textarea,
-        #monitor-feed {
-            scrollbar-width: none !important; /* Firefox */
-            -ms-overflow-style: none !important; /* IE/Edge */
+    const nexoRefineStyle = document.createElement('style');
+    nexoRefineStyle.innerHTML = `
+        /* --- BARRA SUPERIOR FIJA --- */
+        .admin-header-sticky {
+            position: sticky !important;
+            top: 0;
+            background: #000 !important;
+            z-index: 1000;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #111;
         }
-        #modalAdmin .modal-content::-webkit-scrollbar, 
-        .admin-table-scroll::-webkit-scrollbar,
-        textarea::-webkit-scrollbar,
-        #monitor-feed::-webkit-scrollbar { display: none !important; }
 
-        /* --- EFECTO LOGIN (GLOW) APLICADO A TODO --- */
-        #modalAdmin input[type="text"], 
-        #modalAdmin .admin-controls button, 
-        #modalAdmin .btn-primary,
-        .nexo-box-glow {
+        /* --- LIMPIEZA DE FONDOS (Elimina el cuadro negro exterior) --- */
+        #modalAdmin .modal-content {
+            background: #000 !important;
+            padding: 20px !important;
+        }
+        
+        /* Forzamos que la tabla no tenga contenedores fantasma */
+        .admin-table, .admin-table-container, .admin-table-wrapper {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        /* --- CUADRO CON GLOW (EL ÚNICO BORDE VISIBLE) --- */
+        .nexo-glow-module {
             background: #000 !important;
             border: 1px solid var(--gold) !important;
-            border-radius: 10px !important;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 5px rgba(212, 175, 55, 0.2) !important;
-            color: #fff !important;
-            transition: 0.3s ease;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4) !important;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
         }
 
-        /* --- AJUSTE TABLA (4 USUARIOS) --- */
-        .admin-table-scroll {
+        /* --- SCROLL INVISIBLE --- */
+        .nexo-stealth-scroll {
             max-height: 220px !important;
             overflow-y: auto !important;
-            margin: 10px 0;
+            scrollbar-width: none !important;
         }
-
-        /* --- GRID SIMÉTRICO --- */
-        .nexo-grid-simetric {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        /* --- TÍTULOS Y ETIQUETAS --- */
-        .nexo-label {
-            color: var(--gold);
-            font-size: 0.6rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        /* --- SELECTORES INTEGRADOS --- */
-        .nexo-sel-container {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 10;
-        }
-        .nexo-sel-tag { color: var(--gold); font-size: 0.55rem; font-weight: bold; display: flex; align-items: center; gap: 2px; }
-        .nexo-sel-tag input { accent-color: var(--gold); transform: scale(0.8); }
+        .nexo-stealth-scroll::-webkit-scrollbar { display: none !important; }
     `;
-    document.head.appendChild(nexoStyleTotal);
+    document.head.appendChild(nexoRefineStyle);
 
-    // 2. INYECCIÓN DE ESTRUCTURA
-    const applyNexoLayout = () => {
+    const refineLayout = () => {
         const panel = document.querySelector('#modalAdmin .modal-content');
         if (!panel) return;
 
-        // A. Aplicar Glow a la barra de búsqueda existente
+        // 1. Fijar la barra superior (Búsqueda y Controles)
         const search = panel.querySelector('input[type="text"]');
-        if (search) search.style.width = "100%";
-
-        // B. Envolver Tabla Original (Solo si no está envuelta)
-        const table = panel.querySelector('.admin-table');
-        if (table && !table.parentElement.classList.contains('admin-table-scroll')) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'nexo-box-glow admin-table-scroll';
-            const title = document.createElement('div');
-            title.className = 'nexo-label';
-            title.innerHTML = '◈ Gestión de Usuarios';
-            
-            table.parentNode.insertBefore(title, table);
-            table.parentNode.insertBefore(wrapper, table);
-            wrapper.appendChild(table);
+        const controls = panel.querySelector('.admin-controls');
+        if (search && !search.parentElement.classList.contains('admin-header-sticky')) {
+            const headerContainer = document.createElement('div');
+            headerContainer.className = 'admin-header-sticky';
+            search.parentNode.insertBefore(headerContainer, search);
+            headerContainer.appendChild(search);
+            if (controls) headerContainer.appendChild(controls);
         }
 
-        // C. Inyectar Grid Inferior (Monitor | Mensajería)
-        if (!document.getElementById('nexo-final-grid')) {
-            const grid = document.createElement('div');
-            grid.id = 'nexo-final-grid';
-            grid.className = 'nexo-grid-simetric';
-            grid.innerHTML = `
-                <div class="nexo-col">
-                    <div class="nexo-box-glow" style="height: 140px; padding:15px; position:relative;">
-                        <div class="nexo-label">◈ Monitor de Actividad</div>
-                        <div id="monitor-feed" style="height:85px; overflow-y:auto; font-family:monospace; font-size:0.65rem; color:#666;">
-                            > Esperando eventos...
-                        </div>
-                    </div>
-                    <button id="nexo-dl-csv" class="btn-primary" style="width:100%; margin-top:10px; padding:10px; font-weight:bold; cursor:pointer;">Descargar Base de Datos</button>
-                </div>
-
-                <div class="nexo-col">
-                    <div class="nexo-box-glow" style="height: 140px; padding:15px; position:relative;">
-                        <div class="nexo-label">◈ Mensaje Global</div>
-                        <div class="nexo-sel-container">
-                            <label class="nexo-sel-tag"><input type="checkbox" id="n-f" checked> F</label>
-                            <label class="nexo-sel-tag"><input type="checkbox" id="n-p" checked> P</label>
-                            <label class="nexo-sel-tag"><input type="checkbox" id="n-pp" checked> PP</label>
-                        </div>
-                        <textarea id="nexo-msg-txt" style="width:100%; height:85px; background:transparent; border:none; color:#fff; resize:none; font-size:0.85rem; outline:none;" placeholder="Escribir aquí..."></textarea>
-                    </div>
-                    <button id="nexo-send-btn" class="btn-primary" style="width:100%; margin-top:10px; padding:10px; font-weight:900; background:var(--gold) !important; color:#000 !important;">Enviar Aviso</button>
-                </div>
-            `;
-            panel.appendChild(grid);
+        // 2. Corregir la sección de Usuarios (Eliminar bordes extraños)
+        const table = panel.querySelector('.admin-table');
+        if (table && !table.parentElement.classList.contains('nexo-stealth-scroll')) {
+            // Eliminamos cualquier div intermedio que tenga fondos grises o negros
+            let parent = table.parentElement;
+            while (parent && parent !== panel && !parent.classList.contains('nexo-glow-module')) {
+                parent.style.background = "transparent";
+                parent.style.border = "none";
+                parent.style.boxShadow = "none";
+                parent = parent.parentElement;
+            }
         }
     };
 
-    setInterval(applyNexoLayout, 1000);
+    setInterval(refineLayout, 1000);
 })();
     </script>
 </body>
