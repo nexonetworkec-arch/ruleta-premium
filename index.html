@@ -1029,99 +1029,108 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: INTERCEPTOR DE CLIC (ACCIÓN EMERGENTE)
- * Funcionalidad: Solo aparece al interactuar con el botón de envío.
- * Integridad: No modifica el HTML original del modal.
+ * SOLUCIÓN DEFINITIVA: PANEL ADMINISTRATIVO LATERAL (SEGMENTADO)
+ * Inyección aditiva que no interfiere con el diseño principal.
  */
 (function() {
-    // 1. Creación del Menú (permanece oculto en el DOM hasta el clic)
-    const prepararMenuDestinos = () => {
-        if (document.getElementById('capa-segmentacion-admin')) return;
-        
-        const menu = document.createElement('div');
-        menu.id = 'capa-segmentacion-admin';
-        menu.style.cssText = `
-            position: fixed; display: none; flex-direction: column; gap: 10px;
-            background: #0a0a0a; border: 2px solid #d4af37; padding: 15px;
-            border-radius: 12px; z-index: 2147483647; box-shadow: 0 0 30px rgba(0,0,0,0.9);
-            color: #fff; min-width: 160px; font-family: sans-serif;
+    // 1. Crear Estructura del Panel
+    const crearPanelLateral = () => {
+        if (document.getElementById('side-panel-admin')) return;
+
+        const container = document.createElement('div');
+        container.id = 'side-panel-admin';
+        container.style.cssText = `
+            position: fixed; top: 20%; right: -210px; width: 250px;
+            z-index: 2147483647; transition: right 0.3s ease;
+            display: flex; align-items: flex-start;
         `;
-        
-        menu.innerHTML = `
-            <div style="font-size:11px; color:#d4af37; font-weight:bold; text-align:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:5px;">¿A QUIÉN ENVIAR?</div>
-            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" id="checkAllPop" onchange="window.funcToggleAll(this.checked)"> TODOS LOS NIVELES</label>
-            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="pro"> USUARIOS PRO</label>
-            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="ppe"> USUARIOS PPE</label>
-            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="free"> USUARIOS FREE</label>
-            <button id="btn-final-confirmar" style="margin-top:10px; background:linear-gradient(to bottom, #d4af37, #b8860b); border:none; color:#000; font-weight:bold; padding:8px; border-radius:6px; cursor:pointer; text-transform:uppercase; font-size:10px;">Confirmar y Enviar Ahora</button>
-            <div style="text-align:center; margin-top:5px;"><span onclick="document.getElementById('capa-segmentacion-admin').style.display='none'" style="font-size:9px; color:#888; cursor:pointer;">[ Cancelar ]</span></div>
+
+        // Pestaña activadora
+        const tab = document.createElement('div');
+        tab.innerHTML = '◀ NIVEL';
+        tab.style.cssText = `
+            background: #d4af37; color: #000; padding: 15px 5px;
+            border-radius: 10px 0 0 10px; cursor: pointer;
+            font-size: 10px; font-weight: bold; writing-mode: vertical-rl;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
         `;
-        document.body.appendChild(menu);
+
+        // Cuerpo del Panel
+        const body = document.createElement('div');
+        body.style.cssText = `
+            background: rgba(10, 10, 10, 0.98); border: 2px solid #d4af37;
+            padding: 15px; width: 200px; border-radius: 0 0 0 15px;
+            box-shadow: -5px 5px 20px rgba(0,0,0,0.8);
+        `;
+
+        body.innerHTML = `
+            <h4 style="color:#d4af37; margin:0 0 10px 0; font-size:12px; text-align:center;">AVISO SEGMENTADO</h4>
+            <textarea id="sideMsgInput" placeholder="Mensaje..." style="width:100%; height:60px; background:#222; border:1px solid #444; color:#fff; border-radius:5px; padding:5px; font-size:11px; resize:none;"></textarea>
+            
+            <div style="margin:10px 0; display:flex; flex-direction:column; gap:5px;">
+                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" id="sideAll" onchange="window.toggleSide(this.checked)"> TODOS</label>
+                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="pro"> PRO</label>
+                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="ppe"> PPE</label>
+                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="free"> FREE</label>
+            </div>
+
+            <button onclick="window.sendSideMsg()" style="width:100%; background:#d4af37; color:#000; border:none; padding:8px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:11px;">ENVIAR AHORA</button>
+        `;
+
+        // Eventos para abrir/cerrar
+        let abierto = false;
+        tab.onclick = () => {
+            abierto = !abierto;
+            container.style.right = abierto ? '0px' : '-210px';
+            tab.innerHTML = abierto ? '▶ OCULTAR' : '◀ NIVEL';
+        };
+
+        container.appendChild(tab);
+        container.appendChild(body);
+        document.body.appendChild(container);
     };
 
-    // 2. Interceptor de Fase de Captura
-    window.addEventListener('click', function(e) {
-        // Buscamos si el clic fue en el botón de enviar mensaje global
-        if (e.target.tagName === 'BUTTON' && (e.target.innerText.includes('ENVIAR AVISO') || e.target.getAttribute('onclick')?.includes('sendGlobalMsg'))) {
-            
-            // Detenemos la ejecución inmediata del código original
-            e.preventDefault();
-            e.stopPropagation();
+    // 2. Lógica de Envío
+    window.sendSideMsg = async () => {
+        const input = document.getElementById('sideMsgInput');
+        const msg = input.value.trim();
+        const targets = Array.from(document.querySelectorAll('.side-chk:checked')).map(i => i.value);
 
-            const menu = document.getElementById('capa-segmentacion-admin') || (prepararMenuDestinos(), document.getElementById('capa-segmentacion-admin'));
-            
-            // Posicionamos el menú cerca del clic
-            menu.style.display = 'flex';
-            menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
-            menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+        if (!msg) return alert("Escribe un mensaje.");
+        if (targets.length === 0) return alert("Selecciona niveles.");
 
-            // Configuramos la acción del botón de confirmación
-            document.getElementById('btn-final-confirmar').onclick = async () => {
-                const msgInput = document.getElementById('globalMsgInput');
-                const mensajeTexto = msgInput ? msgInput.value.trim() : "";
-                const seleccionados = Array.from(document.querySelectorAll('.chk-pop:checked')).map(i => i.value);
+        try {
+            await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                msg: msg,
+                time: Date.now(),
+                targets: targets
+            });
+            alert("📢 Enviado con éxito.");
+            input.value = "";
+        } catch (e) { console.error(e); }
+    };
 
-                if(!mensajeTexto) return alert("Por favor, escribe el mensaje primero.");
-                if(seleccionados.length === 0) return alert("Debes elegir al menos un nivel.");
+    window.toggleSide = (v) => document.querySelectorAll('.side-chk').forEach(i => i.checked = v);
 
-                try {
-                    // Referenciación: Usamos el objeto dbRef de Firebase definido en tu código base
-                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: mensajeTexto,
-                        time: Date.now(),
-                        targets: seleccionados
-                    });
-                    
-                    alert("📢 ENVIADO CORRECTAMENTE A: " + seleccionados.join(", ").toUpperCase());
-                    if(msgInput) msgInput.value = "";
-                    menu.style.display = 'none';
-                } catch(error) {
-                    console.error("Error en envío segmentado:", error);
-                    alert("Hubo un error al enviar. Revisa la consola.");
-                }
-            };
-        }
-    }, true); // El parámetro 'true' es fundamental para interceptar antes que el onclick original
-
-    // Funciones de utilidad global
-    window.funcToggleAll = (val) => document.querySelectorAll('.chk-pop').forEach(i => i.checked = val);
-
-    // 3. Recepción Filtrada (Lógica de Cliente)
-    // Sincronizada con el objeto 'config' del código original
-    if (window.dbRef) {
+    // 3. Recepción Filtrada (Lado del Usuario)
+    const iniciarRecepción = () => {
+        if (!window.dbRef) return;
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
             const data = snap.val();
-            const nivelActual = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
             
-            if(data && data.time > (Date.now() - 15000)) {
-                // Filtro: Solo muestra si el nivel del usuario está en los targets
-                if(data.targets && data.targets.includes(nivelActual)) {
-                    alert("📢 COMUNICADO OFICIAL:\n\n" + data.msg);
+            if (data && data.time > (Date.now() - 15000)) {
+                if (data.targets && data.targets.includes(miLvl)) {
+                    alert("📢 AVISO ADMIN:\n\n" + data.msg);
                 }
             }
         });
-    }
+    };
+
+    // Iniciar
+    crearPanelLateral();
+    setTimeout(iniciarRecepción, 2000);
 })();
 </script>
 </body>
