@@ -1029,84 +1029,95 @@
 
     <script>
 /**
- * INYECCIÓN ADITIVA: MENÚ EMERGENTE DE ACCIÓN (FINAL)
- * No modifica el DOM original; actúa sobre el evento de clic.
+ * INYECCIÓN ADITIVA: INTERCEPTOR DE CLIC (ACCIÓN EMERGENTE)
+ * Funcionalidad: Solo aparece al interactuar con el botón de envío.
+ * Integridad: No modifica el HTML original del modal.
  */
 (function() {
-    // 1. Crear el menú flotante oculto
-    const crearMenuEmergente = () => {
-        if (document.getElementById('menu-niveles-click')) return;
-        const div = document.createElement('div');
-        div.id = 'menu-niveles-click';
-        div.style.cssText = `
-            position: fixed; display: none; flex-direction: column; gap: 8px;
-            background: #111; border: 2px solid #d4af37; padding: 12px;
-            border-radius: 12px; z-index: 2147483647; box-shadow: 0 0 25px rgba(0,0,0,0.9);
-            color: #fff; min-width: 140px;
+    // 1. Creación del Menú (permanece oculto en el DOM hasta el clic)
+    const prepararMenuDestinos = () => {
+        if (document.getElementById('capa-segmentacion-admin')) return;
+        
+        const menu = document.createElement('div');
+        menu.id = 'capa-segmentacion-admin';
+        menu.style.cssText = `
+            position: fixed; display: none; flex-direction: column; gap: 10px;
+            background: #0a0a0a; border: 2px solid #d4af37; padding: 15px;
+            border-radius: 12px; z-index: 2147483647; box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            color: #fff; min-width: 160px; font-family: sans-serif;
         `;
-        div.innerHTML = `
-            <div style="font-size:10px; color:#d4af37; font-weight:bold; text-align:center; border-bottom:1px solid #333; margin-bottom:5px;">¿A QUIÉN ENVIAR?</div>
-            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="popAll" onchange="window.togglePopAll(this.checked)"> TODOS</label>
-            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="pro"> PRO</label>
-            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="ppe"> PPE</label>
-            <label style="font-size:11px; cursor:pointer; display:flex; align-items:center; gap:6px;"><input type="checkbox" class="pop-chk" value="free"> FREE</label>
-            <button id="btn-final-send" style="margin-top:8px; background:#d4af37; border:none; color:#000; font-weight:bold; padding:5px; border-radius:5px; cursor:pointer;">CONFIRMAR Y ENVIAR</button>
+        
+        menu.innerHTML = `
+            <div style="font-size:11px; color:#d4af37; font-weight:bold; text-align:center; border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:5px;">¿A QUIÉN ENVIAR?</div>
+            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" id="checkAllPop" onchange="window.funcToggleAll(this.checked)"> TODOS LOS NIVELES</label>
+            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="pro"> USUARIOS PRO</label>
+            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="ppe"> USUARIOS PPE</label>
+            <label style="font-size:12px; cursor:pointer; display:flex; align-items:center; gap:8px;"><input type="checkbox" class="chk-pop" value="free"> USUARIOS FREE</label>
+            <button id="btn-final-confirmar" style="margin-top:10px; background:linear-gradient(to bottom, #d4af37, #b8860b); border:none; color:#000; font-weight:bold; padding:8px; border-radius:6px; cursor:pointer; text-transform:uppercase; font-size:10px;">Confirmar y Enviar Ahora</button>
+            <div style="text-align:center; margin-top:5px;"><span onclick="document.getElementById('capa-segmentacion-admin').style.display='none'" style="font-size:9px; color:#888; cursor:pointer;">[ Cancelar ]</span></div>
         `;
-        document.body.appendChild(div);
+        document.body.appendChild(menu);
     };
 
-    // 2. Escuchar clics en toda la ventana (Intercepción)
+    // 2. Interceptor de Fase de Captura
     window.addEventListener('click', function(e) {
-        // Si el clic es en un botón que dice "ENVIAR AVISO"
-        if (e.target.tagName === 'BUTTON' && e.target.innerText.includes('ENVIAR AVISO')) {
+        // Buscamos si el clic fue en el botón de enviar mensaje global
+        if (e.target.tagName === 'BUTTON' && (e.target.innerText.includes('ENVIAR AVISO') || e.target.getAttribute('onclick')?.includes('sendGlobalMsg'))) {
+            
+            // Detenemos la ejecución inmediata del código original
             e.preventDefault();
             e.stopPropagation();
 
-            const menu = document.getElementById('menu-niveles-click') || (crearMenuEmergente(), document.getElementById('menu-niveles-click'));
+            const menu = document.getElementById('capa-segmentacion-admin') || (prepararMenuDestinos(), document.getElementById('capa-segmentacion-admin'));
             
-            // Posicionar el menú donde está el ratón
+            // Posicionamos el menú cerca del clic
             menu.style.display = 'flex';
-            menu.style.top = (e.clientY - 50) + 'px';
-            menu.style.left = (e.clientX - 70) + 'px';
+            menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+            menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
 
-            // Configurar el botón de confirmación del menú
-            document.getElementById('btn-final-send').onclick = async () => {
+            // Configuramos la acción del botón de confirmación
+            document.getElementById('btn-final-confirmar').onclick = async () => {
                 const msgInput = document.getElementById('globalMsgInput');
-                const texto = msgInput ? msgInput.value.trim() : "";
-                const niveles = Array.from(document.querySelectorAll('.pop-chk:checked')).map(i => i.value);
+                const mensajeTexto = msgInput ? msgInput.value.trim() : "";
+                const seleccionados = Array.from(document.querySelectorAll('.chk-pop:checked')).map(i => i.value);
 
-                if(!texto) { alert("Escribe un mensaje"); return; }
-                if(niveles.length === 0) { alert("Selecciona niveles"); return; }
+                if(!mensajeTexto) return alert("Por favor, escribe el mensaje primero.");
+                if(seleccionados.length === 0) return alert("Debes elegir al menos un nivel.");
 
                 try {
+                    // Referenciación: Usamos el objeto dbRef de Firebase definido en tu código base
                     await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                        msg: texto,
+                        msg: mensajeTexto,
                         time: Date.now(),
-                        targets: niveles
+                        targets: seleccionados
                     });
-                    alert("📢 Enviado a: " + niveles.join(", ").toUpperCase());
-                    msgInput.value = "";
+                    
+                    alert("📢 ENVIADO CORRECTAMENTE A: " + seleccionados.join(", ").toUpperCase());
+                    if(msgInput) msgInput.value = "";
                     menu.style.display = 'none';
-                } catch(err) { console.error(err); }
+                } catch(error) {
+                    console.error("Error en envío segmentado:", error);
+                    alert("Hubo un error al enviar. Revisa la consola.");
+                }
             };
-        } else if (!e.target.closest('#menu-niveles-click')) {
-            // Cerrar menú si se hace clic fuera
-            const menu = document.getElementById('menu-niveles-click');
-            if(menu) menu.style.display = 'none';
         }
-    }, true); // El 'true' es vital: captura el evento antes que tu código original
+    }, true); // El parámetro 'true' es fundamental para interceptar antes que el onclick original
 
-    window.togglePopAll = (v) => document.querySelectorAll('.pop-chk').forEach(i => i.checked = v);
+    // Funciones de utilidad global
+    window.funcToggleAll = (val) => document.querySelectorAll('.chk-pop').forEach(i => i.checked = val);
 
-    // 3. Recepción Filtrada (Lado Usuario)
+    // 3. Recepción Filtrada (Lógica de Cliente)
+    // Sincronizada con el objeto 'config' del código original
     if (window.dbRef) {
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
         dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const d = snap.val();
-            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            if(d && d.time > (Date.now() - 15000)) {
-                if(d.targets && d.targets.includes(miLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
+            const data = snap.val();
+            const nivelActual = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            
+            if(data && data.time > (Date.now() - 15000)) {
+                // Filtro: Solo muestra si el nivel del usuario está en los targets
+                if(data.targets && data.targets.includes(nivelActual)) {
+                    alert("📢 COMUNICADO OFICIAL:\n\n" + data.msg);
                 }
             }
         });
