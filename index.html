@@ -832,116 +832,128 @@
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: PANEL DE MENSAJES (MODO PRUEBA - VISIBILIDAD FORZADA) ---
+        // --- INYECCIÓN ADITIVA: MODAL DE GESTIÓN DE AVISOS (ESTILO PREMIUM) ---
         (function() {
-            // 1. CSS ADITIVO
+            // 1. ESTILOS DE MARCA PARA EL MODAL
             const style = document.createElement('style');
             style.innerHTML = `
-                .admin-notif-panel { 
-                    background: #1a1a1a; 
-                    border: 2px solid var(--gold); 
-                    border-radius: 12px; 
-                    padding: 20px; 
-                    margin: 40px auto; 
-                    color: white; 
-                    max-width: 600px;
-                    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-                    position: relative;
-                    z-index: 99999;
-                    font-family: sans-serif;
+                .modal-notif-overlay {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+                    display: none; justify-content: center; align-items: center; z-index: 20000;
                 }
-                .admin-notif-panel h3 { color: var(--gold); margin: 0 0 15px 0; font-size: 18px; text-align: center; text-transform: uppercase; }
-                .notif-segments { display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap; justify-content: center; background: #000; padding: 10px; border-radius: 8px; }
-                .segment-item { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: #ccc; }
-                .segment-item input { accent-color: var(--gold); transform: scale(1.2); }
-                .admin-notif-panel textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; border-radius: 6px; padding: 12px; resize: vertical; min-height: 80px; margin-bottom: 15px; }
-                .btn-send-notif { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 800; width: 100%; transition: 0.3s; text-transform: uppercase; }
-                .btn-send-notif:hover { background: #fff; }
+                .modal-notif-content {
+                    background: var(--card-bg); border: 2px solid var(--gold);
+                    width: 90%; max-width: 450px; border-radius: 15px; padding: 25px;
+                    color: var(--white); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+                    position: relative; animation: modalFadeIn 0.3s ease;
+                }
+                @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
                 
-                #global-announcement-banner { position: fixed; top: 0; left: 0; width: 100%; background: #d4af37; color: #000; padding: 15px; text-align: center; font-weight: bold; z-index: 100000; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-                .close-banner-btn { margin-left: 20px; cursor: pointer; background: black; color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+                .modal-notif-header { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
+                .modal-notif-header h2 { color: var(--gold); margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
+                
+                .notif-input-group { margin-bottom: 20px; }
+                .notif-input-group label { display: block; margin-bottom: 8px; color: var(--gold); font-size: 12px; font-weight: bold; }
+                .notif-textarea { width: 100%; background: #000; border: 1px solid #444; color: white; border-radius: 8px; padding: 12px; resize: none; font-family: inherit; }
+                .notif-textarea:focus { border-color: var(--gold); }
+
+                .notif-grid-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+                .level-card { background: #222; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+                .level-card:hover { background: #282828; border-color: var(--gold); }
+                .level-card input { accent-color: var(--gold); width: 18px; height: 18px; }
+
+                .modal-notif-actions { display: flex; flex-direction: column; gap: 10px; }
+                .btn-notif-main { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+                .btn-notif-delete { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+                
+                .btn-admin-trigger { background: #1a1a1a; border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; margin: 10px; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+                .btn-admin-trigger:hover { background: var(--gold); color: black; }
             `;
             document.head.appendChild(style);
 
-            // 2. INYECCIÓN AUTOMÁTICA (Sin validación isAdmin para prueba)
-            const injectTestUI = () => {
-                if (document.getElementById('notif-manager')) return;
-
-                const notifDiv = document.createElement('div');
-                notifDiv.id = 'notif-manager';
-                notifDiv.className = 'admin-notif-panel';
-                notifDiv.innerHTML = `
-                    <div style="font-size: 10px; color: var(--gold); text-align: right; margin-bottom: 5px;">MODO CONFIGURACIÓN</div>
-                    <h3>📢 NOTIFICACIONES SEGMENTADAS</h3>
-                    <textarea id="notif-text" placeholder="Escribe el mensaje para los usuarios..."></textarea>
-                    <div class="notif-segments">
-                        <label class="segment-item"><input type="checkbox" class="seg-check" value="FREE"> FREE</label>
-                        <label class="segment-item"><input type="checkbox" class="seg-check" value="PRO"> PRO</label>
-                        <label class="segment-item"><input type="checkbox" class="seg-check" value="PPE"> PPE</label>
-                        <label class="segment-item" style="color: var(--gold);">
-                            <input type="checkbox" id="seg-all-test"> TODOS
-                        </label>
+            // 2. CREACIÓN DEL MODAL EN EL DOM
+            const modalMarkup = `
+                <div class="modal-notif-overlay" id="notifModal">
+                    <div class="modal-notif-content">
+                        <div class="modal-notif-header">
+                            <h2>📢 AVISO GLOBAL</h2>
+                        </div>
+                        <div class="notif-input-group">
+                            <label>MENSAJE DEL ADMINISTRADOR</label>
+                            <textarea id="modal-notif-text" class="notif-textarea" rows="4" placeholder="Escribe el anuncio aquí..."></textarea>
+                        </div>
+                        <label style="color: var(--gold); font-size: 12px; font-weight: bold; display: block; margin-bottom: 8px;">ENVIAR A:</label>
+                        <div class="notif-grid-levels">
+                            <label class="level-card"><input type="checkbox" class="m-seg" value="FREE"> FREE</label>
+                            <label class="level-card"><input type="checkbox" class="m-seg" value="PRO"> PRO</label>
+                            <label class="level-card"><input type="checkbox" class="m-seg" value="PPE"> PPE</label>
+                            <label class="level-card" style="border-style: dashed; border-color: var(--gold);">
+                                <input type="checkbox" id="m-seg-all"> TODOS
+                            </label>
+                        </div>
+                        <div class="modal-notif-actions">
+                            <button class="btn-notif-main" id="btn-modal-send">PUBLICAR AHORA</button>
+                            <button class="btn-notif-delete" id="btn-modal-clear">ELIMINAR AVISOS ACTIVOS</button>
+                            <button onclick="document.getElementById('notifModal').style.display='none'" style="background:none; border:none; color:#888; cursor:pointer; font-size:12px; margin-top:5px;">CANCELAR</button>
+                        </div>
                     </div>
-                    <button class="btn-send-notif" id="btn-broadcast-test">ENVIAR AHORA</button>
-                `;
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalMarkup);
+
+            // 3. LÓGICA DE INYECCIÓN DEL BOTÓN Y FUNCIONES
+            const initAdminNotifSystem = () => {
+                const adminPanel = document.querySelector('.admin-controls') || document.body;
+                if (document.getElementById('trigger-notif-modal')) return;
+
+                const btnTrigger = document.createElement('button');
+                btnTrigger.id = 'trigger-notif-modal';
+                btnTrigger.className = 'btn-admin-trigger';
+                btnTrigger.innerHTML = `<span>📢</span> GESTIONAR AVISOS`;
+                btnTrigger.onclick = () => document.getElementById('notifModal').style.display = 'flex';
                 
-                document.body.appendChild(notifDiv);
+                adminPanel.prepend(btnTrigger);
 
-                document.getElementById('seg-all-test').addEventListener('change', (e) => {
-                    document.querySelectorAll('.seg-check').forEach(c => c.checked = e.target.checked);
-                });
+                // Lógica "Todos"
+                document.getElementById('m-seg-all').onchange = (e) => {
+                    document.querySelectorAll('.m-seg').forEach(c => c.checked = e.target.checked);
+                };
 
-                document.getElementById('btn-broadcast-test').addEventListener('click', async () => {
-                    const msg = document.getElementById('notif-text').value.trim();
-                    const levels = Array.from(document.querySelectorAll('.seg-check:checked')).map(c => c.value);
+                // Botón Enviar
+                document.getElementById('btn-modal-send').onclick = async () => {
+                    const msg = document.getElementById('modal-notif-text').value.trim();
+                    const levels = Array.from(document.querySelectorAll('.m-seg:checked')).map(c => c.value);
+                    
+                    if(!msg || levels.length === 0) return alert("Escribe un mensaje y selecciona niveles");
 
-                    if (!msg || levels.length === 0) return alert("Error: Escribe un mensaje y selecciona al menos un nivel.");
+                    const snap = await db.ref('users').once('value');
+                    const updates = {};
+                    snap.forEach(u => {
+                        if(levels.includes(u.val().level)) {
+                            updates[`users/${u.key}/globalMessage`] = { text: msg, time: Date.now() };
+                        }
+                    });
+                    await db.ref().update(updates);
+                    alert("¡Publicado con éxito!");
+                    document.getElementById('notifModal').style.display = 'none';
+                };
 
-                    try {
-                        const snap = await db.ref('users').once('value');
-                        const updates = {};
-                        let count = 0;
-
-                        snap.forEach(userSnap => {
-                            const u = userSnap.val();
-                            if (levels.includes(u.level)) {
-                                updates[`users/${userSnap.key}/globalMessage`] = { text: msg, time: Date.now() };
-                                count++;
-                            }
-                        });
-
-                        await db.ref().update(updates);
-                        alert(`¡Éxito! Enviado a ${count} usuarios.`);
-                        document.getElementById('notif-text').value = '';
-                    } catch (e) { alert("Error de Firebase: " + e.message); }
-                });
+                // Botón Limpiar
+                document.getElementById('btn-modal-clear').onclick = async () => {
+                    if(!confirm("¿Eliminar todos los avisos de todos los usuarios?")) return;
+                    const snap = await db.ref('users').once('value');
+                    const updates = {};
+                    snap.forEach(u => { updates[`users/${u.key}/globalMessage`] = null; });
+                    await db.ref().update(updates);
+                    alert("Avisos eliminados");
+                    document.getElementById('notifModal').style.display = 'none';
+                };
             };
 
-            // 3. RECEPTOR (Para que tú mismo veas el mensaje al enviarlo)
-            const setupClientTest = (uid) => {
-                if (!document.getElementById('global-announcement-banner')) {
-                    const b = document.createElement('div');
-                    b.id = 'global-announcement-banner';
-                    b.innerHTML = `<span id="inner-notif-text"></span> <span class="close-banner-btn" onclick="this.parentElement.style.display='none'">✕</span>`;
-                    document.body.prepend(b);
-                }
-
-                db.ref(`users/${uid}/globalMessage`).on('value', snap => {
-                    const data = snap.val();
-                    if (data && data.text) {
-                        const banner = document.getElementById('global-announcement-banner');
-                        document.getElementById('inner-notif-text').innerText = data.text;
-                        banner.style.display = 'block';
-                    }
-                });
-            };
-
-            // Ejecución inmediata al cargar auth
+            // Ejecución según Auth (Modo Prueba: Visible siempre)
             auth.onAuthStateChanged(user => {
-                injectTestUI(); // Forzado para que lo veas
-                if (user) {
-                    setupClientTest(user.uid);
-                }
+                initAdminNotifSystem(); 
             });
         })();
     </script>
