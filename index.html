@@ -833,158 +833,174 @@
         })();
 
         // ================================================================
-// --- FASE 1: ARQUITECTURA VISUAL NEXO ADMIN (ESTÉTICA FINAL) ---
+// --- FASE 1: ARQUITECTURA VISUAL UNIFICADA (GLOW & STEALTH SCROLL) ---
 // ================================================================
 (function() {
-    // 1. ESTILOS DE INTERFAZ (Glow, Simetría y Scroll)
-    const nexoStyle = document.createElement('style');
-    nexoStyle.innerHTML = `
-        /* Limitación de 4 usuarios y scroll */
-        .admin-table-container { 
-            max-height: 240px !important; 
-            overflow-y: auto !important; 
-            scrollbar-width: thin;
-            scrollbar-color: var(--gold) transparent;
+    // 1. ESTILOS DE IDENTIDAD NEXO®
+    const nexoGlobalStyle = document.createElement('style');
+    nexoGlobalStyle.innerHTML = `
+        /* Scroll Invisible para el Panel Principal */
+        #modalAdmin .modal-content {
+            max-height: 90vh;
+            overflow-y: auto !important;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
         }
-        
-        /* Contenedores con Resplandor Dorado */
-        .nexo-panel-box {
+        #modalAdmin .modal-content::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        /* Estilo Unificado: Borde y Efecto Glow (Réplica Login) */
+        .nexo-module {
             background: #000 !important;
             border: 1px solid var(--gold) !important;
-            border-radius: 15px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 5px rgba(212, 175, 55, 0.2);
+            margin-bottom: 20px;
             padding: 15px;
             position: relative;
-            display: flex;
-            flex-direction: column;
         }
 
-        /* Layout Simétrico */
-        .nexo-grid-admin {
+        /* Títulos de Sección */
+        .nexo-title {
+            color: var(--gold);
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Tabla de Usuarios (4 Filas Max) */
+        .nexo-table-scroll {
+            max-height: 220px !important;
+            overflow-y: auto !important;
+            scrollbar-width: none;
+        }
+        .nexo-table-scroll::-webkit-scrollbar { display: none; }
+
+        /* Grid Simétrico (Monitor | Mensajería) */
+        .nexo-admin-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-top: 20px;
         }
 
-        /* Cuadro de Texto Escroleable */
-        .nexo-textarea-wrapper {
+        /* Cuadro de Mensaje con Selectores Integrados */
+        .nexo-msg-container {
             position: relative;
-            width: 100%;
-        }
-        .nexo-custom-textarea {
-            width: 100%;
             height: 120px;
+        }
+        .nexo-textarea-pro {
+            width: 100%;
+            height: 100%;
             background: transparent;
             border: none;
             color: #fff;
             resize: none;
+            font-size: 0.8rem;
+            padding-right: 50px;
             overflow-y: auto;
-            font-size: 0.85rem;
-            padding-right: 60px; /* Espacio para selectores */
+            scrollbar-width: none;
         }
+        .nexo-textarea-pro::-webkit-scrollbar { display: none; }
 
-        /* Selectores Flotantes (Superior Derecha) */
-        .nexo-floating-selectors {
+        .nexo-selectors-box {
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: 0;
+            right: 0;
             display: flex;
             flex-direction: column;
-            gap: 2px;
-            background: rgba(0,0,0,0.8);
+            gap: 4px;
+            background: rgba(10,10,10,0.9);
             padding: 5px;
-            border-radius: 5px;
+            border-radius: 6px;
             border: 1px solid #222;
-            z-index: 10;
         }
-        .nexo-sel-item {
-            font-size: 0.6rem;
+        .nexo-sel-label {
+            font-size: 0.55rem;
             color: var(--gold);
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
         }
-        .nexo-sel-item input { accent-color: var(--gold); transform: scale(0.8); }
+        .nexo-sel-label input { accent-color: var(--gold); transform: scale(0.7); margin: 0; }
 
-        /* Monitor de Actividad (Estilo Terminal) */
-        .nexo-monitor-live {
-            height: 120px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #aaa;
-            line-height: 1.4;
-        }
-
-        /* Botones de Acción Estilizados */
-        .nexo-btn-admin {
+        /* Botones Nexo Premium */
+        .nexo-btn-pro {
             width: 100%;
+            padding: 10px;
             margin-top: 10px;
-            padding: 8px;
-            background: var(--gold);
-            color: #000;
-            border: none;
             border-radius: 8px;
             font-weight: 900;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
             cursor: pointer;
+            border: 1px solid var(--gold);
+            background: var(--gold);
+            color: #000;
             transition: 0.3s;
         }
-        .nexo-btn-admin:hover { filter: brightness(1.2); }
-        .btn-download { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); }
+        .nexo-btn-pro.secondary { background: #000; color: var(--gold); }
     `;
-    document.head.appendChild(nexoStyle);
+    document.head.appendChild(nexoGlobalStyle);
 
-    // 2. FUNCIÓN DE INYECCIÓN DE ELEMENTOS
-    const injectNexoDashboard = () => {
-        const adminPanel = document.querySelector('#modalAdmin .modal-content');
-        if (!adminPanel || document.getElementById('nexo-grid')) return;
+    // 2. MAQUETACIÓN DINÁMICA
+    const buildNexoAdmin = () => {
+        const panel = document.querySelector('#modalAdmin .modal-content');
+        if (!panel || document.getElementById('nexo-root')) return;
 
-        // Ajustar tabla de usuarios original (4 filas visibles)
-        const userTable = adminPanel.querySelector('.admin-table');
-        if (userTable && userTable.parentNode) {
-            userTable.parentNode.classList.add('admin-table-container');
-        }
+        // Limpiar para reconstruir bajo el nuevo orden
+        const existingTable = panel.querySelector('.admin-table');
+        const root = document.createElement('div');
+        root.id = 'nexo-root';
 
-        // Crear Grid Simétrico
-        const grid = document.createElement('div');
-        grid.id = 'nexo-grid';
-        grid.className = 'nexo-grid-admin';
-
-        grid.innerHTML = `
-            <div class="nexo-column">
-                <div class="nexo-panel-box">
-                    <div class="nexo-monitor-live" id="nexo-monitor-content">
-                        > Sistema conectado...<br>
-                        > Esperando actividad de usuarios...
-                    </div>
-                </div>
-                <button class="nexo-btn-admin btn-download" id="nexo-export-btn">⬇️ Descargar Usuarios</button>
+        root.innerHTML = `
+            <div class="nexo-module">
+                <div class="nexo-title">◈ Gestión de Usuarios</div>
+                <div class="nexo-table-scroll" id="nexo-table-host"></div>
             </div>
 
-            <div class="nexo-column">
-                <div class="nexo-panel-box">
-                    <div class="nexo-textarea-wrapper">
-                        <div class="nexo-floating-selectors">
-                            <label class="nexo-sel-item"><input type="checkbox" id="sel-f" checked> F</label>
-                            <label class="nexo-sel-item"><input type="checkbox" id="sel-p" checked> P</label>
-                            <label class="nexo-sel-item"><input type="checkbox" id="sel-pp" checked> PP</label>
+            <div class="nexo-admin-grid">
+                <div class="nexo-column">
+                    <div class="nexo-module" style="height: 155px;">
+                        <div class="nexo-title">◈ Monitor de Actividad</div>
+                        <div id="nexo-live-feed" style="font-family:monospace; font-size:0.65rem; color:#888; overflow-y:auto; height:100px;">
+                            > Esperando eventos...
                         </div>
-                        <textarea class="nexo-custom-textarea" id="nexo-msg-input" placeholder="Escribir mensaje global..."></textarea>
                     </div>
+                    <button class="nexo-btn-pro secondary" id="btn-export-nexo">Descargar Usuarios</button>
                 </div>
-                <button class="nexo-btn-admin" id="nexo-send-btn">Enviar Mensaje</button>
+
+                <div class="nexo-column">
+                    <div class="nexo-module" style="height: 155px;">
+                        <div class="nexo-title">◈ Mensaje Global</div>
+                        <div class="nexo-msg-container">
+                            <div class="nexo-selectors-box">
+                                <label class="nexo-sel-label"><input type="checkbox" id="n-f" checked> F</label>
+                                <label class="nexo-sel-label"><input type="checkbox" id="n-p" checked> P</label>
+                                <label class="nexo-sel-label"><input type="checkbox" id="n-pp" checked> PP</label>
+                            </div>
+                            <textarea class="nexo-textarea-pro" id="n-msg-input" placeholder="Escribir..."></textarea>
+                        </div>
+                    </div>
+                    <button class="nexo-btn-pro" id="btn-send-nexo">Enviar Aviso</button>
+                </div>
             </div>
         `;
 
-        adminPanel.appendChild(grid);
+        // Reubicar la tabla original dentro del nuevo contenedor
+        if(existingTable) {
+            panel.insertBefore(root, existingTable);
+            root.querySelector('#nexo-table-host').appendChild(existingTable);
+        } else {
+            panel.appendChild(root);
+        }
     };
 
-    // Vigilante para asegurar que aparezca al abrir el modal
-    setInterval(injectNexoDashboard, 1000);
+    setInterval(buildNexoAdmin, 1000);
 })();
     </script>
 </body>
