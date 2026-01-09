@@ -1029,108 +1029,97 @@
 
     <script>
 /**
- * SOLUCIÓN DEFINITIVA: PANEL ADMINISTRATIVO LATERAL (SEGMENTADO)
- * Inyección aditiva que no interfiere con el diseño principal.
+ * INYECCIÓN ADITIVA: PANEL FANTASMA SINCRONIZADO
+ * Solo es visible cuando el modal administrativo está abierto.
+ * No ensucia la página de inicio.
  */
 (function() {
-    // 1. Crear Estructura del Panel
-    const crearPanelLateral = () => {
-        if (document.getElementById('side-panel-admin')) return;
+    // 1. Crear el panel (Invisible por defecto)
+    const crearPanelSincronizado = () => {
+        if (document.getElementById('panel-segmentacion-ghost')) return;
 
-        const container = document.createElement('div');
-        container.id = 'side-panel-admin';
-        container.style.cssText = `
-            position: fixed; top: 20%; right: -210px; width: 250px;
-            z-index: 2147483647; transition: right 0.3s ease;
-            display: flex; align-items: flex-start;
+        const pnl = document.createElement('div');
+        pnl.id = 'panel-segmentacion-ghost';
+        // Diseño flotante que se posicionará sobre el modal
+        pnl.style.cssText = `
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -180px); 
+            z-index: 2147483647; display: none;
+            background: rgba(0,0,0,0.95); border: 1px solid #d4af37;
+            padding: 10px; border-radius: 10px; width: 280px;
+            box-shadow: 0 0 20px rgba(0,0,0,1);
         `;
 
-        // Pestaña activadora
-        const tab = document.createElement('div');
-        tab.innerHTML = '◀ NIVEL';
-        tab.style.cssText = `
-            background: #d4af37; color: #000; padding: 15px 5px;
-            border-radius: 10px 0 0 10px; cursor: pointer;
-            font-size: 10px; font-weight: bold; writing-mode: vertical-rl;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
-        `;
-
-        // Cuerpo del Panel
-        const body = document.createElement('div');
-        body.style.cssText = `
-            background: rgba(10, 10, 10, 0.98); border: 2px solid #d4af37;
-            padding: 15px; width: 200px; border-radius: 0 0 0 15px;
-            box-shadow: -5px 5px 20px rgba(0,0,0,0.8);
-        `;
-
-        body.innerHTML = `
-            <h4 style="color:#d4af37; margin:0 0 10px 0; font-size:12px; text-align:center;">AVISO SEGMENTADO</h4>
-            <textarea id="sideMsgInput" placeholder="Mensaje..." style="width:100%; height:60px; background:#222; border:1px solid #444; color:#fff; border-radius:5px; padding:5px; font-size:11px; resize:none;"></textarea>
-            
-            <div style="margin:10px 0; display:flex; flex-direction:column; gap:5px;">
-                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" id="sideAll" onchange="window.toggleSide(this.checked)"> TODOS</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="pro"> PRO</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="ppe"> PPE</label>
-                <label style="color:#fff; font-size:11px; cursor:pointer;"><input type="checkbox" class="side-chk" value="free"> FREE</label>
+        pnl.innerHTML = `
+            <div style="color:#d4af37; font-size:10px; font-weight:bold; text-align:center; margin-bottom:8px;">SEGMENTACIÓN DE NIVEL</div>
+            <div style="display:flex; justify-content:center; gap:10px; background:#111; padding:5px; border-radius:5px;">
+                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" id="ghostAll" onchange="window.toggleGhost(this.checked)"> ALL</label>
+                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="pro"> PRO</label>
+                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="ppe"> PPE</label>
+                <label style="color:#fff; font-size:10px; cursor:pointer;"><input type="checkbox" class="ghost-chk" value="free"> FREE</label>
             </div>
-
-            <button onclick="window.sendSideMsg()" style="width:100%; background:#d4af37; color:#000; border:none; padding:8px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:11px;">ENVIAR AHORA</button>
+            <p style="color:#888; font-size:8px; margin:5px 0 0 0; text-align:center;">Configura aquí antes de pulsar "ENVIAR AVISO"</p>
         `;
 
-        // Eventos para abrir/cerrar
-        let abierto = false;
-        tab.onclick = () => {
-            abierto = !abierto;
-            container.style.right = abierto ? '0px' : '-210px';
-            tab.innerHTML = abierto ? '▶ OCULTAR' : '◀ NIVEL';
-        };
-
-        container.appendChild(tab);
-        container.appendChild(body);
-        document.body.appendChild(container);
+        document.body.appendChild(pnl);
     };
 
-    // 2. Lógica de Envío
-    window.sendSideMsg = async () => {
-        const input = document.getElementById('sideMsgInput');
-        const msg = input.value.trim();
-        const targets = Array.from(document.querySelectorAll('.side-chk:checked')).map(i => i.value);
+    // 2. Monitor de Visibilidad
+    const vigilarModal = () => {
+        const modalOriginal = document.getElementById('modalAdmin');
+        const miPanel = document.getElementById('panel-segmentacion-ghost');
+        
+        if (modalOriginal && modalOriginal.style.display !== 'none') {
+            // Si el modal admin está abierto, mostramos nuestro panel
+            if (miPanel) miPanel.style.display = 'block';
+            
+            // Re-vinculamos la función de envío para que lea nuestros checks
+            window.sendGlobalMsg = async () => {
+                const input = document.getElementById('globalMsgInput');
+                const msg = input ? input.value.trim() : "";
+                const targets = Array.from(document.querySelectorAll('.ghost-chk:checked')).map(i => i.value);
+                
+                if(!msg) return alert("Escribe el mensaje en el panel original.");
+                if(targets.length === 0) return alert("Selecciona niveles en el panel superior.");
 
-        if (!msg) return alert("Escribe un mensaje.");
-        if (targets.length === 0) return alert("Selecciona niveles.");
-
-        try {
-            await dbRef.ref('users/ADMIN_MESSAGES/current').set({
-                msg: msg,
-                time: Date.now(),
-                targets: targets
-            });
-            alert("📢 Enviado con éxito.");
-            input.value = "";
-        } catch (e) { console.error(e); }
+                try {
+                    await dbRef.ref('users/ADMIN_MESSAGES/current').set({
+                        msg: msg,
+                        time: Date.now(),
+                        targets: targets
+                    });
+                    alert("📢 Enviado a: " + targets.join(", ").toUpperCase());
+                    if(input) input.value = "";
+                } catch(e) { console.error(e); }
+            };
+        } else {
+            // Si el modal admin se cierra, ocultamos todo
+            if (miPanel) miPanel.style.display = 'none';
+        }
     };
 
-    window.toggleSide = (v) => document.querySelectorAll('.side-chk').forEach(i => i.checked = v);
+    // Funciones globales
+    window.toggleGhost = (v) => document.querySelectorAll('.ghost-chk').forEach(i => i.checked = v);
 
-    // 3. Recepción Filtrada (Lado del Usuario)
-    const iniciarRecepción = () => {
+    // 3. Recepción de Mensajes (Lado Usuario)
+    const receptor = () => {
         if (!window.dbRef) return;
         dbRef.ref('users/ADMIN_MESSAGES/current').off('value');
-        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', snap => {
-            const data = snap.val();
-            const miLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
-            
-            if (data && data.time > (Date.now() - 15000)) {
-                if (data.targets && data.targets.includes(miLvl)) {
-                    alert("📢 AVISO ADMIN:\n\n" + data.msg);
+        dbRef.ref('users/ADMIN_MESSAGES/current').on('value', s => {
+            const d = s.val();
+            const uLvl = (window.config && config.level) ? config.level.toLowerCase() : 'free';
+            if(d && d.time > (Date.now() - 15000)) {
+                if(d.targets && d.targets.includes(uLvl)) {
+                    alert("📢 AVISO ADMIN:\n\n" + d.msg);
                 }
             }
         });
     };
 
-    // Iniciar
-    crearPanelLateral();
-    setTimeout(iniciarRecepción, 2000);
+    // Inicialización y bucle de vigilancia
+    crearPanelSincronizado();
+    setInterval(vigilarModal, 500);
+    setTimeout(receptor, 2000);
 })();
 </script>
 </body>
