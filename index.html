@@ -1007,122 +1007,122 @@
 })();
 
         /* ==========================================================
-   BLOQUE MAESTRO REFORZADO: IDENTIDAD Y AUTENTICACIÓN NEXO®
-   (Versión con Ejecución Prioritaria)
+   BLOQUE MAESTRO DEFINITIVO: SISTEMA DE IDENTIDAD NEXO®
+   Reordenamiento Forzado, Recuperación y Suscripción
    ========================================================== */
 
-const iniciarSistemaNexoAuth = () => {
-    // 1. ESTILOS DE INTERFAZ (Registro, Visores y Etiquetas)
-    const nxUnifiedStyles = `
-        #authForm { display: flex !important; flex-direction: column !important; }
-        .nx-pwd-wrapper { position: relative; width: 100%; display: flex; align-items: center; margin-bottom: 10px; }
-        .nx-eye-btn {
-            position: absolute; right: 12px; cursor: pointer; color: #d4af37;
-            font-size: 1.1rem; z-index: 100; opacity: 0.8;
+(function() {
+    const aplicarCambiosNexo = () => {
+        const authForm = document.getElementById('authForm');
+        if (!authForm) return;
+
+        // 1. INYECCIÓN DE ESTILOS PRIORITARIOS
+        if (!document.getElementById('nx-master-styles')) {
+            const style = document.createElement('style');
+            style.id = 'nx-master-styles';
+            style.innerHTML = `
+                #authForm { display: flex !important; flex-direction: column !important; }
+                .input-group { display: flex !important; flex-direction: column !important; margin-bottom: 12px !important; }
+                .nx-pwd-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
+                .nx-eye-icon { position: absolute; right: 15px; cursor: pointer; color: #d4af37; z-index: 10; font-size: 1.2rem; }
+                .nx-forgot { font-size: 11px; color: #d4af37; text-align: right; margin-top: -5px; cursor: pointer; text-decoration: underline; order: 5 !important; }
+                .nx-mandatory::after { content: " *"; color: #ff4d4d; }
+                
+                /* ORDEN ESTRICTO: Nombres, Apellidos, Teléfono, Correo, Claves */
+                #group-n { order: 1 !important; }
+                #group-a { order: 2 !important; }
+                #group-t { order: 3 !important; }
+                #group-c { order: 4 !important; }
+                #group-p { order: 6 !important; }
+                #group-cp { order: 7 !important; }
+            `;
+            document.head.appendChild(style);
         }
-        .nx-forgot-link {
-            font-size: 11px; color: #d4af37; text-align: right;
-            margin: -5px 0 10px 0; cursor: pointer;
-            text-decoration: underline; order: 5 !important;
-        }
-        .nx-req-star::after { content: " *"; color: #ff4d4d; }
-        
-        /* Orden Espejo con el Perfil */
-        #nx-group-name { order: 1 !important; }
-        #nx-group-last { order: 2 !important; }
-        #nx-group-phone { order: 3 !important; }
-        #nx-group-email { order: 4 !important; }
-        #nx-group-pass { order: 6 !important; }
-        #nx-group-conf { order: 7 !important; }
-    `;
-    
-    if (!document.getElementById('nx-styles')) {
-        const styleSheet = document.createElement("style");
-        styleSheet.id = 'nx-styles';
-        styleSheet.innerText = nxUnifiedStyles;
-        document.head.appendChild(styleSheet);
-    }
 
-    const authForm = document.getElementById('authForm');
-    if (!authForm) return console.error("NEXO: No se encontró authForm. Reintentando...");
-
-    // 2. REESTRUCTURACIÓN DE GRUPOS
-    authForm.querySelectorAll('.input-group').forEach(g => {
-        const input = g.querySelector('input');
-        if (input?.id === 'authFullName') g.id = 'nx-group-name';
-        if (input?.id === 'authPhone') g.id = 'nx-group-phone';
-        if (input?.id === 'authEmail') g.id = 'nx-group-email';
-        if (input?.id === 'authPin') g.id = 'nx-group-pass';
-        if (input?.id === 'authPinConfirm') g.id = 'nx-group-conf';
-    });
-
-    // Inyectar Apellidos
-    if (!document.getElementById('authLastName')) {
-        const lastGroup = document.createElement('div');
-        lastGroup.className = 'input-group';
-        lastGroup.id = 'nx-group-last';
-        lastGroup.innerHTML = `<label>Apellidos</label><input type="text" id="authLastName" class="input-pin" placeholder="TUS APELLIDOS">`;
-        const nameGroup = document.getElementById('nx-group-name');
-        if (nameGroup) nameGroup.after(lastGroup);
-    }
-
-    // 3. RECUPERACIÓN Y VISORES
-    if (!document.getElementById('nx-forgot-pass')) {
-        const forgotLink = document.createElement('div');
-        forgotLink.id = 'nx-forgot-pass';
-        forgotLink.className = 'nx-forgot-link';
-        forgotLink.innerText = "¿Olvidaste tu contraseña?";
-        forgotLink.onclick = async () => {
-            const email = document.getElementById('authEmail').value;
-            if (!email) return alert("Escribe tu correo para recuperar la contraseña.");
-            try { await auth.sendPasswordResetEmail(email); alert("NEXO: Correo de recuperación enviado."); }
-            catch (e) { alert("Error: " + e.message); }
+        // 2. IDENTIFICACIÓN Y CREACIÓN DE CAMPOS
+        const fields = {
+            name: document.getElementById('authFullName'),
+            phone: document.getElementById('authPhone'),
+            email: document.getElementById('authEmail'),
+            pass: document.getElementById('authPin'),
+            conf: document.getElementById('authPinConfirm')
         };
-        const emailGroup = document.getElementById('nx-group-email');
-        if (emailGroup) emailGroup.after(forgotLink);
-    }
 
-    const setupField = (id, label) => {
-        const input = document.getElementById(id);
-        if (!input || input.parentElement.classList.contains('nx-pwd-wrapper')) return;
-        
-        const labelEl = input.parentElement.querySelector('label');
-        if (labelEl) labelEl.innerText = label;
-        
-        if (id === 'authPin' || id === 'authPinConfirm') {
+        if (fields.name) fields.name.parentElement.id = 'group-n';
+        if (fields.phone) fields.phone.parentElement.id = 'group-t';
+        if (fields.email) fields.email.parentElement.id = 'group-c';
+        if (fields.pass) fields.pass.parentElement.id = 'group-p';
+        if (fields.conf) fields.conf.parentElement.id = 'group-cp';
+
+        // Inyectar Apellidos si falta
+        if (!document.getElementById('authLastName')) {
+            const groupA = document.createElement('div');
+            groupA.className = 'input-group';
+            groupA.id = 'group-a';
+            groupA.innerHTML = `<label>Apellidos</label><input type="text" id="authLastName" class="input-pin" placeholder="TUS APELLIDOS">`;
+            document.getElementById('group-n').after(groupA);
+        }
+
+        // 3. CAMBIO DE TEXTOS Y VISORES (PIN -> Contraseña)
+        const setupPassField = (el, labelText) => {
+            if (!el || el.dataset.nxReady) return;
+            const label = el.parentElement.querySelector('label');
+            if (label) label.innerText = labelText;
+            
             const wrapper = document.createElement('div');
             wrapper.className = 'nx-pwd-wrapper';
-            input.parentNode.insertBefore(wrapper, input);
-            wrapper.appendChild(input);
+            el.parentNode.insertBefore(wrapper, el);
+            wrapper.appendChild(el);
+            
             const eye = document.createElement('span');
-            eye.className = 'nx-eye-btn';
+            eye.className = 'nx-eye-icon';
             eye.innerHTML = '👁️';
-            eye.onclick = (e) => {
-                e.preventDefault();
-                input.type = input.type === 'password' ? 'text' : 'password';
-                eye.style.opacity = input.type === 'password' ? '0.8' : '0.4';
+            eye.onclick = () => {
+                el.type = el.type === 'password' ? 'text' : 'password';
+                eye.style.opacity = el.type === 'password' ? '1' : '0.5';
             };
             wrapper.appendChild(eye);
+            el.dataset.nxReady = "true";
+        };
+
+        setupPassField(fields.pass, "Contraseña");
+        setupPassField(fields.conf, "Confirmar Contraseña");
+
+        // 4. RECUPERACIÓN DE CONTRASEÑA
+        if (!document.getElementById('nx-forgot-link')) {
+            const link = document.createElement('div');
+            link.id = 'nx-forgot-link';
+            link.className = 'nx-forgot';
+            link.innerText = "¿Olvidaste tu contraseña?";
+            link.onclick = async () => {
+                const mail = document.getElementById('authEmail').value;
+                if (!mail) return alert("Ingresa tu correo para el restablecimiento.");
+                try { await auth.sendPasswordResetEmail(mail); alert("Enlace enviado a tu correo."); }
+                catch(e) { alert(e.message); }
+            };
+            document.getElementById('group-c').after(link);
         }
-    };
 
-    setupField('authFullName', 'Nombres');
-    setupField('authPin', 'Contraseña');
-    setupField('authPinConfirm', 'Confirmar Contraseña');
+        // 5. LÓGICA DE SUSCRIPCIÓN BAJO FOTO
+        const syncSub = (level) => {
+            const subTag = document.getElementById('nx-sub-level');
+            if (subTag) {
+                const lvl = (level || 'FREE').toUpperCase();
+                subTag.innerText = `Suscripción: ${lvl}`;
+                subTag.style.color = lvl === 'GOLD' ? '#d4af37' : '#888';
+            }
+        };
 
-    // 4. LÓGICA DE SUSCRIPCIÓN Y BOTÓN
-    window.nxSyncSubscription = (level) => {
-        const subElement = document.getElementById('nx-sub-level');
-        if (subElement) {
-            const lvl = (level || 'FREE').toUpperCase();
-            subElement.innerText = `Suscripción: ${lvl}`;
-            subElement.style.color = lvl === 'GOLD' ? '#d4af37' : '#888';
-        }
-    };
+        // Escucha de Firebase para Nivel
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                db.ref(`users/${user.uid}/config/level`).on('value', s => syncSub(s.val()));
+            }
+        });
 
-    const authBtn = document.getElementById('btnAuthAction');
-    if (authBtn) {
-        authBtn.onclick = async function() {
+        // 6. SOBRESCRITURA DE REGISTRO (Firebase)
+        const btn = document.getElementById('btnAuthAction');
+        btn.onclick = async () => {
             const isReg = document.getElementById('confirmGroup').style.display === 'block';
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPin').value;
@@ -1133,7 +1133,7 @@ const iniciarSistemaNexoAuth = () => {
             try {
                 if (isReg) {
                     if (pass !== document.getElementById('authPinConfirm').value) return alert("Las contraseñas no coinciden.");
-                    if (!name || !last || !phone) return alert("Completa todos los campos obligatorios.");
+                    if (!name || !last || !phone) return alert("Completa todos los campos.");
                     const cred = await auth.createUserWithEmailAndPassword(email, pass);
                     await db.ref(`users/${cred.user.uid}/config`).set({
                         email, fullName: `${name} ${last}`.toUpperCase(),
@@ -1145,22 +1145,13 @@ const iniciarSistemaNexoAuth = () => {
                 }
             } catch (e) { alert(e.message); }
         };
-    }
+    };
 
-    // Sincronización continua
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            db.ref(`users/${user.uid}/config/level`).on('value', snap => window.nxSyncSubscription(snap.val()));
-        }
-    });
-};
-
-// DISPARADOR DE SEGURIDAD: Se ejecuta cuando todo está listo
-if (document.readyState === "complete" || document.readyState === "interactive") {
-    setTimeout(iniciarSistemaNexoAuth, 500);
-} else {
-    window.addEventListener("DOMContentLoaded", () => setTimeout(iniciarSistemaNexoAuth, 500));
-}
+    // EJECUCIÓN CONTINUA PARA EVITAR FALLOS DE CARGA
+    const observer = new MutationObserver(() => aplicarCambiosNexo());
+    observer.observe(document.body, { childList: true, subtree: true });
+    aplicarCambiosNexo(); // Ejecución inicial
+})();
     </script>
 </body>
 </html>
