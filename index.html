@@ -833,126 +833,158 @@
         })();
 
         // ================================================================
-// --- FASE 1: DISEÑO Y ESTRUCTURA PREMIUM (ESTÉTICA NEXO) ---
+// --- FASE 1: ARQUITECTURA VISUAL NEXO ADMIN (ESTÉTICA FINAL) ---
 // ================================================================
 (function() {
-    // 1. INYECCIÓN DE ESTILOS (GLOW Y LAYOUT)
-    const nexoDesign = document.createElement('style');
-    nexoDesign.innerHTML = `
-        /* Resplandor Dorado Premium (Copiado de Login) */
-        .nexo-glow {
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), inset 0 0 5px rgba(212, 175, 55, 0.2);
-            border: 1px solid var(--gold) !important;
-        }
-
-        /* Modal de Mensajería Espejo */
-        #nexo-modal-messenger {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            display: none; align-items: center; justify-content: center; z-index: 2000000;
-            backdrop-filter: blur(8px);
-        }
-        .messenger-content {
-            background: #000; width: 90%; max-width: 400px;
-            padding: 25px; border-radius: 20px; text-align: center;
-            animation: nexoPop 0.3s ease-out;
+    // 1. ESTILOS DE INTERFAZ (Glow, Simetría y Scroll)
+    const nexoStyle = document.createElement('style');
+    nexoStyle.innerHTML = `
+        /* Limitación de 4 usuarios y scroll */
+        .admin-table-container { 
+            max-height: 240px !important; 
+            overflow-y: auto !important; 
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold) transparent;
         }
         
-        /* Simulación de Notificación (Vista Previa) */
-        .nexo-preview-box {
-            background: #050505; border: 1px solid #333;
-            border-radius: 15px; padding: 20px; margin: 20px 0;
-            min-height: 100px; color: #fff; font-size: 0.9rem;
-            text-align: center; display: flex; align-items: center;
-            justify-content: center; overflow: hidden;
-            word-wrap: break-word; transition: 0.3s;
-        }
-        .nexo-preview-box:empty::before {
-            content: "Vista previa del mensaje...";
-            color: #444; font-style: italic;
+        /* Contenedores con Resplandor Dorado */
+        .nexo-panel-box {
+            background: #000 !important;
+            border: 1px solid var(--gold) !important;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            padding: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Área de escritura invisible que expande el box */
-        .nexo-editable {
-            width: 100%; min-height: 20px; background: transparent;
-            border: none; color: #fff; outline: none; resize: none;
-            text-align: center; font-family: inherit; font-size: 0.9rem;
+        /* Layout Simétrico */
+        .nexo-grid-admin {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        /* Controles de Segmento Estilo Global */
-        .nexo-seg-bar {
-            display: flex; justify-content: space-around;
-            padding: 10px; background: #0a0a0a; border-radius: 10px;
-            margin-bottom: 20px; border: 1px solid #1a1a1a;
+        /* Cuadro de Texto Escroleable */
+        .nexo-textarea-wrapper {
+            position: relative;
+            width: 100%;
         }
-        .seg-opt { color: var(--gold); font-size: 0.7rem; font-weight: bold; cursor: pointer; }
-        .seg-opt input { margin-right: 5px; accent-color: var(--gold); }
+        .nexo-custom-textarea {
+            width: 100%;
+            height: 120px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            resize: none;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            padding-right: 60px; /* Espacio para selectores */
+        }
 
-        @keyframes nexoPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* Selectores Flotantes (Superior Derecha) */
+        .nexo-floating-selectors {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: rgba(0,0,0,0.8);
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #222;
+            z-index: 10;
+        }
+        .nexo-sel-item {
+            font-size: 0.6rem;
+            color: var(--gold);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .nexo-sel-item input { accent-color: var(--gold); transform: scale(0.8); }
+
+        /* Monitor de Actividad (Estilo Terminal) */
+        .nexo-monitor-live {
+            height: 120px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        /* Botones de Acción Estilizados */
+        .nexo-btn-admin {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nexo-btn-admin:hover { filter: brightness(1.2); }
+        .btn-download { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold); }
     `;
-    document.head.appendChild(nexoDesign);
+    document.head.appendChild(nexoStyle);
 
-    // 2. CREACIÓN DEL MODAL DE MENSAJERÍA (VISTA PREVIA)
-    const messengerHTML = document.createElement('div');
-    messengerHTML.id = 'nexo-modal-messenger';
-    messengerHTML.innerHTML = `
-        <div class="messenger-content nexo-glow">
-            <h3 style="color:var(--gold); font-size:0.8rem; letter-spacing:3px; margin:0;">MODAL DE MENSAJERÍA</h3>
-            <p style="color:#555; font-size:0.6rem; margin-top:5px;">VISTA PREVIA EN TIEMPO REAL</p>
-            
-            <div class="nexo-preview-box" id="nexo-preview">
-                <textarea id="nexo-input-main" class="nexo-editable" placeholder="Escribe aquí..."></textarea>
-            </div>
+    // 2. FUNCIÓN DE INYECCIÓN DE ELEMENTOS
+    const injectNexoDashboard = () => {
+        const adminPanel = document.querySelector('#modalAdmin .modal-content');
+        if (!adminPanel || document.getElementById('nexo-grid')) return;
 
-            <div class="nexo-seg-bar">
-                <label class="seg-opt"><input type="checkbox" id="seg-f" checked> FREE</label>
-                <label class="seg-opt"><input type="checkbox" id="seg-p" checked> PRO</label>
-                <label class="seg-opt"><input type="checkbox" id="seg-pp" checked> PPE</label>
-            </div>
-
-            <div style="display:flex; gap:10px;">
-                <button id="nexo-btn-close" style="flex:1; background:#222; color:#fff; border:none; padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:bold;">CANCELAR</button>
-                <button id="nexo-btn-send-final" style="flex:2; background:var(--gold); color:#000; border:none; padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:bold;">ENVIAR AVISO</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(messengerHTML);
-
-    // 3. INYECTOR DE BOTONES EN FILA ADMIN
-    const injectAdminButtons = () => {
-        const adminRow = document.querySelector('.admin-controls') || document.querySelector('.admin-actions');
-        if (adminRow && !document.getElementById('btn-nexo-msg')) {
-            // Crear Botón Exportar
-            const btnExp = document.createElement('button');
-            btnExp.id = 'btn-nexo-exp';
-            btnExp.className = 'btn btn-primary'; // Usa tu clase nativa
-            btnExp.innerHTML = '📥 Exportar BD';
-            btnExp.style.marginRight = '10px';
-            
-            // Crear Botón Mensajería
-            const btnMsg = document.createElement('button');
-            btnMsg.id = 'btn-nexo-msg';
-            btnMsg.className = 'btn btn-primary'; // Usa tu clase nativa
-            btnMsg.innerHTML = '🔔 Mensajería';
-
-            adminRow.appendChild(btnExp);
-            adminRow.appendChild(btnMsg);
-
-            // Evento para abrir el modal visual
-            btnMsg.onclick = () => { document.getElementById('nexo-modal-messenger').style.display = 'flex'; };
-            document.getElementById('nexo-btn-close').onclick = () => { document.getElementById('nexo-modal-messenger').style.display = 'none'; };
+        // Ajustar tabla de usuarios original (4 filas visibles)
+        const userTable = adminPanel.querySelector('.admin-table');
+        if (userTable && userTable.parentNode) {
+            userTable.parentNode.classList.add('admin-table-container');
         }
+
+        // Crear Grid Simétrico
+        const grid = document.createElement('div');
+        grid.id = 'nexo-grid';
+        grid.className = 'nexo-grid-admin';
+
+        grid.innerHTML = `
+            <div class="nexo-column">
+                <div class="nexo-panel-box">
+                    <div class="nexo-monitor-live" id="nexo-monitor-content">
+                        > Sistema conectado...<br>
+                        > Esperando actividad de usuarios...
+                    </div>
+                </div>
+                <button class="nexo-btn-admin btn-download" id="nexo-export-btn">⬇️ Descargar Usuarios</button>
+            </div>
+
+            <div class="nexo-column">
+                <div class="nexo-panel-box">
+                    <div class="nexo-textarea-wrapper">
+                        <div class="nexo-floating-selectors">
+                            <label class="nexo-sel-item"><input type="checkbox" id="sel-f" checked> F</label>
+                            <label class="nexo-sel-item"><input type="checkbox" id="sel-p" checked> P</label>
+                            <label class="nexo-sel-item"><input type="checkbox" id="sel-pp" checked> PP</label>
+                        </div>
+                        <textarea class="nexo-custom-textarea" id="nexo-msg-input" placeholder="Escribir mensaje global..."></textarea>
+                    </div>
+                </div>
+                <button class="nexo-btn-admin" id="nexo-send-btn">Enviar Mensaje</button>
+            </div>
+        `;
+
+        adminPanel.appendChild(grid);
     };
 
-    // Auto-ajuste del textarea para la vista previa
-    document.addEventListener('input', (e) => {
-        if(e.target.id === 'nexo-input-main') {
-            e.target.style.height = 'auto';
-            e.target.style.height = (e.target.scrollHeight) + 'px';
-        }
-    });
-
-    // Vigilante para asegurar que los botones aparezcan cuando el panel se abra
-    setInterval(injectAdminButtons, 1500);
+    // Vigilante para asegurar que aparezca al abrir el modal
+    setInterval(injectNexoDashboard, 1000);
 })();
     </script>
 </body>
