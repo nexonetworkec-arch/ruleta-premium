@@ -307,6 +307,18 @@
             margin-top:10px;">CANCELAR</button>
     </div></div>
 
+    <div id="modalLead" class="lead-modal">
+        <div class="lead-card">
+            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
+            <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
+            <input type="text" id="leadNom" class="lead-input" placeholder="NOMBRE">
+            <input type="tel" id="leadTel" class="lead-input" placeholder="WHATSAPP">
+            <input type="email" id="leadMail" class="lead-input" placeholder="EMAIL" style="text-transform: none !important;">
+            <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
         z-index:9999"></canvas>
 
@@ -845,5 +857,6 @@
     </script>
 </body>
 </html>
+
 
 
