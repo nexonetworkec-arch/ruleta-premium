@@ -1005,9 +1005,25 @@
         }
     });
 })();
+
+    // CORRECCIÓN: Sincronización con valor por defecto
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            firebase.database().ref(`users/${user.uid}/config/modalConfig`).on('value', s => {
+                if (s.exists()) {
+                    configModal = s.val();
+                } else {
+                    // Si no existe en la DB, por defecto está DESACTIVADO
+                    configModal = { activo: false, campos: { nom: true, ape: true, tel: true, mail: true } };
+                }
+                console.log("NEXO: Configuración de modal cargada.");
+            });
+        }
+    });
 </script>
 </body>
 </html>
+
 
 
 
