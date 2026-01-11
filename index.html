@@ -860,7 +860,154 @@
 })();
     </script>
 </body>
+
+    <style>
+    .nexo-modal {
+        display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.95); backdrop-filter: blur(8px);
+    }
+    .nexo-modal-content {
+        background: #161616; margin: 5% auto; padding: 30px; border: 2px solid #d4af37;
+        width: 90%; max-width: 400px; border-radius: 20px; color: #ffffff; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    }
+    .nexo-input {
+        width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid #444;
+        color: white; border-radius: 8px; font-size: 16px; transition: 0.3s;
+    }
+    .nexo-input:focus { border-color: #d4af37; background: #2a2a2a; }
+    .nexo-btn-gold {
+        width: 100%; padding: 15px; background: #d4af37; border: none; color: black;
+        font-weight: 800; border-radius: 8px; cursor: pointer; margin-top: 15px; text-transform: uppercase;
+    }
+    .nexo-btn-outline {
+        background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 10px;
+        border-radius: 8px; cursor: pointer; margin: 5px; font-size: 12px;
+    }
+</style>
+
+<div id="modalLead" class="nexo-modal">
+    <div class="nexo-modal-content">
+        <h2 style="color: #d4af37; text-align: center; margin-bottom: 5px;">REGISTRO PREMIUM</h2>
+        <p style="text-align: center; font-size: 0.85em; color: #aaa; margin-bottom: 20px;">Por favor, completa tus datos para participar.</p>
+        <input type="text" id="leadNombre" class="nexo-input" placeholder="Nombre">
+        <input type="text" id="leadApellido" class="nexo-input" placeholder="Apellido">
+        <input type="tel" id="leadTelefono" class="nexo-input" placeholder="Teléfono Celular">
+        <input type="email" id="leadCorreo" class="nexo-input" placeholder="Correo Electrónico">
+        <button onclick="validarYRegistrarLead()" class="nexo-btn-gold">CONFIRMAR Y GIRAR</button>
+    </div>
+</div>
+
+<div style="position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column;">
+    <button onclick="toggleModalConfig()" class="nexo-btn-outline">⚙️ Configurar Modal</button>
+    <button onclick="descargarExcelLeads()" class="nexo-btn-outline">📊 Descargar Excel</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+(function() {
+    let leadDataCapturado = null;
+    let requiereModalDB = false;
+
+    // INTERCEPTOR DEL MOTOR DE GIRO
+    const originalSpin = window.appWheel && window.appWheel.spin ? window.appWheel.spin : null;
+    
+    // Si tu función de giro es global (como en el código original)
+    const proxySpin = function() {
+        if (requiereModalDB && !leadDataCapturado) {
+            document.getElementById('modalLead').style.display = 'block';
+            console.log("NEXO Log: Bloqueo de giro por falta de datos.");
+            return;
+        }
+        
+        // Llamar a la función original de giro
+        if (typeof window.spin === 'function' && window.spin !== proxySpin) {
+            window._originalSpinActual();
+        }
+    };
+
+    // Guardamos la original y reemplazamos
+    window._originalSpinActual = window.spin;
+    window.spin = proxySpin;
+
+    // VALIDACIÓN Y REGISTRO
+    window.validarYRegistrarLead = async function() {
+        const nombre = document.getElementById('leadNombre').value.trim();
+        const apellido = document.getElementById('leadApellido').value.trim();
+        const telefono = document.getElementById('leadTelefono').value.trim();
+        const correo = document.getElementById('leadCorreo').value.trim();
+
+        if (!nombre || !apellido || !telefono || !correo) {
+            alert("Todos los campos son obligatorios para participar.");
+            return;
+        }
+
+        const user = firebase.auth().currentUser;
+        if (user) {
+            const nuevoLead = { nombre, apellido, telefono, correo, fecha: new Date().toLocaleString() };
+            try {
+                await firebase.database().ref(`users/${user.uid}/leads`).push(nuevoLead);
+                leadDataCapturado = nuevoLead;
+                document.getElementById('modalLead').style.display = 'none';
+                alert("Registro exitoso. ¡Mucha suerte!");
+                window._originalSpinActual(); // Gira automáticamente al registrarse
+            } catch (e) {
+                alert("Error al guardar datos: " + e.message);
+            }
+        }
+    };
+
+    // CONFIGURACIÓN SEGURA CON CONTRASEÑA
+    window.toggleModalConfig = async function() {
+        const pass = prompt("Por seguridad, ingrese su contraseña para cambiar la configuración del modal:");
+        if (!pass) return;
+
+        const user = firebase.auth().currentUser;
+        const cred = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+
+        try {
+            await user.reauthenticateWithCredential(cred);
+            const nuevoEstado = !requiereModalDB;
+            await firebase.database().ref(`users/${user.uid}/config/requireLead`).set(nuevoEstado);
+            alert("Configuración actualizada: El modal ahora está " + (nuevoEstado ? "ACTIVADO" : "DESACTIVADO"));
+        } catch (e) {
+            alert("Error: Contraseña incorrecta o fallo de conexión.");
+        }
+    };
+
+    // EXPORTAR A EXCEL
+    window.descargarExcelLeads = async function() {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const snap = await firebase.database().ref(`users/${user.uid}/leads`).once('value');
+        const data = snap.val();
+
+        if (!data) {
+            alert("No hay registros de participantes aún.");
+            return;
+        }
+
+        const filas = Object.values(data);
+        const ws = XLSX.utils.json_to_sheet(filas);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Participantes");
+        XLSX.writeFile(wb, `NEXO_Participantes_${user.uid.substring(0,5)}.xlsx`);
+    };
+
+    // SINCRONIZACIÓN DE ESTADO INICIAL
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            firebase.database().ref(`users/${user.uid}/config/requireLead`).on('value', snap => {
+                requiereModalDB = snap.val() || false;
+                console.log("NEXO Config: Modal obligatorio =", requiereModalDB);
+            });
+        }
+    });
+})();
+</script>
 </html>
+
 
 
 
