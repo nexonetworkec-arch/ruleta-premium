@@ -854,9 +854,66 @@
                 }
             });
         })();
+
+        // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
+        (function() {
+            const btnSpin = document.getElementById('btnSpinCenter');
+            const modalLead = document.getElementById('modalLead');
+            let tempLeadData = null;
+
+            if(btnSpin) {
+                btnSpin.onclick = () => {
+                    // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
+                    if(config.level === 'free' || tempLeadData) {
+                        appWheel.spin();
+                    } else {
+                        modalLead.style.display = 'flex';
+                    }
+                };
+            }
+
+            document.getElementById('btnConfirmLead').onclick = () => {
+                const nom = document.getElementById('leadNom').value;
+                const tel = document.getElementById('leadTel').value;
+                const mail = document.getElementById('leadMail').value;
+                if(!nom || !tel || !mail) return alert("Por favor, llena todos los campos.");
+                
+                tempLeadData = { nombre: nom, whatsapp: tel, email: mail, fecha: new Date().toLocaleString() };
+                modalLead.style.display = 'none';
+                appWheel.spin();
+            };
+
+            // Función para descargar Excel
+            const btnExport = document.getElementById('btnExportLeads');
+            if(btnExport) {
+                btnExport.onclick = async () => {
+                    const snap = await db.ref(`users/${currentUser.uid}/leads`).once('value');
+                    if(!snap.exists()) return alert("No hay leads registrados.");
+                    const ws = XLSX.utils.json_to_sheet(Object.values(snap.val()));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+                    XLSX.writeFile(wb, "NEXO_Leads.xlsx");
+                };
+            }
+
+            // Integrar el guardado del lead cuando la ruleta termina (finalize)
+            const originalFinalize = appWheel.finalize.bind(appWheel);
+            appWheel.finalize = async function() {
+                await originalFinalize();
+                if(tempLeadData) {
+                    const s = (Math.PI*2)/config.prizes.length;
+                    let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
+                    if(idx < 0) idx += config.prizes.length;
+                    tempLeadData.premio = config.prizes[idx];
+                    await db.ref(`users/${currentUser.uid}/leads`).push(tempLeadData);
+                    tempLeadData = null; // Limpiar para el siguiente giro
+                }
+            };
+        })();
     </script>
 </body>
 </html>
+
 
 
 
