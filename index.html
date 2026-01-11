@@ -322,7 +322,7 @@
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-        // --- 1. CONFIGURACIÓN ÚNICA Y GLOBAL ---
+        // --- 1. CONFIGURACIÓN ÚNICA (CORREGIDA SIN PUNTOS ERRÓNEOS) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
             authDomain: "ruletapremiumbusiness.firebaseapp.com",
@@ -340,7 +340,7 @@
         const auth = firebase.auth(); 
         const db = firebase.database();
 
-        // Variables de estado únicas
+        // Variables de estado iniciales
         let currentUser = null; 
         let winnersHistory = [];
         let config = { 
@@ -351,10 +351,6 @@
             level: "free", 
             customLogoURL: "" 
         };
-
-        // --- 2. MOTOR LÓGICO ---
-        class AudioEngine {
-            // ... 
       
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
@@ -931,6 +927,7 @@
     </script>
 </body>
 </html>
+
 
 
 
