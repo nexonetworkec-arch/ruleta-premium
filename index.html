@@ -307,13 +307,13 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
-            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
-            projectId: "ruletapremiumbusiness-4db7e",
-            storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-            messagingSenderId: "822563863112",
-            appId: "1:822563863112:web:d134d015736e2fafb5367d",
-             databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
+            apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
+            authDomain: "ruletapremiumbusiness.firebaseapp.com",
+            projectId: "ruletapremiumbusiness",
+            storageBucket: "ruletapremiumbusiness.firebasestorage.app",
+            messagingSenderId: "15131512066",
+            appId: "1:15131512066:web:f98b361c388fc1225e861b",
+             databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
@@ -831,181 +831,182 @@
                 }
             });
         })();
-
-        // --- INYECCIÓN ADITIVA: DIAGNÓSTICO DE ERRORES DE AUTENTICACIÓN ---
-// Este bloque intercepta errores de Firebase para darte más detalles en la consola.
-(function() {
-    const originalSignIn = firebase.auth().signInWithEmailAndPassword;
-    
-    firebase.auth().signInWithEmailAndPassword = function(email, password) {
-        return originalSignIn.apply(this, [email, password]).catch((error) => {
-            console.group("🔍 Diagnóstico NEXO® Auth");
-            console.error("Código de Error:", error.code);
-            console.error("Mensaje:", error.message);
-            
-            if (error.code === 'auth/invalid-login-credentials') {
-                console.warn("Sugerencia: Revisa si el usuario existe en Firebase Console o si la contraseña es correcta.");
-                console.warn("Nota: Si la protección de enumeración está activa, Firebase siempre devolverá este error para proteger la privacidad.");
-            }
-            
-            if (error.code === 'auth/user-not-found') {
-                console.warn("Sugerencia: El correo electrónico no está registrado.");
-            }
-            
-            console.groupEnd();
-            throw error; // Re-lanzamos para que handleAuth() lo capture y muestre el alert
-        });
-    };
-    console.log("✅ Sistema de Diagnóstico de Auth Inyectado.");
-})();
     </script>
-</body>
 
     <style>
-    .nexo-modal {
-        display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%;
-        background-color: rgba(0,0,0,0.95); backdrop-filter: blur(8px);
+    /* Estilos del Modal de Registro y Notificación */
+    .nexo-modal-over {
+        display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); backdrop-filter: blur(10px);
     }
-    .nexo-modal-content {
-        background: #161616; margin: 5% auto; padding: 30px; border: 2px solid #d4af37;
-        width: 90%; max-width: 400px; border-radius: 20px; color: #ffffff; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    .nexo-modal-box {
+        background: #161616; margin: 10vh auto; padding: 30px; border: 2px solid #d4af37;
+        width: 90%; max-width: 400px; border-radius: 20px; color: white; box-shadow: 0 0 30px rgba(212,175,55,0.3);
     }
-    .nexo-input {
-        width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid #444;
-        color: white; border-radius: 8px; font-size: 16px; transition: 0.3s;
+    .nexo-input-field {
+        width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #444;
+        color: white; border-radius: 8px; font-size: 16px;
     }
-    .nexo-input:focus { border-color: #d4af37; background: #2a2a2a; }
-    .nexo-btn-gold {
+    .nexo-input-field:focus { border-color: #d4af37; outline: none; }
+    .nexo-btn-main {
         width: 100%; padding: 15px; background: #d4af37; border: none; color: black;
-        font-weight: 800; border-radius: 8px; cursor: pointer; margin-top: 15px; text-transform: uppercase;
+        font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; text-transform: uppercase;
     }
-    .nexo-btn-outline {
-        background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 10px;
-        border-radius: 8px; cursor: pointer; margin: 5px; font-size: 12px;
+    .nexo-config-panel {
+        background: #222; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px dashed #d4af37;
     }
+    .option-row { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; font-size: 14px; }
+    .notif-btn { background: #333; color: white; border: 1px solid #d4af37; padding: 10px; margin: 10px 0; width: 100%; border-radius: 8px; cursor: pointer; text-align: left; }
+    .notif-btn:hover { background: #d4af37; color: black; }
 </style>
 
-<div id="modalLead" class="nexo-modal">
-    <div class="nexo-modal-content">
-        <h2 style="color: #d4af37; text-align: center; margin-bottom: 5px;">REGISTRO PREMIUM</h2>
-        <p style="text-align: center; font-size: 0.85em; color: #aaa; margin-bottom: 20px;">Por favor, completa tus datos para participar.</p>
-        <input type="text" id="leadNombre" class="nexo-input" placeholder="Nombre">
-        <input type="text" id="leadApellido" class="nexo-input" placeholder="Apellido">
-        <input type="tel" id="leadTelefono" class="nexo-input" placeholder="Teléfono Celular">
-        <input type="email" id="leadCorreo" class="nexo-input" placeholder="Correo Electrónico">
-        <button onclick="validarYRegistrarLead()" class="nexo-btn-gold">CONFIRMAR Y GIRAR</button>
+<div id="nexoModalLead" class="nexo-modal-over">
+    <div class="nexo-modal-box">
+        <h2 style="color: #d4af37; text-align: center;">REGISTRO</h2>
+        <p style="text-align: center; font-size: 0.9em; color: #ccc;">Completa los datos para participar</p>
+        <div id="fieldsContainer">
+            <input type="text" id="leadNom" class="nexo-input-field" placeholder="Nombre">
+            <input type="text" id="leadApe" class="nexo-input-field" placeholder="Apellido">
+            <input type="tel" id="leadTel" class="nexo-input-field" placeholder="WhatsApp / Celular">
+            <input type="email" id="leadMail" class="nexo-input-field" placeholder="Correo Electrónico">
+        </div>
+        <button onclick="procesarRegistroLead()" class="nexo-btn-main">CONTINUAR</button>
     </div>
 </div>
 
-<div style="position: fixed; bottom: 20px; left: 20px; z-index: 999; display: flex; flex-direction: column;">
-    <button onclick="toggleModalConfig()" class="nexo-btn-outline">⚙️ Configurar Modal</button>
-    <button onclick="descargarExcelLeads()" class="nexo-btn-outline">📊 Descargar Excel</button>
+<div id="nexoModalNotif" class="nexo-modal-over">
+    <div class="nexo-modal-box">
+        <h2 style="color: #d4af37; text-align: center;">¡FELICIDADES!</h2>
+        <p style="text-align: center;">¿Por dónde prefieres recibir la notificación de tu premio?</p>
+        <button class="notif-btn" onclick="setNotifChan('WhatsApp')">🟢 WhatsApp</button>
+        <button class="notif-btn" onclick="setNotifChan('Email')">🔵 Correo Electrónico</button>
+    </div>
+</div>
+
+<div style="position: fixed; bottom: 10px; right: 10px; z-index: 9999;">
+    <button onclick="abrirConfigModal()" style="background:#111; color:#d4af37; border:1px solid #d4af37; padding:8px; border-radius:5px; cursor:pointer; font-size:10px;">⚙️ CONFIG MODAL</button>
+    <button onclick="exportarLeadsExcel()" style="background:#111; color:#d4af37; border:1px solid #d4af37; padding:8px; border-radius:5px; cursor:pointer; font-size:10px;">📊 EXCEL LEADS</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 (function() {
-    let leadDataCapturado = null;
-    let requiereModalDB = false;
+    let currentLeadSession = null;
+    let configModal = { activo: false, campos: { nom: true, ape: true, tel: true, mail: true } };
 
-    // INTERCEPTOR DEL MOTOR DE GIRO
-    const originalSpin = window.appWheel && window.appWheel.spin ? window.appWheel.spin : null;
-    
-    // Si tu función de giro es global (como en el código original)
-    const proxySpin = function() {
-        if (requiereModalDB && !leadDataCapturado) {
-            document.getElementById('modalLead').style.display = 'block';
-            console.log("NEXO Log: Bloqueo de giro por falta de datos.");
-            return;
+    // 1. INTERCEPTOR DEL BOTÓN GIRAR (REEMPLAZO DIRECTO)
+    const intervalCheck = setInterval(() => {
+        const btnSpin = document.getElementById('btnSpin');
+        if (btnSpin) {
+            const originalOnclick = btnSpin.onclick;
+            btnSpin.onclick = null; // Quitamos el original
+            btnSpin.addEventListener('click', (e) => {
+                if (configModal.activo && !currentLeadSession) {
+                    e.stopImmediatePropagation();
+                    document.getElementById('nexoModalLead').style.display = 'block';
+                    ajustarCamposVisibles();
+                } else {
+                    if (typeof window.spin === 'function') window.spin();
+                }
+            });
+            clearInterval(intervalCheck);
         }
-        
-        // Llamar a la función original de giro
-        if (typeof window.spin === 'function' && window.spin !== proxySpin) {
-            window._originalSpinActual();
+    }, 500);
+
+    // 2. VALIDACIÓN DE EMAIL Y REGISTRO
+    window.procesarRegistroLead = async function() {
+        const data = {
+            nombre: document.getElementById('leadNom').value.trim(),
+            apellido: document.getElementById('leadApe').value.trim(),
+            telefono: document.getElementById('leadTel').value.trim(),
+            correo: document.getElementById('leadMail').value.trim()
+        };
+
+        // Validar solo campos activos
+        if (configModal.campos.nom && !data.nombre) return alert("Nombre requerido");
+        if (configModal.campos.ape && !data.apellido) return alert("Apellido requerido");
+        if (configModal.campos.tel && !data.telefono) return alert("Teléfono requerido");
+        if (configModal.campos.mail) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!re.test(data.correo)) return alert("Por favor, ingrese un correo electrónico válido.");
         }
+
+        currentLeadSession = data;
+        document.getElementById('nexoModalLead').style.display = 'none';
+        if (typeof window.spin === 'function') window.spin();
     };
 
-    // Guardamos la original y reemplazamos
-    window._originalSpinActual = window.spin;
-    window.spin = proxySpin;
-
-    // VALIDACIÓN Y REGISTRO
-    window.validarYRegistrarLead = async function() {
-        const nombre = document.getElementById('leadNombre').value.trim();
-        const apellido = document.getElementById('leadApellido').value.trim();
-        const telefono = document.getElementById('leadTelefono').value.trim();
-        const correo = document.getElementById('leadCorreo').value.trim();
-
-        if (!nombre || !apellido || !telefono || !correo) {
-            alert("Todos los campos son obligatorios para participar.");
-            return;
-        }
-
+    // 3. SELECCIÓN DE NOTIFICACIÓN (Se activa cuando la ruleta termina)
+    window.setNotifChan = async function(canal) {
         const user = firebase.auth().currentUser;
-        if (user) {
-            const nuevoLead = { nombre, apellido, telefono, correo, fecha: new Date().toLocaleString() };
-            try {
-                await firebase.database().ref(`users/${user.uid}/leads`).push(nuevoLead);
-                leadDataCapturado = nuevoLead;
-                document.getElementById('modalLead').style.display = 'none';
-                alert("Registro exitoso. ¡Mucha suerte!");
-                window._originalSpinActual(); // Gira automáticamente al registrarse
-            } catch (e) {
-                alert("Error al guardar datos: " + e.message);
-            }
+        if (user && currentLeadSession) {
+            const finalData = { ...currentLeadSession, canalNotificacion: canal, fecha: new Date().toLocaleString() };
+            await firebase.database().ref(`users/${user.uid}/leads`).push(finalData);
+            document.getElementById('nexoModalNotif').style.display = 'none';
+            alert("Preferencia guardada. Nos contactaremos pronto.");
         }
     };
 
-    // CONFIGURACIÓN SEGURA CON CONTRASEÑA
-    window.toggleModalConfig = async function() {
-        const pass = prompt("Por seguridad, ingrese su contraseña para cambiar la configuración del modal:");
-        if (!pass) return;
+    // Interceptar el final del giro (Ganador)
+    const originalFinalizarSorteo = window.finalizarSorteo;
+    window.finalizarSorteo = function(p) {
+        if (typeof originalFinalizarSorteo === 'function') originalFinalizarSorteo(p);
+        if (configModal.activo) {
+            setTimeout(() => { document.getElementById('nexoModalNotif').style.display = 'block'; }, 2000);
+        }
+    };
 
+    // 4. CONFIGURACIÓN DINÁMICA CON CONTRASEÑA
+    window.abrirConfigModal = async function() {
+        const pass = prompt("Contraseña de administrador:");
+        if (!pass) return;
         const user = firebase.auth().currentUser;
         const cred = firebase.auth.EmailAuthProvider.credential(user.email, pass);
-
+        
         try {
             await user.reauthenticateWithCredential(cred);
-            const nuevoEstado = !requiereModalDB;
-            await firebase.database().ref(`users/${user.uid}/config/requireLead`).set(nuevoEstado);
-            alert("Configuración actualizada: El modal ahora está " + (nuevoEstado ? "ACTIVADO" : "DESACTIVADO"));
-        } catch (e) {
-            alert("Error: Contraseña incorrecta o fallo de conexión.");
-        }
+            const promptCampos = confirm("¿Desea ACTIVAR el modal de registro?\n(Aceptar = SI / Cancelar = NO)");
+            const camposMod = {
+                nom: confirm("¿Solicitar NOMBRE?"),
+                ape: confirm("¿Solicitar APELLIDO?"),
+                tel: confirm("¿Solicitar TELÉFONO?"),
+                mail: confirm("¿Solicitar CORREO?")
+            };
+            await firebase.database().ref(`users/${user.uid}/config/modalConfig`).set({ activo: promptCampos, campos: camposMod });
+            alert("Configuración guardada correctamente.");
+        } catch (e) { alert("Acceso denegado: Contraseña incorrecta."); }
     };
 
-    // EXPORTAR A EXCEL
-    window.descargarExcelLeads = async function() {
+    function ajustarCamposVisibles() {
+        document.getElementById('leadNom').style.display = configModal.campos.nom ? 'block' : 'none';
+        document.getElementById('leadApe').style.display = configModal.campos.ape ? 'block' : 'none';
+        document.getElementById('leadTel').style.display = configModal.campos.tel ? 'block' : 'none';
+        document.getElementById('leadMail').style.display = configModal.campos.mail ? 'block' : 'none';
+    }
+
+    // 5. EXCEL
+    window.exportarLeadsExcel = async function() {
         const user = firebase.auth().currentUser;
-        if (!user) return;
-
         const snap = await firebase.database().ref(`users/${user.uid}/leads`).once('value');
-        const data = snap.val();
-
-        if (!data) {
-            alert("No hay registros de participantes aún.");
-            return;
-        }
-
-        const filas = Object.values(data);
-        const ws = XLSX.utils.json_to_sheet(filas);
+        if (!snap.exists()) return alert("No hay leads registrados.");
+        const ws = XLSX.utils.json_to_sheet(Object.values(snap.val()));
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Participantes");
-        XLSX.writeFile(wb, `NEXO_Participantes_${user.uid.substring(0,5)}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "Leads");
+        XLSX.writeFile(wb, "NEXO_Leads.xlsx");
     };
 
-    // SINCRONIZACIÓN DE ESTADO INICIAL
+    // Sincronización Inicial
     firebase.auth().onAuthStateChanged(user => {
         if (user) {
-            firebase.database().ref(`users/${user.uid}/config/requireLead`).on('value', snap => {
-                requiereModalDB = snap.val() || false;
-                console.log("NEXO Config: Modal obligatorio =", requiereModalDB);
+            firebase.database().ref(`users/${user.uid}/config/modalConfig`).on('value', s => {
+                if (s.exists()) configModal = s.val();
             });
         }
     });
 })();
 </script>
+</body>
 </html>
 
 
