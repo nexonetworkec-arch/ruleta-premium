@@ -306,27 +306,31 @@
         z-index:9999"></canvas>
 
     <script>
-        // --- CONFIGURACIÓN ACTUALIZADA Y VALIDADA ---
-const firebaseConfig = {
-    apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
-    authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
-    databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
-    projectId: "ruletapremiumbusiness-4db7e",
-    storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-    messagingSenderId: "822563863112",
-    appId: "1:822563863112:web:d134d015736e2fafb5367d"
-};
+       // --- CONFIGURACIÓN ACTUALIZADA (SIN DUPLICAR DECLARACIONES) ---
+(function() {
+    const firebaseConfig = {
+        apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
+        authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+        databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
+        projectId: "ruletapremiumbusiness-4db7e",
+        storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
+        messagingSenderId: "822563863112",
+        appId: "1:822563863112:web:d134d015736e2fafb5367d"
+    };
 
-// Inicialización Segura (Evita duplicados)
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-} else {
-    firebase.app(); 
-}
+    // Inicialización Segura
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
 
-const auth = firebase.auth();
-const db = firebase.database();
-// --------------------------------------------
+    // ASIGNACIÓN (No declaración)
+    // Esto evita el error "Identifier has already been declared"
+    window.auth = firebase.auth();
+    window.db = firebase.database();
+    
+    console.log("✅ Conexión con Firebase NEXO® restablecida.");
+})();
+// ------------------------------------------------------------
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
         let currentUser = null; let winnersHistory = [];
@@ -846,6 +850,7 @@ const db = firebase.database();
     </script>
 </body>
 </html>
+
 
 
 
