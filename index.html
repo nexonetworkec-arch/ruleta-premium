@@ -831,8 +831,36 @@
                 }
             });
         })();
+
+        // --- INYECCIÓN ADITIVA: DIAGNÓSTICO DE ERRORES DE AUTENTICACIÓN ---
+// Este bloque intercepta errores de Firebase para darte más detalles en la consola.
+(function() {
+    const originalSignIn = firebase.auth().signInWithEmailAndPassword;
+    
+    firebase.auth().signInWithEmailAndPassword = function(email, password) {
+        return originalSignIn.apply(this, [email, password]).catch((error) => {
+            console.group("🔍 Diagnóstico NEXO® Auth");
+            console.error("Código de Error:", error.code);
+            console.error("Mensaje:", error.message);
+            
+            if (error.code === 'auth/invalid-login-credentials') {
+                console.warn("Sugerencia: Revisa si el usuario existe en Firebase Console o si la contraseña es correcta.");
+                console.warn("Nota: Si la protección de enumeración está activa, Firebase siempre devolverá este error para proteger la privacidad.");
+            }
+            
+            if (error.code === 'auth/user-not-found') {
+                console.warn("Sugerencia: El correo electrónico no está registrado.");
+            }
+            
+            console.groupEnd();
+            throw error; // Re-lanzamos para que handleAuth() lo capture y muestre el alert
+        });
+    };
+    console.log("✅ Sistema de Diagnóstico de Auth Inyectado.");
+})();
     </script>
 </body>
 </html>
+
 
 
