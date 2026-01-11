@@ -9,867 +9,618 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root { 
-            --bg-color: #0a0a0a;
-            --card-bg: #161616; 
-            --gold: #d4af37; 
-            --white: #ffffff; 
-            --danger: #ff4d4d; 
-            --gray: #222;
+            --bg-color: #0a0a0a; 
+            --card-bg: #161616; [cite: 2]
+            --gold: #d4af37; [cite: 2]
+            --white: #ffffff; [cite: 2]
+            --danger: #ff4d4d; [cite: 2]
+            --gray: #222; [cite: 2]
         }
         
-        * { box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; [cite: 3]
+        -webkit-tap-highlight-color: transparent; outline: none; } [cite: 4]
         
         body { 
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px), radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 40px 40px; background-position: 0 0, 20px 20px;
-            color: var(--white); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            background-color: var(--bg-color); [cite: 5]
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px), radial-gradient(circle, #1a1a1a 1px, transparent 1px); [cite: 5]
+            background-size: 40px 40px; background-position: 0 0, 20px 20px; [cite: 5]
+            color: var(--white); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; [cite: 6]
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; [cite: 6]
+            overflow: hidden; [cite: 7]
         }
         
         #loginScreen, #verifyOverlay { 
-            position: fixed;
-            inset: 0; background: rgba(0,0,0,0.97); 
-            z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(20px);
+            position: fixed; [cite: 7]
+            inset: 0; background: rgba(0,0,0,0.97); [cite: 8]
+            z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(20px); [cite: 8]
         }
         
         .login-card { 
-            background: var(--card-bg);
-            padding: 45px 35px; border-radius: 40px; border: 1px solid #333; 
-            width: 95%; max-width: 420px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+            background: var(--card-bg); [cite: 9]
+            padding: 45px 35px; border-radius: 40px; border: 1px solid #333; [cite: 10]
+            width: 95%; max-width: 420px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.9); [cite: 10]
         }
 
-        .input-group { position: relative; width: 100%; margin-bottom: 20px; text-align: left;
+        .input-group { position: relative; width: 100%; margin-bottom: 20px; text-align: left; [cite: 11] }
+        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 8px; [cite: 12]
+        margin-left: 12px; font-weight: 800; text-transform: uppercase; } [cite: 13]
+        .input-pin { width: 100%; padding: 18px; [cite: 13]
+        background: #000; border: 1px solid #333; color: var(--gold); border-radius: 18px; font-size: 1.1rem; transition: 0.3s; [cite: 14]
         }
-        .input-group label { display: block; font-size: 0.7rem; color: var(--gold); margin-bottom: 8px;
-            margin-left: 12px; font-weight: 800; text-transform: uppercase; }
-        .input-pin { width: 100%; padding: 18px;
-            background: #000; border: 1px solid #333; color: var(--gold); border-radius: 18px; font-size: 1.1rem; transition: 0.3s;
-        }
-        .input-pin:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15);
-        }
-
-        .app-container { display: none; position: relative; width: 100vw; height: 100vh; flex-direction: row;
-            align-items: center; justify-content: center; padding: 25px; }
-        .wheel-section { flex: 1; display: flex;
-            flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .wheel-wrapper { position: relative;
-            width: 78vh; height: 78vh; max-width: 580px; max-height: 580px; filter: drop-shadow(0 0 60px rgba(0,0,0,0.8));
-        }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #1a1a1a;
-            background: #000; }
-        #pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--gold); z-index: 50;
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
-        #centerLogo { position: absolute; top: 50%;
-            left: 50%; transform: translate(-50%, -50%); width: 115px; height: 115px; border-radius: 50%; background: #000; z-index: 100; display: flex; justify-content: center;
-            align-items: center; border: 4px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        .input-pin:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15); [cite: 15]
         }
 
-        #btnSpinCenter { width: 98px; height: 98px; border-radius: 50%; border: 2px solid var(--gold);
-            background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 7px 0 #5e4b14; transition: 0.1s; text-transform: uppercase; font-size: 0.9rem; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important;
+        .app-container { display: none; position: relative; width: 100vw; height: 100vh; flex-direction: row; [cite: 16]
+        align-items: center; justify-content: center; padding: 25px; } [cite: 17]
+        .wheel-section { flex: 1; display: flex; [cite: 17]
+        flex-direction: column; align-items: center; justify-content: center; z-index: 10; } [cite: 18]
+        .wheel-wrapper { position: relative; [cite: 18]
+        width: 78vh; height: 78vh; max-width: 580px; max-height: 580px; filter: drop-shadow(0 0 60px rgba(0,0,0,0.8)); [cite: 19]
         }
-        #btnSpinCenter:active { transform: translateY(4px); box-shadow: 0 2px 0 #5e4b14;
-        }
-
-        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column;
-            gap: 15px; width: 220px; z-index: 100; }
-        .btn { padding: 18px; border: none;
-            border-radius: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.4s;
-        }
-        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000;
-        }
-        .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333;
-        }
-        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger);
-            border: 1px solid rgba(255, 77, 77, 0.2); }
-
-        .modal { position: fixed;
-            inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 9000; padding: 25px; backdrop-filter: blur(15px);
-        }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #222;
-            width: 100%; max-width: 480px; text-align: center; }
-        .option-input { width: 100%; padding: 15px;
-            background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px;
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #1a1a1a; [cite: 20]
+        background: #000; } [cite: 21]
+        #pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); [cite: 21]
+        width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--gold); z-index: 50; [cite: 22]
+        filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); } [cite: 23]
+        #centerLogo { position: absolute; top: 50%; [cite: 23]
+        left: 50%; transform: translate(-50%, -50%); width: 115px; height: 115px; border-radius: 50%; background: #000; z-index: 100; display: flex; justify-content: center; [cite: 24]
+        align-items: center; border: 4px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.8); [cite: 25]
         }
 
-        .prize-row-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 10px;
+        #btnSpinCenter { width: 98px; height: 98px; border-radius: 50%; border: 2px solid var(--gold); [cite: 26]
+        background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center; [cite: 27]
+        box-shadow: 0 7px 0 #5e4b14; transition: 0.1s; text-transform: uppercase; font-size: 0.9rem; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; [cite: 28]
         }
-        .prize-number { color: var(--gold); font-weight: 900; font-size: 0.9rem; width: 25px; text-align: right;
-        }
-        .prize-row-wrapper .option-input { margin-bottom: 0; flex: 1;
-        }
-
-        #historyList { max-height: 280px; overflow-y: auto; text-align: left; background: #000; border-radius: 20px;
-            padding: 20px; border: 1px solid #222; }
-        .history-item { padding: 12px 0;
-            border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; display: flex; align-items: center;
-        }
-        .history-ordinal { color: var(--gold); font-weight: 900; font-size: 0.75rem; width: 45px; text-align: left;
-            flex-shrink: 0; }
-        .history-info { flex: 1; display: flex; justify-content: space-between; align-items: center;
+        #btnSpinCenter:active { transform: translateY(4px); box-shadow: 0 2px 0 #5e4b14; [cite: 29]
         }
 
-        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.75rem; color: #aaa;
+        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column; [cite: 30]
+        gap: 15px; width: 220px; z-index: 100; } [cite: 31]
+        .btn { padding: 18px; border: none; [cite: 31]
+        border-radius: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.4s; [cite: 32]
         }
-        .admin-table th { color: var(--gold); text-align: left; padding: 12px;
-            border-bottom: 2px solid #222; }
-        .admin-table td { padding: 12px;
-            border-bottom: 1px solid #1a1a1a; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000; [cite: 33]
+        }
+        .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333; [cite: 34]
+        }
+        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger); [cite: 35]
+        border: 1px solid rgba(255, 77, 77, 0.2); } [cite: 36]
 
-        .row-marketing { border-left: 4px solid #007bff !important;
-            background: rgba(0,123,255,0.05) !important; }
-        .badge-mkt { background: #007bff; color: white; padding: 2px 6px;
-            border-radius: 4px; font-size: 9px; font-weight: bold; display: inline-block; margin-bottom: 4px;
+        .modal { position: fixed; [cite: 36]
+        inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 9000; padding: 25px; backdrop-filter: blur(15px); [cite: 37]
         }
-        .input-mkt { background: #000; border: 1px solid #333; color: #fff; font-size: 10px;
-            padding: 4px; border-radius: 4px; width: 100%; }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #222; [cite: 38]
+        width: 100%; max-width: 480px; text-align: center; } [cite: 39]
+        .option-input { width: 100%; padding: 15px; [cite: 39]
+        background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px; [cite: 40]
+        }
+
+        .prize-row-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; [cite: 41]
+        }
+        .prize-number { color: var(--gold); font-weight: 900; font-size: 0.9rem; width: 25px; text-align: right; [cite: 42]
+        }
+        .prize-row-wrapper .option-input { margin-bottom: 0; flex: 1; [cite: 43]
+        }
+
+        #historyList { max-height: 280px; overflow-y: auto; text-align: left; background: #000; border-radius: 20px; [cite: 44]
+        padding: 20px; border: 1px solid #222; } [cite: 45]
+        .history-item { padding: 12px 0; [cite: 45]
+        border-bottom: 1px solid #1a1a1a; font-size: 0.85rem; display: flex; align-items: center; [cite: 46]
+        }
+        .history-ordinal { color: var(--gold); font-weight: 900; font-size: 0.75rem; width: 45px; text-align: left; [cite: 47]
+        flex-shrink: 0; } [cite: 48]
+        .history-info { flex: 1; display: flex; justify-content: space-between; align-items: center; [cite: 48]
+        }
+
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.75rem; color: #aaa; [cite: 49]
+        }
+        .admin-table th { color: var(--gold); text-align: left; padding: 12px; [cite: 50]
+        border-bottom: 2px solid #222; } [cite: 51]
+        .admin-table td { padding: 12px; [cite: 51]
+        border-bottom: 1px solid #1a1a1a; } [cite: 52]
+
+        .row-marketing { border-left: 4px solid #007bff !important; [cite: 52]
+        background: rgba(0,123,255,0.05) !important; } [cite: 53]
+        .badge-mkt { background: #007bff; color: white; padding: 2px 6px; [cite: 53]
+        border-radius: 4px; font-size: 9px; font-weight: bold; display: inline-block; margin-bottom: 4px; [cite: 54]
+        }
+        .input-mkt { background: #000; border: 1px solid #333; color: #fff; font-size: 10px; [cite: 55]
+        padding: 4px; border-radius: 4px; width: 100%; } [cite: 56]
 
         @media (max-width: 800px) {
-            .app-container { flex-direction: column;
+            .app-container { flex-direction: column; [cite: 56]
             }
-            .side-panel { position: relative; width: 100%; flex-direction: row;
-                flex-wrap: wrap; margin-bottom: 20px; right: auto; top: auto; }
-            .wheel-wrapper { width: 85vw;
-                height: 85vw; }
-            /* --- INYECCIÓN ADITIVA: Interfaz Móvil Bottom-Nav --- */
-@media (max-width: 800px) {
-    /* Mantenemos la estructura de tablas intacta como en la web */
-    .admin-table {
-        min-width: 600px !important; /* Fuerza el scroll horizontal para mantener las columnas web */
-        display: table !important;
-    }
-    
-    #modalAdmin .modal-content {
-        max-width: 95vw !important;
-        padding: 15px !important;
-    }
-
-    /* Reubicación de botones a la parte inferior */
-    .side-panel {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        background: rgba(10, 10, 10, 0.95) !important;
-        backdrop-filter: blur(15px) !important;
-        padding: 15px !important;
-        margin: 0 !important;
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important; /* Organiza en filas de 2 */
-        gap: 10px !important;
-        border-top: 1px solid #333 !important;
-        z-index: 1000 !important;
-        border-radius: 25px 25px 0 0 !important;
-    }
-
-    /* Ajuste de botones para el nuevo layout */
-    .side-panel .btn {
-        padding: 12px 5px !important;
-        font-size: 0.65rem !important;
-        margin: 0 !important;
-    }
-
-    /* Espaciado extra para que la ruleta no choque con los botones */
-    .app-container {
-        padding-bottom: 220px !important; 
-        justify-content: flex-start !important;
-        overflow-y: auto !important;
-    }
-
-    .wheel-wrapper {
-        margin-top: 20px !important;
-        width: 75vw !important;
-        height: 75vw !important;
-    }
-}
+            .side-panel { position: relative; width: 100%; flex-direction: row; [cite: 57]
+            flex-wrap: wrap; margin-bottom: 20px; right: auto; top: auto; } [cite: 58]
+            .wheel-wrapper { width: 85vw; [cite: 58]
+            height: 85vw; } [cite: 59]
+            
+            /* INYECCIÓN ADITIVA MÓVIL (MANTENIDA) */
+            .admin-table { min-width: 600px !important; display: table !important; } [cite: 59, 60]
+            #modalAdmin .modal-content { max-width: 95vw !important; padding: 15px !important; } [cite: 61, 62]
+            .side-panel { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; background: rgba(10, 10, 10, 0.95) !important; backdrop-filter: blur(15px) !important; padding: 15px !important; margin: 0 !important; display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; border-top: 1px solid #333 !important; z-index: 1000 !important; border-radius: 25px 25px 0 0 !important; } [cite: 63, 64, 65, 66, 67]
+            .side-panel .btn { padding: 12px 5px !important; font-size: 0.65rem !important; margin: 0 !important; } [cite: 68]
+            .app-container { padding-bottom: 220px !important; justify-content: flex-start !important; overflow-y: auto !important; } [cite: 69]
+            .wheel-wrapper { margin-top: 20px !important; width: 75vw !important; height: 75vw !important; } [cite: 70]
         }
+
+        /* --- NUEVOS ESTILOS PARA LEADS (INYECCIÓN ADITIVA) --- */
+        .lead-modal { display: none; position: fixed; z-index: 10001; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
+        .lead-card { background: var(--card-bg); padding: 30px; border-radius: 30px; border: 1px solid var(--gold); width: 90%; max-width: 380px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="loginScreen">
         <div class="login-card">
-            <h2 style="color: var(--gold); font-size: 2.5rem; font-weight: 900; margin:0;">NEXO®</h2>
-            <p style="color: #444; font-size: 0.7rem; letter-spacing: 5px; margin-bottom: 40px;">BUSINESS PRO</p>
-            <div class="input-group"><label>Email</label><input type="email" id="authEmail" class="input-pin"></div>
-            <div class="input-group"><label>Pin</label><input type="password" id="authPin" 
-                class="input-pin"></div>
+            <h2 style="color: var(--gold); font-size: 2.5rem; font-weight: 900; margin:0;">NEXO®</h2> [cite: 70]
+            <p style="color: #444; font-size: 0.7rem; letter-spacing: 5px; margin-bottom: 40px;">BUSINESS PRO</p> [cite: 70]
+            <div class="input-group"><label>Email</label><input type="email" id="authEmail" class="input-pin"></div> [cite: 70]
+            <div class="input-group"><label>Pin</label><input type="password" id="authPin" class="input-pin"></div> [cite: 71]
             <div id="confirmGroup" style="display: none;">
-                <div class="input-group"><label>Confirmar Pin</label><input type="password" id="authPinConfirm" class="input-pin"></div>
-                <div class="input-group"><label>Nombres y Apellidos</label><input type="text" id="authFullName" class="input-pin" placeholder="EJ: JUAN PÉREZ"></div>
-                <div class="input-group"><label>Teléfono (Opcional)</label><input type="tel" id="authPhone" class="input-pin" placeholder="+00 000 000000"></div>
+                <div class="input-group"><label>Confirmar Pin</label><input type="password" id="authPinConfirm" class="input-pin"></div> [cite: 71]
+                <div class="input-group"><label>Nombres y Apellidos</label><input type="text" id="authFullName" class="input-pin" placeholder="EJ: JUAN PÉREZ"></div> [cite: 71]
+                <div class="input-group"><label>Teléfono (Opcional)</label><input type="tel" id="authPhone" class="input-pin" placeholder="+00 000 000000"></div> [cite: 71, 72]
             </div>
-   
-             <button id="btnAuthAction" class="btn btn-primary" style="width: 100%;">ACCEDER</button>
-            <div id="toggleAuth" style="margin-top:30px;
-                font-size:0.8rem; cursor:pointer; color:#666">¿Nuevo? <b style="color:var(--gold)">REGISTRAR</b></div>
+             <button id="btnAuthAction" class="btn btn-primary" style="width: 100%;">ACCEDER</button> [cite: 72]
+            <div id="toggleAuth" style="margin-top:30px; font-size:0.8rem; cursor:pointer; color:#666">¿Nuevo? <b style="color:var(--gold)">REGISTRAR</b></div> [cite: 72, 73]
         </div>
     </div>
 
     <div class="app-container" id="appMain">
         <div class="side-panel">
-            <button id="btnEditList" class="btn btn-secondary">EDITAR PREMIOS</button>
-            <button id="btnWinners" class="btn btn-secondary">VER HISTORIAL</button>
-            <button id="btnResetApp" class="btn btn-danger">REINICIAR APP</button>
-            <button id="btnAdminMaster" class="btn btn-secondary" style="display:none;
-                border-color:var(--gold); color:var(--gold);">ADMIN MASTER</button>
-            <button onclick="firebase.auth().signOut().then(()=>location.reload())" class="btn" style="color:#333;
-                font-size:0.6rem;">SALIR</button>
+            <button id="btnEditList" class="btn btn-secondary">EDITAR PREMIOS</button> [cite: 73]
+            <button id="btnWinners" class="btn btn-secondary">VER HISTORIAL</button> [cite: 73]
+            <button id="btnResetApp" class="btn btn-danger">REINICIAR APP</button> [cite: 73]
+            <button id="btnExportLeads" class="btn btn-secondary" style="border-color:#28a745; color:#28a745;">DESCARGAR LEADS</button>
+            <button id="btnAdminMaster" class="btn btn-secondary" style="display:none; border-color:var(--gold); color:var(--gold);">ADMIN MASTER</button> [cite: 73, 74]
+            <button onclick="firebase.auth().signOut().then(()=>location.reload())" class="btn" style="color:#333; font-size:0.6rem;">SALIR</button> [cite: 74, 75]
         </div>
 
         <div class="wheel-section">
-            <h2 id="mainTitle" contenteditable="true" spellcheck="false" oninput="syncTitles()" style="color:var(--gold);
-                font-weight:900;">RULETA PREMIUM</h2>
-            <div id="userBadgeArea" style="margin-bottom:20px;"></div>
+            <h2 id="mainTitle" contenteditable="true" spellcheck="false" oninput="syncTitles()" style="color:var(--gold); font-weight:900;">RULETA PREMIUM</h2> [cite: 75, 76]
+            <div id="userBadgeArea" style="margin-bottom:20px;"></div> [cite: 76]
             <div class="wheel-wrapper">
-                <div id="pointer"></div>
-                <div id="centerLogo"><button id="btnSpinCenter" onclick="appWheel.spin()">GIRAR</button></div>
-                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+                <div id="pointer"></div> [cite: 76]
+                <div id="centerLogo"><button id="btnSpinCenter" onclick="handleSpinCheck()">GIRAR</button></div> [cite: 76, 77]
+                <canvas id="wheelCanvas" width="800" height="800"></canvas> [cite: 77]
             </div>
      
-        <div style="margin-top:35px; background:rgba(0,0,0,0.7); padding:18px; border-radius:25px;
-            border: 1px solid #222;">
-                <label style="color:#888;
-                    cursor:pointer; display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" id="chkRemoveWinner" style="width:20px;
-                        height:20px;"> AUTO-ELIMINAR GANADOR
+            <div style="margin-top:35px; background:rgba(0,0,0,0.7); padding:18px; border-radius:25px; border: 1px solid #222;"> [cite: 77, 78]
+                <label style="color:#888; cursor:pointer; display:flex; align-items:center; gap:10px;"> [cite: 78, 79]
+                    <input type="checkbox" id="chkRemoveWinner" style="width:20px; height:20px;"> AUTO-ELIMINAR GANADOR [cite: 79, 80]
                 </label>
             </div>
         </div>
     </div>
 
     <div id="modalHistory" class="modal"><div class="modal-content">
-        <div id="historyCaptureArea" style="background:var(--card-bg);
-            padding:20px; border-radius:20px;">
-            <h3 id="modalDynamicTitle" style="color:var(--gold);">HISTORIAL</h3>
-            <div id="historyList"></div>
+        <div id="historyCaptureArea" style="background:var(--card-bg); padding:20px; border-radius:20px;"> [cite: 80, 81]
+            <h3 id="modalDynamicTitle" style="color:var(--gold);">HISTORIAL</h3> [cite: 81]
+            <div id="historyList"></div> [cite: 81]
         </div>
-        <div style="display:grid;
-            grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
-            <button id="btnDownloadImg" class="btn btn-primary">IMAGEN</button>
-            <button id="btnExportCSV" class="btn btn-secondary">CSV</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;"> [cite: 81, 82]
+            <button id="btnDownloadImg" class="btn btn-primary">IMAGEN</button> [cite: 82]
+            <button id="btnExportCSV" class="btn btn-secondary">CSV</button> [cite: 82]
         </div>
-        <button id="btnCloseHistory" class="btn" style="width:100%;
-            color:#555; margin-top:10px;">CERRAR</button>
+        <button id="btnCloseHistory" class="btn" style="width:100%; color:#555; margin-top:10px;">CERRAR</button> [cite: 82, 83]
     </div></div>
 
-    <div id="modalWinner" class="modal"><div class="modal-content" style="border: 4px solid var(--gold);
-        background: #000;">
-        <h2 style="color:#fff;">GANADOR</h2>
-        <div id="winnerDisplay" style="font-size: 3rem;
-            margin: 30px 0; color:var(--gold); font-weight:900;">---</div>
-        <button id="btnCloseWinner" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border: 4px solid var(--gold); background: #000;"> [cite: 83, 84]
+        <h2 style="color:#fff;">GANADOR</h2> [cite: 84]
+        <div id="winnerDisplay" style="font-size: 3rem; margin: 30px 0; color:var(--gold); font-weight:900;">---</div> [cite: 84, 85]
+        <button id="btnCloseWinner" class="btn btn-primary" style="width:100%;">CONTINUAR</button> [cite: 85]
     </div></div>
+
+    <div id="modalLead" class="lead-modal">
+        <div class="lead-card">
+            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
+            <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
+            <input type="text" id="leadNom" class="option-input" placeholder="NOMBRE">
+            <input type="tel" id="leadTel" class="option-input" placeholder="WHATSAPP">
+            <input type="email" id="leadMail" class="option-input" placeholder="EMAIL">
+            <button onclick="validarYSpin()" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+        </div>
+    </div>
 
     <div id="modalAdmin" class="modal"><div class="modal-content" style="max-width: 650px;">
-        <h3 style="color:var(--gold);">PANEL CONTROL NEXO®</h3>
-        <input type="text" id="adminSearch" class="option-input" placeholder="BUSCAR...">
-        <div style="max-height: 380px;
-            overflow-y: auto; background: #000; border-radius: 20px;">
+        <h3 style="color:var(--gold);">PANEL CONTROL NEXO®</h3> [cite: 85]
+        <input type="text" id="adminSearch" class="option-input" placeholder="BUSCAR..."> [cite: 85]
+        <div style="max-height: 380px; overflow-y: auto; background: #000; border-radius: 20px;"> [cite: 85, 86]
             <table class="admin-table">
-                <thead><tr><th>UID / ROL</th><th>NIVEL</th><th>ACCIONES</th></tr></thead>
-                <tbody id="adminUserList"></tbody>
+                <thead><tr><th>UID / ROL</th><th>NIVEL</th><th>ACCIONES</th></tr></thead> [cite: 86]
+                <tbody id="adminUserList"></tbody> [cite: 86]
             </table>
         </div>
-        <button onclick="document.getElementById('modalAdmin').style.display='none'" class="btn btn-secondary" style="width:100%;
-            margin-top:20px;">CERRAR PANEL</button>
+        <button onclick="document.getElementById('modalAdmin').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR PANEL</button> [cite: 86, 87]
     </div></div>
 
     <div id="modalAdd" class="modal"><div class="modal-content">
-        <h3 style="color:var(--gold);">PREMIOS</h3>
-        <div style="margin-bottom:20px;
-            display:flex; gap:10px; align-items:center; justify-content:center;">
-            <span style="font-size:0.7rem; color:var(--gold);
-                font-weight:800;">CANTIDAD:</span>
-            <input type="number" id="prizeQuantity" min="1" value="2" style="width:60px; background:#000;
-                border:1px solid #333; color:white; border-radius:10px; padding:10px; text-align:center;">
-            <button onclick="generatePrizeInputs()" class="btn btn-secondary" style="padding:10px 15px;
-                font-size:0.6rem;">GENERAR</button>
+        <h3 style="color:var(--gold);">PREMIOS</h3> [cite: 87]
+        <div style="margin-bottom:20px; display:flex; gap:10px; align-items:center; justify-content:center;"> [cite: 87, 88]
+            <span style="font-size:0.7rem; color:var(--gold); font-weight:800;">CANTIDAD:</span> [cite: 88, 89]
+            <input type="number" id="prizeQuantity" min="1" value="2" style="width:60px; background:#000; border:1px solid #333; color:white; border-radius:10px; padding:10px; text-align:center;"> [cite: 89, 90]
+            <button onclick="generatePrizeInputs()" class="btn btn-secondary" style="padding:10px 15px; font-size:0.6rem;">GENERAR</button> [cite: 90, 91]
         </div>
-        <div id="inputsContainer" style="max-height: 300px;
-            overflow-y: auto;"></div>
-        <button id="btnSaveList" class="btn btn-primary" style="width:100%;
-            margin-top:10px;">GUARDAR</button>
-        <button onclick="document.getElementById('modalAdd').style.display='none'" class="btn" style="color:#555;
-            margin-top:10px;">CANCELAR</button>
+        <div id="inputsContainer" style="max-height: 300px; overflow-y: auto;"></div> [cite: 91, 92]
+        <button id="btnSaveList" class="btn btn-primary" style="width:100%; margin-top:10px;">GUARDAR</button> [cite: 92, 93]
+        <button onclick="document.getElementById('modalAdd').style.display='none'" class="btn" style="color:#555; margin-top:10px;">CANCELAR</button> [cite: 93, 94]
     </div></div>
 
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
-        z-index:9999"></canvas>
+    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas> [cite: 95]
 
     <script>
-       // --- CONFIGURACIÓN ACTUALIZADA (SIN DUPLICAR DECLARACIONES) ---
-(function() {
+        // --- 1. CONFIGURACIÓN (REUBICADA AL INICIO PARA EVITAR REFERENCEERROR) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
+            authDomain: "ruletapremiumbusiness.firebaseapp.com",
+            projectId: "ruletapremiumbusiness",
+            storageBucket: "ruletapremiumbusiness.firebasestorage.app",
+            messagingSenderId: "15131512066",
+            appId: "1:15131512066:web:f98b361c388fc1225e861b",
+            databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com" [cite: 95, 96]
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth(); const db = firebase.database(); [cite: 96]
+        
+        let currentUser = null; let winnersHistory = []; [cite: 96]
+        let config = { title: "RULETA PREMIUM", prizes: ["OPCIÓN 1", "OPCIÓN 2"], colorA: "#d4af37", colorB: "#141414", level: "free", customLogoURL: "" }; [cite: 96]
 
-    // --- CONFIGURACIÓN CENTRALIZADA (SOLUCIÓN AL ERROR DE REFERENCIA) ---
-const firebaseConfig = {
-    apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
-    authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
-    databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
-    projectId: "ruletapremiumbusiness-4db7e",
-    storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-    messagingSenderId: "822563863112",
-    appId: "1:822563863112:web:d134d015736e2fafb5367d"
-};
-
-// Inicialización única y segura
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
-// Asignación a variables globales para que todo el código las vea
-window.auth = firebase.auth();
-window.db = firebase.database();
-console.log("✅ Conexión establecida con ruletapremiumbusiness-4db7e");
-
-    // Inicialización Segura
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
-    // ASIGNACIÓN (No declaración)
-    // Esto evita el error "Identifier has already been declared"
-    window.auth = firebase.auth();
-    window.db = firebase.database();
-    
-    console.log("✅ Conexión con Firebase NEXO® restablecida.");
-})();
-// ------------------------------------------------------------
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(); const db = firebase.database();
-        let currentUser = null; let winnersHistory = [];
-        let config = { title: "RULETA PREMIUM", prizes: ["OPCIÓN 1", "OPCIÓN 2"], colorA: "#d4af37", colorB: "#141414", level: "free", customLogoURL: "" };
-
+        // --- LÓGICA DE AUDIO ORIGINAL ---
         class AudioEngine {
-             constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-            playTick() { if(this.ctx.state === 'suspended') this.ctx.resume();
-                const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.setValueAtTime(600, this.ctx.currentTime); g.gain.setValueAtTime(0.1, this.ctx.currentTime); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.05);
-                }
-            playWin() { [261, 329, 392].forEach((f, i) => { const o = this.ctx.createOscillator(); o.frequency.value = f; o.connect(this.ctx.destination); o.start(this.ctx.currentTime + i*0.1); o.stop(this.ctx.currentTime + 0.5); });
-                }
+            constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } [cite: 97, 98]
+            playTick() { if(this.ctx.state === 'suspended') this.ctx.resume(); const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.setValueAtTime(600, this.ctx.currentTime); g.gain.setValueAtTime(0.1, this.ctx.currentTime); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.05); } [cite: 98, 99]
+            playWin() { [261, 329, 392].forEach((f, i) => { const o = this.ctx.createOscillator(); o.frequency.value = f; o.connect(this.ctx.destination); o.start(this.ctx.currentTime + i*0.1); o.stop(this.ctx.currentTime + 0.5); }); } [cite: 100]
         }
+        
+        // --- CONFETTI ORIGINAL ---
         class ConfettiEngine {
-            constructor() { this.canvas = document.getElementById('confettiCanvas');
-                this.ctx = this.canvas.getContext('2d'); this.items = []; }
-            burst() { this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight; for(let i=0; i<80; i++) this.items.push({ x: innerWidth/2, y: innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20-10, size: Math.random()*8+4, color: config.colorA, a: 1 });
-                this.loop(); }
-            loop() { this.ctx.clearRect(0,0,innerWidth,innerHeight);
-                this.items.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.a -= 0.01; this.ctx.fillStyle = p.color; this.ctx.globalAlpha = p.a; this.ctx.fillRect(p.x, p.y, p.size, p.size); if(p.a <= 0) this.items.splice(i,1); });
-                if(this.items.length) requestAnimationFrame(()=>this.loop()); }
+            constructor() { this.canvas = document.getElementById('confettiCanvas'); this.ctx = this.canvas.getContext('2d'); this.items = []; } [cite: 101, 102]
+            burst() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; for(let i=0; i<80; i++) this.items.push({ x: innerWidth/2, y: innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20-10, size: Math.random()*8+4, color: config.colorA, a: 1 }); this.loop(); } [cite: 102, 103, 104]
+            loop() { this.ctx.clearRect(0,0,innerWidth,innerHeight); this.items.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.a -= 0.01; this.ctx.fillStyle = p.color; this.ctx.globalAlpha = p.a; this.ctx.fillRect(p.x, p.y, p.size, p.size); if(p.a <= 0) this.items.splice(i,1); }); if(this.items.length) requestAnimationFrame(()=>this.loop()); } [cite: 104, 105, 106]
         }
 
+        // --- MOTOR DE RULETA ORIGINAL ---
         class Wheel {
-            constructor() { this.canvas = document.getElementById('wheelCanvas');
-                this.ctx = this.canvas.getContext('2d'); this.angle = 0; this.isSpinning = false; this.audio = new AudioEngine(); this.confetti = new ConfettiEngine();
-                }
+            constructor() { this.canvas = document.getElementById('wheelCanvas'); this.ctx = this.canvas.getContext('2d'); this.angle = 0; this.isSpinning = false; this.audio = new AudioEngine(); this.confetti = new ConfettiEngine(); } [cite: 106, 107, 108]
             draw() {
-                const w = 800, cx = 400, r = 360;
-                this.ctx.clearRect(0,0,w,w);
-                const n = config.prizes.length; const slice = (Math.PI*2)/n;
+                const w = 800, cx = 400, r = 360; [cite: 108]
+                this.ctx.clearRect(0,0,w,w); [cite: 109]
+                const n = config.prizes.length; const slice = (Math.PI*2)/n; [cite: 109]
                 config.prizes.forEach((t, i) => {
-                    this.ctx.save(); this.ctx.beginPath(); this.ctx.fillStyle = i%2?config.colorB:config.colorA;
-                    this.ctx.moveTo(cx,cx); this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice); this.ctx.fill();
-                    this.ctx.translate(cx,cx); this.ctx.rotate(this.angle+i*slice+slice/2);
-                     this.ctx.font = "900 40px Segoe UI"; this.ctx.textAlign="right"; this.ctx.fillStyle="#fff";
-                    this.ctx.fillText(t.toUpperCase(), r-40, 0); this.ctx.restore();
+                    this.ctx.save(); this.ctx.beginPath(); this.ctx.fillStyle = i%2?config.colorB:config.colorA; [cite: 109]
+                    this.ctx.moveTo(cx,cx); this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice); this.ctx.fill(); [cite: 109]
+                    this.ctx.translate(cx,cx); this.ctx.rotate(this.angle+i*slice+slice/2); [cite: 109]
+                    this.ctx.font = "900 40px Segoe UI"; this.ctx.textAlign="right"; this.ctx.fillStyle="#fff"; [cite: 110]
+                    this.ctx.fillText(t.toUpperCase(), r-40, 0); this.ctx.restore(); [cite: 110]
                 });
-                }
+            }
             spin() {
-                if(this.isSpinning) return;
-                this.isSpinning = true;
-                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
-                const start = performance.now();
+                if(this.isSpinning) return; [cite: 111]
+                this.isSpinning = true; [cite: 112]
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2); [cite: 112]
+                const start = performance.now(); [cite: 112]
                 const anim = (now) => {
-                    const p = Math.min((now-start)/5000, 1);
-                    this.angle = total * (1 - Math.pow(1-p, 3)); this.draw();
+                    const p = Math.min((now-start)/5000, 1); [cite: 113, 114]
+                    this.angle = total * (1 - Math.pow(1-p, 3)); this.draw(); [cite: 114]
                     if(p < 1) requestAnimationFrame(anim);
-                    else { this.isSpinning = false; this.finalize();
-                        }
+                    else { this.isSpinning = false; this.finalize(); } [cite: 114, 115]
                 };
                 requestAnimationFrame(anim);
-                }
+            }
             async finalize() {
-                const s = (Math.PI*2)/config.prizes.length;
-                let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
-                if(idx < 0) idx += config.prizes.length;
+                const s = (Math.PI*2)/config.prizes.length; [cite: 116]
+                let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length; [cite: 117]
+                if(idx < 0) idx += config.prizes.length; [cite: 117]
                 this.winnerIdx = idx;
                 const premio = config.prizes[idx];
-                document.getElementById('winnerDisplay').innerText = premio;
-                document.getElementById('modalWinner').style.display = 'flex';
-                this.audio.playWin();
-                this.confetti.burst();
+                document.getElementById('winnerDisplay').innerText = premio; [cite: 117]
+                document.getElementById('modalWinner').style.display = 'flex'; [cite: 118]
+                this.audio.playWin(); [cite: 118]
+                this.confetti.burst(); [cite: 118]
                 
-                const fecha = new Date().toLocaleString();
-                winnersHistory.push({nombre: premio, fecha: fecha});
+                const fecha = new Date().toLocaleString(); [cite: 118]
+                winnersHistory.push({nombre: premio, fecha: fecha}); [cite: 118]
+                await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory); [cite: 119]
+                await db.ref('users/'+currentUser.uid+'/spinLogs').push({ premio: premio, timestamp: fecha }); [cite: 120]
                 
-                // --- INYECCIÓN ADITIVA: Registro en Historial Global del Usuario ---
-                await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory);
-                await db.ref('users/'+currentUser.uid+'/spinLogs').push({
-                    premio: premio,
-                    timestamp: fecha
-                });
+                // Registro de Lead si existe sesión activa
+                if(window.currentLead) {
+                    window.currentLead.premio = premio;
+                    await db.ref('users/'+currentUser.uid+'/leads').push(window.currentLead);
+                    window.currentLead = null;
+                }
             }
         }
-        const appWheel = new Wheel();
+
+        const appWheel = new Wheel(); [cite: 121]
+
+        // --- FUNCIONES ADITIVAS DE LEADS ---
+        function handleSpinCheck() {
+            if(config.level !== 'free' && !window.currentLead) {
+                document.getElementById('modalLead').style.display = 'flex';
+            } else { appWheel.spin(); }
+        }
+
+        function validarYSpin() {
+            const nom = document.getElementById('leadNom').value;
+            const tel = document.getElementById('leadTel').value;
+            const mail = document.getElementById('leadMail').value;
+            if(!nom || !tel || !mail) return alert("Completa todos los campos");
+            window.currentLead = { nombre: nom, whatsapp: tel, email: mail, fecha: new Date().toLocaleString() };
+            document.getElementById('modalLead').style.display = 'none';
+            appWheel.spin();
+        }
+
+        document.getElementById('btnExportLeads').onclick = async () => {
+            const snap = await db.ref('users/'+currentUser.uid+'/leads').once('value');
+            if(!snap.exists()) return alert("No hay leads registrados aún.");
+            const data = Object.values(snap.val());
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Leads");
+            XLSX.writeFile(wb, "NEXO_Leads.xlsx");
+        };
+
+        // --- LÓGICA DE INTERFAZ ORIGINAL (MANTENIDA LÍNEA POR LÍNEA) ---
         document.getElementById('btnCloseWinner').onclick = async () => {
             if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
-                config.prizes.splice(appWheel.winnerIdx, 1);
-                if(config.prizes.length === 0) config.prizes = ["FIN"];
-                await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes);
+                config.prizes.splice(appWheel.winnerIdx, 1); [cite: 122]
+                if(config.prizes.length === 0) config.prizes = ["FIN"]; [cite: 123]
+                await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes); [cite: 123]
             }
-            document.getElementById('modalWinner').style.display = 'none';
-            };
-        document.getElementById('btnWinners').onclick = () => { syncTitles(); document.getElementById('modalHistory').style.display = 'flex'; };
-        document.getElementById('btnCloseHistory').onclick = () => { document.getElementById('modalHistory').style.display = 'none'; };
-        document.getElementById('btnResetApp').onclick = async () => { if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { await db.ref('users/'+currentUser.uid+'/history').remove(); winnersHistory = []; location.reload(); } };
+            document.getElementById('modalWinner').style.display = 'none'; [cite: 123]
+        };
+
+        document.getElementById('btnWinners').onclick = () => { syncTitles(); document.getElementById('modalHistory').style.display = 'flex'; }; [cite: 124]
+        document.getElementById('btnCloseHistory').onclick = () => { document.getElementById('modalHistory').style.display = 'none'; }; [cite: 124]
+        document.getElementById('btnResetApp').onclick = async () => { if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { await db.ref('users/'+currentUser.uid+'/history').remove(); winnersHistory = []; location.reload(); } }; [cite: 125]
+
         auth.onAuthStateChanged(user => {
-            currentUser = user;
+            currentUser = user; [cite: 126]
             if(user) {
-                document.getElementById('loginScreen').style.display='none';
-                document.getElementById('appMain').style.display='flex';
-                db.ref('admins/'+user.uid).on('value', s => { if(s.val()) document.getElementById('btnAdminMaster').style.display='block'; });
-                db.ref('users/'+user.uid+'/config').on('value', 
-                s => { if(s.val()) { config = {...config, ...s.val()}; document.getElementById('mainTitle').innerText = config.title; appWheel.draw(); } });
-                db.ref('users/'+user.uid+'/history').on('value', s => { winnersHistory = s.val() || []; renderHistory(); });
+                document.getElementById('loginScreen').style.display='none'; [cite: 126]
+                document.getElementById('appMain').style.display='flex'; [cite: 126]
+                db.ref('admins/'+user.uid).on('value', s => { if(s.val()) document.getElementById('btnAdminMaster').style.display='block'; }); [cite: 126]
+                db.ref('users/'+user.uid+'/config').on('value', s => { if(s.val()) { config = {...config, ...s.val()}; document.getElementById('mainTitle').innerText = config.title; appWheel.draw(); } }); [cite: 126, 127]
+                db.ref('users/'+user.uid+'/history').on('value', s => { winnersHistory = s.val() || []; renderHistory(); }); [cite: 127]
             }
         });
-        const getOrdinal = (n) => {
-            if (n === 1) return "1er";
-            if (n === 2) return "2do";
-            if (n === 3) return "3er";
-            return n + "to";
-        };
+
+        const getOrdinal = (n) => { if (n === 1) return "1er"; if (n === 2) return "2do"; if (n === 3) return "3er"; return n + "to"; }; [cite: 128, 129]
         const renderHistory = () => { 
-            const list = document.getElementById('historyList');
-            list.innerHTML = winnersHistory.map((h, i) => `
-                <div class="history-item">
-                    <span class="history-ordinal">${getOrdinal(i + 1)}</span>
-                    <div class="history-info">
-                        <span>${h.nombre}</span>
-                         <small>${h.fecha}</small>
-                    </div>
-                </div>
-            `).join("");
-            };
+            const list = document.getElementById('historyList'); [cite: 130]
+            list.innerHTML = winnersHistory.map((h, i) => `<div class="history-item"><span class="history-ordinal">${getOrdinal(i + 1)}</span><div class="history-info"><span>${h.nombre}</span><small>${h.fecha}</small></div></div>`).join(""); [cite: 131, 132]
+        };
 
         const checkExportPermission = () => {
-            const hasLvl = config.level === 'pro' ||
-                config.level === 'ppe';
-            const hasCustomPerm = config.permissions?.canExport === true;
-            if (!hasLvl && !hasCustomPerm) {
-                alert("🔒 FUNCIÓN PREMIUM: Esta herramienta solo está disponible para licencias PRO/PPE o autorizadas por el Administrador.");
-                return false;
-            }
-            return true;
+            const hasLvl = config.level === 'pro' || config.level === 'ppe'; [cite: 133, 134]
+            const hasCustomPerm = config.permissions?.canExport === true; [cite: 134]
+            if (!hasLvl && !hasCustomPerm) { alert("🔒 FUNCIÓN PREMIUM: Esta herramienta solo está disponible para licencias PRO/PPE o autorizadas por el Administrador."); return false; } [cite: 134, 135]
+            return true; [cite: 135]
         };
 
-        // --- INYECCIÓN ADITIVA: Rastreador de Descargas ---
-        const logDownload = async (type) => {
-            if(currentUser) {
-                await db.ref(`users/${currentUser.uid}/downloadLogs`).push({
-                    type: type,
-                    timestamp: new Date().toLocaleString()
-                });
-            }
-        };
+        const logDownload = async (type) => { if(currentUser) { await db.ref(`users/${currentUser.uid}/downloadLogs`).push({ type: type, timestamp: new Date().toLocaleString() }); } }; [cite: 136, 137]
 
         document.getElementById('btnDownloadImg').onclick = async () => {
-            if (!checkExportPermission()) return;
-            const area = document.getElementById('historyCaptureArea');
+            if (!checkExportPermission()) return; [cite: 138]
+            const area = document.getElementById('historyCaptureArea'); [cite: 139]
             try {
-                const canvas = await html2canvas(area, { backgroundColor: '#161616', scale: 2 });
-                const link = document.createElement('a');
-                link.download = `Historial_${config.title.replace(/\s+/g, '_')}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-                logDownload('IMAGE');
-            } catch (e) { alert("Error al generar imagen.");
-                }
+                const canvas = await html2canvas(area, { backgroundColor: '#161616', scale: 2 }); [cite: 139]
+                const link = document.createElement('a'); [cite: 140]
+                link.download = `Historial_${config.title.replace(/\s+/g, '_')}.png`; [cite: 140]
+                link.href = canvas.toDataURL("image/png"); [cite: 140]
+                link.click(); [cite: 140]
+                logDownload('IMAGE'); [cite: 140]
+            } catch (e) { alert("Error al generar imagen."); } [cite: 141]
         };
 
         document.getElementById('btnExportCSV').onclick = () => {
-            if (!checkExportPermission()) return;
-            if (winnersHistory.length === 0) return alert("Historial vacío.");
-            let csv = "NRO,PREMIO,FECHA Y HORA\n";
-            winnersHistory.forEach((h, i) => {
-                csv += `${i + 1},"${h.nombre.replace(/"/g, '""')}","${h.fecha}"\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', `Historial_${config.title.replace(/\s+/g, '_')}.csv`);
-             document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            logDownload('CSV');
+            if (!checkExportPermission()) return; [cite: 142]
+            if (winnersHistory.length === 0) return alert("Historial vacío."); [cite: 143]
+            let csv = "NRO,PREMIO,FECHA Y HORA\n"; [cite: 143]
+            winnersHistory.forEach((h, i) => { csv += `${i + 1},"${h.nombre.replace(/"/g, '""')}","${h.fecha}"\n`; }); [cite: 144]
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); [cite: 144]
+            const link = document.createElement('a'); [cite: 144]
+            link.href = URL.createObjectURL(blob); [cite: 144]
+            link.setAttribute('download', `Historial_${config.title.replace(/\s+/g, '_')}.csv`); [cite: 144]
+            document.body.appendChild(link); [cite: 145]
+            link.click(); [cite: 145]
+            document.body.removeChild(link); [cite: 145]
+            logDownload('CSV'); [cite: 145]
         };
 
         document.getElementById('btnAuthAction').onclick = async () => {
-            const e = document.getElementById('authEmail').value, p = document.getElementById('authPin').value, phone = document.getElementById('authPhone').value, fullName = document.getElementById('authFullName').value;
-            const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-              try {
+            const e = document.getElementById('authEmail').value, p = document.getElementById('authPin').value, phone = document.getElementById('authPhone').value, fullName = document.getElementById('authFullName').value; [cite: 145]
+            const isRegister = document.getElementById('confirmGroup').style.display === 'block'; [cite: 146]
+            try {
                 if(isRegister) {
-                    const cred = await auth.createUserWithEmailAndPassword(e, p);
-                    await db.ref(`users/${cred.user.uid}/config`).set({ 
-                        email: e, 
-                        phone: phone || "No registrado", 
-                        fullName: fullName || "SIN NOMBRE", 
-                         createdAt: new Date().toLocaleDateString(), 
-                        level: "free",
-                        maxSpins: 10,
-                        permissions: { canExport: false, canCustom: false, canAutoRemove: false, showAds: true }
-                     });
-                    } else { await auth.signInWithEmailAndPassword(e, p); }
-            } catch(err) { alert(err.message);
-                }
+                    const cred = await auth.createUserWithEmailAndPassword(e, p); [cite: 146]
+                    await db.ref(`users/${cred.user.uid}/config`).set({ email: e, phone: phone || "No registrado", fullName: fullName || "SIN NOMBRE", createdAt: new Date().toLocaleDateString(), level: "free", maxSpins: 10, permissions: { canExport: false, canCustom: false, canAutoRemove: false, showAds: true } }); [cite: 147, 148, 149]
+                } else { await auth.signInWithEmailAndPassword(e, p); } [cite: 150]
+            } catch(err) { alert(err.message); } [cite: 150, 151]
         };
-        document.getElementById('toggleAuth').onclick = () => { document.getElementById('confirmGroup').style.display = (document.getElementById('confirmGroup').style.display==='none'?'block':'none'); };
-        document.getElementById('btnEditList').onclick = () => { 
-            const qtyInput = document.getElementById('prizeQuantity');
-            qtyInput.value = config.prizes.length;
-            generatePrizeInputs();
-            document.getElementById('modalAdd').style.display='flex'; 
-        };
+
+        document.getElementById('toggleAuth').onclick = () => { document.getElementById('confirmGroup').style.display = (document.getElementById('confirmGroup').style.display==='none'?'block':'none'); }; [cite: 151]
+        document.getElementById('btnEditList').onclick = () => { const qtyInput = document.getElementById('prizeQuantity'); qtyInput.value = config.prizes.length; generatePrizeInputs(); document.getElementById('modalAdd').style.display='flex'; }; [cite: 152, 153]
 
         window.generatePrizeInputs = () => {
-            const container = document.getElementById('inputsContainer');
-            let qty = parseInt(document.getElementById('prizeQuantity').value) || 1;
-            
-            // Restricción Nivel FREE (Inyección Aditiva)
-            if (config.level === 'free' && qty > 10) {
-                alert("Nivel FREE limitado a 10 premios.");
-                qty = 10; document.getElementById('prizeQuantity').value = 10;
-            }
-
-            const currentValues = Array.from(document.querySelectorAll('#inputsContainer .option-input')).map(i => i.value);
-            container.innerHTML = "";
+            const container = document.getElementById('inputsContainer'); [cite: 153]
+            let qty = parseInt(document.getElementById('prizeQuantity').value) || 1; [cite: 154]
+            if (config.level === 'free' && qty > 10) { alert("Nivel FREE limitado a 10 premios."); qty = 10; document.getElementById('prizeQuantity').value = 10; } [cite: 154, 155]
+            const currentValues = Array.from(document.querySelectorAll('#inputsContainer .option-input')).map(i => i.value); [cite: 155]
+            container.innerHTML = ""; [cite: 156]
             for(let i=0; i < qty; i++) {
-                const val = currentValues[i] ||
-                    config.prizes[i] || "";
-                container.innerHTML += `
-                    <div class="prize-row-wrapper">
-                        <span class="prize-number">${i + 1}.</span>
-                        <input type="text" class="option-input" value="${val.toUpperCase()}" oninput="this.value = this.value.toUpperCase()">
-                     </div>`;
+                const val = currentValues[i] || config.prizes[i] || ""; [cite: 156, 157]
+                container.innerHTML += `<div class="prize-row-wrapper"><span class="prize-number">${i + 1}.</span><input type="text" class="option-input" value="${val.toUpperCase()}" oninput="this.value = this.value.toUpperCase()"></div>`; [cite: 157, 158]
             }
         };
-        document.getElementById('btnSaveList').onclick = async () => { const p = []; document.querySelectorAll('#inputsContainer input').forEach(i => { if(i.value) p.push(i.value.toUpperCase()); }); await db.ref('users/'+currentUser.uid+'/config/prizes').set(p); document.getElementById('modalAdd').style.display='none';
-            };
-        function syncTitles() { document.getElementById('modalDynamicTitle').innerText = document.getElementById('mainTitle').innerText; }
+
+        document.getElementById('btnSaveList').onclick = async () => { const p = []; document.querySelectorAll('#inputsContainer input').forEach(i => { if(i.value) p.push(i.value.toUpperCase()); }); await db.ref('users/'+currentUser.uid+'/config/prizes').set(p); document.getElementById('modalAdd').style.display='none'; }; [cite: 159, 160]
+        function syncTitles() { document.getElementById('modalDynamicTitle').innerText = document.getElementById('mainTitle').innerText; } [cite: 160]
         
+        // --- ADMIN MASTER ORIGINAL ---
         const injectMasterAdminStyles = () => {
-            if (document.getElementById('adminMasterStyles')) return;
-            const style = document.createElement('style');
-            style.id = 'adminMasterStyles';
-            style.innerHTML = `.admin-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-                margin: 20px 0; } .admin-card { background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; text-align: center;
-                } .admin-card small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: 800; } .admin-card div { font-size: 1.2rem; font-weight: 900;
-                color: #fff; margin-top: 5px; } .admin-filters { display: flex; gap: 8px; margin-bottom: 15px; justify-content: center;
-                } .filter-chip { padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; border: 1px solid #333; background: #000; color: #666; cursor: pointer;
-                transition: 0.3s; } .filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); } .btn-action-mini { padding: 8px 12px !important;
-                font-size: 0.75rem !important; border-radius: 8px; cursor: pointer; border: none; font-weight: 800; min-width: 50px; min-height: 38px; margin: 2px;
-                } .btn-msg { background: #007bff; color: white; } .btn-cfg { background: #333; color: var(--gold); } .btn-lvl { background: var(--gold);
-                color: #000; } .btn-view { background: #28a745; color: white; } .profile-header { text-align: left; border-bottom: 1px solid #333; padding-bottom: 15px;
-                margin-bottom: 15px; } .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; } .stat-box { background: #000;
-                padding: 15px; border-radius: 15px; border: 1px solid #222; text-align: center; } .stat-box b { color: var(--gold); font-size: 1.4rem; display: block;
-                } .stat-box span { font-size: 0.6rem; color: #555; text-transform: uppercase; } .online-badge { width: 8px; height: 8px; border-radius: 50%; background: #28a745; display: inline-block; margin-right: 5px; box-shadow: 0 0 10px #28a745; } .offline-badge { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; margin-right: 5px; }`;
-            document.head.appendChild(style);
+            if (document.getElementById('adminMasterStyles')) return; [cite: 160, 161]
+            const style = document.createElement('style'); [cite: 161]
+            style.id = 'adminMasterStyles'; [cite: 162]
+            style.innerHTML = `.admin-dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; } .admin-card { background: #111; border: 1px solid #222; padding: 12px; border-radius: 12px; text-align: center; } .admin-card small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; font-weight: 800; } .admin-card div { font-size: 1.2rem; font-weight: 900; color: #fff; margin-top: 5px; } .admin-filters { display: flex; gap: 8px; margin-bottom: 15px; justify-content: center; } .filter-chip { padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; border: 1px solid #333; background: #000; color: #666; cursor: pointer; transition: 0.3s; } .filter-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(212,175,55,0.1); } .btn-action-mini { padding: 8px 12px !important; font-size: 0.75rem !important; border-radius: 8px; cursor: pointer; border: none; font-weight: 800; min-width: 50px; min-height: 38px; margin: 2px; } .btn-msg { background: #007bff; color: white; } .btn-cfg { background: #333; color: var(--gold); } .btn-lvl { background: var(--gold); color: #000; } .btn-view { background: #28a745; color: white; } .profile-header { text-align: left; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; } .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; } .stat-box { background: #000; padding: 15px; border-radius: 15px; border: 1px solid #222; text-align: center; } .stat-box b { color: var(--gold); font-size: 1.4rem; display: block; } .stat-box span { font-size: 0.6rem; color: #555; text-transform: uppercase; } .online-badge { width: 8px; height: 8px; border-radius: 50%; background: #28a745; display: inline-block; margin-right: 5px; box-shadow: 0 0 10px #28a745; } .offline-badge { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; margin-right: 5px; }`; [cite: 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174]
+            document.head.appendChild(style); [cite: 174]
         };
+
         const updateAdminDashboard = (snap) => {
-            let stats = { total: 0, free: 0, pro: 0, ppe: 0, active: 0 };
-            snap.forEach(u => { 
-                stats.total++; 
-                const d = u.val();
-                const lvl = d.config?.level || 'free'; 
-                if (stats.hasOwnProperty(lvl)) stats[lvl]++;
-                if (d.status?.state === 'online') stats.active++;
-            });
-            let container = document.getElementById('adminDashContainer');
-            if (!container) { container = document.createElement('div'); container.id = 'adminDashContainer'; const modal = document.querySelector('#modalAdmin .modal-content h3'); modal.parentNode.insertBefore(container, modal.nextSibling);
-                }
-            container.innerHTML = `<div class="admin-dashboard"><div class="admin-card"><small>Usuarios</small><div>${stats.total}</div></div><div class="admin-card"><small>Activos</small><div style="color:#28a745">${stats.active}</div></div><div class="admin-card"><small>Pro</small><div>${stats.pro}</div></div><div class="admin-card"><small>PPE</small><div>${stats.ppe}</div></div></div><div class="admin-filters"><div class="filter-chip active" onclick="applyAdminFilter('all', this)">TODOS</div><div class="filter-chip" onclick="applyAdminFilter('free', this)">FREE</div><div class="filter-chip" onclick="applyAdminFilter('pro', this)">PRO</div><div class="filter-chip" onclick="applyAdminFilter('ppe', this)">PPE</div></div>`;
-            };
+            let stats = { total: 0, free: 0, pro: 0, ppe: 0, active: 0 }; [cite: 174, 175]
+            snap.forEach(u => { stats.total++; const d = u.val(); const lvl = d.config?.level || 'free'; if (stats.hasOwnProperty(lvl)) stats[lvl]++; if (d.status?.state === 'online') stats.active++; }); [cite: 175, 176]
+            let container = document.getElementById('adminDashContainer'); [cite: 176, 177]
+            if (!container) { container = document.createElement('div'); container.id = 'adminDashContainer'; const modal = document.querySelector('#modalAdmin .modal-content h3'); modal.parentNode.insertBefore(container, modal.nextSibling); } [cite: 177, 178]
+            container.innerHTML = `<div class="admin-dashboard"><div class="admin-card"><small>Usuarios</small><div>${stats.total}</div></div><div class="admin-card"><small>Activos</small><div style="color:#28a745">${stats.active}</div></div><div class="admin-card"><small>Pro</small><div>${stats.pro}</div></div><div class="admin-card"><small>PPE</small><div>${stats.ppe}</div></div></div><div class="admin-filters"><div class="filter-chip active" onclick="applyAdminFilter('all', this)">TODOS</div><div class="filter-chip" onclick="applyAdminFilter('free', this)">FREE</div><div class="filter-chip" onclick="applyAdminFilter('pro', this)">PRO</div><div class="filter-chip" onclick="applyAdminFilter('ppe', this)">PPE</div></div>`; [cite: 178, 179]
+        };
 
         window.updateAdminTableFull = () => {
-            injectMasterAdminStyles();
-            const list = document.getElementById('adminUserList');
+            injectMasterAdminStyles(); [cite: 179, 180]
+            const list = document.getElementById('adminUserList'); [cite: 180]
             db.ref('users').on('value', snap => {
                 if (document.getElementById('modalAdmin').style.display === 'flex') {
-                    updateAdminDashboard(snap); list.innerHTML = "";
+                    updateAdminDashboard(snap); list.innerHTML = ""; [cite: 180, 181]
                     snap.forEach(u => {
-                        const d = u.val(); 
-                        const level = d.config?.level || 'free'; const isMkt = d.isMarketing || false;
-                        const isOnline = d.status?.state === 'online';
-                        list.innerHTML += `<tr class="user-row ${isMkt ? 'row-marketing' : ''}" data-level="${level}"><td>${isOnline ? '<span class="online-badge"></span>' : '<span class="offline-badge"></span>'}${isMkt ? '<span class="badge-mkt">MKT</span><br>' : ''}${isMkt ? `<input type="text" class="input-mkt" value="${d.email || ''}" onchange="db.ref('users/${u.key}/email').set(this.value)">` : u.key.substring(0,8)}</td><td style="color:var(--gold);">${level.toUpperCase()}<br>${isMkt ? `<input type="password" class="input-mkt" style="width:60px" value="${d.pin || ''}" onchange="db.ref('users/${u.key}/pin').set(this.value)">` : ''}</td><td style="display:flex; gap:4px; justify-content:center;"><button class="btn-action-mini btn-lvl" onclick="cycleLvl('${u.key}','${level}')">LVL</button><button class="btn-action-mini btn-cfg" onclick="openLic('${u.key}')">⚙️</button><button class="btn-action-mini ${isMkt ?
-                        'btn-lvl' : 'btn-cfg'}" onclick="db.ref('users/${u.key}/isMarketing').set(${!isMkt})">M</button><button class="btn-action-mini btn-view" onclick="viewUserProfile('${u.key}')">VER</button></td></tr>`;
+                        const d = u.val(); const level = d.config?.level || 'free'; const isMkt = d.isMarketing || false; const isOnline = d.status?.state === 'online'; [cite: 181, 182]
+                        list.innerHTML += `<tr class="user-row ${isMkt ? 'row-marketing' : ''}" data-level="${level}"><td>${isOnline ? '<span class="online-badge"></span>' : '<span class="offline-badge"></span>'}${isMkt ? '<span class="badge-mkt">MKT</span><br>' : ''}${isMkt ? `<input type="text" class="input-mkt" value="${d.email || ''}" onchange="db.ref('users/${u.key}/email').set(this.value)">` : u.key.substring(0,8)}</td><td style="color:var(--gold);">${level.toUpperCase()}<br>${isMkt ? `<input type="password" class="input-mkt" style="width:60px" value="${d.pin || ''}" onchange="db.ref('users/${u.key}/pin').set(this.value)">` : ''}</td><td style="display:flex; gap:4px; justify-content:center;"><button class="btn-action-mini btn-lvl" onclick="cycleLvl('${u.key}','${level}')">LVL</button><button class="btn-action-mini btn-cfg" onclick="openLic('${u.key}')">⚙️</button><button class="btn-action-mini ${isMkt ? 'btn-lvl' : 'btn-cfg'}" onclick="db.ref('users/${u.key}/isMarketing').set(${!isMkt})">M</button><button class="btn-action-mini btn-view" onclick="viewUserProfile('${u.key}')">VER</button></td></tr>`; [cite: 182, 183, 184]
                     });
                 }
             });
         };
 
-        window.applyAdminFilter = (filter, el) => { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.querySelectorAll('.user-row').forEach(row => row.style.display = (filter === 'all' || row.dataset.level === filter) ? "" : "none"); };
-     
-        window.cycleLvl = async (uid, cur) => { const lvls = ['free', 'pro', 'ppe']; await db.ref(`users/${uid}/config/level`).set(lvls[(lvls.indexOf(cur)+1)%lvls.length]); };
+        window.applyAdminFilter = (filter, el) => { document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.querySelectorAll('.user-row').forEach(row => row.style.display = (filter === 'all' || row.dataset.level === filter) ? "" : "none"); }; [cite: 184, 185]
+        window.cycleLvl = async (uid, cur) => { const lvls = ['free', 'pro', 'ppe']; await db.ref(`users/${uid}/config/level`).set(lvls[(lvls.indexOf(cur)+1)%lvls.length]); }; [cite: 185]
+        
         window.openLic = async (uid) => {
             if(!document.getElementById('modalLic')) {
-                const d = document.createElement('div'); d.id = 'modalLic'; d.className = 'modal';
-                d.innerHTML = `<div class="modal-content" style="max-width:380px;
-                    text-align:left;"><h3 style="color:var(--gold); text-align:center;">CONFIG LICENCIA</h3><div style="background:#000; padding:15px; border-radius:15px; border:1px solid #222; margin-bottom:15px;"><label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pExp"> Exportar PNG/CSV</label><label style="display:block;
-                    margin-bottom:10px;"><input type="checkbox" id="pCus"> Personalizar Título</label><label style="display:block;"><input type="checkbox" id="pAut"> Auto-Eliminar Ganador</label></div><label style="color:var(--gold);
-                    font-size:0.65rem;">RANGO EVENTO (PPE)</label><input type="date" id="dS" class="option-input"><input type="date" id="dE" class="option-input"><button id="bSLic" class="btn btn-primary" style="width:100%;">GUARDAR</button><button onclick="document.getElementById('modalLic').style.display='none'" class="btn" style="width:100%; color:#444;
-                    margin-top:10px;">SALIR</button></div>`;
-                document.body.appendChild(d);
+                const d = document.createElement('div'); d.id = 'modalLic'; d.className = 'modal'; [cite: 185]
+                d.innerHTML = `<div class="modal-content" style="max-width:380px; text-align:left;"><h3 style="color:var(--gold); text-align:center;">CONFIG LICENCIA</h3><div style="background:#000; padding:15px; border-radius:15px; border:1px solid #222; margin-bottom:15px;"><label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pExp"> Exportar PNG/CSV</label><label style="display:block; margin-bottom:10px;"><input type="checkbox" id="pCus"> Personalizar Título</label><label style="display:block;"><input type="checkbox" id="pAut"> Auto-Eliminar Ganador</label></div><label style="color:var(--gold); font-size:0.65rem;">RANGO EVENTO (PPE)</label><input type="date" id="dS" class="option-input"><input type="date" id="dE" class="option-input"><button id="bSLic" class="btn btn-primary" style="width:100%;">GUARDAR</button><button onclick="document.getElementById('modalLic').style.display='none'" class="btn" style="width:100%; color:#444; margin-top:10px;">SALIR</button></div>`; [cite: 186, 187, 188, 189]
+                document.body.appendChild(d); [cite: 189]
             }
-            const s = await db.ref(`users/${uid}/config`).once('value'); const c = s.val() || {};
-            document.getElementById('pExp').checked = c.permissions?.canExport || false; document.getElementById('pCus').checked = c.permissions?.canCustom || false; document.getElementById('pAut').checked = c.permissions?.canAutoRemove || false; document.getElementById('dS').value = c.eventDates?.start || ""; document.getElementById('dE').value = c.eventDates?.end || ""; document.getElementById('modalLic').style.display = 'flex';
-           
-             document.getElementById('bSLic').onclick = async () => { await db.ref(`users/${uid}/config/permissions`).set({ canExport: document.getElementById('pExp').checked, canCustom: document.getElementById('pCus').checked, canAutoRemove: document.getElementById('pAut').checked }); await db.ref(`users/${uid}/config/eventDates`).set({ start: document.getElementById('dS').value, end: document.getElementById('dE').value });
-                document.getElementById('modalLic').style.display = 'none'; };
+            const s = await db.ref(`users/${uid}/config`).once('value'); const c = s.val() || {}; [cite: 189]
+            document.getElementById('pExp').checked = c.permissions?.canExport || false; document.getElementById('pCus').checked = c.permissions?.canCustom || false; document.getElementById('pAut').checked = c.permissions?.canAutoRemove || false; document.getElementById('dS').value = c.eventDates?.start || ""; document.getElementById('dE').value = c.eventDates?.end || ""; document.getElementById('modalLic').style.display = 'flex'; [cite: 189, 190]
+            document.getElementById('bSLic').onclick = async () => { await db.ref(`users/${uid}/config/permissions`).set({ canExport: document.getElementById('pExp').checked, canCustom: document.getElementById('pCus').checked, canAutoRemove: document.getElementById('pAut').checked }); await db.ref(`users/${uid}/config/eventDates`).set({ start: document.getElementById('dS').value, end: document.getElementById('dE').value }); document.getElementById('modalLic').style.display = 'none'; }; [cite: 190, 191]
         };
 
         const repairAdminAccess = () => {
-            const btn = document.getElementById('btnAdminMaster');
-            const modal = document.getElementById('modalAdmin');
-            if (btn) { btn.onclick = async () => { if (!currentUser) return alert("Sesión no activa.");
-                try { const adminSnap = await db.ref('admins/' + currentUser.uid).once('value'); if (adminSnap.val() === true) { modal.style.display = 'flex'; updateAdminTableFull();
-                    } else { alert("ACCESO DENEGADO. Tu UID no es admin: " + currentUser.uid);
-                    } } catch (e) { alert("Error: " + e.message); } }; }
+            const btn = document.getElementById('btnAdminMaster'); const modal = document.getElementById('modalAdmin'); [cite: 191, 192]
+            if (btn) { btn.onclick = async () => { if (!currentUser) return alert("Sesión no activa."); try { const adminSnap = await db.ref('admins/' + currentUser.uid).once('value'); if (adminSnap.val() === true) { modal.style.display = 'flex'; updateAdminTableFull(); } else { alert("ACCESO DENEGADO. Tu UID no es admin: " + currentUser.uid); } } catch (e) { alert("Error: " + e.message); } }; } [cite: 192, 193, 194, 195]
         };
-        setTimeout(repairAdminAccess, 2000);
+        setTimeout(repairAdminAccess, 2000); [cite: 196]
 
-        // --- ACTUALIZACIÓN ADITIVA: Tarjeta de Perfil con Giros y Descargas ---
+        // --- PERFIL DE USUARIO ORIGINAL ---
         window.viewUserProfile = async (uid) => {
-            if(!document.getElementById('modalUserProfile')) { const d = document.createElement('div');
-                d.id = 'modalUserProfile'; d.className = 'modal'; d.innerHTML = `<div class="modal-content" style="max-width:500px; text-align:left;"><div id="userProfileContent">Cargando...</div><button onclick="document.getElementById('modalUserProfile').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR</button></div>`; document.body.appendChild(d);
-                }
-            document.getElementById('modalUserProfile').style.display = 'flex';
-            const userSnap = await db.ref(`users/${uid}`).once('value');
-            const data = userSnap.val() || {}; 
-            const hist = data.history ? Object.values(data.history) : []; 
-            const loginLogs = data.loginLogs ? Object.values(data.loginLogs).reverse() : [];
-            const spinLogs = data.spinLogs ? Object.values(data.spinLogs).reverse() : [];
-            const downloadLogs = data.downloadLogs ? Object.values(data.downloadLogs).reverse() : [];
-            const config = data.config || {};
-            
-            document.getElementById('userProfileContent').innerHTML = `
-                <div class="profile-header"><h2 style="color:var(--gold); margin:0;">${config.fullName || 'SIN NOMBRE'}</h2><small style="color:#666;">UID: ${uid}</small></div>
-                <div style="font-size:0.8rem; line-height:1.6;"><p><b>📧 Email:</b> ${data.email || config.email || 'No asignado'}</p><p><b>📞 Teléfono:</b> ${config.phone || 'No registrado'}</p><p><b>🎫 Licencia:</b> <span style="color:var(--gold); font-weight:bold;">${(config.level || 'FREE').toUpperCase()}</span></p></div>
-                <div class="profile-grid">
-                    <div class="stat-box"><b>${spinLogs.length}</b><span>Giros Totales</span></div>
-                    <div class="stat-box"><b>${downloadLogs.length}</b><span>Descargas</span></div>
-                    <div class="stat-box"><b>${data.status?.state === 'online' ? 'SÍ' : 'NO'}</b><span>Online</span></div>
-                    <div class="stat-box"><b>${loginLogs.length}</b><span>Sesiones</span></div>
-                </div>
-                <div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div>
-                        <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Giros:</small>
-                        <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">
-                            ${spinLogs.map(s => `<div style="border-bottom:1px solid #111; padding:3px 0;">🎁 ${s.premio} <br> <span style="color:#555">${s.timestamp}</span></div>`).join("") || "Sin giros"}
-                        </div>
-                    </div>
-                    <div>
-                        <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Descargas:</small>
-                        <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">
-                            ${downloadLogs.map(d => `<div style="border-bottom:1px solid #111; padding:3px 0;">💾 ${d.type} <br> <span style="color:#555">${d.timestamp}</span></div>`).join("") || "Sin descargas"}
-                        </div>
-                    </div>
-                </div>
-                <div style="margin-top:15px;">
-                    <small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Últimas Sesiones:</small>
-                    <div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:80px; overflow-y:auto; font-size:0.65rem;">
-                        ${loginLogs.slice(0,5).map(l => `<div style="border-bottom:1px solid #111; padding:2px 0;">📅 ${l.timestamp}</div>`).join("") || "Sin registros"}
-                    </div>
-                </div>`;
-        };
-        window.applyLogoToWheel = (url) => { const btn = document.getElementById('btnSpinCenter'); if(!btn) return;
-            if (url && url.trim() !== "") { btn.style.backgroundImage = `url(${url})`; btn.style.color = "transparent"; btn.innerText = "";
-                } else { btn.style.backgroundImage = "none"; btn.style.color = "#000"; btn.innerText = "GIRAR"; } };
-        db.ref('users').on('value', () => { if(currentUser) { db.ref(`users/${currentUser.uid}/config/customLogoURL`).on('value', s => { window.applyLogoToWheel(s.val()); }); } });
-        const checkProBranding = () => { 
-            if(!currentUser || !config) return;
-            if(!document.getElementById('btnBranding')) { 
-                const side = document.querySelector('.side-panel');
-                const btn = document.createElement('button'); 
-                btn.id = 'btnBranding'; btn.className = 'btn btn-secondary'; 
-                btn.style.color = 'var(--gold)'; btn.style.borderColor = 'var(--gold)';
-                btn.innerText = '✨ CONFIG. MARCA'; 
-                btn.onclick = () => { 
-                    if (config.level === 'free') return alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE.");
-                    const url = prompt("URL del Logo (PNG transparente):", config.customLogoURL || ""); 
-                    if(url !== null) db.ref(`users/${currentUser.uid}/config/customLogoURL`).set(url); 
-                }; 
-                side.insertBefore(btn, document.getElementById('btnResetApp'));
-                } 
-        };
-        setTimeout(checkProBranding, 3500);
-        const injectGlobalControlPanel = () => {
-            if (document.getElementById('adminMasterGlobalControl')) return;
-            const controlPanel = document.createElement('div'); controlPanel.id = 'adminMasterGlobalControl'; controlPanel.style = "background:#050505; padding:20px; border-radius:25px; margin:15px 0; border:2px solid var(--gold); text-align:left; box-shadow: 0 0 20px rgba(212,175,55,0.1);";
-            controlPanel.innerHTML = `<p style="color:var(--gold); font-weight:900; font-size:0.75rem; margin-top:0; text-transform:uppercase; letter-spacing:1px;">Control Global de Segmento (Solo FREE)</p><div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.65rem; color:#ccc; margin-bottom:15px;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('isDefault', this.checked)"> PREDETERMINADO</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('showAds', this.checked)"> PUBLICIDAD</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canExport', this.checked)"> DESCARGA LISTA</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canAutoRemove', this.checked)"> AUTO-ELIMINAR</label></div><div style="padding-top:12px;
-                border-top:1px solid #222; display:flex; align-items:center; gap:12px; font-size:0.7rem;"><span style="color:var(--gold); font-weight:800;">LÍMITE GIROS:</span><input type="number" id="globalSpinLimit" value="5" style="width:60px; background:#000; border:1px solid #444; color:var(--gold); border-radius:8px;
-                padding:6px; text-align:center;"><button onclick="syncGlobalSpins()" style="background:var(--gold); border:none; padding:8px 15px; border-radius:10px; font-weight:900; cursor:pointer;
-                font-size:0.65rem;">APLICAR</button></div>`;
-            const dash = document.getElementById('adminDashContainer'); if (dash) dash.parentNode.insertBefore(controlPanel, dash.nextSibling);
+            if(!document.getElementById('modalUserProfile')) { const d = document.createElement('div'); d.id = 'modalUserProfile'; d.className = 'modal'; d.innerHTML = `<div class="modal-content" style="max-width:500px; text-align:left;"><div id="userProfileContent">Cargando...</div><button onclick="document.getElementById('modalUserProfile').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR</button></div>`; document.body.appendChild(d); } [cite: 196, 197, 198]
+            document.getElementById('modalUserProfile').style.display = 'flex'; [cite: 198]
+            const userSnap = await db.ref(`users/${uid}`).once('value'); const data = userSnap.val() || {}; const hist = data.history ? Object.values(data.history) : []; const loginLogs = data.loginLogs ? Object.values(data.loginLogs).reverse() : []; const spinLogs = data.spinLogs ? Object.values(data.spinLogs).reverse() : []; const downloadLogs = data.downloadLogs ? Object.values(data.downloadLogs).reverse() : []; const config = data.config || {}; [cite: 198, 199, 200, 201]
+            document.getElementById('userProfileContent').innerHTML = `<div class="profile-header"><h2 style="color:var(--gold); margin:0;">${config.fullName || 'SIN NOMBRE'}</h2><small style="color:#666;">UID: ${uid}</small></div><div style="font-size:0.8rem; line-height:1.6;"><p><b>📧 Email:</b> ${data.email || config.email || 'No asignado'}</p><p><b>📞 Teléfono:</b> ${config.phone || 'No registrado'}</p><p><b>🎫 Licencia:</b> <span style="color:var(--gold); font-weight:bold;">${(config.level || 'FREE').toUpperCase()}</span></p></div><div class="profile-grid"><div class="stat-box"><b>${spinLogs.length}</b><span>Giros Totales</span></div><div class="stat-box"><b>${downloadLogs.length}</b><span>Descargas</span></div><div class="stat-box"><b>${data.status?.state === 'online' ? 'SÍ' : 'NO'}</b><span>Online</span></div><div class="stat-box"><b>${loginLogs.length}</b><span>Sesiones</span></div></div><div style="margin-top:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px;"><div><small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Giros:</small><div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">${spinLogs.map(s => `<div style="border-bottom:1px solid #111; padding:3px 0;">🎁 ${s.premio} <br> <span style="color:#555">${s.timestamp}</span></div>`).join("") || "Sin giros"}</div></div><div><small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Historial Descargas:</small><div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:100px; overflow-y:auto; font-size:0.65rem;">${downloadLogs.map(d => `<div style="border-bottom:1px solid #111; padding:3px 0;">💾 ${d.type} <br> <span style="color:#555">${d.timestamp}</span></div>`).join("") || "Sin descargas"}</div></div></div><div style="margin-top:15px;"><small style="color:var(--gold); font-weight:800; text-transform:uppercase;">Últimas Sesiones:</small><div style="background:#000; padding:10px; border-radius:10px; border:1px solid #222; margin-top:5px; max-height:80px; overflow-y:auto; font-size:0.65rem;">${loginLogs.slice(0,5).map(l => `<div style="border-bottom:1px solid #111; padding:2px 0;">📅 ${l.timestamp}</div>`).join("") || "Sin registros"}</div></div>`; [cite: 201, 202, 203, 204, 205, 206, 207, 208, 209, 210]
         };
 
-        window.applyGlobalSync = async (field, value) => { const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/permissions/${field}`] = value; }); await db.ref().update(updates); };
-        window.syncGlobalSpins = async () => { const limit = parseInt(document.getElementById('globalSpinLimit').value); const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/maxSpins`] = 
-                limit; }); await db.ref().update(updates); alert("Límite de giros actualizado globalmente."); };
+        window.applyLogoToWheel = (url) => { const btn = document.getElementById('btnSpinCenter'); if(!btn) return; if (url && url.trim() !== "") { btn.style.backgroundImage = `url(${url})`; btn.style.color = "transparent"; btn.innerText = ""; } else { btn.style.backgroundImage = "none"; btn.style.color = "#000"; btn.innerText = "GIRAR"; } }; [cite: 211, 212, 213]
+        db.ref('users').on('value', () => { if(currentUser) { db.ref(`users/${currentUser.uid}/config/customLogoURL`).on('value', s => { window.applyLogoToWheel(s.val()); }); } }); [cite: 214]
+
+        const checkProBranding = () => { 
+            if(!currentUser || !config) return; [cite: 215]
+            if(!document.getElementById('btnBranding')) { 
+                const side = document.querySelector('.side-panel'); const btn = document.createElement('button'); btn.id = 'btnBranding'; btn.className = 'btn btn-secondary'; btn.style.color = 'var(--gold)'; btn.style.borderColor = 'var(--gold)'; btn.innerText = '✨ CONFIG. MARCA'; [cite: 216, 217, 218]
+                btn.onclick = () => { if (config.level === 'free') return alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE."); const url = prompt("URL del Logo (PNG transparente):", config.customLogoURL || ""); if(url !== null) db.ref(`users/${currentUser.uid}/config/customLogoURL`).set(url); }; [cite: 218, 219]
+                side.insertBefore(btn, document.getElementById('btnResetApp')); [cite: 219]
+            } 
+        };
+        setTimeout(checkProBranding, 3500); [cite: 220]
+
+        // --- PANEL DE CONTROL GLOBAL ORIGINAL ---
+        const injectGlobalControlPanel = () => {
+            if (document.getElementById('adminMasterGlobalControl')) return; [cite: 221]
+            const controlPanel = document.createElement('div'); controlPanel.id = 'adminMasterGlobalControl'; controlPanel.style = "background:#050505; padding:20px; border-radius:25px; margin:15px 0; border:2px solid var(--gold); text-align:left; box-shadow: 0 0 20px rgba(212,175,55,0.1);"; [cite: 222]
+            controlPanel.innerHTML = `<p style="color:var(--gold); font-weight:900; font-size:0.75rem; margin-top:0; text-transform:uppercase; letter-spacing:1px;">Control Global de Segmento (Solo FREE)</p><div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:0.65rem; color:#ccc; margin-bottom:15px;"><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('isDefault', this.checked)"> PREDETERMINADO</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('showAds', this.checked)"> PUBLICIDAD</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canExport', this.checked)"> DESCARGA LISTA</label><label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onchange="applyGlobalSync('canAutoRemove', this.checked)"> AUTO-ELIMINAR</label></div><div style="padding-top:12px; border-top:1px solid #222; display:flex; align-items:center; gap:12px; font-size:0.7rem;"><span style="color:var(--gold); font-weight:800;">LÍMITE GIROS:</span><input type="number" id="globalSpinLimit" value="5" style="width:60px; background:#000; border:1px solid #444; color:var(--gold); border-radius:8px; padding:6px; text-align:center;"><button onclick="syncGlobalSpins()" style="background:var(--gold); border:none; padding:8px 15px; border-radius:10px; font-weight:900; cursor:pointer; font-size:0.65rem;">APLICAR</button></div>`; [cite: 223, 224, 225, 226]
+            const dash = document.getElementById('adminDashContainer'); if (dash) dash.parentNode.insertBefore(controlPanel, dash.nextSibling); [cite: 226]
+        };
+
+        window.applyGlobalSync = async (field, value) => { const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/permissions/${field}`] = value; }); await db.ref().update(updates); }; [cite: 226]
+        window.syncGlobalSpins = async () => { const limit = parseInt(document.getElementById('globalSpinLimit').value); const snap = await db.ref('users').once('value'); const updates = {}; snap.forEach(u => { if (u.val().config?.level === 'free') updates[`users/${u.key}/config/maxSpins`] = limit; }); await db.ref().update(updates); alert("Límite de giros actualizado globalmente."); }; [cite: 226, 227]
 
         const applyProSafetyShield = () => {
-            const btnEdit = document.getElementById('btnEditList');
-            if (!btnEdit) return;
-            const originalOnClick = btnEdit.onclick;
-            btnEdit.onclick = function(e) { if (config.level === 'pro') { alert("NIVEL PRO ACTIVADO: Las configuraciones de este nivel son fijas.");
-                return; } if (originalOnClick) originalOnClick.apply(this, arguments); };
+            const btnEdit = document.getElementById('btnEditList'); if (!btnEdit) return; [cite: 227, 228]
+            const originalOnClick = btnEdit.onclick; [cite: 228]
+            btnEdit.onclick = function(e) { if (config.level === 'pro') { alert("NIVEL PRO ACTIVADO: Las configuraciones de este nivel son fijas."); return; } if (originalOnClick) originalOnClick.apply(this, arguments); }; [cite: 228, 229]
         };
 
-        const checkEmailVerificationStatus = async (user) => { if (user && !user.emailVerified) { alert("📧 CUENTA NO ACTIVADA: Por favor, verifica tu correo antes de entrar.");
-            await user.sendEmailVerification().catch(() => {}); await auth.signOut(); location.reload(); return false; } return true; };
-        const originalAuthAction = document.getElementById('btnAuthAction').onclick;
-        document.getElementById('btnAuthAction').onclick = async function() { const isRegister = document.getElementById('confirmGroup').style.display === 'block'; await originalAuthAction.apply(this, arguments); const user = auth.currentUser;
-            if (user && isRegister) { await user.sendEmailVerification(); alert("✅ Revisa tu correo y verifica tu cuenta."); await auth.signOut(); location.reload(); } };
-        auth.onAuthStateChanged(async (user) => { if (user) await checkEmailVerificationStatus(user); });
-        setTimeout(() => { injectGlobalControlPanel(); applyProSafetyShield(); }, 4000);
+        const checkEmailVerificationStatus = async (user) => { if (user && !user.emailVerified) { alert("📧 CUENTA NO ACTIVADA: Por favor, verifica tu correo antes de entrar."); await user.sendEmailVerification().catch(() => {}); await auth.signOut(); location.reload(); return false; } return true; }; [cite: 229, 230]
+        const originalAuthAction = document.getElementById('btnAuthAction').onclick; [cite: 230]
+        document.getElementById('btnAuthAction').onclick = async function() { const isRegister = document.getElementById('confirmGroup').style.display === 'block'; await originalAuthAction.apply(this, arguments); const user = auth.currentUser; if (user && isRegister) { await user.sendEmailVerification(); alert("✅ Revisa tu correo y verifica tu cuenta."); await auth.signOut(); location.reload(); } }; [cite: 231, 232]
+        auth.onAuthStateChanged(async (user) => { if (user) await checkEmailVerificationStatus(user); }); [cite: 233]
+        setTimeout(() => { injectGlobalControlPanel(); applyProSafetyShield(); }, 4000); [cite: 233]
+
         const injectUpperCasePolicyV2 = () => {
-            const style = document.createElement('style');
-            style.id = 'upperCasePolicyStyle'; style.innerHTML = `#mainTitle, .option-input, #authFullName, #authPhone { text-transform: uppercase !important; }`; document.head.appendChild(style);
-            const mainTitle = document.getElementById('mainTitle');
-            if(mainTitle) { mainTitle.addEventListener('blur', async () => { const upperVal = mainTitle.innerText.toUpperCase(); mainTitle.innerText = upperVal; if(currentUser) await db.ref(`users/${currentUser.uid}/config/title`).set(upperVal); });
-                }
-            const profileFields = ['authFullName', 'authPhone'];
-            profileFields.forEach(id => { const field = document.getElementById(id); if(field) field.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); }); });
+            const style = document.createElement('style'); [cite: 234]
+            style.id = 'upperCasePolicyStyle'; style.innerHTML = `#mainTitle, .option-input, #authFullName, #authPhone { text-transform: uppercase !important; }`; document.head.appendChild(style); [cite: 235]
+            const mainTitle = document.getElementById('mainTitle'); [cite: 235]
+            if(mainTitle) { mainTitle.addEventListener('blur', async () => { const upperVal = mainTitle.innerText.toUpperCase(); mainTitle.innerText = upperVal; if(currentUser) await db.ref(`users/${currentUser.uid}/config/title`).set(upperVal); }); } [cite: 236, 237]
+            const profileFields = ['authFullName', 'authPhone']; [cite: 237]
+            profileFields.forEach(id => { const field = document.getElementById(id); if(field) field.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); }); }); [cite: 238]
         };
-        setTimeout(injectUpperCasePolicyV2, 2000);
-        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); } });
-        const antiFlickerStyle = document.createElement('style');
-        antiFlickerStyle.innerHTML = `.user-logged #loginScreen { display: none !important; }`; document.head.appendChild(antiFlickerStyle);
-        if (localStorage.getItem('firebase:authUser:' + firebaseConfig.apiKey)) { document.body.classList.add('user-logged');
-            }
+        setTimeout(injectUpperCasePolicyV2, 2000); [cite: 238]
+        window.addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); } }); [cite: 239]
+        const antiFlickerStyle = document.createElement('style'); [cite: 239]
+        antiFlickerStyle.innerHTML = `.user-logged #loginScreen { display: none !important; }`; document.head.appendChild(antiFlickerStyle); [cite: 240]
+        if (localStorage.getItem('firebase:authUser:' + firebaseConfig.apiKey)) { document.body.classList.add('user-logged'); } [cite: 240, 241]
 
-        const btnReset = document.getElementById('btnResetApp');
-        if(btnReset) { btnReset.onclick = async function(e) { if(confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?")) { await db.ref('users/'+currentUser.uid+'/history').remove();
-            await db.ref('users/'+currentUser.uid+'/config/prizes').set(["OPCIÓN 1", "OPCIÓN 2"]); alert("✅ Datos restablecidos."); location.reload(); } };
-            }
+        const btnReset = document.getElementById('btnResetApp'); [cite: 241]
+        if(btnReset) { btnReset.onclick = async function(e) { if(confirm("⚠️ AVISO: Se procederá a limpiar la base de datos de esta cuenta. ¿Continuar?")) { await db.ref('users/'+currentUser.uid+'/history').remove(); await db.ref('users/'+currentUser.uid+'/config/prizes').set(["OPCIÓN 1", "OPCIÓN 2"]); alert("✅ Datos restablecidos."); location.reload(); } }; } [cite: 242, 243, 244]
 
-        // --- INYECCIÓN ADITIVA: MATRIZ DE PRIVILEGIOS INVIOLABLE ---
+        // --- MATRIZ DE PRIVILEGIOS ORIGINAL ---
         const PowerLevelShield = {
-            isPremium: () => (config.level === 'pro' || config.level === 'ppe'),
-            enforcePrivileges: () => {
-                if (PowerLevelShield.isPremium()) {
-                     config.permissions = { canExport: true, canCustom: true, canAutoRemove: true, showAds: false, isDefault: false };
-                    config.maxSpins = Infinity;
-                }
-            }
+            isPremium: () => (config.level === 'pro' || config.level === 'ppe'), [cite: 244]
+            enforcePrivileges: () => { if (PowerLevelShield.isPremium()) { config.permissions = { canExport: true, canCustom: true, canAutoRemove: true, showAds: false, isDefault: false }; config.maxSpins = Infinity; } } [cite: 244, 245, 246]
         };
-        db.ref('users/'+(currentUser?.uid)+'/config').on('value', () => PowerLevelShield.enforcePrivileges());
-        const legacyExportCheck = window.checkExportPermission;
-        window.checkExportPermission = () => { if (PowerLevelShield.isPremium()) return true; return legacyExportCheck(); };
-        // --- INYECCIÓN ADITIVA: DESBLOQUEO DE EDICIÓN PARA NIVELES PREMIUM ---
+        db.ref('users/'+(currentUser?.uid)+'/config').on('value', () => PowerLevelShield.enforcePrivileges()); [cite: 247]
+        const legacyExportCheck = window.checkExportPermission; [cite: 247]
+        window.checkExportPermission = () => { if (PowerLevelShield.isPremium()) return true; return legacyExportCheck(); }; [cite: 247]
+
         (function() {
-            const btnEdit = document.getElementById('btnEditList');
-            if (btnEdit) {
-                btnEdit.addEventListener('click', function(e) {
-                    if (PowerLevelShield.isPremium()) {
-                         e.stopImmediatePropagation();
-                        const qtyInput = document.getElementById('prizeQuantity');
-                        qtyInput.value = config.prizes.length;
-                        generatePrizeInputs();
-                         document.getElementById('modalAdd').style.display='flex';
-                    }
-                }, true);
-            }
-        })();
-        // --- INYECCIÓN ADITIVA: RESTRICCIONES NIVEL FREE (VISIBLES PERO INACTIVAS) ---
-        (function() {
-            const originalSpin = appWheel.spin.bind(appWheel);
-            appWheel.spin = function() {
-                if (config.level === 'free' && winnersHistory.length >= 10) {
-                     return alert("⛔ Límite de 10 giros alcanzado para nivel FREE. Solicita una licencia PRO para giros ilimitados.");
-                }
-                originalSpin();
-            };
-            const btnImg = document.getElementById('btnDownloadImg');
-            const btnCSV = document.getElementById('btnExportCSV');
-            const blockFree = (e) => {
-                if (config.level === 'free') {
-                    e.stopImmediatePropagation();
-                    alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE.");
-                }
-            };
-            btnImg.addEventListener('click', blockFree, true);
-            btnCSV.addEventListener('click', blockFree, true);
+            const btnEdit = document.getElementById('btnEditList'); [cite: 248]
+            if (btnEdit) { btnEdit.addEventListener('click', function(e) { if (PowerLevelShield.isPremium()) { e.stopImmediatePropagation(); const qtyInput = document.getElementById('prizeQuantity'); qtyInput.value = config.prizes.length; generatePrizeInputs(); document.getElementById('modalAdd').style.display='flex'; } }, true); } [cite: 248, 249, 250]
         })();
 
-        // --- INYECCIÓN ADITIVA: REFUERZO DE REGISTRO Y AUTH ---
         (function() {
-            const btnAuth = document.getElementById('btnAuthAction');
+            const originalSpin = appWheel.spin.bind(appWheel); [cite: 251]
+            appWheel.spin = function() { if (config.level === 'free' && winnersHistory.length >= 10) { return alert("⛔ Límite de 10 giros alcanzado para nivel FREE. Solicita una licencia PRO para giros ilimitados."); } originalSpin(); }; [cite: 251, 252]
+            const btnImg = document.getElementById('btnDownloadImg'); const btnCSV = document.getElementById('btnExportCSV'); [cite: 252]
+            const blockFree = (e) => { if (config.level === 'free') { e.stopImmediatePropagation(); alert("🔒 Función bloqueada para nivel FREE. Contacta al Administrador para obtener una licencia PRO/PPE."); } }; [cite: 252, 253, 254]
+            btnImg.addEventListener('click', blockFree, true); btnCSV.addEventListener('click', blockFree, true); [cite: 254]
+        })();
+
+        (function() {
+            const btnAuth = document.getElementById('btnAuthAction'); [cite: 255]
             if (btnAuth) {
-                const originalAuthClick = btnAuth.onclick;
+                const originalAuthClick = btnAuth.onclick; [cite: 255]
                 btnAuth.onclick = async (e) => {
-                    const email = document.getElementById('authEmail').value;
-                    const pin = document.getElementById('authPin').value;
-                    const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-                    if (!email || !pin) return alert("Por favor, completa Email y Pin.");
-                    if (isRegister) {
-                        const pinConfirm = document.getElementById('authPinConfirm').value;
-                        const fullName = document.getElementById('authFullName').value;
-                        if (pin !== pinConfirm) return alert("Los Pins no coinciden.");
-                        if (!fullName) return alert("El nombre es obligatorio para el registro.");
-                    }
-                    if (originalAuthClick) {
-                        try {
-                            await originalAuthClick.call(btnAuth, e);
-                        } catch (err) {
-                            alert("Error: " + err.message);
-                        }
-                    }
+                    const email = document.getElementById('authEmail').value; const pin = document.getElementById('authPin').value; const isRegister = document.getElementById('confirmGroup').style.display === 'block'; [cite: 256]
+                    if (!email || !pin) return alert("Por favor, completa Email y Pin."); [cite: 256]
+                    if (isRegister) { const pinConfirm = document.getElementById('authPinConfirm').value; const fullName = document.getElementById('authFullName').value; if (pin !== pinConfirm) return alert("Los Pins no coinciden."); if (!fullName) return alert("El nombre es obligatorio para el registro."); } [cite: 257, 258, 259]
+                    if (originalAuthClick) { try { await originalAuthClick.call(btnAuth, e); } catch (err) { alert("Error: " + err.message); } } [cite: 259, 260, 261]
                 };
             }
         })();
 
-        // --- INYECCIÓN ADITIVA: MONITOREO DE SESIONES Y PRESENCIA (ADMIN MASTER) ---
         (function() {
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    const statusRef = db.ref(`users/${user.uid}/status`);
-                    const loginRef = db.ref(`users/${user.uid}/loginLogs`).push();
-                    const now = new Date().toLocaleString();
-                    
-                    await loginRef.set({ timestamp: now });
-                    
-                    const onlineStatus = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
-                    const offlineStatus = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
-
-                    db.ref('.info/connected').on('value', (snap) => {
-                        if (snap.val() === false) return;
-                        statusRef.onDisconnect().set(offlineStatus).then(() => {
-                            statusRef.set(onlineStatus);
-                        });
-                    });
+                    const statusRef = db.ref(`users/${user.uid}/status`); const loginRef = db.ref(`users/${user.uid}/loginLogs`).push(); const now = new Date().toLocaleString(); [cite: 262, 263]
+                    await loginRef.set({ timestamp: now }); [cite: 263]
+                    const onlineStatus = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP }; [cite: 264]
+                    const offlineStatus = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP }; [cite: 264]
+                    db.ref('.info/connected').on('value', (snap) => { if (snap.val() === false) return; statusRef.onDisconnect().set(offlineStatus).then(() => { statusRef.set(onlineStatus); }); }); [cite: 264, 265, 266]
                 }
             });
         })();
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
