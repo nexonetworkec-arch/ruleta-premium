@@ -319,24 +319,42 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
-        z-index:9999"></canvas>
+    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-   // --- MOVIDO AL INICIO PARA EVITAR ERRORES ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
-        authDomain: "ruletapremiumbusiness.firebaseapp.com",
-        projectId: "ruletapremiumbusiness",
-        storageBucket: "ruletapremiumbusiness.firebasestorage.app",
-        messagingSenderId: "15131512066",
-        appId: "1:15131512066:web:f98b361c388fc1225e861b",
-        databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
-    };
-        const firebaseConfig = { ... };
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-const auth = firebase.auth(); //
-const db = firebase.database(); //
+        // --- 1. CONFIGURACIÓN ÚNICA (CORREGIDA) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
+            authDomain: "ruletapremiumbusiness.firebaseapp.com",
+            projectId: "ruletapremiumbusiness",
+            storageBucket: "ruletapremiumbusiness.firebasestorage.app",
+            messagingSenderId: "15131512066",
+            appId: "1:15131512066:web:f98b361c388fc1225e861b",
+            databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
+        };
+
+        // --- 2. INICIALIZACIÓN GLOBAL ---
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+        const auth = firebase.auth(); 
+        const db = firebase.database();
+
+        // --- 3. VARIABLES DE ESTADO ---
+        let currentUser = null; 
+        let winnersHistory = [];
+        let config = { 
+            title: "RULETA PREMIUM", 
+            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
+            colorA: "#d4af37", 
+            colorB: "#141414", 
+            level: "free", 
+            customLogoURL: "" 
+        };
+
+        // --- 4. INICIO DE TU LÓGICA ORIGINAL (AudioEngine) ---
+        class AudioEngine {
+            // ...
       
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
@@ -913,6 +931,7 @@ const db = firebase.database(); //
     </script>
 </body>
 </html>
+
 
 
 
