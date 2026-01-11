@@ -333,9 +333,10 @@
         appId: "1:15131512066:web:f98b361c388fc1225e861b",
         databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
     };
-    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-    const auth = firebase.auth(); 
-    const db = firebase.database();
+    const firebaseConfig = { ... };
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+const auth = firebase.auth(); // ESTA SE QUEDA
+const db = firebase.database(); // ESTA SE QUEDA
       
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
@@ -912,6 +913,7 @@
     </script>
 </body>
 </html>
+
 
 
 
