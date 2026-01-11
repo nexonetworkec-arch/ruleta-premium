@@ -308,15 +308,27 @@
     <script>
        // --- CONFIGURACIÓN ACTUALIZADA (SIN DUPLICAR DECLARACIONES) ---
 (function() {
-    const firebaseConfig = {
-        apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
-        authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
-        databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
-        projectId: "ruletapremiumbusiness-4db7e",
-        storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-        messagingSenderId: "822563863112",
-        appId: "1:822563863112:web:d134d015736e2fafb5367d"
-    };
+
+    // --- CONFIGURACIÓN CENTRALIZADA (SOLUCIÓN AL ERROR DE REFERENCIA) ---
+const firebaseConfig = {
+    apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
+    authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+    databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
+    projectId: "ruletapremiumbusiness-4db7e",
+    storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
+    messagingSenderId: "822563863112",
+    appId: "1:822563863112:web:d134d015736e2fafb5367d"
+};
+
+// Inicialización única y segura
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+// Asignación a variables globales para que todo el código las vea
+window.auth = firebase.auth();
+window.db = firebase.database();
+console.log("✅ Conexión establecida con ruletapremiumbusiness-4db7e");
 
     // Inicialización Segura
     if (!firebase.apps.length) {
@@ -850,6 +862,7 @@
     </script>
 </body>
 </html>
+
 
 
 
