@@ -194,14 +194,15 @@
 
 /* --- INYECCIÓN ADITIVA: UI CONTROL LEADS --- */
 .close-modal {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
+    position: absolute; /* Esto lo saca del flujo y lo permite posicionar */
+    top: 15px;         /* Distancia desde arriba */
+    right: 20px;        /* Distancia desde la derecha */
+    font-size: 30px;
     color: var(--gold);
     cursor: pointer;
     font-weight: bold;
-    z-index: 100;
+    line-height: 1;
+    z-index: 1000;      /* Asegura que esté por encima de todo */
 }
 .switch-container {
     display: flex;
@@ -335,10 +336,11 @@ input:checked + .slider:before { transform: translateX(22px); }
             margin-top:10px;">CANCELAR</button>
     </div></div>
 
-    <div id="modalLead" class="lead-modal">
-        <span class="close-modal" id="btnCloseLeadModal">&times;</span>
+    <div id="leadModal" class="modal" style="display: none;">
+    <div class="modal-content" style="position: relative;"> <span class="close-modal" id="btnCloseLeadModal">&times;</span>
+        
         <div class="lead-card">
-            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
+            <h2 style="color: var(--gold); margin-bottom: 20px;">Registro de Participante</h2>
             <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
             <input type="text" id="leadNom" class="lead-input" placeholder="NOMBRE">
             <input type="tel" id="leadTel" class="lead-input" placeholder="WHATSAPP">
@@ -989,19 +991,17 @@ if(btnAdminExport) {
             };
         })();
 
-// --- FUNCIONALIDADES DE REGISTRO AVANZADO ---
-
-// 1. Agregar botón de cerrar al modal (Inyección DOM)
-const modalContent = document.querySelector('#leadModal .modal-content');
-if(modalContent) {
-    const closeBtn = document.createElement('span');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'close-modal';
-    closeBtn.onclick = () => {
-        document.getElementById('leadModal').style.display = 'none';
-        tempLeadData = null; // Resetea datos si cierra
+// Reemplaza el bloque del botón de cierre por este:
+const btnCloseLead = document.getElementById('btnCloseLeadModal');
+if (btnCloseLead) {
+    btnCloseLead.onclick = function() {
+        const modal = document.getElementById('leadModal');
+        if (modal) {
+            modal.style.display = 'none';
+            // Importante: No borramos tempLeadData aquí para no perder el flujo, 
+            // solo ocultamos la vista.
+        }
     };
-    modalContent.appendChild(closeBtn);
 }
 
 // 2. Validación de Correo y Duplicados
@@ -1154,6 +1154,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
