@@ -1166,17 +1166,86 @@ if(btnMaster) {
         } catch(e) { alert("Error: No tienes permisos de Administrador Master."); }
     };
 }
+
+/* ==========================================================================
+   INYECCIÓN ADITIVA: PARCHE DE SEGURIDAD Y OPTIMIZACIÓN (INTEGRIDAD 100%)
+   ========================================================================== */
+
+// 1. Validación de Seguridad en Registro (Fix: Pin Match)
+const originalAuthAction = document.getElementById('btnAuthAction').onclick;
+document.getElementById('btnAuthAction').onclick = async function(e) {
+    const isRegister = document.getElementById('confirmGroup').style.display === 'block';
+    if(isRegister) {
+        const p1 = document.getElementById('authPin').value;
+        const p2 = document.getElementById('authPinConfirm').value;
+        const name = document.getElementById('authFullName').value;
+        
+        if(p1.length < 6) { alert("El PIN debe tener al menos 6 caracteres."); return; }
+        if(p1 !== p2) { alert("Los PIN no coinciden."); return; }
+        if(!name) { alert("Por favor, ingresa tu nombre completo."); return; }
+    }
+    
+    // Feedback Visual: Indicador de carga
+    const btn = e.target;
+    const originalText = btn.innerText;
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
+    
+    try {
+        await originalAuthAction.apply(this, arguments);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
+
+// 2. Fix de AudioContext para Navegadores Móviles (Safari/Chrome)
+document.addEventListener('touchstart', function() {
+    if (appWheel.audio && appWheel.audio.ctx.state === 'suspended') {
+        appWheel.audio.ctx.resume();
+    }
+}, { once: true });
+
+// 3. Robustez del Motor de Giro (Fix: IsSpinning Lock)
+const originalSpin = appWheel.spin.bind(appWheel);
+appWheel.spin = function() {
+    // Si la ruleta está bloqueada por más de 10 segundos, liberar (Fail-safe)
+    if(this.isSpinning) {
+        if(!this._spinTimestamp) this._spinTimestamp = Date.now();
+        if(Date.now() - this._spinTimestamp > 10000) this.isSpinning = false;
+        else return;
+    }
+    this._spinTimestamp = Date.now();
+    originalSpin();
+};
+
+// 4. Ajuste de Estilos Aditivos (Fix: Responsividad y UI)
+const patchStyles = document.createElement('style');
+patchStyles.innerHTML = `
+    /* Evita el solapamiento en móviles pequeños */
+    @media (max-height: 700px) and (max-width: 800px) {
+        .wheel-wrapper { width: 60vw !important; height: 60vw !important; }
+        .app-container { padding-bottom: 180px !important; }
+    }
+    /* Estilo para el estado de carga del botón */
+    #btnAuthAction:disabled { opacity: 0.7; cursor: not-allowed; background: #444; }
+    /* Mejora de visibilidad de textos en la ruleta */
+    #wheelCanvas { filter: contrast(1.1) brightness(1.1); }
+`;
+document.head.appendChild(patchStyles);
+
+// 5. Normalización de Nombres de Usuario
+db.ref('users').on('child_added', (snapshot) => {
+    const data = snapshot.val();
+    if (data.config && data.config.fullName) {
+        const normalized = data.config.fullName.toUpperCase();
+        if (data.config.fullName !== normalized) {
+            db.ref(`users/${snapshot.key}/config/fullName`).set(normalized);
+        }
+    }
+});
+
+console.log("NEXO® Pro: Parches de integridad aplicados correctamente.");
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
