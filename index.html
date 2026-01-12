@@ -350,17 +350,16 @@
             customLogoURL: "" 
         };
 
-        // --- 2. INICIO DE MOTORES ---
+        // ESTA ES LA LÍNEA QUE SIGUE:
         class AudioEngine {
-        let config = { 
-            title: "RULETA PREMIUM", 
-            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
-            colorA: "#d4af37", 
-            colorB: "#141414", 
-            level: "free", 
-            customLogoURL: "" 
-        };
-
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.m = {
+                    win: [440, 554, 659, 880],
+                    click: [150, 100],
+                    loss: [220, 110]
+                };
+            }
         // --- 2. INICIO DE LÓGICA ORIGINAL ---
         class AudioEngine {
 
