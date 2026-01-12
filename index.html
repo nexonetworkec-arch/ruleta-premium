@@ -857,5 +857,61 @@
         });
     })();
 </script>
+
+<script>
+    (function() {
+        // Constante de acceso privilegiado
+        const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        // Monitoreo de autenticación para activar privilegios
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MASTER_UID) {
+                console.log("NEXO® System: Acceso Master detectado para " + MASTER_UID);
+                
+                // 1. Localizar y activar el botón en la interfaz
+                const btnAdmin = document.getElementById('btnAdminMaster');
+                if (btnAdmin) {
+                    btnAdmin.style.display = 'block';
+                    btnAdmin.style.border = '2px solid var(--gold)';
+                    btnAdmin.style.boxShadow = '0 0 10px rgba(212, 175, 55, 0.5)';
+                    
+                    // Vinculación de apertura y carga de datos
+                    btnAdmin.onclick = () => {
+                        document.getElementById('modalAdmin').style.display = 'flex';
+                        
+                        // Carga inicial de la tabla y estadísticas
+                        if (typeof updateAdminTableFull === 'function') {
+                            updateAdminTableFull();
+                        }
+                    };
+                }
+            }
+        });
+
+        // Asegurar que el buscador y los filtros funcionen al escribir
+        const searchInput = document.getElementById('searchUser');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const term = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#adminUsersTable tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        }
+
+        // Estilos adicionales para mejorar la visualización del panel administrativo
+        const style = document.createElement('style');
+        style.innerHTML = `
+            #modalAdmin .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+            .badge-mkt { background: #ff00ff; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; margin-left: 5px; }
+            .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+            .status-online { background-color: #4caf50; box-shadow: 0 0 5px #4caf50; }
+            .status-offline { background-color: #888; }
+        `;
+        document.head.appendChild(style);
+    })();
+</script>
 </body>
 </html>
