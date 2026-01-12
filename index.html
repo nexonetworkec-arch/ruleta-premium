@@ -317,6 +317,7 @@
             <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
@@ -331,7 +332,6 @@
             appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
 
-        // Inicialización única para proteger la integridad del motor
         if (!firebase.apps.length) { 
             firebase.initializeApp(firebaseConfig); 
         }
@@ -339,7 +339,6 @@
         const auth = firebase.auth(); 
         const db = firebase.database();
 
-        // Variables de estado global requeridas por el sistema
         let currentUser = null; 
         let winnersHistory = [];
         let config = { 
@@ -351,28 +350,8 @@
             customLogoURL: "" 
         };
 
-        // --- 3. INICIO DEL MOTOR DE AUDIO ---
+        // --- 3. CONEXIÓN CON MOTOR DE AUDIO ---
         class AudioEngine {
-
-        // --- 2. INICIO DE MOTORES (AudioEngine) ---
-        class AudioEngine {
-             constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-            playTick() { if(this.ctx.state === 'suspended') this.ctx.resume();
-                const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.frequency.setValueAtTime(600, this.ctx.currentTime); g.gain.setValueAtTime(0.1, this.ctx.currentTime); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.05);
-                }
-            playWin() { [261, 329, 392].forEach((f, i) => { const o = this.ctx.createOscillator(); o.frequency.value = f; o.connect(this.ctx.destination); o.start(this.ctx.currentTime + i*0.1); o.stop(this.ctx.currentTime + 0.5); });
-                }
-        }
-        class ConfettiEngine {
-            constructor() { this.canvas = document.getElementById('confettiCanvas');
-                this.ctx = this.canvas.getContext('2d'); this.items = []; }
-            burst() { this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight; for(let i=0; i<80; i++) this.items.push({ x: innerWidth/2, y: innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20-10, size: Math.random()*8+4, color: config.colorA, a: 1 });
-                this.loop(); }
-            loop() { this.ctx.clearRect(0,0,innerWidth,innerHeight);
-                this.items.forEach((p,i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.4; p.a -= 0.01; this.ctx.fillStyle = p.color; this.ctx.globalAlpha = p.a; this.ctx.fillRect(p.x, p.y, p.size, p.size); if(p.a <= 0) this.items.splice(i,1); });
-                if(this.items.length) requestAnimationFrame(()=>this.loop()); }
-        }
 
         class Wheel {
             constructor() { this.canvas = document.getElementById('wheelCanvas');
@@ -925,3 +904,4 @@
     </script>
 </body>
 </html>
+
