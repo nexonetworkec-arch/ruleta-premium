@@ -903,182 +903,110 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-     // ================================================================
-// INYECCIÓN ADITIVA: SISTEMA DE LEADS, EXCEL Y PANEL ADMINISTRADOR
-// ================================================================
+    // --- AQUÍ EMPIEZA EL REEMPLAZO ---
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Leads_NEXO_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
-(function() {
-    const btnSpin = document.getElementById('btnSpinCenter');
-    const modalLead = document.getElementById('leadModal');
-    let tempLeadData = null;
+// ==========================================
+// LÓGICA DEL PANEL ADMIN Y CONTROL DE GIRO
+// ==========================================
 
-    // 1. Control del Botón Girar con Validación de Sistema de Leads
-    if(btnSpin) {
-        btnSpin.onclick = async () => {
-            // Verificar si el sistema de leads está activo en la configuración del usuario
-            const snapActive = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
-            const isActive = snapActive.val();
+// 1. Interceptor de Giro (¿Pide datos o gira directo?)
+const btnSpin = document.getElementById('btnSpinCenter');
+if(btnSpin) {
+    btnSpin.onclick = async () => {
+        const snap = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
+        const isActive = snap.val();
 
-            // Si el sistema está activo y no hay datos temporales, pedirlos. 
-            // Si es FREE o el sistema está apagado, gira directo.
-            if(config.level === 'FREE' || !isActive || tempLeadData) {
-                appWheel.spin();
-            } else {
-                if(modalLead) modalLead.style.display = 'flex';
-            }
-        };
-    }
-
-    // 2. Validación y Confirmación de Registro (Lead)
-    const btnConfirm = document.getElementById('btnConfirmLead');
-    if(btnConfirm) {
-        btnConfirm.onclick = async () => {
-            const name = document.getElementById('leadName').value.trim();
-            const phone = document.getElementById('leadPhone').value.trim();
-            const email = document.getElementById('leadEmail').value.trim();
-
-            if(!name || !phone || !email) return alert("Por favor, llena todos los campos.");
-            
-            // Validación de formato y duplicados
-            const esValido = await validarLead(email);
-            if(!esValido) return;
-
-            tempLeadData = { 
-                nombre: name, 
-                whatsapp: phone, 
-                email: email, 
-                fecha: new Date().toLocaleString() 
-            };
-
-            if(modalLead) modalLead.style.display = 'none';
+        // Si es FREE, o sistema OFF, o ya se registró -> Gira
+        if(config.level === 'FREE' || !isActive || window.tempLeadData) {
             appWheel.spin();
-        };
-    }
-
-    // 3. Función para Exportar Excel (Usuario Pro/PPE)
-    const btnExport = document.getElementById('btnExportLeads');
-    if(btnExport) {
-        btnExport.onclick = async () => {
-            try {
-                const snap = await db.ref(`users/${currentUser.uid}/leads`).once('value');
-                if(!snap.exists()) return alert("No hay leads registrados para exportar.");
-                
-                const data = Object.values(snap.val());
-                const ws = XLSX.utils.json_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Mis Leads");
-                XLSX.writeFile(wb, `Leads_NEXO_${new Date().toLocaleDateString()}.xlsx`);
-            } catch (error) {
-                alert("Error al exportar: " + error.message);
-            }
-        };
-    }
-
-    // 4. Integrar guardado automático del lead al finalizar el giro
-    const originalFinalize = appWheel.finalize.bind(appWheel);
-    appWheel.finalize = async function() {
-        await originalFinalize();
-        if(tempLeadData) {
-            const s = (Math.PI*2)/config.prizes.length;
-            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
-            if(idx < 0) idx += config.prizes.length;
-            
-            // Guardar el premio ganado en el registro del lead
-            tempLeadData.premio = config.prizes[idx];
-            await db.ref(`users/${currentUser.uid}/leads`).push(tempLeadData);
-            tempLeadData = null; // Limpiar para el siguiente participante
+        } else {
+            document.getElementById('leadModal').style.display = 'flex';
         }
     };
-})();
+}
 
-// --- FUNCIONES DE SOPORTE ---
+// 2. Confirmación dentro del Modal
+const btnConfirm = document.getElementById('btnConfirmLead');
+if(btnConfirm) {
+    btnConfirm.onclick = async () => {
+        const name = document.getElementById('leadName').value.trim();
+        const phone = document.getElementById('leadPhone').value.trim();
+        const email = document.getElementById('leadEmail').value.trim();
 
-// Validación de Email y Duplicados
+        if(!name || !phone || !email) return alert("Llena todos los campos.");
+        
+        const esValido = await validarLead(email);
+        if(!esValido) return;
+
+        window.tempLeadData = { nombre: name, whatsapp: phone, email: email, fecha: new Date().toLocaleString() };
+        document.getElementById('leadModal').style.display = 'none';
+        appWheel.spin();
+    };
+}
+
+// 3. Validación de duplicados
 async function validarLead(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert("Por favor, ingresa un correo electrónico válido.");
-        return false;
-    }
-
-    const snapshot = await db.ref(`users/${currentUser.uid}/leads`)
-        .orderByChild('email')
-        .equalTo(email)
-        .once('value');
-
-    if (snapshot.exists()) {
-        alert("Este correo ya ha participado en este sorteo.");
+    const snap = await db.ref(`users/${currentUser.uid}/leads`).orderByChild('email').equalTo(email).once('value');
+    if (snap.exists()) {
+        alert("Este correo ya participó.");
         return false;
     }
     return true;
 }
 
-// Control de Activación del Sistema con Contraseña
-async function toggleLeadSystem(active) {
-    const password = prompt("Introduce tu contraseña para confirmar el cambio:");
-    if (!password) return;
-
-    try {
-        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
-        await firebase.auth().currentUser.reauthenticateWithCredential(credential);
-        
-        await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).set(active);
-        alert(`Sistema de registro ${active ? 'ACTIVADO' : 'DESACTIVADO'}`);
-    } catch (error) {
-        alert("Error de autenticación: Contraseña incorrecta.");
-        const sw = document.getElementById('leadSwitch');
-        if(sw) sw.checked = !active;
+// 4. Renderizado del Panel Admin Master
+async function renderAdminUsers(filter = "") {
+    const list = document.getElementById('adminUserList');
+    if(!list) return;
+    list.innerHTML = "Cargando...";
+    const snapshot = await db.ref('users').once('value');
+    const users = snapshot.val();
+    list.innerHTML = "";
+    for (let uid in users) {
+        const u = users[uid];
+        const email = u.email || "Sin email";
+        const level = (u.config && u.config.level) ? u.config.level : "FREE";
+        if (filter && !email.toLowerCase().includes(filter.toLowerCase())) continue;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${email}</td>
+            <td><span class="badge-${level.toLowerCase()}">${level}</span></td>
+            <td>
+                <select onchange="updateUserLevel('${uid}', this.value)">
+                    <option value="FREE" ${level==='FREE'?'selected':''}>FREE</option>
+                    <option value="PRO" ${level==='PRO'?'selected':''}>PRO</option>
+                    <option value="PPE" ${level==='PPE'?'selected':''}>PPE</option>
+                </select>
+            </td>
+            <td><button onclick="deleteUserAccount('${uid}')" style="color:red">Eliminar</button></td>`;
+        list.appendChild(row);
     }
 }
 
-// --- LÓGICA EXCLUSIVA ADMIN MASTER ---
+async function updateUserLevel(uid, lvl) {
+    await db.ref(`users/${uid}/config/level`).set(lvl);
+    renderAdminUsers();
+}
 
-const btnAdminMaster = document.getElementById('btnAdminMaster'); 
-if(btnAdminMaster) {
-    btnAdminMaster.onclick = async () => {
-        // Verificar si es admin en la tabla de permisos
-        const adminCheck = await db.ref(`admins/${currentUser.uid}`).once('value');
-        if(!adminCheck.exists()) return alert("Acceso denegado: No tienes permisos de Administrador Master.");
-
-        // Mostrar Panel y cargar usuarios
-        const modalAdmin = document.getElementById('modalAdmin');
-        if(modalAdmin) {
-            modalAdmin.style.display = 'flex';
-            renderAdminUsers(); // Función definida en el bloque anterior
-        }
+// Vincular botón Admin
+const btnAdmin = document.getElementById('btnAdminMaster');
+if(btnAdmin) {
+    btnAdmin.onclick = () => {
+        document.getElementById('modalAdmin').style.display = 'flex';
+        renderAdminUsers();
     };
 }
 
-// Función para descargar TODA la base de datos (Global)
-async function exportGlobalDatabase() {
-    try {
-        const allUsersSnap = await db.ref('users').once('value');
-        let allLeads = [];
-        
-        allUsersSnap.forEach(userSnap => {
-            const userData = userSnap.val();
-            if(userData.leads) {
-                Object.values(userData.leads).forEach(lead => {
-                    allLeads.push({ 
-                        ...lead, 
-                        owner_id: userSnap.key,
-                        owner_email: userData.email 
-                    });
-                });
-            }
-        });
-
-        if(allLeads.length === 0) return alert("No hay datos globales disponibles.");
-        
-        const ws = XLSX.utils.json_to_sheet(allLeads);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Global_Leads");
-        XLSX.writeFile(wb, "NEXO_MASTER_DATABASE.xlsx");
-    } catch (error) {
-        alert("Error en exportación maestra: " + error.message);
-    }
-}
-    </script>
+</script>
 </body>
 </html>
+
 
