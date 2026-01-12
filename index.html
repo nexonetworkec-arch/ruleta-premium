@@ -1161,8 +1161,47 @@
         }
     }
 </script>
+
+    <style>
+    .btn-spin {
+        position: relative;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        overflow: visible !important; /* Permite que el texto respire */
+        z-index: 10;
+    }
+
+    /* Forzamos que el texto esté por encima del brillo dorado */
+    .btn-spin span, .btn-spin i {
+        position: relative;
+        z-index: 11;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    (function() {
+        const btn = document.getElementById('spinBtn');
+        if (btn) {
+            // Aseguramos que el botón contenga un span para el texto
+            if (!btn.querySelector('span')) {
+                const texto = btn.innerText || "GIRAR";
+                btn.innerHTML = `<span>${texto}</span>`;
+            }
+
+            // Reparador de estado: Si el botón se queda vacío, restaurar
+            setInterval(() => {
+                if (btn.innerText.trim() === "" && !btn.querySelector('i')) {
+                    btn.innerHTML = `<span>GIRAR</span>`;
+                }
+            }, 2000);
+        }
+    })();
+</script>
 </body>
 </html>
+
 
 
 
