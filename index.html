@@ -322,7 +322,7 @@
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-        // --- 1. CONFIGURACIÓN ÚNICA Y SEGURA (PROYECTO: 4db7e) ---
+        // --- 1. CONFIGURACIÓN INTEGRADA Y SANEADA (PROYECTO: 4db7e) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -332,6 +332,27 @@
             messagingSenderId: "822563863112",
             appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
+
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+
+        const auth = firebase.auth(); 
+        const db = firebase.database();
+
+        let currentUser = null; 
+        let winnersHistory = [];
+        let config = { 
+            title: "RULETA PREMIUM", 
+            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
+            colorA: "#d4af37", 
+            colorB: "#141414", 
+            level: "free", 
+            customLogoURL: "" 
+        };
+
+        // --- 2. MOTOR ORIGINAL ---
+        class AudioEngine {
 
         // Inicialización protegida para mantener integridad
         if (!firebase.apps.length) { 
