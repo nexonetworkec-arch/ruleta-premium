@@ -194,15 +194,14 @@
 
 /* --- INYECCIÓN ADITIVA: UI CONTROL LEADS --- */
 .close-modal {
-    position: absolute; /* Esto lo saca del flujo y lo permite posicionar */
-    top: 15px;         /* Distancia desde arriba */
-    right: 20px;        /* Distancia desde la derecha */
-    font-size: 30px;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
     color: var(--gold);
     cursor: pointer;
     font-weight: bold;
-    line-height: 1;
-    z-index: 1000;      /* Asegura que esté por encima de todo */
+    z-index: 100;
 }
 .switch-container {
     display: flex;
@@ -336,11 +335,9 @@ input:checked + .slider:before { transform: translateX(22px); }
             margin-top:10px;">CANCELAR</button>
     </div></div>
 
-    <div id="leadModal" class="modal" style="display: none;">
-    <div class="modal-content" style="position: relative;"> <span class="close-modal" id="btnCloseLeadModal">&times;</span>
-        
+    <div id="modalLead" class="lead-modal">
         <div class="lead-card">
-            <h2 style="color: var(--gold); margin-bottom: 20px;">Registro de Participante</h2>
+            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
             <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
             <input type="text" id="leadNom" class="lead-input" placeholder="NOMBRE">
             <input type="tel" id="leadTel" class="lead-input" placeholder="WHATSAPP">
@@ -413,14 +410,40 @@ input:checked + .slider:before { transform: translateX(22px); }
                 if(this.items.length) requestAnimationFrame(()=>this.loop()); }
         }
 
-        /* ==========================================
-   BLOQUE ESTRUCTURAL CORREGIDO (MOTOR WHEEL)
-   ========================================== */
+        class Wheel {
+            constructor() { this.canvas = document.getElementById('wheelCanvas');
+                this.ctx = this.canvas.getContext('2d'); this.angle = 0; this.isSpinning = false; this.audio = new AudioEngine(); this.confetti = new ConfettiEngine();
+                }
+            draw() {
+                const w = 800, cx = 400, r = 360;
+                this.ctx.clearRect(0,0,w,w);
+                const n = config.prizes.length; const slice = (Math.PI*2)/n;
+                config.prizes.forEach((t, i) => {
+                    this.ctx.save(); this.ctx.beginPath(); this.ctx.fillStyle = i%2?config.colorB:config.colorA;
+                    this.ctx.moveTo(cx,cx); this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice); this.ctx.fill();
+                    this.ctx.translate(cx,cx); this.ctx.rotate(this.angle+i*slice+slice/2);
+                     this.ctx.font = "900 40px Segoe UI"; this.ctx.textAlign="right"; this.ctx.fillStyle="#fff";
+                    this.ctx.fillText(t.toUpperCase(), r-40, 0); this.ctx.restore();
+                });
+                }
+            spin() {
+                if(this.isSpinning) return;
+                this.isSpinning = true;
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
+                const start = performance.now();
+                const anim = (now) => {
+                    const p = Math.min((now-start)/5000, 1);
+                    this.angle = total * (1 - Math.pow(1-p, 3)); this.draw();
+                    if(p < 1) requestAnimationFrame(anim);
+                    else { this.isSpinning = false; this.finalize();
+                        }
+                };
+                requestAnimationFrame(anim);
+                }
             async finalize() {
                 const s = (Math.PI*2)/config.prizes.length;
                 let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
                 if(idx < 0) idx += config.prizes.length;
-                
                 this.winnerIdx = idx;
                 const premio = config.prizes[idx];
                 document.getElementById('winnerDisplay').innerText = premio;
@@ -431,102 +454,37 @@ input:checked + .slider:before { transform: translateX(22px); }
                 const fecha = new Date().toLocaleString();
                 winnersHistory.push({nombre: premio, fecha: fecha});
                 
-          /* === REEMPLAZA DESDE TUS AWAIT HASTA EL INICIO DE FINALIZE CON ESTO === */
-
-            // 1. Aquí termina el método anterior (el que anima el giro)
-        } 
-
-        async finalize() {
-            const s = (Math.PI*2)/config.prizes.length;
-            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
-            if(idx < 0) idx += config.prizes.length;
-            this.winnerIdx = idx;
-            const premio = config.prizes[idx];
-            const fecha = new Date().toLocaleString();
-
-            async finalize() {
-            const s = (Math.PI * 2) / config.prizes.length;
-            let idx = Math.floor(((Math.PI * 1.5) - (this.angle % (Math.PI * 2))) / s) % config.prizes.length;
-            if (idx < 0) idx += config.prizes.length;
-            
-            this.winnerIdx = idx;
-            const premio = config.prizes[idx];
-            const fecha = new Date().toLocaleString();
-
-            // 1. Interfaz y Premiación
-            document.getElementById('winnerDisplay').innerText = premio;
-            document.getElementById('modalWinner').style.display = 'flex';
-            this.audio.playWin();
-            this.confetti.burst();
-
-            // 2. INYECCIÓN ADITIVA: Registro en Firebase
-            winnersHistory.push({ nombre: premio, fecha: fecha });
-            try {
-                await db.ref('users/' + currentUser.uid + '/history').set(winnersHistory);
-                await db.ref('users/' + currentUser.uid + '/spinLogs').push({
+                // --- INYECCIÓN ADITIVA: Registro en Historial Global del Usuario ---
+                await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory);
+                await db.ref('users/'+currentUser.uid+'/spinLogs').push({
                     premio: premio,
                     timestamp: fecha
                 });
-            } catch (e) {
-                console.error("Error en Firebase:", e);
             }
-        } // Cierre de finalize
-    } // Cierre definitivo de la clase Wheel
-
-    // --- INSTANCIACIÓN Y CONTROLADORES ---
-    const appWheel = new Wheel();
-
-    document.getElementById('btnCloseWinner').onclick = async () => {
-        if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
-            config.prizes.splice(appWheel.winnerIdx, 1);
-            if(config.prizes.length === 0) config.prizes = ["FIN"];
-            await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes);
         }
-        document.getElementById('modalWinner').style.display = 'none';
-    };
-
-    document.getElementById('btnWinners').onclick = () => { 
-        syncTitles(); 
-        document.getElementById('modalHistory').style.display = 'flex'; 
-    };
-
-    document.getElementById('btnCloseHistory').onclick = () => { 
-        document.getElementById('modalHistory').style.display = 'none'; 
-    };
-
-    document.getElementById('btnResetApp').onclick = async () => { 
-        if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { 
-            await db.ref('users/'+currentUser.uid+'/history').remove(); 
-            winnersHistory = []; 
-            location.reload(); 
-        } 
-    };
-
-    // --- ESTADO DE AUTENTICACIÓN ---
-    auth.onAuthStateChanged(user => {
-        currentUser = user;
-        if(user) {
-            document.getElementById('loginScreen').style.display='none';
-            document.getElementById('appMain').style.display='flex';
-            
-            db.ref('admins/'+user.uid).on('value', s => { 
-                if(s.val()) document.getElementById('btnAdminMaster').style.display='block'; 
-            });
-
-            db.ref('users/'+user.uid+'/config').on('value', s => { 
-                if(s.val()) { 
-                    config = {...config, ...s.val()}; 
-                    document.getElementById('mainTitle').innerText = config.title; 
-                    appWheel.draw(); 
-                } 
-            });
-
-            db.ref('users/'+user.uid+'/history').on('value', s => { 
-                winnersHistory = s.val() || []; 
-                renderHistory(); 
-            });
-        }
-    });
+        const appWheel = new Wheel();
+        document.getElementById('btnCloseWinner').onclick = async () => {
+            if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
+                config.prizes.splice(appWheel.winnerIdx, 1);
+                if(config.prizes.length === 0) config.prizes = ["FIN"];
+                await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes);
+            }
+            document.getElementById('modalWinner').style.display = 'none';
+            };
+        document.getElementById('btnWinners').onclick = () => { syncTitles(); document.getElementById('modalHistory').style.display = 'flex'; };
+        document.getElementById('btnCloseHistory').onclick = () => { document.getElementById('modalHistory').style.display = 'none'; };
+        document.getElementById('btnResetApp').onclick = async () => { if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { await db.ref('users/'+currentUser.uid+'/history').remove(); winnersHistory = []; location.reload(); } };
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            if(user) {
+                document.getElementById('loginScreen').style.display='none';
+                document.getElementById('appMain').style.display='flex';
+                db.ref('admins/'+user.uid).on('value', s => { if(s.val()) document.getElementById('btnAdminMaster').style.display='block'; });
+                db.ref('users/'+user.uid+'/config').on('value', 
+                s => { if(s.val()) { config = {...config, ...s.val()}; document.getElementById('mainTitle').innerText = config.title; appWheel.draw(); } });
+                db.ref('users/'+user.uid+'/history').on('value', s => { winnersHistory = s.val() || []; renderHistory(); });
+            }
+        });
         const getOrdinal = (n) => {
             if (n === 1) return "1er";
             if (n === 2) return "2do";
@@ -945,38 +903,23 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-   // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL (CORREGIDA) ---
-(function() {
-    const btnSpin = document.getElementById('btnSpinCenter');
-    if (btnSpin) {
-        btnSpin.onclick = () => {
-            // Verificar si el switch de leads existe y está activo
-            const leadSwitch = document.getElementById('leadSystemSwitch');
-            const leadsActivos = leadSwitch ? leadSwitch.checked : false;
+        // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
+        (function() {
+            const btnSpin = document.getElementById('btnSpinCenter');
+            const modalLead = document.getElementById('modalLead');
+            let tempLeadData = null;
 
-            // 1. Si el sistema de leads está apagado o es nivel FREE, girar directo
-            if (config.level === 'free' || !leadsActivos) {
-                appWheel.spin();
-                return;
+            if(btnSpin) {
+                btnSpin.onclick = () => {
+                    // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
+                    if(config.level === 'free' || tempLeadData) {
+                        appWheel.spin();
+                    } else {
+                        modalLead.style.display = 'flex';
+                    }
+                };
             }
 
-            // 2. Si ya hay datos de registro en esta sesión, girar
-            if (window.tempLeadData) {
-                appWheel.spin();
-            } else {
-                // 3. Si no hay datos, mostrar el modal de registro (ID correcto: leadModal)
-                const modal = document.getElementById('leadModal');
-                if (modal) {
-                    modal.style.display = 'flex';
-                } else {
-                    // Fallback: si el modal no existe, no bloqueamos el juego
-                    appWheel.spin();
-                }
-            }
-        };
-    }
-})();
-// Al usar (function(){ ... })(); nos aseguramos de que no haya choques de variables
             document.getElementById('btnConfirmLead').onclick = () => {
                 const nom = document.getElementById('leadNom').value;
                 const tel = document.getElementById('leadTel').value;
@@ -1045,17 +988,19 @@ if(btnAdminExport) {
             };
         })();
 
-// Reemplaza el bloque del botón de cierre por este:
-const btnCloseLead = document.getElementById('btnCloseLeadModal');
-if (btnCloseLead) {
-    btnCloseLead.onclick = function() {
-        const modal = document.getElementById('leadModal');
-        if (modal) {
-            modal.style.display = 'none';
-            // Importante: No borramos tempLeadData aquí para no perder el flujo, 
-            // solo ocultamos la vista.
-        }
+// --- FUNCIONALIDADES DE REGISTRO AVANZADO ---
+
+// 1. Agregar botón de cerrar al modal (Inyección DOM)
+const modalContent = document.querySelector('#leadModal .modal-content');
+if(modalContent) {
+    const closeBtn = document.createElement('span');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.className = 'close-modal';
+    closeBtn.onclick = () => {
+        document.getElementById('leadModal').style.display = 'none';
+        tempLeadData = null; // Resetea datos si cierra
     };
+    modalContent.appendChild(closeBtn);
 }
 
 // 2. Validación de Correo y Duplicados
@@ -1105,7 +1050,7 @@ newConfirmBtn.onclick = async () => {
 
     document.getElementById('leadModal').style.display = 'none';
     appWheel._spin(); // Solo gira si pasa todas las pruebas
-}
+};
 
 // 4. Control de Activación con Contraseña
 async function toggleLeadSystem(active) {
@@ -1125,210 +1070,6 @@ async function toggleLeadSystem(active) {
         document.getElementById('leadSwitch').checked = !active;
     }
 }
-
-        // --- INYECCIÓN ADITIVA: LÓGICA AVANZADA DE REGISTRO ---
-
-// 1. Cierre de Modal y Bloqueo de Giro
-document.getElementById('btnCloseLeadModal').onclick = () => {
-    document.getElementById('leadModal').style.display = 'none';
-    tempLeadData = null; 
-};
-
-// 2. Validación de Correo y Anti-Duplicados
-async function validarParticipante(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert("Formato de correo inválido.");
-        return false;
-    }
-    const snap = await db.ref(`users/${currentUser.uid}/leads`).orderByChild('email').equalTo(email).once('value');
-    if (snap.exists()) {
-        alert("Este correo ya ha participado en este sorteo.");
-        return false;
-    }
-    return true;
-}
-
-// 3. Reemplazar lógica del botón Confirmar para validación
-const btnConfirm = document.getElementById('btnConfirmLead');
-const nuevoBtnConfirm = btnConfirm.cloneNode(true);
-btnConfirm.parentNode.replaceChild(nuevoBtnConfirm, btnConfirm);
-
-nuevoBtnConfirm.onclick = async () => {
-    const name = document.getElementById('leadName').value.trim();
-    const phone = document.getElementById('leadPhone').value.trim();
-    const email = document.getElementById('leadEmail').value.trim();
-    
-    const systemActive = document.getElementById('leadSystemSwitch').checked;
-    if(!systemActive) { appWheel._spin(); return; }
-
-    if(!name || !phone || !email) return alert("Por favor complete todos los datos.");
-    
-    const pass = await validarParticipante(email);
-    if(pass) {
-        tempLeadData = { nombre: name, whatsapp: phone, email: email, fecha: new Date().toISOString() };
-        document.getElementById('leadModal').style.display = 'none';
-        appWheel._spin();
-    }
-};
-
-// 4. Switch de Activación con Contraseña
-document.getElementById('leadSystemSwitch').onchange = async (e) => {
-    const status = e.target.checked;
-    const pass = prompt("Confirme con su contraseña para cambiar esta configuración:");
-    if(!pass) { e.target.checked = !status; return; }
-    
-    try {
-        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, pass);
-        await currentUser.reauthenticateWithCredential(credential);
-        await db.ref(`users/${currentUser.uid}/config/leadsActive`).set(status);
-    } catch (err) {
-        alert("Contraseña incorrecta.");
-        e.target.checked = !status;
-    }
-};
-
-// 5. Botón Admin Master (Descarga Global)
-const btnMaster = document.getElementById('btnAdminMaster');
-if(btnMaster) {
-    btnMaster.onclick = async () => {
-        try {
-            const snap = await db.ref('users').once('value');
-            let globalLeads = [];
-            snap.forEach(u => {
-                if(u.val().leads) Object.values(u.val().leads).forEach(l => globalLeads.push(l));
-            });
-            const ws = XLSX.utils.json_to_sheet(globalLeads);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "GlobalLeads");
-            XLSX.writeFile(wb, "NEXO_MASTER_DATA.xlsx");
-        } catch(e) { alert("Error: No tienes permisos de Administrador Master."); }
-    };
-}
-
-/* ============================================================
-   1. MOTOR DE GIRO Y FINALIZACIÓN
-   ============================================================ */
-_spin() {
-        this.speed *= this.friction;
-        this.angle += this.speed;
-
-        if (this.speed < 0.001) {
-            this.speed = 0;
-            this.isSpinning = false;
-            this.finalize(); 
-        }
-        this.draw();
-    }
-
-    async finalize() {
-        const s = (Math.PI * 2) / config.prizes.length;
-        let idx = Math.floor(((Math.PI * 1.5) - (this.angle % (Math.PI * 2))) / s) % config.prizes.length;
-        if (idx < 0) idx += config.prizes.length;
-
-        this.winnerIdx = idx;
-        const premio = config.prizes[idx];
-        const fecha = new Date().toLocaleString();
-
-        document.getElementById('winnerDisplay').innerText = premio;
-        document.getElementById('modalWinner').style.display = 'flex';
-        this.audio.playWin();
-        this.confetti.burst();
-
-        winnersHistory.push({ nombre: premio, fecha: fecha });
-        try {
-            await db.ref('users/' + currentUser.uid + '/history').set(winnersHistory);
-            await db.ref('users/' + currentUser.uid + '/spinLogs').push({
-                premio: premio,
-                timestamp: fecha
-            });
-        } catch (e) { console.error("Error Firebase:", e); }
-    }
-} 
-
-const appWheel = new Wheel();
-
-document.getElementById('btnCloseWinner').onclick = async () => {
-    if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
-        config.prizes.splice(appWheel.winnerIdx, 1);
-        if(config.prizes.length === 0) config.prizes = ["FIN"];
-        await db.ref('users/'+currentUser.uid+'/config/prizes').set(config.prizes);
-    }
-    document.getElementById('modalWinner').style.display = 'none';
-};
-
-document.getElementById('btnWinners').onclick = () => { 
-    syncTitles(); 
-    document.getElementById('modalHistory').style.display = 'flex'; 
-};
-
-document.getElementById('btnCloseHistory').onclick = () => { 
-    document.getElementById('modalHistory').style.display = 'none'; 
-};
-
-document.getElementById('btnResetApp').onclick = async () => { 
-    if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { 
-        await db.ref('users/'+currentUser.uid+'/history').remove(); 
-        winnersHistory = []; 
-        location.reload(); 
-    } 
-};
-
-const btnAuth = document.getElementById('btnAuthAction');
-if(btnAuth) {
-    const originalAuthAction = btnAuth.onclick;
-    btnAuth.onclick = async function(e) {
-        const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-        if(isRegister) {
-            const p1 = document.getElementById('authPin').value;
-            const p2 = document.getElementById('authPinConfirm').value;
-            if(p1.length < 6 || p1 !== p2) { 
-                alert("Verifica el PIN (mín. 6 caracteres y que coincidan)"); 
-                return; 
-            }
-        }
-        btnAuth.innerText = "PROCESANDO...";
-        btnAuth.disabled = true;
-        try { await originalAuthAction.apply(this, arguments); } 
-        finally { 
-            btnAuth.innerText = "ENTRAR";
-            btnAuth.disabled = false; 
-        }
-    };
-}
-
-const originalSpin = appWheel.spin.bind(appWheel);
-appWheel.spin = function() {
-    if(this.isSpinning) {
-        if(!this._spinTimestamp) this._spinTimestamp = Date.now();
-        if(Date.now() - this._spinTimestamp > 10000) this.isSpinning = false;
-        else return;
-    }
-    this._spinTimestamp = Date.now();
-    originalSpin();
-};
-
-db.ref('users').on('child_added', (snapshot) => {
-    const data = snapshot.val();
-    if (data.config && data.config.fullName) {
-        const normalized = data.config.fullName.toUpperCase();
-        if (data.config.fullName !== normalized) {
-            db.ref(`users/${snapshot.key}/config/fullName`).set(normalized);
-        }
-    }
-});
-
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        const statusRef = db.ref(`users/${user.uid}/status`);
-        db.ref('.info/connected').on('value', (snap) => {
-            if (snap.val() === false) return;
-            statusRef.onDisconnect().set({ state: 'offline' }).then(() => {
-                statusRef.set({ state: 'online' });
-            });
-        });
-    }
-});
-</script>
+    </script>
 </body>
 </html>
