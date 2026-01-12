@@ -906,29 +906,31 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-       // --- CORRECCIÓN DE LÓGICA DE GIRO Y LEADS ---
-document.getElementById('btnSpinCenter').onclick = async () => {
-    // 1. Verificar si el sistema de leads está activo en el Switch
-    const leadsActivos = document.getElementById('leadSystemSwitch').checked;
-    
-    // 2. Si es nivel FREE o los leads están apagados, gira directamente
-    if (config.level === 'free' || !leadsActivos) {
-        appWheel.spin();
-        return;
-    }
+    // --- CORRECCIÓN LÍNEA 921 A 998 ---
+const btnSpin = document.getElementById('btnSpinCenter');
 
-    // 3. Si están activos, verificar si ya tenemos datos temporales
-    if (typeof tempLeadData !== 'undefined' && tempLeadData !== null) {
-        appWheel.spin();
-    } else {
-        // Mostrar el modal de registro (ID correcto: leadModal)
-        const modal = document.getElementById('leadModal');
-        if (modal) {
-            modal.style.display = 'flex';
+if (btnSpin) {
+    btnSpin.onclick = () => {
+        const leadsActivos = document.getElementById('leadSystemSwitch')?.checked;
+        
+        // Si el sistema de leads está desactivado o es nivel FREE, gira directo
+        if (config.level === 'free' || !leadsActivos) {
+            appWheel.spin();
+            return;
         }
-    }
-};
 
+        // Si ya tenemos datos temporales de esta sesión, gira
+        if (typeof tempLeadData !== 'undefined' && tempLeadData !== null) {
+            appWheel.spin();
+        } else {
+            // Si no, abre el modal de registro
+            const modal = document.getElementById('leadModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+    }; // Aquí termina el onclick
+} // Aquí termina el if(btnSpin)
             document.getElementById('btnConfirmLead').onclick = () => {
                 const nom = document.getElementById('leadNom').value;
                 const tel = document.getElementById('leadTel').value;
@@ -1160,6 +1162,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
