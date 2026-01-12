@@ -431,13 +431,35 @@ input:checked + .slider:before { transform: translateX(22px); }
                 const fecha = new Date().toLocaleString();
                 winnersHistory.push({nombre: premio, fecha: fecha});
                 
-                // --- INYECCIÓN ADITIVA: Registro en Historial Global ---
-                await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory);
-                await db.ref('users/'+currentUser.uid+'/spinLogs').push({
-                    premio: premio,
-                    timestamp: fecha
-                });
-            } // <--- ESTA llave cierra el bloque del if/registro (NO ES EL CIERRE DE FINALIZE)
+               /* === REEMPLAZA DESDE TUS AWAIT HASTA EL INICIO DE FINALIZE CON ESTO === */
+
+            // 1. Aquí termina el método anterior (el que anima el giro)
+        } 
+
+        async finalize() {
+            const s = (Math.PI*2)/config.prizes.length;
+            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
+            if(idx < 0) idx += config.prizes.length;
+            this.winnerIdx = idx;
+            const premio = config.prizes[idx];
+            const fecha = new Date().toLocaleString();
+
+            // --- INYECCIÓN ADITIVA: Registro en Historial Global ---
+            winnersHistory.push({nombre: premio, fecha: fecha});
+            
+            await db.ref('users/'+currentUser.uid+'/history').set(winnersHistory);
+            await db.ref('users/'+currentUser.uid+'/spinLogs').push({
+                premio: premio,
+                timestamp: fecha
+            });
+
+            // --- CONTINUACIÓN DE LA INTERFAZ ---
+            document.getElementById('winnerDisplay').innerText = premio;
+            document.getElementById('modalWinner').style.display = 'flex';
+            this.audio.playWin();
+            this.confetti.burst();
+        } 
+    } // CIERRE FINAL DE LA CLASE WHEEL
 
             async finalize() { // <--- Ahora sí, finalize queda dentro de la clase
                 const s = (Math.PI*2)/config.prizes.length;
@@ -1270,6 +1292,7 @@ console.log("NEXO® Pro: Parches de integridad aplicados correctamente.");
     </script>
 </body>
 </html>
+
 
 
 
