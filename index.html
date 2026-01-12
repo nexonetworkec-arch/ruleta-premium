@@ -913,5 +913,80 @@
         document.head.appendChild(style);
     })();
 </script>
+
+<script>
+    function updateAdminTableFull() {
+        const tableBody = document.getElementById('adminUsersTable');
+        if (!tableBody) return;
+
+        // Referencia a todos los usuarios
+        db.ref('users').on('value', (snapshot) => {
+            const users = snapshot.val();
+            if (!users) {
+                tableBody.innerHTML = '<tr><td colspan="5">No hay usuarios registrados</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let stats = { total: 0, online: 0, free: 0, pro: 0, ppe: 0 };
+
+            Object.keys(users).forEach(uid => {
+                const u = users[uid];
+                stats.total++;
+                
+                // Conteo de niveles
+                const lvl = (u.lvl || 'free').toLowerCase();
+                if (stats[lvl] !== undefined) stats[lvl]++;
+                
+                // Conteo de conexión
+                const isOnline = u.status && u.status.state === 'online';
+                if (isOnline) stats.online++;
+
+                // Badge de Marketing si aplica
+                const mktBadge = u.mkt ? '<span class="badge-mkt">MKT</span>' : '';
+
+                html += `
+                <tr onclick="viewUserProfile('${uid}')" style="cursor:pointer">
+                    <td>
+                        <span class="status-dot ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                        <small>${uid.substring(0,8)}...</small>
+                    </td>
+                    <td style="color:var(--gold); font-weight:bold;">
+                        ${lvl.toUpperCase()} ${mktBadge}
+                    </td>
+                    <td>
+                        <button class="btn-action" onclick="event.stopPropagation(); cycleLvl('${uid}', '${lvl}')">
+                            🔄 Cambiar
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn-action" style="background:#444" onclick="event.stopPropagation(); openLic('${uid}')">
+                            ⚙️ Permisos
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            tableBody.innerHTML = html;
+
+            // Actualizar las tarjetas de estadísticas en el DOM
+            const updateStat = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            updateStat('statTotal', stats.total);
+            updateStat('statOnline', stats.online);
+            updateStat('statFree', stats.free);
+            updateStat('statPro', stats.pro);
+            updateStat('statPPE', stats.ppe);
+        });
+    }
+
+    // Asegurar que si el modal ya está abierto, se carguen los datos
+    if(document.getElementById('modalAdmin').style.display === 'flex') {
+        updateAdminTableFull();
+    }
+</script>
 </body>
 </html>
