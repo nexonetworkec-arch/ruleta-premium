@@ -906,31 +906,38 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-    // --- CORRECCIÓN LÍNEA 921 A 998 ---
-const btnSpin = document.getElementById('btnSpinCenter');
+   // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL (CORREGIDA) ---
+(function() {
+    const btnSpin = document.getElementById('btnSpinCenter');
+    if (btnSpin) {
+        btnSpin.onclick = () => {
+            // Verificar si el switch de leads existe y está activo
+            const leadSwitch = document.getElementById('leadSystemSwitch');
+            const leadsActivos = leadSwitch ? leadSwitch.checked : false;
 
-if (btnSpin) {
-    btnSpin.onclick = () => {
-        const leadsActivos = document.getElementById('leadSystemSwitch')?.checked;
-        
-        // Si el sistema de leads está desactivado o es nivel FREE, gira directo
-        if (config.level === 'free' || !leadsActivos) {
-            appWheel.spin();
-            return;
-        }
-
-        // Si ya tenemos datos temporales de esta sesión, gira
-        if (typeof tempLeadData !== 'undefined' && tempLeadData !== null) {
-            appWheel.spin();
-        } else {
-            // Si no, abre el modal de registro
-            const modal = document.getElementById('leadModal');
-            if (modal) {
-                modal.style.display = 'flex';
+            // 1. Si el sistema de leads está apagado o es nivel FREE, girar directo
+            if (config.level === 'free' || !leadsActivos) {
+                appWheel.spin();
+                return;
             }
-        }
-    }; // Aquí termina el onclick
-} // Aquí termina el if(btnSpin)
+
+            // 2. Si ya hay datos de registro en esta sesión, girar
+            if (window.tempLeadData) {
+                appWheel.spin();
+            } else {
+                // 3. Si no hay datos, mostrar el modal de registro
+                const modal = document.getElementById('leadModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                } else {
+                    // Si por algún motivo el modal no existe, girar para no bloquear el juego
+                    appWheel.spin();
+                }
+            }
+        };
+    }
+})(); 
+// Al usar (function(){ ... })(); nos aseguramos de que no haya choques de variables
             document.getElementById('btnConfirmLead').onclick = () => {
                 const nom = document.getElementById('leadNom').value;
                 const tel = document.getElementById('leadTel').value;
@@ -1162,6 +1169,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
