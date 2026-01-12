@@ -917,42 +917,72 @@ input:checked + .slider:before { transform: translateX(22px); }
 // LÓGICA DEL PANEL ADMIN Y CONTROL DE GIRO
 // ==========================================
 
-// 1. Interceptor de Giro (¿Pide datos o gira directo?)
-const btnSpin = document.getElementById('btnSpinCenter');
-if(btnSpin) {
-    btnSpin.onclick = async () => {
-        const snap = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
-        const isActive = snap.val();
+(function() {
+    const btnSpin = document.getElementById('btnSpinCenter');
+    const modalLead = document.getElementById('leadModal');
+    window.tempLeadData = null;
 
-        // Si es FREE, o sistema OFF, o ya se registró -> Gira
-        if(config.level === 'FREE' || !isActive || window.tempLeadData) {
+    // 1. Interceptor de Giro (¿Pide datos o gira directo?)
+    if(btnSpin) {
+        btnSpin.onclick = async () => {
+            try {
+                const snap = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
+                const isActive = snap.val();
+
+                // Si es FREE, o sistema OFF, o ya se registró en esta sesión -> Gira
+                if(config.level === 'FREE' || !isActive || window.tempLeadData) {
+                    appWheel.spin();
+                } else {
+                    if(modalLead) modalLead.style.display = 'flex';
+                }
+            } catch (e) {
+                appWheel.spin(); // Fallback por si falla la red
+            }
+        };
+    }
+
+    // 2. Confirmación dentro del Modal
+    const btnConfirm = document.getElementById('btnConfirmLead');
+    if(btnConfirm) {
+        btnConfirm.onclick = async () => {
+            const name = document.getElementById('leadName').value.trim();
+            const phone = document.getElementById('leadPhone').value.trim();
+            const email = document.getElementById('leadEmail').value.trim();
+
+            if(!name || !phone || !email) return alert("Llena todos los campos.");
+            
+            const esValido = await validarLead(email);
+            if(!esValido) return;
+
+            window.tempLeadData = { 
+                nombre: name, 
+                whatsapp: phone, 
+                email: email, 
+                fecha: new Date().toLocaleString() 
+            };
+            
+            if(modalLead) modalLead.style.display = 'none';
             appWheel.spin();
-        } else {
-            document.getElementById('leadModal').style.display = 'flex';
+        };
+    }
+
+    // 3. Inyección en el cierre del giro para guardar el lead con el premio
+    const originalFinalize = appWheel.finalize.bind(appWheel);
+    appWheel.finalize = async function() {
+        await originalFinalize();
+        if(window.tempLeadData) {
+            const s = (Math.PI*2)/config.prizes.length;
+            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
+            if(idx < 0) idx += config.prizes.length;
+            
+            window.tempLeadData.premio = config.prizes[idx];
+            await db.ref(`users/${currentUser.uid}/leads`).push(window.tempLeadData);
+            window.tempLeadData = null; 
         }
     };
-}
+})();
 
-// 2. Confirmación dentro del Modal
-const btnConfirm = document.getElementById('btnConfirmLead');
-if(btnConfirm) {
-    btnConfirm.onclick = async () => {
-        const name = document.getElementById('leadName').value.trim();
-        const phone = document.getElementById('leadPhone').value.trim();
-        const email = document.getElementById('leadEmail').value.trim();
-
-        if(!name || !phone || !email) return alert("Llena todos los campos.");
-        
-        const esValido = await validarLead(email);
-        if(!esValido) return;
-
-        window.tempLeadData = { nombre: name, whatsapp: phone, email: email, fecha: new Date().toLocaleString() };
-        document.getElementById('leadModal').style.display = 'none';
-        appWheel.spin();
-    };
-}
-
-// 3. Validación de duplicados
+// 4. Validación de duplicados
 async function validarLead(email) {
     const snap = await db.ref(`users/${currentUser.uid}/leads`).orderByChild('email').equalTo(email).once('value');
     if (snap.exists()) {
@@ -962,49 +992,62 @@ async function validarLead(email) {
     return true;
 }
 
-// 4. Renderizado del Panel Admin Master
+// 5. Renderizado del Panel Admin Master
 async function renderAdminUsers(filter = "") {
     const list = document.getElementById('adminUserList');
     if(!list) return;
-    list.innerHTML = "Cargando...";
+    list.innerHTML = "<tr><td colspan='4'>Cargando...</td></tr>";
+    
     const snapshot = await db.ref('users').once('value');
     const users = snapshot.val();
     list.innerHTML = "";
+    
     for (let uid in users) {
         const u = users[uid];
         const email = u.email || "Sin email";
         const level = (u.config && u.config.level) ? u.config.level : "FREE";
         if (filter && !email.toLowerCase().includes(filter.toLowerCase())) continue;
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${email}</td>
             <td><span class="badge-${level.toLowerCase()}">${level}</span></td>
             <td>
-                <select onchange="updateUserLevel('${uid}', this.value)">
+                <select onchange="updateUserLevel('${uid}', this.value)" style="background:#222; color:white; border:1px solid #d4af37;">
                     <option value="FREE" ${level==='FREE'?'selected':''}>FREE</option>
                     <option value="PRO" ${level==='PRO'?'selected':''}>PRO</option>
                     <option value="PPE" ${level==='PPE'?'selected':''}>PPE</option>
                 </select>
             </td>
-            <td><button onclick="deleteUserAccount('${uid}')" style="color:red">Eliminar</button></td>`;
+            <td><button onclick="deleteUserAccount('${uid}')" style="color:#ff4d4d; background:none; border:none; cursor:pointer;">Eliminar</button></td>`;
         list.appendChild(row);
     }
 }
 
 async function updateUserLevel(uid, lvl) {
-    await db.ref(`users/${uid}/config/level`).set(lvl);
-    renderAdminUsers();
+    if(confirm(`¿Confirmas cambiar el nivel a ${lvl}?`)) {
+        await db.ref(`users/${uid}/config/level`).set(lvl);
+        renderAdminUsers();
+    }
+}
+
+async function deleteUserAccount(uid) {
+    if(confirm("¿Eliminar este usuario permanentemente?")) {
+        await db.ref(`users/${uid}`).remove();
+        renderAdminUsers();
+    }
 }
 
 // Vincular botón Admin
 const btnAdmin = document.getElementById('btnAdminMaster');
 if(btnAdmin) {
-    btnAdmin.onclick = () => {
+    btnAdmin.onclick = async () => {
+        const adminCheck = await db.ref(`admins/${currentUser.uid}`).once('value');
+        if(!adminCheck.exists()) return alert("Acceso denegado: No eres Administrador Master.");
         document.getElementById('modalAdmin').style.display = 'flex';
         renderAdminUsers();
     };
 }
-
 </script>
 </body>
 </html>
