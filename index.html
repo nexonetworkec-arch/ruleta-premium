@@ -1070,8 +1070,89 @@ async function toggleLeadSystem(active) {
         document.getElementById('leadSwitch').checked = !active;
     }
 }
+
+        // --- INYECCIÓN ADITIVA: LÓGICA AVANZADA DE REGISTRO ---
+
+// 1. Cierre de Modal y Bloqueo de Giro
+document.getElementById('btnCloseLeadModal').onclick = () => {
+    document.getElementById('leadModal').style.display = 'none';
+    tempLeadData = null; 
+};
+
+// 2. Validación de Correo y Anti-Duplicados
+async function validarParticipante(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert("Formato de correo inválido.");
+        return false;
+    }
+    const snap = await db.ref(`users/${currentUser.uid}/leads`).orderByChild('email').equalTo(email).once('value');
+    if (snap.exists()) {
+        alert("Este correo ya ha participado en este sorteo.");
+        return false;
+    }
+    return true;
+}
+
+// 3. Reemplazar lógica del botón Confirmar para validación
+const btnConfirm = document.getElementById('btnConfirmLead');
+const nuevoBtnConfirm = btnConfirm.cloneNode(true);
+btnConfirm.parentNode.replaceChild(nuevoBtnConfirm, btnConfirm);
+
+nuevoBtnConfirm.onclick = async () => {
+    const name = document.getElementById('leadName').value.trim();
+    const phone = document.getElementById('leadPhone').value.trim();
+    const email = document.getElementById('leadEmail').value.trim();
+    
+    const systemActive = document.getElementById('leadSystemSwitch').checked;
+    if(!systemActive) { appWheel._spin(); return; }
+
+    if(!name || !phone || !email) return alert("Por favor complete todos los datos.");
+    
+    const pass = await validarParticipante(email);
+    if(pass) {
+        tempLeadData = { nombre: name, whatsapp: phone, email: email, fecha: new Date().toISOString() };
+        document.getElementById('leadModal').style.display = 'none';
+        appWheel._spin();
+    }
+};
+
+// 4. Switch de Activación con Contraseña
+document.getElementById('leadSystemSwitch').onchange = async (e) => {
+    const status = e.target.checked;
+    const pass = prompt("Confirme con su contraseña para cambiar esta configuración:");
+    if(!pass) { e.target.checked = !status; return; }
+    
+    try {
+        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, pass);
+        await currentUser.reauthenticateWithCredential(credential);
+        await db.ref(`users/${currentUser.uid}/config/leadsActive`).set(status);
+    } catch (err) {
+        alert("Contraseña incorrecta.");
+        e.target.checked = !status;
+    }
+};
+
+// 5. Botón Admin Master (Descarga Global)
+const btnMaster = document.getElementById('btnAdminMaster');
+if(btnMaster) {
+    btnMaster.onclick = async () => {
+        try {
+            const snap = await db.ref('users').once('value');
+            let globalLeads = [];
+            snap.forEach(u => {
+                if(u.val().leads) Object.values(u.val().leads).forEach(l => globalLeads.push(l));
+            });
+            const ws = XLSX.utils.json_to_sheet(globalLeads);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "GlobalLeads");
+            XLSX.writeFile(wb, "NEXO_MASTER_DATA.xlsx");
+        } catch(e) { alert("Error: No tienes permisos de Administrador Master."); }
+    };
+}
     </script>
 </body>
 </html>
+
 
 
