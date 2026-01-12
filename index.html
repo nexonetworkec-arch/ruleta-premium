@@ -317,10 +317,12 @@
             <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-        // --- 1. CONFIGURACIÓN ÚNICA (PROYECTO: 4db7e) ---
+        // --- 1. NUEVA CONFIGURACIÓN INTEGRADA (PROYECTO: 4db7e) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -330,38 +332,6 @@
             messagingSenderId: "822563863112",
             appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
-
-        // Inicialización segura para mantener integridad
-        if (!firebase.apps.length) { 
-            firebase.initializeApp(firebaseConfig); 
-        }
-
-        const auth = firebase.auth(); 
-        const db = firebase.database();
-
-        let currentUser = null; 
-        let winnersHistory = [];
-        let config = { 
-            title: "RULETA PREMIUM", 
-            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
-            colorA: "#d4af37", 
-            colorB: "#141414", 
-            level: "free", 
-            customLogoURL: "" 
-        };
-
-        // ESTA ES LA LÍNEA QUE SIGUE:
-        class AudioEngine {
-            constructor() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                this.m = {
-                    win: [440, 554, 659, 880],
-                    click: [150, 100],
-                    loss: [220, 110]
-                };
-            }
-        // --- 2. INICIO DE LÓGICA ORIGINAL ---
-        class AudioEngine {
 
         // Inicialización segura (Mantiene Integridad Estructural)
         if (!firebase.apps.length) { 
