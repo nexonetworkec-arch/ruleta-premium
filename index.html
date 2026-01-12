@@ -437,9 +437,11 @@ input:checked + .slider:before { transform: translateX(22px); }
                     premio: premio,
                     timestamp: fecha
                 });
-            } // Cierre de finalize 
-        } // Cierre de la Clase Wheel 
+            } // <--- ESTA llave cierra el bloque del if/registro (NO ES EL CIERRE DE FINALIZE)
 
+            async finalize() { // <--- Ahora sí, finalize queda dentro de la clase
+                const s = (Math.PI*2)/config.prizes.length;
+                //
         /* === INICIO DEL BLOQUE CORRECTO === */
                 await db.ref('users/'+currentUser.uid+'/spinLogs').push({
                     premio: premio,
@@ -1268,6 +1270,7 @@ console.log("NEXO® Pro: Parches de integridad aplicados correctamente.");
     </script>
 </body>
 </html>
+
 
 
 
