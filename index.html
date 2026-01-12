@@ -345,6 +345,14 @@ input:checked + .slider:before { transform: translateX(22px); }
             <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
         </div>
     </div>
+
+    <div class="switch-container">
+    <span style="color: var(--white); font-size: 14px;">Activar Registro de Leads</span>
+    <label class="switch">
+        <input type="checkbox" id="leadSystemSwitch" checked>
+        <span class="slider"></span>
+    </label>
+</div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
@@ -1065,4 +1073,5 @@ async function toggleLeadSystem(active) {
     </script>
 </body>
 </html>
+
 
