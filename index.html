@@ -988,5 +988,49 @@
         updateAdminTableFull();
     }
 </script>
+
+    <script>
+    (function() {
+        const MY_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        // 1. SOBREESCRITURA DEL BOTÓN PARA FORZAR CARGA
+        const btnAdmin = document.getElementById('btnAdminMaster');
+        if (btnAdmin) {
+            btnAdmin.onclick = function() {
+                document.getElementById('modalAdmin').style.display = 'flex';
+                // Forzamos la ejecución de la función de carga que ya existe en tu código
+                if (typeof updateAdminTableFull === 'function') {
+                    console.log("NEXO®: Cargando base de datos en panel...");
+                    updateAdminTableFull(); 
+                } else {
+                    console.error("NEXO® Error: La función updateAdminTableFull no se encuentra definida.");
+                }
+            };
+        }
+
+        // 2. REPARADOR DE NODOS (Asegura que el contenedor de estadísticas exista)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.id === 'modalAdmin' && mutation.target.style.display === 'flex') {
+                    // Si el dashboard no se creó, lo forzamos
+                    if (!document.getElementById('adminDashContainer')) {
+                        if (typeof updateAdminTableFull === 'function') updateAdminTableFull();
+                    }
+                }
+            });
+        });
+
+        const modal = document.getElementById('modalAdmin');
+        if (modal) observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+
+        // 3. AUTO-ADMIN (Te otorga permisos de escritura en la DB si no los tienes)
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MY_UID) {
+                db.ref('admins/' + MY_UID).set(true);
+            }
+        });
+    })();
+</script>
 </body>
 </html>
+
