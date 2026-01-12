@@ -191,6 +191,11 @@
     }
 }
         }
+
+        /* --- INYECCIÓN ADITIVA: ESTILOS DE LEADS --- */
+        .lead-modal { display: none; position: fixed; z-index: 10001; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
+        .lead-card { background: var(--card-bg); padding: 30px; border-radius: 30px; border: 1px solid var(--gold); width: 90%; max-width: 380px; text-align: center; }
+        .lead-input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -302,19 +307,54 @@
             margin-top:10px;">CANCELAR</button>
     </div></div>
 
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
-        z-index:9999"></canvas>
+    <div id="modalLead" class="lead-modal">
+        <div class="lead-card">
+            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
+            <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
+            <input type="text" id="leadNom" class="lead-input" placeholder="NOMBRE">
+            <input type="tel" id="leadTel" class="lead-input" placeholder="WHATSAPP">
+            <input type="email" id="leadMail" class="lead-input" placeholder="EMAIL" style="text-transform: none !important;">
+            <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
+        // --- 1. CONFIGURACIÓN ÚNICA (PROYECTO: 4db7e) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
             projectId: "ruletapremiumbusiness-4db7e",
             storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
             messagingSenderId: "822563863112",
-            appId: "1:822563863112:web:d134d015736e2fafb5367d",
-             databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
+            appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
+
+        // Inicialización Única y Segura
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+
+        // Variables Globales (Solo se declaran UNA VEZ aquí)
+        const auth = firebase.auth(); 
+        const db = firebase.database();
+
+        let currentUser = null; 
+        let winnersHistory = [];
+        let config = { 
+            title: "RULETA PREMIUM", 
+            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
+            colorA: "#d4af37", 
+            colorB: "#141414", 
+            level: "free", 
+            customLogoURL: "" 
+        };
+
+        // --- 2. INICIO DEL MOTOR ---
+        class AudioEngine {      
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
         let currentUser = null; let winnersHistory = [];
@@ -831,8 +871,65 @@
                 }
             });
         })();
+
+        // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
+        (function() {
+            const btnSpin = document.getElementById('btnSpinCenter');
+            const modalLead = document.getElementById('modalLead');
+            let tempLeadData = null;
+
+            if(btnSpin) {
+                btnSpin.onclick = () => {
+                    // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
+                    if(config.level === 'free' || tempLeadData) {
+                        appWheel.spin();
+                    } else {
+                        modalLead.style.display = 'flex';
+                    }
+                };
+            }
+
+            document.getElementById('btnConfirmLead').onclick = () => {
+                const nom = document.getElementById('leadNom').value;
+                const tel = document.getElementById('leadTel').value;
+                const mail = document.getElementById('leadMail').value;
+                if(!nom || !tel || !mail) return alert("Por favor, llena todos los campos.");
+                
+                tempLeadData = { nombre: nom, whatsapp: tel, email: mail, fecha: new Date().toLocaleString() };
+                modalLead.style.display = 'none';
+                appWheel.spin();
+            };
+
+            // Función para descargar Excel
+            const btnExport = document.getElementById('btnExportLeads');
+            if(btnExport) {
+                btnExport.onclick = async () => {
+                    const snap = await db.ref(`users/${currentUser.uid}/leads`).once('value');
+                    if(!snap.exists()) return alert("No hay leads registrados.");
+                    const ws = XLSX.utils.json_to_sheet(Object.values(snap.val()));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+                    XLSX.writeFile(wb, "NEXO_Leads.xlsx");
+                };
+            }
+
+            // Integrar el guardado del lead cuando la ruleta termina (finalize)
+            const originalFinalize = appWheel.finalize.bind(appWheel);
+            appWheel.finalize = async function() {
+                await originalFinalize();
+                if(tempLeadData) {
+                    const s = (Math.PI*2)/config.prizes.length;
+                    let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
+                    if(idx < 0) idx += config.prizes.length;
+                    tempLeadData.premio = config.prizes[idx];
+                    await db.ref(`users/${currentUser.uid}/leads`).push(tempLeadData);
+                    tempLeadData = null; // Limpiar para el siguiente giro
+                }
+            };
+        })();
     </script>
 </body>
 </html>
+
 
 
