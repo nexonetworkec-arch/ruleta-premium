@@ -317,12 +317,10 @@
             <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-        // --- 1. CONFIGURACIÓN INTEGRADA Y SANEADA (PROYECTO: 4db7e) ---
+        // --- 1. CONFIGURACIÓN ÚNICA (PROYECTO: 4db7e) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -333,6 +331,7 @@
             appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
 
+        // Inicialización segura para mantener integridad
         if (!firebase.apps.length) { 
             firebase.initializeApp(firebaseConfig); 
         }
@@ -351,21 +350,8 @@
             customLogoURL: "" 
         };
 
-        // --- 2. MOTOR ORIGINAL ---
+        // --- 2. INICIO DE MOTORES ---
         class AudioEngine {
-
-        // Inicialización protegida para mantener integridad
-        if (!firebase.apps.length) { 
-            firebase.initializeApp(firebaseConfig); 
-        }
-
-        // Referencias globales obligatorias
-        const auth = firebase.auth(); 
-        const db = firebase.database();
-
-        // Variables de estado únicas (no duplicar)
-        let currentUser = null; 
-        let winnersHistory = [];
         let config = { 
             title: "RULETA PREMIUM", 
             prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
