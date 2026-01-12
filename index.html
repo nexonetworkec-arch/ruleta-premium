@@ -903,55 +903,155 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
-        (function() {
-            const btnSpin = document.getElementById('btnSpinCenter');
-            const modalLead = document.getElementById('modalLead');
-            let tempLeadData = null;
+     // ================================================================
+// INYECCIÓN ADITIVA: SISTEMA DE LEADS, EXCEL Y PANEL ADMINISTRADOR
+// ================================================================
 
-            if(btnSpin) {
-                btnSpin.onclick = () => {
-                    // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
-                    if(config.level === 'free' || tempLeadData) {
-                        appWheel.spin();
-                    } else {
-                        modalLead.style.display = 'flex';
-                    }
-                };
-            }
+(function() {
+    const btnSpin = document.getElementById('btnSpinCenter');
+    const modalLead = document.getElementById('leadModal');
+    let tempLeadData = null;
 
-            document.getElementById('btnConfirmLead').onclick = () => {
-                const nom = document.getElementById('leadNom').value;
-                const tel = document.getElementById('leadTel').value;
-                const mail = document.getElementById('leadMail').value;
-                if(!nom || !tel || !mail) return alert("Por favor, llena todos los campos.");
-                
-                tempLeadData = { nombre: nom, whatsapp: tel, email: mail, fecha: new Date().toLocaleString() };
-                modalLead.style.display = 'none';
+    // 1. Control del Botón Girar con Validación de Sistema de Leads
+    if(btnSpin) {
+        btnSpin.onclick = async () => {
+            // Verificar si el sistema de leads está activo en la configuración del usuario
+            const snapActive = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
+            const isActive = snapActive.val();
+
+            // Si el sistema está activo y no hay datos temporales, pedirlos. 
+            // Si es FREE o el sistema está apagado, gira directo.
+            if(config.level === 'FREE' || !isActive || tempLeadData) {
                 appWheel.spin();
+            } else {
+                if(modalLead) modalLead.style.display = 'flex';
+            }
+        };
+    }
+
+    // 2. Validación y Confirmación de Registro (Lead)
+    const btnConfirm = document.getElementById('btnConfirmLead');
+    if(btnConfirm) {
+        btnConfirm.onclick = async () => {
+            const name = document.getElementById('leadName').value.trim();
+            const phone = document.getElementById('leadPhone').value.trim();
+            const email = document.getElementById('leadEmail').value.trim();
+
+            if(!name || !phone || !email) return alert("Por favor, llena todos los campos.");
+            
+            // Validación de formato y duplicados
+            const esValido = await validarLead(email);
+            if(!esValido) return;
+
+            tempLeadData = { 
+                nombre: name, 
+                whatsapp: phone, 
+                email: email, 
+                fecha: new Date().toLocaleString() 
             };
 
-            // Función para descargar Excel
-            const btnExport = document.getElementById('btnExportLeads');
-            if(btnExport) {
-                btnExport.onclick = async () => {
-                    const snap = await db.ref(`users/${currentUser.uid}/leads`).once('value');
-                    if(!snap.exists()) return alert("No hay leads registrados.");
-                    const ws = XLSX.utils.json_to_sheet(Object.values(snap.val()));
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Leads");
-                    XLSX.writeFile(wb, "NEXO_Leads.xlsx");
-                };
+            if(modalLead) modalLead.style.display = 'none';
+            appWheel.spin();
+        };
+    }
+
+    // 3. Función para Exportar Excel (Usuario Pro/PPE)
+    const btnExport = document.getElementById('btnExportLeads');
+    if(btnExport) {
+        btnExport.onclick = async () => {
+            try {
+                const snap = await db.ref(`users/${currentUser.uid}/leads`).once('value');
+                if(!snap.exists()) return alert("No hay leads registrados para exportar.");
+                
+                const data = Object.values(snap.val());
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Mis Leads");
+                XLSX.writeFile(wb, `Leads_NEXO_${new Date().toLocaleDateString()}.xlsx`);
+            } catch (error) {
+                alert("Error al exportar: " + error.message);
             }
+        };
+    }
 
-// Función para descargar base de datos completa (Solo para ADMIN MASTER)
-const btnAdminExport = document.getElementById('btnAdminMaster'); 
-if(btnAdminExport) {
-    btnAdminExport.onclick = async () => {
-        // Verificar si es admin según las reglas que definimos
+    // 4. Integrar guardado automático del lead al finalizar el giro
+    const originalFinalize = appWheel.finalize.bind(appWheel);
+    appWheel.finalize = async function() {
+        await originalFinalize();
+        if(tempLeadData) {
+            const s = (Math.PI*2)/config.prizes.length;
+            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
+            if(idx < 0) idx += config.prizes.length;
+            
+            // Guardar el premio ganado en el registro del lead
+            tempLeadData.premio = config.prizes[idx];
+            await db.ref(`users/${currentUser.uid}/leads`).push(tempLeadData);
+            tempLeadData = null; // Limpiar para el siguiente participante
+        }
+    };
+})();
+
+// --- FUNCIONES DE SOPORTE ---
+
+// Validación de Email y Duplicados
+async function validarLead(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert("Por favor, ingresa un correo electrónico válido.");
+        return false;
+    }
+
+    const snapshot = await db.ref(`users/${currentUser.uid}/leads`)
+        .orderByChild('email')
+        .equalTo(email)
+        .once('value');
+
+    if (snapshot.exists()) {
+        alert("Este correo ya ha participado en este sorteo.");
+        return false;
+    }
+    return true;
+}
+
+// Control de Activación del Sistema con Contraseña
+async function toggleLeadSystem(active) {
+    const password = prompt("Introduce tu contraseña para confirmar el cambio:");
+    if (!password) return;
+
+    try {
+        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
+        await firebase.auth().currentUser.reauthenticateWithCredential(credential);
+        
+        await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).set(active);
+        alert(`Sistema de registro ${active ? 'ACTIVADO' : 'DESACTIVADO'}`);
+    } catch (error) {
+        alert("Error de autenticación: Contraseña incorrecta.");
+        const sw = document.getElementById('leadSwitch');
+        if(sw) sw.checked = !active;
+    }
+}
+
+// --- LÓGICA EXCLUSIVA ADMIN MASTER ---
+
+const btnAdminMaster = document.getElementById('btnAdminMaster'); 
+if(btnAdminMaster) {
+    btnAdminMaster.onclick = async () => {
+        // Verificar si es admin en la tabla de permisos
         const adminCheck = await db.ref(`admins/${currentUser.uid}`).once('value');
-        if(!adminCheck.val()) return alert("Acceso denegado: No eres Administrador Master.");
+        if(!adminCheck.exists()) return alert("Acceso denegado: No tienes permisos de Administrador Master.");
 
+        // Mostrar Panel y cargar usuarios
+        const modalAdmin = document.getElementById('modalAdmin');
+        if(modalAdmin) {
+            modalAdmin.style.display = 'flex';
+            renderAdminUsers(); // Función definida en el bloque anterior
+        }
+    };
+}
+
+// Función para descargar TODA la base de datos (Global)
+async function exportGlobalDatabase() {
+    try {
         const allUsersSnap = await db.ref('users').once('value');
         let allLeads = [];
         
@@ -959,117 +1059,26 @@ if(btnAdminExport) {
             const userData = userSnap.val();
             if(userData.leads) {
                 Object.values(userData.leads).forEach(lead => {
-                    allLeads.push({ ...lead, admin_owner: userSnap.key });
+                    allLeads.push({ 
+                        ...lead, 
+                        owner_id: userSnap.key,
+                        owner_email: userData.email 
+                    });
                 });
             }
         });
 
-        if(allLeads.length === 0) return alert("No hay datos globales para descargar.");
+        if(allLeads.length === 0) return alert("No hay datos globales disponibles.");
         
         const ws = XLSX.utils.json_to_sheet(allLeads);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Global_Leads");
         XLSX.writeFile(wb, "NEXO_MASTER_DATABASE.xlsx");
-    };
-}
-
-            // Integrar el guardado del lead cuando la ruleta termina (finalize)
-            const originalFinalize = appWheel.finalize.bind(appWheel);
-            appWheel.finalize = async function() {
-                await originalFinalize();
-                if(tempLeadData) {
-                    const s = (Math.PI*2)/config.prizes.length;
-                    let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
-                    if(idx < 0) idx += config.prizes.length;
-                    tempLeadData.premio = config.prizes[idx];
-                    await db.ref(`users/${currentUser.uid}/leads`).push(tempLeadData);
-                    tempLeadData = null; // Limpiar para el siguiente giro
-                }
-            };
-        })();
-
-// --- FUNCIONALIDADES DE REGISTRO AVANZADO ---
-
-// 1. Agregar botón de cerrar al modal (Inyección DOM)
-const modalContent = document.querySelector('#leadModal .modal-content');
-if(modalContent) {
-    const closeBtn = document.createElement('span');
-    closeBtn.innerHTML = '&times;';
-    closeBtn.className = 'close-modal';
-    closeBtn.onclick = () => {
-        document.getElementById('leadModal').style.display = 'none';
-        tempLeadData = null; // Resetea datos si cierra
-    };
-    modalContent.appendChild(closeBtn);
-}
-
-// 2. Validación de Correo y Duplicados
-async function validarLead(email) {
-    // Regex para formato de correo
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert("Por favor, ingresa un correo electrónico válido.");
-        return false;
-    }
-
-    // Verificar duplicados en Firebase
-    const snapshot = await db.ref(`users/${currentUser.uid}/leads`)
-        .orderByChild('email')
-        .equalTo(email)
-        .once('value');
-
-    if (snapshot.exists()) {
-        alert("Este correo ya ha participado anteriormente.");
-        return false;
-    }
-    return true;
-}
-
-// 3. Modificar el evento del botón "Confirmar y Girar"
-const originalConfirmBtn = document.getElementById('btnConfirmLead');
-const newConfirmBtn = originalConfirmBtn.cloneNode(true);
-originalConfirmBtn.parentNode.replaceChild(newConfirmBtn, originalConfirmBtn);
-
-newConfirmBtn.onclick = async () => {
-    const name = document.getElementById('leadName').value.trim();
-    const phone = document.getElementById('leadPhone').value.trim();
-    const email = document.getElementById('leadEmail').value.trim();
-
-    if(!name || !phone || !email) return alert("Completa todos los campos.");
-    
-    // Ejecutar validaciones
-    const esValido = await validarLead(email);
-    if(!esValido) return;
-
-    tempLeadData = { 
-        nombre: name, 
-        whatsapp: phone, 
-        email: email, 
-        fecha: new Date().toLocaleString() 
-    };
-
-    document.getElementById('leadModal').style.display = 'none';
-    appWheel._spin(); // Solo gira si pasa todas las pruebas
-};
-
-// 4. Control de Activación con Contraseña
-async function toggleLeadSystem(active) {
-    const password = prompt("Introduce tu contraseña para confirmar el cambio:");
-    if (!password) return;
-
-    try {
-        // Re-autenticación para seguridad
-        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
-        await currentUser.reauthenticateWithCredential(credential);
-        
-        // Guardar preferencia en Firebase
-        await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).set(active);
-        alert(`Sistema de registro ${active ? 'ACTIVADO' : 'DESACTIVADO'}`);
     } catch (error) {
-        alert("Contraseña incorrecta. No se pudo realizar el cambio.");
-        document.getElementById('leadSwitch').checked = !active;
+        alert("Error en exportación maestra: " + error.message);
     }
 }
     </script>
 </body>
 </html>
+
