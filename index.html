@@ -191,39 +191,6 @@
     }
 }
         }
-
-/* --- INYECCIÓN ADITIVA: UI CONTROL LEADS --- */
-.close-modal {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    color: var(--gold);
-    cursor: pointer;
-    font-weight: bold;
-    z-index: 100;
-}
-.switch-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-.switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--gold); }
-input:checked + .slider:before { transform: translateX(22px); }
-
-        /* --- INYECCIÓN ADITIVA: ESTILOS DE LEADS --- */
-        .lead-modal { display: none; position: fixed; z-index: 10001; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
-        .lead-card { background: var(--card-bg); padding: 30px; border-radius: 30px; border: 1px solid var(--gold); width: 90%; max-width: 380px; text-align: center; }
-        .lead-input { width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: #fff; border-radius: 14px; margin-bottom: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -335,62 +302,24 @@ input:checked + .slider:before { transform: translateX(22px); }
             margin-top:10px;">CANCELAR</button>
     </div></div>
 
-    <div id="modalLead" class="lead-modal">
-        <div class="lead-card">
-            <h3 style="color:var(--gold); margin-top:0;">REGISTRO</h3>
-            <p style="font-size:0.8rem; color:#888;">Ingresa tus datos para girar</p>
-            <input type="text" id="leadNom" class="lead-input" placeholder="NOMBRE">
-            <input type="tel" id="leadTel" class="lead-input" placeholder="WHATSAPP">
-            <input type="email" id="leadMail" class="lead-input" placeholder="EMAIL" style="text-transform: none !important;">
-            <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
-        </div>
-    </div>
-
-    <div class="switch-container">
-    <span style="color: var(--white); font-size: 14px;">Activar Registro de Leads</span>
-    <label class="switch">
-        <input type="checkbox" id="leadSystemSwitch" checked>
-        <span class="slider"></span>
-    </label>
-</div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
+    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none;
+        z-index:9999"></canvas>
 
     <script>
-        // --- 1. NUEVA CONFIGURACIÓN INTEGRADA (PROYECTO: 4db7e) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
-            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
-            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
-            projectId: "ruletapremiumbusiness-4db7e",
-            storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-            messagingSenderId: "822563863112",
-            appId: "1:822563863112:web:d134d015736e2fafb5367d"
+            apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
+            authDomain: "ruletapremiumbusiness.firebaseapp.com",
+            projectId: "ruletapremiumbusiness",
+            storageBucket: "ruletapremiumbusiness.firebasestorage.app",
+            messagingSenderId: "15131512066",
+            appId: "1:15131512066:web:f98b361c388fc1225e861b",
+             databaseURL: "https://ruletapremiumbusiness-default-rtdb.firebaseio.com"
         };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.database();
+        let currentUser = null; let winnersHistory = [];
+        let config = { title: "RULETA PREMIUM", prizes: ["OPCIÓN 1", "OPCIÓN 2"], colorA: "#d4af37", colorB: "#141414", level: "free", customLogoURL: "" };
 
-        // Inicialización segura (Mantiene Integridad Estructural)
-        if (!firebase.apps.length) { 
-            firebase.initializeApp(firebaseConfig); 
-        }
-
-        // Referencias globales necesarias para todo el motor
-        const auth = firebase.auth(); 
-        const db = firebase.database();
-
-        // Variables de estado únicas
-        let currentUser = null; 
-        let winnersHistory = [];
-        let config = { 
-            title: "RULETA PREMIUM", 
-            prizes: ["OPCIÓN 1", "OPCIÓN 2"], 
-            colorA: "#d4af37", 
-            colorB: "#141414", 
-            level: "free", 
-            customLogoURL: "" 
-        };
-
-        // --- 2. INICIO DE MOTORES (AudioEngine) ---
         class AudioEngine {
              constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
             playTick() { if(this.ctx.state === 'suspended') this.ctx.resume();
@@ -902,154 +831,6 @@ input:checked + .slider:before { transform: translateX(22px); }
                 }
             });
         })();
-
-    // --- AQUÍ EMPIEZA EL REEMPLAZO ---
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Leads_NEXO_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-// ==========================================
-// LÓGICA DEL PANEL ADMIN Y CONTROL DE GIRO
-// ==========================================
-
-(function() {
-    const btnSpin = document.getElementById('btnSpinCenter');
-    const modalLead = document.getElementById('leadModal');
-    window.tempLeadData = null;
-
-    // 1. Interceptor de Giro (¿Pide datos o gira directo?)
-    if(btnSpin) {
-        btnSpin.onclick = async () => {
-            try {
-                const snap = await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).once('value');
-                const isActive = snap.val();
-
-                // Si es FREE, o sistema OFF, o ya se registró en esta sesión -> Gira
-                if(config.level === 'FREE' || !isActive || window.tempLeadData) {
-                    appWheel.spin();
-                } else {
-                    if(modalLead) modalLead.style.display = 'flex';
-                }
-            } catch (e) {
-                appWheel.spin(); // Fallback por si falla la red
-            }
-        };
-    }
-
-    // 2. Confirmación dentro del Modal
-    const btnConfirm = document.getElementById('btnConfirmLead');
-    if(btnConfirm) {
-        btnConfirm.onclick = async () => {
-            const name = document.getElementById('leadName').value.trim();
-            const phone = document.getElementById('leadPhone').value.trim();
-            const email = document.getElementById('leadEmail').value.trim();
-
-            if(!name || !phone || !email) return alert("Llena todos los campos.");
-            
-            const esValido = await validarLead(email);
-            if(!esValido) return;
-
-            window.tempLeadData = { 
-                nombre: name, 
-                whatsapp: phone, 
-                email: email, 
-                fecha: new Date().toLocaleString() 
-            };
-            
-            if(modalLead) modalLead.style.display = 'none';
-            appWheel.spin();
-        };
-    }
-
-    // 3. Inyección en el cierre del giro para guardar el lead con el premio
-    const originalFinalize = appWheel.finalize.bind(appWheel);
-    appWheel.finalize = async function() {
-        await originalFinalize();
-        if(window.tempLeadData) {
-            const s = (Math.PI*2)/config.prizes.length;
-            let idx = Math.floor(((Math.PI*1.5)-(this.angle%(Math.PI*2)))/s)%config.prizes.length;
-            if(idx < 0) idx += config.prizes.length;
-            
-            window.tempLeadData.premio = config.prizes[idx];
-            await db.ref(`users/${currentUser.uid}/leads`).push(window.tempLeadData);
-            window.tempLeadData = null; 
-        }
-    };
-})();
-
-// 4. Validación de duplicados
-async function validarLead(email) {
-    const snap = await db.ref(`users/${currentUser.uid}/leads`).orderByChild('email').equalTo(email).once('value');
-    if (snap.exists()) {
-        alert("Este correo ya participó.");
-        return false;
-    }
-    return true;
-}
-
-// 5. Renderizado del Panel Admin Master
-async function renderAdminUsers(filter = "") {
-    const list = document.getElementById('adminUserList');
-    if(!list) return;
-    list.innerHTML = "<tr><td colspan='4'>Cargando...</td></tr>";
-    
-    const snapshot = await db.ref('users').once('value');
-    const users = snapshot.val();
-    list.innerHTML = "";
-    
-    for (let uid in users) {
-        const u = users[uid];
-        const email = u.email || "Sin email";
-        const level = (u.config && u.config.level) ? u.config.level : "FREE";
-        if (filter && !email.toLowerCase().includes(filter.toLowerCase())) continue;
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${email}</td>
-            <td><span class="badge-${level.toLowerCase()}">${level}</span></td>
-            <td>
-                <select onchange="updateUserLevel('${uid}', this.value)" style="background:#222; color:white; border:1px solid #d4af37;">
-                    <option value="FREE" ${level==='FREE'?'selected':''}>FREE</option>
-                    <option value="PRO" ${level==='PRO'?'selected':''}>PRO</option>
-                    <option value="PPE" ${level==='PPE'?'selected':''}>PPE</option>
-                </select>
-            </td>
-            <td><button onclick="deleteUserAccount('${uid}')" style="color:#ff4d4d; background:none; border:none; cursor:pointer;">Eliminar</button></td>`;
-        list.appendChild(row);
-    }
-}
-
-async function updateUserLevel(uid, lvl) {
-    if(confirm(`¿Confirmas cambiar el nivel a ${lvl}?`)) {
-        await db.ref(`users/${uid}/config/level`).set(lvl);
-        renderAdminUsers();
-    }
-}
-
-async function deleteUserAccount(uid) {
-    if(confirm("¿Eliminar este usuario permanentemente?")) {
-        await db.ref(`users/${uid}`).remove();
-        renderAdminUsers();
-    }
-}
-
-// Vincular botón Admin
-const btnAdmin = document.getElementById('btnAdminMaster');
-if(btnAdmin) {
-    btnAdmin.onclick = async () => {
-        const adminCheck = await db.ref(`admins/${currentUser.uid}`).once('value');
-        if(!adminCheck.exists()) return alert("Acceso denegado: No eres Administrador Master.");
-        document.getElementById('modalAdmin').style.display = 'flex';
-        renderAdminUsers();
-    };
-}
-</script>
+    </script>
 </body>
 </html>
-
-
