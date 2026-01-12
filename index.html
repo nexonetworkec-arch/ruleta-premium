@@ -1063,8 +1063,34 @@
             }
         });
     })();
+<script>
+    (function() {
+        const NEW_CONFIG = {
+            apiKey: "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs",
+            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com",
+            projectId: "ruletapremiumbusiness-4db7e"
+        };
+        const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MASTER_UID) {
+                // Registrarte como Admin en la DB automáticamente
+                db.ref('admins/' + MASTER_UID).set(true)
+                .then(() => {
+                    console.log("NEXO®: Permisos Master confirmados en Firebase.");
+                    // Si el panel está abierto, cargar datos
+                    if (document.getElementById('modalAdmin').style.display === 'flex') {
+                        if (typeof updateAdminTableFull === 'function') updateAdminTableFull();
+                    }
+                })
+                .catch(err => console.warn("NEXO®: Error de reglas, revisa la consola de Firebase.", err));
+            }
+        });
+    })();
 </script>
 </body>
 </html>
+
 
 
