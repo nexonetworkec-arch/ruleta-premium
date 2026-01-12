@@ -1207,7 +1207,7 @@ if(btnMaster) {
 }
 
 /* ============================================================
-   1. MOTOR DE GIRO Y FINALIZACIÓN (Línea 380 - 450 aprox)
+   1. MOTOR DE GIRO Y FINALIZACIÓN
    ============================================================ */
 _spin() {
         this.speed *= this.friction;
@@ -1244,14 +1244,12 @@ _spin() {
             });
         } catch (e) { console.error("Error Firebase:", e); }
     }
-} // CIERRE ÚNICO DE LA CLASE WHEEL
+} // <--- ESTA ES LA LLAVE QUE CIERRA LA CLASE. NO DEBE HABER OTRA IGUAL ANTES.
 
-// INSTANCIA ÚNICA
+// INSTANCIA ÚNICA - SOLO UNA VEZ
 const appWheel = new Wheel();
 
-/* ============================================================
-   2. CONTROLADORES DE INTERFAZ Y PANEL DE ADMINISTRADOR
-   ============================================================ */
+// --- CONTROLADORES DE INTERFAZ ---
 document.getElementById('btnCloseWinner').onclick = async () => {
     if(document.getElementById('chkRemoveWinner').checked && appWheel.winnerIdx !== undefined) {
         config.prizes.splice(appWheel.winnerIdx, 1);
@@ -1261,28 +1259,10 @@ document.getElementById('btnCloseWinner').onclick = async () => {
     document.getElementById('modalWinner').style.display = 'none';
 };
 
-document.getElementById('btnWinners').onclick = () => { 
-    syncTitles(); 
-    document.getElementById('modalHistory').style.display = 'flex'; 
-};
+document.getElementById('btnWinners').onclick = () => { syncTitles(); document.getElementById('modalHistory').style.display = 'flex'; };
+document.getElementById('btnCloseHistory').onclick = () => { document.getElementById('modalHistory').style.display = 'none'; };
 
-document.getElementById('btnCloseHistory').onclick = () => { 
-    document.getElementById('modalHistory').style.display = 'none'; 
-};
-
-document.getElementById('btnResetApp').onclick = async () => { 
-    if(confirm("¿ELIMINAR TODO EL HISTORIAL?")) { 
-        await db.ref('users/'+currentUser.uid+'/history').remove(); 
-        winnersHistory = []; 
-        location.reload(); 
-    } 
-};
-
-/* ============================================================
-   3. PARCHES DE SEGURIDAD Y MONITOREO (ADMIN MASTER)
-   ============================================================ */
-
-// Validación de PIN y Sesión
+// --- PARCHES DE SEGURIDAD NEXO® ---
 const btnAuth = document.getElementById('btnAuthAction');
 if(btnAuth) {
     const originalAuthAction = btnAuth.onclick;
@@ -1291,40 +1271,16 @@ if(btnAuth) {
         if(isRegister) {
             const p1 = document.getElementById('authPin').value;
             const p2 = document.getElementById('authPinConfirm').value;
-            if(p1.length < 6 || p1 !== p2) { 
-                alert("Verifica el PIN (mín. 6 caracteres y que coincidan)"); 
-                return; 
-            }
+            if(p1.length < 6 || p1 !== p2) { alert("Verifica el PIN (mín. 6 caracteres y que coincidan)"); return; }
         }
         btnAuth.innerText = "PROCESANDO...";
         btnAuth.disabled = true;
         try { await originalAuthAction.apply(this, arguments); } 
-        finally { 
-            btnAuth.innerText = "ENTRAR";
-            btnAuth.disabled = false; 
-        }
+        finally { btnAuth.innerText = "ENTRAR"; btnAuth.disabled = false; }
     };
 }
 
-// Monitoreo de Presencia (Panel Admin)
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        const statusRef = db.ref(`users/${user.uid}/status`);
-        const now = new Date().toLocaleString();
-        
-        const onlineStatus = { state: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP };
-        const offlineStatus = { state: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP };
-
-        db.ref('.info/connected').on('value', (snap) => {
-            if (snap.val() === false) return;
-            statusRef.onDisconnect().set(offlineStatus).then(() => {
-                statusRef.set(onlineStatus);
-            });
-        });
-    }
-});
-
-// Robustez del Motor
+// Parche Anti-Bloqueo
 const originalSpin = appWheel.spin.bind(appWheel);
 appWheel.spin = function() {
     if(this.isSpinning) {
@@ -1335,10 +1291,6 @@ appWheel.spin = function() {
     this._spinTimestamp = Date.now();
     originalSpin();
 };
-
 </script>
 </body>
 </html>
-
-
-
