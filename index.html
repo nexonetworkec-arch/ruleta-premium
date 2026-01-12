@@ -1088,9 +1088,82 @@
             }
         });
     })();
+<script>
+    (function() {
+        const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        // Función para forzar la carga de datos con los IDs correctos del HTML
+        function forceAdminLoad() {
+            // Sincronizamos los IDs: Tu HTML usa 'adminUserList'
+            const list = document.getElementById('adminUserList');
+            if (!list) return;
+
+            db.ref('users').on('value', snap => {
+                // Actualizamos el Dashboard de estadísticas
+                if (typeof updateAdminDashboard === 'function') {
+                    updateAdminDashboard(snap);
+                }
+
+                let html = '';
+                snap.forEach(userSnap => {
+                    const u = userSnap.val();
+                    const uid = userSnap.key;
+                    const config = u.config || {};
+                    const status = u.status || { state: 'offline' };
+                    const lvl = (config.level || 'FREE').toUpperCase();
+                    
+                    const isOnline = status.state === 'online';
+                    const dot = isOnline ? 'online-badge' : 'offline-badge';
+
+                    html += `
+                    <tr>
+                        <td>
+                            <span class="${dot}"></span>
+                            <small title="${uid}">${uid.substring(0,8)}...</small>
+                        </td>
+                        <td style="color:var(--gold); font-weight:bold;">${lvl}</td>
+                        <td>
+                            <button class="btn-action-mini btn-lvl" onclick="cycleUserLevel('${uid}', '${lvl}')">NIVEL</button>
+                            <button class="btn-action-mini btn-cfg" onclick="openUserConfig('${uid}')">⚙️</button>
+                        </td>
+                    </tr>`;
+                });
+                list.innerHTML = html;
+            });
+        }
+
+        // Conectamos el botón Admin Master del HTML (Línea 277)
+        const btnAdmin = document.getElementById('btnAdminMaster');
+        if (btnAdmin) {
+            btnAdmin.onclick = () => {
+                document.getElementById('modalAdmin').style.display = 'flex';
+                injectMasterAdminStyles(); // Asegura que los estilos existan
+                forceAdminLoad();
+            };
+        }
+
+        // Auto-Validación de Rango Master
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MASTER_UID) {
+                // Asegura que el botón sea visible y funcional
+                if(btnAdmin) btnAdmin.style.display = 'block';
+                // Escribimos en la DB que eres admin para saltar las reglas
+                db.ref('admins/' + MASTER_UID).set(true);
+            }
+        });
+    })();
+
+    // Función auxiliar para cambiar niveles desde la tabla
+    async function cycleUserLevel(uid, current) {
+        const next = current === 'FREE' ? 'PRO' : (current === 'PRO' ? 'PPE' : 'FREE');
+        if(confirm(`¿Cambiar usuario ${uid} a nivel ${next}?`)) {
+            await db.ref(`users/${uid}/config/level`).set(next.toLowerCase());
+        }
+    }
 </script>
 </body>
 </html>
+
 
 
 
