@@ -317,12 +317,10 @@
             <button id="btnConfirmLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
 
     <script>
-        // --- 1. NUEVA CONFIGURACIÓN INTEGRADA (PROYECTO: 4db7e) ---
+        // --- 2. CONFIGURACIÓN FIREBASE (PROYECTO: 4db7e) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -333,16 +331,15 @@
             appId: "1:822563863112:web:d134d015736e2fafb5367d"
         };
 
-        // Inicialización segura (Mantiene Integridad Estructural)
+        // Inicialización única para proteger la integridad del motor
         if (!firebase.apps.length) { 
             firebase.initializeApp(firebaseConfig); 
         }
 
-        // Referencias globales necesarias para todo el motor
         const auth = firebase.auth(); 
         const db = firebase.database();
 
-        // Variables de estado únicas
+        // Variables de estado global requeridas por el sistema
         let currentUser = null; 
         let winnersHistory = [];
         let config = { 
@@ -353,6 +350,9 @@
             level: "free", 
             customLogoURL: "" 
         };
+
+        // --- 3. INICIO DEL MOTOR DE AUDIO ---
+        class AudioEngine {
 
         // --- 2. INICIO DE MOTORES (AudioEngine) ---
         class AudioEngine {
