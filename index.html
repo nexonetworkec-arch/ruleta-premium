@@ -1031,6 +1031,40 @@
         });
     })();
 </script>
+
+    <script>
+    (function() {
+        // 1. Definición de la nueva credencial proporcionada
+        const NEW_API_KEY = "AIzaSyDNfPSLAq9aiavYo3ezVCwesCrpTluOIcs";
+        const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        // 2. Reinicialización del motor si la clave no coincide
+        if (firebase.apps.length > 0 && firebase.app().options.apiKey !== NEW_API_KEY) {
+            console.log("NEXO®: Actualizando API Key del sistema...");
+            
+            // Re-asignamos la clave en el objeto de configuración global
+            firebase.app().options.apiKey = NEW_API_KEY;
+        }
+
+        // 3. Verificación de permisos y visualización
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MASTER_UID) {
+                const btnAdmin = document.getElementById('btnAdminMaster');
+                if (btnAdmin) {
+                    btnAdmin.style.display = 'block';
+                    btnAdmin.onclick = () => {
+                        document.getElementById('modalAdmin').style.display = 'flex';
+                        // Llamada al renderizador de tabla definido en la línea 180 [cite: 180]
+                        if (typeof updateAdminTableFull === 'function') {
+                            updateAdminTableFull();
+                        }
+                    };
+                }
+            }
+        });
+    })();
+</script>
 </body>
 </html>
+
 
