@@ -1206,49 +1206,96 @@ if(btnMaster) {
     };
 }
 
-/* ==========================================================================
-   INYECCIÓN ADITIVA: PARCHE DE SEGURIDAD Y OPTIMIZACIÓN (INTEGRIDAD 100%)
-   ========================================================================== */
+/* ============================================================
+   1. MOTOR DE GIRO Y FINALIZACIÓN (Línea 380 - 450 aprox)
+   ============================================================ */
+    _spin() {
+        this.speed *= this.friction;
+        this.angle += this.speed;
 
-// 1. Validación de Seguridad en Registro (Fix: Pin Match)
-const originalAuthAction = document.getElementById('btnAuthAction').onclick;
-document.getElementById('btnAuthAction').onclick = async function(e) {
-    const isRegister = document.getElementById('confirmGroup').style.display === 'block';
-    if(isRegister) {
-        const p1 = document.getElementById('authPin').value;
-        const p2 = document.getElementById('authPinConfirm').value;
-        const name = document.getElementById('authFullName').value;
-        
-        if(p1.length < 6) { alert("El PIN debe tener al menos 6 caracteres."); return; }
-        if(p1 !== p2) { alert("Los PIN no coinciden."); return; }
-        if(!name) { alert("Por favor, ingresa tu nombre completo."); return; }
+        if (this.speed < 0.001) {
+            this.speed = 0;
+            this.isSpinning = false;
+            this.finalize(); // Llama a la finalización
+        }
+        this.draw();
     }
-    
-    // Feedback Visual: Indicador de carga
-    const btn = e.target;
-    const originalText = btn.innerText;
-    btn.innerText = "PROCESANDO...";
-    btn.disabled = true;
-    
-    try {
-        await originalAuthAction.apply(this, arguments);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-};
 
-// 2. Fix de AudioContext para Navegadores Móviles (Safari/Chrome)
-document.addEventListener('touchstart', function() {
+    async finalize() {
+        const s = (Math.PI * 2) / config.prizes.length;
+        let idx = Math.floor(((Math.PI * 1.5) - (this.angle % (Math.PI * 2))) / s) % config.prizes.length;
+        if (idx < 0) idx += config.prizes.length;
+
+        this.winnerIdx = idx;
+        const premio = config.prizes[idx];
+        const fecha = new Date().toLocaleString();
+
+        // Interfaz
+        document.getElementById('winnerDisplay').innerText = premio;
+        document.getElementById('modalWinner').style.display = 'flex';
+        this.audio.playWin();
+        this.confetti.burst();
+
+        // Inyección Firebase
+        winnersHistory.push({ nombre: premio, fecha: fecha });
+        try {
+            await db.ref('users/' + currentUser.uid + '/history').set(winnersHistory);
+            await db.ref('users/' + currentUser.uid + '/spinLogs').push({
+                premio: premio,
+                timestamp: fecha
+            });
+        } catch (e) { console.error("Error Firebase:", e); }
+    }
+} // CIERRE ÚNICO DE LA CLASE WHEEL
+
+const appWheel = new Wheel();
+
+/* ============================================================
+   2. CONTROLADORES DE INTERFAZ Y LEADS
+   ============================================================ */
+async function validarYRedireccionar() {
+    const name = document.getElementById('leadName').value;
+    const phone = document.getElementById('leadPhone').value;
+    const email = document.getElementById('leadEmail').value;
+
+    if(!name || !phone || !email) { alert("Completa todos los campos"); return; }
+    
+    document.getElementById('leadModal').style.display = 'none';
+    appWheel.spin(); 
+} // CIERRE DE FUNCIÓN (Sin punto y coma)
+
+/* ============================================================
+   3. INYECCIÓN ADITIVA: PARCHES DE SEGURIDAD (NEXO®)
+   ============================================================ */
+
+// Parche 1: Validación de PIN
+const btnAuth = document.getElementById('btnAuthAction');
+if(btnAuth) {
+    const originalAuthAction = btnAuth.onclick;
+    btnAuth.onclick = async function(e) {
+        const isRegister = document.getElementById('confirmGroup').style.display === 'block';
+        if(isRegister) {
+            const p1 = document.getElementById('authPin').value;
+            const p2 = document.getElementById('authPinConfirm').value;
+            if(p1.length < 6 || p1 !== p2) { alert("Verifica el PIN (mín. 6 caracteres y que coincidan)"); return; }
+        }
+        btnAuth.innerText = "PROCESANDO...";
+        btnAuth.disabled = true;
+        try { await originalAuthAction.apply(this, arguments); } 
+        finally { btnAuth.innerText = "ENTRAR"; btnAuth.disabled = false; }
+    };
+}
+
+// Parche 2: Audio Móvil
+document.addEventListener('touchstart', () => {
     if (appWheel.audio && appWheel.audio.ctx.state === 'suspended') {
         appWheel.audio.ctx.resume();
     }
 }, { once: true });
 
-// 3. Robustez del Motor de Giro (Fix: IsSpinning Lock)
+// Parche 3: Robustez Anti-Bloqueo
 const originalSpin = appWheel.spin.bind(appWheel);
 appWheel.spin = function() {
-    // Si la ruleta está bloqueada por más de 10 segundos, liberar (Fail-safe)
     if(this.isSpinning) {
         if(!this._spinTimestamp) this._spinTimestamp = Date.now();
         if(Date.now() - this._spinTimestamp > 10000) this.isSpinning = false;
@@ -1258,22 +1305,16 @@ appWheel.spin = function() {
     originalSpin();
 };
 
-// 4. Ajuste de Estilos Aditivos (Fix: Responsividad y UI)
+// Parche 4: Estilos Dinámicos
 const patchStyles = document.createElement('style');
 patchStyles.innerHTML = `
-    /* Evita el solapamiento en móviles pequeños */
-    @media (max-height: 700px) and (max-width: 800px) {
-        .wheel-wrapper { width: 60vw !important; height: 60vw !important; }
-        .app-container { padding-bottom: 180px !important; }
-    }
-    /* Estilo para el estado de carga del botón */
-    #btnAuthAction:disabled { opacity: 0.7; cursor: not-allowed; background: #444; }
-    /* Mejora de visibilidad de textos en la ruleta */
-    #wheelCanvas { filter: contrast(1.1) brightness(1.1); }
+    @media (max-height: 700px) { .wheel-wrapper { width: 60vw; height: 60vw; } }
+    #btnAuthAction:disabled { opacity: 0.7; background: #444; }
+    #wheelCanvas { filter: contrast(1.1); }
 `;
 document.head.appendChild(patchStyles);
 
-// 5. Normalización de Nombres de Usuario
+// Parche 5: Normalización
 db.ref('users').on('child_added', (snapshot) => {
     const data = snapshot.val();
     if (data.config && data.config.fullName) {
@@ -1288,10 +1329,3 @@ console.log("NEXO® Pro: Parches de integridad aplicados correctamente.");
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
