@@ -913,7 +913,8 @@ input:checked + .slider:before { transform: translateX(22px); }
             let tempLeadData = null;
 
             if(btnSpin) {
-                btnSpin.onclick = () => {
+                // La forma correcta de llamar al modal es con document.getElementById y entre comillas
+document.getElementById('leadModal').style.display = 'flex';
                     // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
                     if(config.level === 'free' || tempLeadData) {
                         appWheel.spin();
@@ -1154,6 +1155,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
