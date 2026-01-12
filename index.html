@@ -431,7 +431,7 @@ input:checked + .slider:before { transform: translateX(22px); }
                 const fecha = new Date().toLocaleString();
                 winnersHistory.push({nombre: premio, fecha: fecha});
                 
-               /* === REEMPLAZA DESDE TUS AWAIT HASTA EL INICIO DE FINALIZE CON ESTO === */
+          /* === REEMPLAZA DESDE TUS AWAIT HASTA EL INICIO DE FINALIZE CON ESTO === */
 
             // 1. Aquí termina el método anterior (el que anima el giro)
         } 
@@ -452,6 +452,14 @@ input:checked + .slider:before { transform: translateX(22px); }
                 premio: premio,
                 timestamp: fecha
             });
+
+            // --- CONTINUACIÓN DE LA INTERFAZ ---
+            document.getElementById('winnerDisplay').innerText = premio;
+            document.getElementById('modalWinner').style.display = 'flex';
+            this.audio.playWin();
+            this.confetti.burst();
+        } 
+    } // CIERRE FINAL DE LA CLASE WHEEL
 
             // --- CONTINUACIÓN DE LA INTERFAZ ---
             document.getElementById('winnerDisplay').innerText = premio;
@@ -1292,6 +1300,7 @@ console.log("NEXO® Pro: Parches de integridad aplicados correctamente.");
     </script>
 </body>
 </html>
+
 
 
 
