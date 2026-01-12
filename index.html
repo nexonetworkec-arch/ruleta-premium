@@ -909,7 +909,7 @@ input:checked + .slider:before { transform: translateX(22px); }
         // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
         (function() {
             const btnSpin = document.getElementById('btnSpinCenter');
-            const modalLead = document.getElementById('modalLead');
+            document.getElementById('leadModal').style.display = 'flex';
             let tempLeadData = null;
 
             if(btnSpin) {
@@ -1154,6 +1154,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
