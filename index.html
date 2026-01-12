@@ -906,23 +906,28 @@ input:checked + .slider:before { transform: translateX(22px); }
             });
         })();
 
-        // --- INYECCIÓN ADITIVA: LÓGICA DE LEADS Y EXCEL ---
-        (function() {
-            const btnSpin = document.getElementById('btnSpinCenter');
-            document.getElementById('leadModal').style.display = 'flex';
-            let tempLeadData = null;
+       // --- CORRECCIÓN DE LÓGICA DE GIRO Y LEADS ---
+document.getElementById('btnSpinCenter').onclick = async () => {
+    // 1. Verificar si el sistema de leads está activo en el Switch
+    const leadsActivos = document.getElementById('leadSystemSwitch').checked;
+    
+    // 2. Si es nivel FREE o los leads están apagados, gira directamente
+    if (config.level === 'free' || !leadsActivos) {
+        appWheel.spin();
+        return;
+    }
 
-            if(btnSpin) {
-                // La forma correcta de llamar al modal es con document.getElementById y entre comillas
-document.getElementById('leadModal').style.display = 'flex';
-                    // Si es nivel FREE o ya se registró, gira. Si no, pide datos.
-                    if(config.level === 'free' || tempLeadData) {
-                        appWheel.spin();
-                    } else {
-                        modalLead.style.display = 'flex';
-                    }
-                };
-            }
+    // 3. Si están activos, verificar si ya tenemos datos temporales
+    if (typeof tempLeadData !== 'undefined' && tempLeadData !== null) {
+        appWheel.spin();
+    } else {
+        // Mostrar el modal de registro (ID correcto: leadModal)
+        const modal = document.getElementById('leadModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+};
 
             document.getElementById('btnConfirmLead').onclick = () => {
                 const nom = document.getElementById('leadNom').value;
@@ -1155,6 +1160,7 @@ if(btnMaster) {
     </script>
 </body>
 </html>
+
 
 
 
