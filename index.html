@@ -192,6 +192,34 @@
 }
         }
 
+/* Inyección Aditiva: Estilos UI Control Leads */
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    color: var(--gold);
+    cursor: pointer;
+}
+
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--gray);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* Toggle Switch */
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 20px; }
+.slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--gold); }
+input:checked + .slider:before { transform: translateX(20px); }
+
         /* --- INYECCIÓN ADITIVA: ESTILOS DE LEADS --- */
         .lead-modal { display: none; position: fixed; z-index: 10001; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
         .lead-card { background: var(--card-bg); padding: 30px; border-radius: 30px; border: 1px solid var(--gold); width: 90%; max-width: 380px; text-align: center; }
@@ -908,6 +936,35 @@
                 };
             }
 
+// Función para descargar base de datos completa (Solo para ADMIN MASTER)
+const btnAdminExport = document.getElementById('btnAdminMaster'); 
+if(btnAdminExport) {
+    btnAdminExport.onclick = async () => {
+        // Verificar si es admin según las reglas que definimos
+        const adminCheck = await db.ref(`admins/${currentUser.uid}`).once('value');
+        if(!adminCheck.val()) return alert("Acceso denegado: No eres Administrador Master.");
+
+        const allUsersSnap = await db.ref('users').once('value');
+        let allLeads = [];
+        
+        allUsersSnap.forEach(userSnap => {
+            const userData = userSnap.val();
+            if(userData.leads) {
+                Object.values(userData.leads).forEach(lead => {
+                    allLeads.push({ ...lead, admin_owner: userSnap.key });
+                });
+            }
+        });
+
+        if(allLeads.length === 0) return alert("No hay datos globales para descargar.");
+        
+        const ws = XLSX.utils.json_to_sheet(allLeads);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Global_Leads");
+        XLSX.writeFile(wb, "NEXO_MASTER_DATABASE.xlsx");
+    };
+}
+
             // Integrar el guardado del lead cuando la ruleta termina (finalize)
             const originalFinalize = appWheel.finalize.bind(appWheel);
             appWheel.finalize = async function() {
@@ -922,6 +979,89 @@
                 }
             };
         })();
+
+// --- FUNCIONALIDADES DE REGISTRO AVANZADO ---
+
+// 1. Agregar botón de cerrar al modal (Inyección DOM)
+const modalContent = document.querySelector('#leadModal .modal-content');
+if(modalContent) {
+    const closeBtn = document.createElement('span');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.className = 'close-modal';
+    closeBtn.onclick = () => {
+        document.getElementById('leadModal').style.display = 'none';
+        tempLeadData = null; // Resetea datos si cierra
+    };
+    modalContent.appendChild(closeBtn);
+}
+
+// 2. Validación de Correo y Duplicados
+async function validarLead(email) {
+    // Regex para formato de correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert("Por favor, ingresa un correo electrónico válido.");
+        return false;
+    }
+
+    // Verificar duplicados en Firebase
+    const snapshot = await db.ref(`users/${currentUser.uid}/leads`)
+        .orderByChild('email')
+        .equalTo(email)
+        .once('value');
+
+    if (snapshot.exists()) {
+        alert("Este correo ya ha participado anteriormente.");
+        return false;
+    }
+    return true;
+}
+
+// 3. Modificar el evento del botón "Confirmar y Girar"
+const originalConfirmBtn = document.getElementById('btnConfirmLead');
+const newConfirmBtn = originalConfirmBtn.cloneNode(true);
+originalConfirmBtn.parentNode.replaceChild(newConfirmBtn, originalConfirmBtn);
+
+newConfirmBtn.onclick = async () => {
+    const name = document.getElementById('leadName').value.trim();
+    const phone = document.getElementById('leadPhone').value.trim();
+    const email = document.getElementById('leadEmail').value.trim();
+
+    if(!name || !phone || !email) return alert("Completa todos los campos.");
+    
+    // Ejecutar validaciones
+    const esValido = await validarLead(email);
+    if(!esValido) return;
+
+    tempLeadData = { 
+        nombre: name, 
+        whatsapp: phone, 
+        email: email, 
+        fecha: new Date().toLocaleString() 
+    };
+
+    document.getElementById('leadModal').style.display = 'none';
+    appWheel._spin(); // Solo gira si pasa todas las pruebas
+};
+
+// 4. Control de Activación con Contraseña
+async function toggleLeadSystem(active) {
+    const password = prompt("Introduce tu contraseña para confirmar el cambio:");
+    if (!password) return;
+
+    try {
+        // Re-autenticación para seguridad
+        const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
+        await currentUser.reauthenticateWithCredential(credential);
+        
+        // Guardar preferencia en Firebase
+        await db.ref(`users/${currentUser.uid}/config/leadSystemActive`).set(active);
+        alert(`Sistema de registro ${active ? 'ACTIVADO' : 'DESACTIVADO'}`);
+    } catch (error) {
+        alert("Contraseña incorrecta. No se pudo realizar el cambio.");
+        document.getElementById('leadSwitch').checked = !active;
+    }
+}
     </script>
 </body>
 </html>
