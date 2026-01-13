@@ -1351,10 +1351,114 @@ appWheel.applyReportBtnIdentity = function() {
 appWheel.applyReportBtnIdentity();
 
 /* --- FIN DEL BLOQUE DE IDENTIDAD --- */
-   
+
+        /* ==========================================================================
+   NEXO® LIST MANAGER: EDICIÓN Y ELIMINACIÓN DE BASES DE DATOS
+   Referencia: [2026-01-13] - Gestión administrativa de premios
+   ========================================================================== */
+
+// 1. Estilos del Administrador de Listas
+const styleListManager = document.createElement('style');
+styleListManager.innerHTML = `
+    .nexo-list-admin {
+        position: fixed; top: 15%; left: 15%; width: 70%; height: 70%;
+        background: #000; border: 2px solid #d4af37; z-index: 5000;
+        color: #fff; padding: 25px; display: none; overflow-y: auto;
+        box-shadow: 0 0 40px rgba(0,0,0,0.95);
+    }
+    .list-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .list-table th { color: #d4af37; text-align: left; padding: 12px; border-bottom: 1px solid #d4af37; }
+    .list-table td { padding: 12px; border-bottom: 1px solid #222; }
+    .btn-action-nexo {
+        background: transparent; border: 1px solid #444; color: #fff;
+        padding: 5px 12px; cursor: pointer; margin-right: 5px; font-size: 11px;
+        text-transform: uppercase; transition: 0.3s;
+    }
+    .btn-edit-nexo:hover { border-color: #d4af37; color: #d4af37; }
+    .btn-delete-nexo:hover { border-color: #ff4444; color: #ff4444; }
+`;
+document.head.appendChild(styleListManager);
+
+// 2. Contenedor del Modal
+const listModal = document.createElement('div');
+listModal.id = 'nexoListAdminModal';
+listModal.className = 'nexo-list-admin';
+document.body.appendChild(listModal);
+
+// 3. Lógica de Administración
+appWheel.openListManager = function() {
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_prizes')) || {};
+    const modal = document.getElementById('nexoListAdminModal');
+    
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d4af37; padding-bottom:10px;">
+            <h2 style="margin:0; color:#d4af37; letter-spacing:2px;">GESTIÓN DE LISTAS GUARDADAS</h2>
+            <button class="btn-action-nexo" onclick="document.getElementById('nexoListAdminModal').style.display='none'">CERRAR</button>
+        </div>
+        <table class="list-table">
+            <thead>
+                <tr>
+                    <th>NOMBRE DE LA LISTA</th>
+                    <th>PREMIOS</th>
+                    <th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    Object.keys(savedLists).forEach(name => {
+        html += `
+            <tr>
+                <td style="font-weight:bold;">${name}</td>
+                <td style="color:#888;">${savedLists[name].length} items</td>
+                <td>
+                    <button class="btn-action-nexo btn-edit-nexo" onclick="appWheel.editSavedList('${name}')">EDITAR</button>
+                    <button class="btn-action-nexo btn-delete-nexo" onclick="appWheel.deleteSavedList('${name}')">ELIMINAR</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    modal.innerHTML = html;
+    modal.style.display = 'block';
+};
+
+// Función para Eliminar
+appWheel.deleteSavedList = function(name) {
+    if (confirm(`¿Estás seguro de eliminar la lista "${name}"?`)) {
+        let savedLists = JSON.parse(localStorage.getItem('nexo_saved_prizes')) || {};
+        delete savedLists[name];
+        localStorage.setItem('nexo_saved_prizes', JSON.stringify(savedLists));
+        this.openListManager(); // Refrescar modal
+    }
+};
+
+// Función para Cargar/Editar (vuelve al editor de premios)
+appWheel.editSavedList = function(name) {
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_prizes')) || {};
+    config.prizes = [...savedLists[name]];
+    this.updatePrizesList(); // Refresca el UI de premios
+    this.draw();
+    document.getElementById('nexoListAdminModal').style.display = 'none';
+    alert(`Lista "${name}" cargada en el editor para modificación.`);
+};
+
+// 4. Vincular al botón de Guardar existente
+// Buscamos el botón de guardar y le añadimos la nueva funcionalidad
+const checkSaveBtn = setInterval(() => {
+    const saveBtn = document.querySelector('button[onclick*="saveCurrentList"]');
+    if (saveBtn) {
+        saveBtn.setAttribute('onclick', 'appWheel.openListManager()');
+        clearInterval(checkSaveBtn);
+    }
+}, 500);
+
+/* --- FIN DEL BLOQUE DE GESTIÓN DE LISTAS --- */
     </script>
 </body>
 </html>
+
 
 
 
