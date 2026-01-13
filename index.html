@@ -319,115 +319,135 @@
         };
     </script>
 
-    <style>
-    /* Forzamos el comportamiento del contenedor principal en móviles */
+   <style>
+    /* RESET Y PRIORIDAD PARA MÓVILES */
     @media (max-width: 768px) and (orientation: portrait) {
+        /* Forzar que el cuerpo permita scroll si el contenido crece */
         body { 
             overflow-y: auto !important; 
             display: block !important; 
+            height: auto !important;
         }
 
+        /* Reestructuración del contenedor principal */
         #appMain {
             display: flex !important;
             flex-direction: column !important;
             height: auto !important;
             min-height: 100vh !important;
-            padding: 20px 10px !important;
+            padding: 40px 15px !important;
+            justify-content: flex-start !important;
             align-items: center !important;
         }
 
-        /* 1. EL TÍTULO VA ARRIBA */
+        /* FORZAR ORDEN JERÁRQUICO (Título > Ruleta > Checkbox > Botones) */
+        
+        /* 1. El contenedor del título y ruleta */
         #appMain > div:nth-child(2) {
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             width: 100% !important;
-            order: 1 !important; /* Posición jerárquica */
+            order: 1 !important; /* Aparece primero */
         }
 
+        /* Título arriba */
         #appMain h1 {
-            order: -2 !important; 
+            order: 1 !important;
             margin-bottom: 20px !important;
-            font-size: 22px !important;
+            font-size: 24px !important;
         }
 
-        /* 2. LA RULETA EN EL CENTRO */
+        /* Ruleta en medio */
         .wheel-wrapper {
-            order: -1 !important;
+            order: 2 !important;
             width: 85vw !important;
             height: 85vw !important;
-            max-width: 400px !important;
-            max-height: 400px !important;
-            margin: 10px auto !important;
+            max-width: 450px !important;
+            max-height: 450px !important;
+            margin: 20px auto !important;
         }
 
-        /* 3. AUTO-ELIMINAR ABAJO DE LA RULETA */
+        /* Checkbox debajo de la ruleta */
         #appMain > div:nth-child(2) > div:last-of-type {
-            order: 0 !important;
-            margin: 20px 0 !important;
-            display: inline-block !important;
+            order: 3 !important;
+            margin-top: 10px !important;
+            margin-bottom: 30px !important;
         }
 
-        /* 4. BOTONES ABAJO DEL TODO */
+        /* 2. El panel de botones (Side Panel) */
         .side-panel {
-            position: relative !important;
+            display: flex !important;
+            position: relative !important; /* Rompe el "absolute" original */
             right: auto !important;
             top: auto !important;
             width: 100% !important;
-            max-width: 320px !important;
+            max-width: 350px !important;
             flex-direction: row !important;
             flex-wrap: wrap !important;
             justify-content: center !important;
-            gap: 10px !important;
-            margin: 20px 0 50px 0 !important;
-            order: 2 !important;
+            gap: 12px !important;
+            order: 2 !important; /* Aparece después del bloque anterior */
+            padding-bottom: 50px !important;
         }
 
+        /* Ajuste de botones en cuadrícula para móviles */
         .side-panel .btn {
-            flex: 1 1 45% !important;
-            font-size: 9px !important;
-            padding: 14px 5px !important;
+            flex: 1 1 45% !important; /* Dos botones por fila */
+            font-size: 10px !important;
+            min-width: 140px !important;
         }
 
-        /* Botón salir a ancho completo */
+        /* Botón de Salir a ancho completo */
         .side-panel button[onclick*="signOut"] {
             flex: 1 1 100% !important;
+            margin-top: 10px !important;
         }
     }
 
-    /* Ajuste para modo Horizontal (Landscape) */
-    @media (max-height: 500px) and (orientation: landscape) {
+    /* COMPORTAMIENTO HORIZONTAL (Landscape) */
+    @media (orientation: landscape) {
         #appMain {
             flex-direction: row !important;
             justify-content: center !important;
-            gap: 20px !important;
+            align-items: center !important;
+            gap: 40px !important;
+        }
+        .side-panel {
+            position: static !important;
+            order: 2 !important;
         }
         .wheel-wrapper {
             width: 70vh !important;
             height: 70vh !important;
         }
-        .side-panel {
-            width: 180px !important;
-            scale: 0.8;
-        }
-        h1 { display: none; } /* Ocultamos título en horizontal móvil para ganar espacio */
     }
 </style>
 
 <script>
-    /* Inyección Aditiva para asegurar que el DOM responda a los cambios */
+    /* Script de apoyo para asegurar la limpieza de estilos en línea */
     (function() {
-        console.log("NEXO® Master: Aplicando corrección de jerarquía visual...");
-        // Forzamos que el div del título se comporte como flex para el ordenamiento
-        const contentDiv = document.querySelector('#appMain > div[style*="text-align:center"]');
-        if (contentDiv) {
-            contentDiv.style.display = 'flex';
-            contentDiv.style.flexDirection = 'column';
-            contentDiv.style.alignItems = 'center';
+        function aplicarCambios() {
+            if (window.innerWidth <= 768) {
+                const main = document.getElementById('appMain');
+                if (main) {
+                    main.style.display = 'flex';
+                    // Buscamos el div que contiene el título y la ruleta
+                    const contentDiv = main.querySelector('div[style*="text-align:center"]');
+                    if (contentDiv) {
+                        contentDiv.style.textAlign = 'center';
+                        contentDiv.style.width = '100%';
+                    }
+                }
+            }
         }
+        window.addEventListener('resize', aplicarCambios);
+        window.addEventListener('load', aplicarCambios);
+        aplicarCambios();
     })();
 </script>
    </body>
 </html>
+
 
 
