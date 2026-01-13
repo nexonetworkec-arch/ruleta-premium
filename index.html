@@ -832,31 +832,59 @@
             });
         })();
 
-        /* --- INYECCIÓN ADITIVA: CORRECCIÓN VISIBILIDAD "GIRAR" Y OPTIMIZACIÓN PANEL ADMIN --- */
+        /* --- INYECCIÓN ADITIVA: REFUERZO MAESTRO DE INTERFAZ (GIRAR + ADMIN 100%) --- */
 (function() {
-    // 1. Corrección de la palabra "GIRAR"
-    const fixSpinButton = () => {
-        const btnSpin = document.getElementById('btnSpinCenter');
-        if (btnSpin) {
-            // Aseguramos que el texto sea visible si no hay una imagen cargada
-            if (!btnSpin.querySelector('img')) {
-                btnSpin.innerText = "GIRAR";
-                btnSpin.style.color = "#000"; // Color negro original
-                btnSpin.style.fontWeight = "900";
-                btnSpin.style.fontSize = "14px";
-                btnSpin.style.display = "flex";
-                btnSpin.style.alignItems = "center";
-                btnSpin.style.justifyContent = "center";
+    // 1. ESTILOS DE ALTA PRIORIDAD (Se imponen sobre el CSS original)
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #btnSpinCenter {
+            color: #000 !important;
+            font-weight: 900 !important;
+            font-size: 14px !important;
+            text-transform: uppercase !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        #modalAdmin { background: rgba(0,0,0,0.95) !important; }
+        .admin-table-container { display: block !important; width: 100% !important; }
+    `;
+    document.head.appendChild(style);
+
+    // 2. REPARACIÓN PERMANENTE DE "GIRAR" (Evita el pantallazo)
+    const forceGirarText = () => {
+        const btn = document.getElementById('btnSpinCenter');
+        if (btn && !btn.querySelector('img')) {
+            if (btn.innerText !== "GIRAR") {
+                btn.innerText = "GIRAR";
             }
         }
     };
 
-    // 2. Optimización del Panel de Administrador (Carga 100%)
-    const optimizeAdminPanel = () => {
+    // Observador: Si algo (Firebase o JS original) borra el texto, lo reponemos al instante
+    const observer = new MutationObserver(() => forceGirarText());
+    const btnSpin = document.getElementById('btnSpinCenter');
+    if (btnSpin) {
+        observer.observe(btnSpin, { childList: true, characterData: true, subtree: true });
+    }
+
+    // 3. OPTIMIZACIÓN TOTAL DEL PANEL DE ADMINISTRADOR
+    const initAdminFix = () => {
         const btnAdmin = document.getElementById('btnAdminMaster');
         if (btnAdmin) {
-            // Sobrescribimos el click para asegurar carga inmediata
-            btnAdmin.addEventListener('click', () => {
+            // Clonamos para limpiar eventos previos que causan lentitud
+            const newBtnAdmin = btnAdmin.cloneNode(true);
+            btnAdmin.parentNode.replaceChild(newBtnAdmin, btnAdmin);
+            
+            newBtnAdmin.style.display = 'flex'; // Forzar visibilidad del botón
+
+            newBtnAdmin.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Ejecución inmediata de dependencias
                 if (typeof injectMasterAdminStyles === 'function') injectMasterAdminStyles();
                 if (typeof updateAdminTableFull === 'function') updateAdminTableFull();
                 
@@ -868,17 +896,11 @@
         }
     };
 
-    // Ejecución inmediata y tras carga de Firebase
-    fixSpinButton();
-    optimizeAdminPanel();
-    
-    // Observador para cambios en la base de datos que afecten al logo/botón
-    const settingsRef = firebase.database().ref('settings');
-    settingsRef.on('value', () => {
-        setTimeout(fixSpinButton, 500);
-    });
+    // Ejecutar al cargar y re-intentar tras breve pausa para asegurar Firebase
+    forceGirarText();
+    initAdminFix();
+    setTimeout(() => { forceGirarText(); initAdminFix(); }, 1500);
 })();
     </script>
 </body>
 </html>
-
