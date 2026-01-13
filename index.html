@@ -1441,7 +1441,116 @@ appWheel.renderUserCards = function() {
 // 4. Integración en el Menú Hamburguesa
 // Se añade al final del bloque de navegación anterior
 /* --- FIN DEL BLOQUE GLOBAL --- */
+
+        /* ==========================================================================
+   NEXO® GLOBAL COMMAND CENTER: MOTOR DE DATOS Y EXPORTACIÓN EXCEL
+   Referencia: [2026-01-13] - CRM Avanzado con Exportación Masiva
+   ========================================================================== */
+
+// 1. Motor de Exportación a Excel (CSV)
+appWheel.exportToCSV = function(data, fileName) {
+    const timestamp = new Date().toLocaleString().replace(/[/,:]/g, '-');
+    const finalName = `${fileName}_${timestamp}.csv`;
+    
+    // Encabezados del CSV
+    const headers = ["ID", "Nombre", "Apellido", "Email", "Telefono", "Nivel", "Giros", "Premios", "Sesion", "Estado"];
+    const rows = data.map(u => [u.id, u.nombre, u.apellido, u.email, u.tel, u.nivel, u.giros, u.premios, u.sesion, u.estado]);
+    
+    let csvContent = "data:text/csv;charset=utf-8," 
+        + headers.join(",") + "\n" 
+        + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", finalName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// 2. Renderizado de Tarjetas de Usuario con Métricas
+appWheel.renderUserCards = function() {
+    const container = document.getElementById('adminContent');
+    const users = JSON.parse(localStorage.getItem('nexo_users')) || db.users;
+    
+    let html = `
+        <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color:#d4af37; margin:0;">BASE DE DATOS DE USUARIOS</h3>
+            <button class="nexo-btn-gold" style="padding: 10px 20px; font-size: 11px;" onclick="appWheel.exportToCSV(db.users, 'NEXO_GLOBAL_DATABASE')">
+                📥 DESCARGAR BASE COMPLETA (EXCEL)
+            </button>
+        </div>
+        <div class="user-grid">
+    `;
+
+    users.forEach(user => {
+        html += `
+            <div class="user-card">
+                <span class="badge badge-${user.nivel}">${user.nivel}</span>
+                <div style="font-size: 18px; font-weight:900; color:#d4af37;">${user.nombre.toUpperCase()} ${user.apellido.toUpperCase()}</div>
+                <div style="color:#aaa; font-size:12px; margin: 5px 0;">📧 ${user.email}</div>
+                <div style="color:#aaa; font-size:12px; margin-bottom:15px;">📞 ${user.tel}</div>
+                
+                <div class="metric-box">
+                    <div style="text-align:center;"><small>GIROS</small><br><span class="metric-val">${user.giros}</span></div>
+                    <div style="text-align:center;"><small>PREMIOS</small><br><span class="metric-val">${user.premios}</span></div>
+                    <div style="text-align:center;"><small>SESIÓN</small><br><span class="metric-val">${user.sesion}</span></div>
+                </div>
+
+                <div style="margin-top:20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn-nexo-admin btn-nexo-edit" onclick="appWheel.changeNivel(${user.id})">UPGRADE NIVEL</button>
+                    <button class="btn-nexo-admin" onclick="appWheel.exportToCSV([db.users.find(u=>u.id==${user.id})], 'FICHA_USUARIO_${user.nombre}')">📥 EXPORTAR</button>
+                    <button class="btn-nexo-admin btn-nexo-delete" style="grid-column: span 2;">SUSPENDER CUENTA</button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html + '</div>';
+};
+
+// 3. Sistema de Pestañas Corregido
+appWheel.switchTab = function(tab) {
+    const container = document.getElementById('adminContent');
+    // Actualizar botones de pestañas
+    document.querySelectorAll('.btn-nexo-admin').forEach(b => b.classList.remove('active'));
+    
+    if (tab === 'users') {
+        this.renderUserCards();
+    } else if (tab === 'messages') {
+        container.innerHTML = `
+            <div class="admin-form-group">
+                <h3 style="color:#d4af37; letter-spacing:2px;">BROADCASTING CENTER</h3>
+                <label style="font-size:11px; color:#666;">SELECCIONAR AUDIENCIA:</label>
+                <select id="msgAudience" class="nexo-select">
+                    <option value="ALL">TODOS LOS USUARIOS</option>
+                    <option value="PRO">SÓLO MIEMBROS PRO</option>
+                    <option value="PPE">SÓLO MIEMBROS PPE</option>
+                    <option value="FREE">SÓLO MIEMBROS FREE</option>
+                </select>
+                <label style="font-size:11px; color:#666;">MENSAJE GLOBAL:</label>
+                <textarea id="msgBody" class="nexo-input" rows="5" placeholder="Escribe el comunicado oficial..."></textarea>
+                <button class="nexo-btn-gold" onclick="appWheel.sendBroadcast()">🚀 ENVIAR NOTIFICACIÓN</button>
+            </div>
+        `;
+    } else if (tab === 'live') {
+        container.innerHTML = `
+            <div class="live-feed-container">
+                <h3 style="color:#d4af37;">AUDITORÍA EN TIEMPO REAL</h3>
+                <div id="feedContent">
+                    <div class="feed-entry">> [${new Date().toLocaleTimeString()}] SESIÓN ADMINISTRATIVA INICIADA.</div>
+                    <div class="feed-entry">> [${new Date().toLocaleTimeString()}] MOTOR DE EXPORTACIÓN CSV LISTO.</div>
+                    <div class="feed-entry" style="color:#d4af37">> [${new Date().toLocaleTimeString()}] ESPERANDO ACTIVIDAD DE USUARIOS...</div>
+                </div>
+            </div>
+        `;
+    }
+};
+
+/* --- FIN DEL BLOQUE DE CONTROL TOTAL --- */
     </script>
 </body>
 </html>
+
 
