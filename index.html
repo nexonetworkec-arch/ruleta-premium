@@ -317,6 +317,85 @@
         document.getElementById('btnAuth').onclick = () => {
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
+
+        // --- INYECCIÓN ADITIVA: MÓDULO SENSORIAL NEXO® PRO ---
+// Integración de Sonidos Premium y Confeti de Pantalla Completa
+(function() {
+    // 1. Recursos de Sonido (Carga rápida desde CDN estable)
+    const soundTick = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'); // Clic de ruleta
+    const soundWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');  // Fanfarria victoria
+    soundTick.volume = 0.3;
+    soundWin.volume = 0.5;
+
+    // 2. Extensión del motor de la ruleta para Sonido
+    const originalDraw = appWheel.draw;
+    let lastPrizeIndex = -1;
+
+    // Monitorizamos el ángulo para disparar el sonido de 'clic'
+    const originalSpin = appWheel.spin;
+    appWheel.spin = function() {
+        soundTick.play().catch(() => console.log("Audio requiere interacción"));
+        originalSpin.apply(this, arguments);
+        
+        // Efecto de sonido rítmico mientras gira
+        const tickInterval = setInterval(() => {
+            if(this.isSpinning) {
+                soundTick.currentTime = 0;
+                soundTick.play().catch(()=>{});
+            } else {
+                clearInterval(tickInterval);
+            }
+        }, 150); // Ajuste rítmico del clic
+    };
+
+    // 3. Extensión de Victoria para Confeti de Pantalla Completa
+    const originalFinish = appWheel.finish;
+    appWheel.finish = function() {
+        // Disparar sonido de victoria
+        soundWin.play().catch(()=>{});
+
+        // Lanzamiento de Confeti Oro/Negro en TODA la pantalla
+        const end = Date.now() + (3 * 1000); // 3 segundos de lluvia
+        const colors = ['#d4af37', '#000000', '#ffffff'];
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 }, // Desde la izquierda
+                colors: colors,
+                zIndex: 10001
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 }, // Desde la derecha
+                colors: colors,
+                zIndex: 10001
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+
+        // Confeti central explosivo
+        confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.5 },
+            colors: ['#d4af37', '#000000'],
+            zIndex: 10001
+        });
+
+        originalFinish.apply(this, arguments);
+    };
+
+    console.log("Inyección Sensorial NEXO®: Activa (Pantalla Completa + Audio)");
+})();
     </script>
 </body>
 </html>
+
