@@ -688,6 +688,59 @@ appWheel.processEndGame = function(resultado) {
 };
 
 /* --- FIN DEL BLOQUE DE CELEBRACIÓN --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE CAPTURA: GENERADOR DE TICKET DE VICTORIA NEXO®
+   Referencia: [2026-01-13] - Uso de html2canvas para exportación de premios.
+   ========================================================================== */
+
+// 1. Inyectar el botón de descarga en el modal de ganador
+const modalContent = document.querySelector('#modalWinner .modal-content');
+const downloadBtn = document.createElement('button');
+downloadBtn.id = 'btnDownloadWin';
+downloadBtn.className = 'btn btn-secondary';
+downloadBtn.style.width = '100%';
+downloadBtn.style.marginTop = '10px';
+downloadBtn.style.borderColor = '#d4af37';
+downloadBtn.innerHTML = '📸 DESCARGAR TICKET';
+modalContent.insertBefore(downloadBtn, document.getElementById('btnFinishWin'));
+
+// 2. Lógica de captura y exportación
+downloadBtn.onclick = async function() {
+    const winnerArea = document.querySelector('#modalWinner .modal-content');
+    const originalBorder = winnerArea.style.border;
+    
+    // Preparación estética para la foto
+    this.style.display = 'none';
+    document.getElementById('btnFinishWin').style.display = 'none';
+    winnerArea.style.border = '5px solid #d4af37';
+    winnerArea.style.background = '#000000';
+
+    try {
+        const canvas = await html2canvas(winnerArea, {
+            backgroundColor: '#000000',
+            scale: 2, // Alta resolución
+            logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `NEXO_Premio_${new Date().getTime()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        
+        console.log("✔️ Ticket NEXO® generado con éxito.");
+    } catch (error) {
+        console.error("❌ Error al generar captura:", error);
+    } finally {
+        // Restaurar visibilidad de botones
+        this.style.display = 'block';
+        document.getElementById('btnFinishWin').style.display = 'block';
+        winnerArea.style.border = originalBorder;
+    }
+};
+
+/* --- FIN DEL BLOQUE DE CAPTURA --- */
     </script>
 </body>
 </html>
+
