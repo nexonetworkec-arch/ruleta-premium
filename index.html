@@ -474,9 +474,95 @@ appWheel.processEndGame = function(resultado) {
 appWheel.updateVisualHistory();
 
 /* --- FIN DEL BLOQUE VISUAL --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE ESTÉTICA 3D PREMIUM (NEXO® PRO)
+   Referencia: [2026-01-13] - Mejora visual sin afectar la lógica core.
+   ========================================================================== */
+
+// 1. Estilos para el contenedor y efectos de iluminación
+const style3D = document.createElement('style');
+style3D.innerHTML = `
+    .wheel-wrapper {
+        perspective: 1000px;
+        filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.2));
+    }
+    #wheelCanvas {
+        border: none !important; /* Eliminamos el borde plano original */
+        transition: transform 0.5s ease-out;
+    }
+    /* El "Anillo de Oro" 3D */
+    .wheel-wrapper::after {
+        content: '';
+        position: absolute;
+        inset: -15px;
+        border-radius: 50%;
+        border: 15px solid #d4af37;
+        background: transparent;
+        pointer-events: none;
+        box-shadow: 
+            inset 0 0 20px rgba(0,0,0,0.8),
+            0 5px 15px rgba(0,0,0,0.5);
+        background: linear-gradient(135deg, #8a6d1d 0%, #d4af37 45%, #fdf5e6 50%, #d4af37 55%, #8a6d1d 100%);
+        z-index: 10;
+    }
+    /* Reflejo de cristal superior */
+    .wheel-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+        z-index: 11;
+        pointer-events: none;
+    }
+`;
+document.head.appendChild(style3D);
+
+// 2. Modificación Aditiva de los Colores de la Ruleta
+// Redefinimos los colores de dibujo para que usen gradientes brillantes
+appWheel.drawOriginal = appWheel.draw; 
+appWheel.draw = function() {
+    const ctx = this.ctx;
+    const cx = 400;
+    
+    // Dibujamos el fondo base con profundidad
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cx, 390, 0, Math.PI * 2);
+    ctx.fillStyle = '#050505';
+    ctx.fill();
+    ctx.shadowBlur = 50;
+    ctx.shadowColor = 'rgba(212, 175, 55, 0.3)';
+    ctx.restore();
+
+    // Llamamos al dibujo original de las porciones
+    appWheel.drawOriginal();
+
+    // Añadimos un "Centro Maestro" con efecto de botón físico
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cx, 50, 0, Math.PI * 2);
+    const grad = ctx.createLinearGradient(cx-50, cx-50, cx+50, cx+50);
+    grad.addColorStop(0, '#d4af37');
+    grad.addColorStop(0.5, '#fdf5e6');
+    grad.addColorStop(1, '#8a6d1d');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+};
+
+// Re-dibujar para aplicar cambios inmediatamente
+appWheel.draw();
+
+/* --- FIN DEL BLOQUE 3D --- */
     </script>
 </body>
 </html>
+
 
 
 
