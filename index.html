@@ -318,26 +318,52 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
 
-        // --- INYECCIÓN ADITIVA: EXPERIENCIA TOTAL NEXO® (CORRECCIÓN DE TIEMPOS Y CAPAS) ---
+        // --- INYECCIÓN ADITIVA: MOTOR DE AUDIO NATIVO NEXO® (SIN ARCHIVOS EXTERNOS) ---
 (function() {
-    // 1. Audio con Auto-reparación
-    const sTick = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_783ef5a761.mp3'); 
-    const sWin = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_062636f33d.mp3'); 
-    sTick.volume = 0.4;
-    sWin.volume = 0.6;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    const unlock = () => { [sTick, sWin].forEach(s => { s.play().then(()=> {s.pause(); s.currentTime=0;}); }); window.removeEventListener('click', unlock); };
-    window.addEventListener('click', unlock);
+    // Generador de Clic (Frecuencia corta y seca)
+    function playTick() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
 
-    // 2. Intercepción del Giro para Sonido de Clic
+    // Generador de Victoria (Acorde triunfal armónico)
+    function playWinSound() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const notes = [261.63, 329.63, 392.00, 523.25]; // Acorde de Do Mayor
+        notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.1));
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (i * 0.1));
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + (i * 0.1));
+            osc.stop(audioCtx.currentTime + 2);
+        });
+    }
+
+    // 1. Intercepción del Giro para Sonido de Clic por Grados
     const orgSpin = appWheel.spin;
     appWheel.spin = function() {
         if (!this.isSpinning) {
             let lastA = 0;
             const checkTick = () => {
                 if(this.isSpinning) {
-                    if(Math.abs(this.angle - lastA) > 0.2) { 
-                        sTick.currentTime = 0; sTick.play().catch(()=>{}); 
+                    // Cada vez que la ruleta avanza un tramo pequeño, suena el clic
+                    if(Math.abs(this.angle - lastA) > 0.25) { 
+                        playTick();
                         lastA = this.angle; 
                     }
                     requestAnimationFrame(checkTick);
@@ -348,14 +374,11 @@
         orgSpin.apply(this, arguments);
     };
 
-    // 3. Intercepción de Victoria: Confeti y Audio INSTANTÁNEO
+    // 2. Intercepción de Victoria: Confeti y Audio NATIVO
     const orgFinish = appWheel.finish;
     appWheel.finish = function() {
-        // Sonido inmediato
-        sWin.currentTime = 0;
-        sWin.play().catch(()=>{});
+        playWinSound(); // Audio instantáneo sin lag de descarga
 
-        // EXPLOSIÓN DE CONFETI EN TODA LA PANTALLA (Inmediato)
         const duration = 5 * 1000;
         const animationEnd = Date.now() + duration;
 
@@ -363,34 +386,32 @@
             const timeLeft = animationEnd - Date.now();
             if (timeLeft <= 0) return;
 
-            const count = 3;
             const opt = { 
-                zIndex: 100000, // POR ENCIMA DE TODO
-                particleCount: count,
-                colors: ['#d4af37', '#000000', '#ffffff'],
-                spread: 80,
-                startVelocity: 30
+                zIndex: 100000, 
+                particleCount: 3,
+                colors: ['#d4af37', '#000000'],
+                spread: 70
             };
 
-            // Lluvia desde los laterales hacia el centro
-            confetti({ ...opt, origin: { x: 0, y: 0.7 }, angle: 60 });
-            confetti({ ...opt, origin: { x: 1, y: 0.7 }, angle: 120 });
+            confetti({ ...opt, origin: { x: 0, y: 0.8 }, angle: 60 });
+            confetti({ ...opt, origin: { x: 1, y: 0.8 }, angle: 120 });
             
-            // Lluvia desde arriba (Random)
-            if (Math.random() > 0.8) {
-                confetti({ ...opt, origin: { x: Math.random(), y: -0.1 }, gravity: 0.5 });
+            if (Math.random() > 0.9) {
+                confetti({ ...opt, origin: { x: 0.5, y: -0.1 }, gravity: 1.2, scalar: 1.2 });
             }
-
             requestAnimationFrame(frame);
         };
         frame();
 
-        // Ejecutar la lógica original (Mostrar modal, etc.)
         orgFinish.apply(this, arguments);
     };
 
-    console.log("Sistema Sensorial NEXO®: Sincronización de Capas y Audio OK.");
+    // Desbloqueo del contexto de audio al primer toque
+    window.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+    console.log("Audio Master NEXO®: Motor de Síntesis Digital Activo.");
 })();
     </script>
 </body>
 </html>
+
