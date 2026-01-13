@@ -9,71 +9,59 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
     <style>
         :root { 
-            --bg-color: #0a0a0a;
-            --card-bg: #161616; 
-            --gold: #d4af37; 
-            --white: #ffffff; 
-            --danger: #ff4d4d; 
-            --gray: #222;
+            --bg-color: #0a0a0a; --card-bg: #161616; --gold: #d4af37; --white: #ffffff; --danger: #ff4d4d;
         }
 
-        /* BLOQUEO DE PANTALLAZO LOGIN */
         #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); z-index: 10000;
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .spinner {
-            width: 50px; height: 50px; border: 3px solid rgba(212,175,55,0.1);
-            border-radius: 50%; border-top-color: var(--gold);
-            animation: spin 1s ease-in-out infinite;
-        }
+        .spinner { width: 50px; height: 50px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        
         body { 
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px), radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 40px 40px; background-position: 0 0, 20px 20px;
-            color: var(--white); font-family: 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
+            background-color: var(--bg-color); color: var(--white); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px;
         }
 
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; }
 
-        .login-card { 
-            background: var(--card-bg); padding: 45px 35px; border-radius: 40px; border: 1px solid #333; 
-            width: 95%; max-width: 420px; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        /* RUEDA PREMIUM */
+        .wheel-wrapper { position: relative; width: 85vh; height: 85vh; max-width: 550px; max-height: 550px; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 12px solid #111; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; }
+        #btnSpinCenter { 
+            width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gold);
+            background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-size: 14px;
+            background-size: cover !important;
         }
 
-        /* Estilos Ruleta Originales */
-        .wheel-wrapper { position: relative; width: 78vh; height: 78vh; max-width: 580px; max-height: 580px; filter: drop-shadow(0 0 60px rgba(0,0,0,0.8)); }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #1a1a1a; background: #000; }
-        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 115px; height: 115px; border-radius: 50%; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; border: 4px solid #1a1a1a; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        #btnSpinCenter { width: 98px; height: 98px; border-radius: 50%; border: 2px solid var(--gold); background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 7px 0 #5e4b14; transition: 0.1s; text-transform: uppercase; font-size: 0.9rem; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; }
-        
-        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column; gap: 15px; width: 220px; z-index: 100; }
-        .btn { padding: 18px; border: none; border-radius: 18px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.4s; }
-        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000; }
+        /* PANELES Y BOTONES */
+        .side-panel { position: absolute; right: 30px; top: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 500; }
+        .btn { padding: 15px 25px; border: none; border-radius: 15px; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: 0.3s; font-size: 11px; }
+        .btn-primary { background: var(--gold); color: #000; }
         .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333; }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; justify-content: center; align-items: center; z-index: 9000; padding: 25px; backdrop-filter: blur(15px); }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #222; width: 100%; max-width: 550px; text-align: center; }
+        /* MODALES CRISTAL */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(10px); }
+        .modal-content { background: var(--card-bg); padding: 30px; border-radius: 30px; border: 1px solid #333; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        
+        .prize-item { display: flex; gap: 10px; margin-bottom: 10px; }
+        .prize-item input { flex: 1; padding: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 10px; }
 
-        /* Monitor Admin */
-        .admin-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-        .admin-card { background: #000; border: 1px solid #222; padding: 15px; border-radius: 15px; }
-        .admin-card small { color: var(--gold); font-size: 0.6rem; text-transform: uppercase; }
-        .admin-card div { font-size: 1.3rem; font-weight: 900; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th { color: var(--gold); padding: 10px; border-bottom: 1px solid #333; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #111; }
 
-        @media (max-width: 800px) {
-            .side-panel { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: rgba(10,10,10,0.95); padding: 15px; display: grid; grid-template-columns: repeat(2, 1fr); border-radius: 25px 25px 0 0; }
-            .wheel-wrapper { width: 75vw; height: 75vw; }
+        @media (max-width: 768px) {
+            .side-panel { position: fixed; bottom: 0; left: 0; right: 0; flex-direction: row; background: #000; padding: 15px; justify-content: space-around; }
+            .wheel-wrapper { width: 80vw; height: 80vw; margin-bottom: 100px; }
         }
     </style>
 </head>
@@ -81,29 +69,28 @@
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <p style="color: var(--gold); margin-top: 15px; font-weight: 800; letter-spacing: 2px;">NEXO® SECURE LOAD</p>
+        <p style="color: var(--gold); margin-top: 20px; font-weight: 900; letter-spacing: 3px;">NEXO® SECURE</p>
     </div>
 
     <div id="loginScreen">
-        <div class="login-card">
-            <h2 style="color: var(--gold); font-size: 2.5rem; font-weight: 900; margin:0;">NEXO®</h2>
-            <p style="color: #444; font-size: 0.7rem; letter-spacing: 5px; margin-bottom: 40px;">BUSINESS PRO</p>
-            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; padding:18px; background:#000; border:1px solid #333; color:var(--gold); border-radius:18px; margin-bottom:15px;">
-            <input type="password" id="authPin" placeholder="PIN" style="width:100%; padding:18px; background:#000; border:1px solid #333; color:var(--gold); border-radius:18px; margin-bottom:25px;">
-            <button id="btnAuthAction" class="btn btn-primary" style="width: 100%;">ACCEDER</button>
+        <div style="background: var(--card-bg); padding: 40px; border-radius: 35px; border: 1px solid #333; text-align: center; width: 350px;">
+            <h2 style="color: var(--gold); margin-bottom: 30px;">ACCESO NEXO®</h2>
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; padding:15px; margin-bottom:15px; border-radius:15px; border:1px solid #333; background:#000; color:white;">
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; padding:15px; margin-bottom:25px; border-radius:15px; border:1px solid #333; background:#000; color:white;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR</button>
         </div>
     </div>
 
     <div class="app-container" id="appMain">
         <div class="side-panel">
-            <button id="btnEditList" class="btn btn-secondary">PREMIOS</button>
-            <button id="btnWinners" class="btn btn-secondary">HISTORIAL</button>
-            <button id="btnAdminMaster" class="btn btn-secondary" style="display:none; border-color:var(--gold); color:var(--gold);">ADMIN MASTER</button>
-            <button onclick="firebase.auth().signOut().then(()=>location.reload())" class="btn btn-secondary" style="color:var(--danger);">SALIR</button>
+            <button onclick="openModal('modalPrizes')" class="btn btn-secondary">🎁 PREMIOS</button>
+            <button onclick="openModal('modalHistory')" class="btn btn-secondary">📜 HISTORIAL</button>
+            <button id="btnAdmin" class="btn btn-secondary" style="display:none; color:var(--gold);">👑 ADMIN</button>
+            <button onclick="auth.signOut()" class="btn btn-secondary" style="color:var(--danger);">SALIR</button>
         </div>
 
         <div style="text-align:center;">
-            <h2 id="mainTitle" style="color:var(--gold); font-weight:900; margin-bottom:30px;">RULETA PREMIUM</h2>
+            <h1 id="titleBrand" style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:40px;">RULETA PREMIUM</h1>
             <div class="wheel-wrapper">
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
                 <canvas id="wheelCanvas" width="800" height="800"></canvas>
@@ -111,24 +98,32 @@
         </div>
     </div>
 
-    <div id="modalAdmin" class="modal">
+    <div id="modalPrizes" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold);">PANEL CONTROL NEXO®</h3>
-            <div id="adminDash" class="admin-dashboard"></div>
-            <div style="max-height: 300px; overflow-y: auto; background: #000; border-radius: 20px;">
-                <table style="width:100%; border-collapse: collapse; font-size: 11px; color: #888;">
-                    <thead><tr style="color:var(--gold);"><th>USUARIO</th><th>NIVEL</th><th>ESTADO</th></tr></thead>
-                    <tbody id="adminUserList"></tbody>
-                </table>
-            </div>
-            <button onclick="document.getElementById('modalAdmin').style.display='none'" class="btn btn-secondary" style="width:100%; margin-top:20px;">CERRAR</button>
+            <h3 style="color:var(--gold);">EDITAR PREMIOS</h3>
+            <div id="prizesList"></div>
+            <button onclick="addPrizeInput()" class="btn btn-secondary" style="width:100%; margin-top:10px;">+ AÑADIR</button>
+            <button onclick="savePrizes()" class="btn btn-primary" style="width:100%; margin-top:20px;">GUARDAR CAMBIOS</button>
+            <button onclick="closeModal('modalPrizes')" class="btn btn-secondary" style="width:100%; margin-top:10px;">CANCELAR</button>
         </div>
     </div>
 
-    <canvas id="confettiCanvas" style="position:fixed; inset:0; pointer-events:none; z-index:9999"></canvas>
+    <div id="modalHistory" class="modal">
+        <div class="modal-content" id="captureArea">
+            <h3 style="color:var(--gold);">HISTORIAL DE PREMIOS</h3>
+            <table id="historyTable">
+                <thead><tr><th>FECHA</th><th>PREMIO</th></tr></thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button onclick="downloadHistory()" class="btn btn-primary" style="flex:1;">📸 CAPTURA</button>
+                <button onclick="closeModal('modalHistory')" class="btn btn-secondary" style="flex:1;">CERRAR</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Pega aquí tus credenciales originales de Firebase
+        // CONFIGURACIÓN FIREBASE (RECUERDA PEGAR TUS CLAVES AQUÍ)
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -142,9 +137,12 @@
         const auth = firebase.auth(); const db = firebase.database();
 
         let currentUser = null;
-        let config = { prizes: ["PREMIO 1", "PREMIO 2"], colorA: "#d4af37", colorB: "#141414" };
+        let config = { prizes: ["PREMIO 1", "INTENTA DE NUEVO", "PREMIO 2", "BONO NEXO"], colorA: "#d4af37", colorB: "#111" };
 
-        // --- GESTIÓN DE ESTADO BLINDADA ---
+        const sndSpin = new Audio('https://tools.nexo.com/spin.mp3');
+        const sndWin = new Audio('https://tools.nexo.com/win.mp3');
+
+        // --- AUTENTICACIÓN ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if(user) {
@@ -155,7 +153,9 @@
                 document.getElementById('appMain').style.display = 'flex';
                 
                 checkAdmin(user.uid);
+                applyLogo(config.customLogoURL);
                 appWheel.draw();
+                loadHistory();
             } else {
                 document.getElementById('appMain').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'flex';
@@ -163,20 +163,19 @@
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // --- MOTOR RULETA (SANEADO) ---
+        // --- MOTOR RULETA ---
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.angle = 0;
-                this.isSpinning = false;
+                this.angle = 0; this.isSpinning = false;
             }
             draw() {
-                const w = 800, cx = 400, r = 360;
+                const w = 800, cx = 400, r = 380;
                 this.ctx.clearRect(0,0,w,w);
                 const n = config.prizes.length;
                 const slice = (Math.PI*2)/n;
-                config.prizes.forEach((t, i) => {
+                config.prizes.forEach((p, i) => {
                     this.ctx.save();
                     this.ctx.beginPath();
                     this.ctx.fillStyle = i%2 ? config.colorB : config.colorA;
@@ -185,65 +184,106 @@
                     this.ctx.fill();
                     this.ctx.translate(cx,cx);
                     this.ctx.rotate(this.angle+i*slice+slice/2);
-                    this.ctx.font = "900 40px Segoe UI";
+                    this.ctx.font = "900 35px Segoe UI";
                     this.ctx.textAlign="right";
-                    this.ctx.fillStyle="#fff";
-                    this.ctx.fillText(t.toUpperCase(), r-40, 0);
+                    this.ctx.fillStyle = i%2 ? "#fff" : "#000";
+                    this.ctx.fillText(p.toUpperCase(), r-50, 15);
                     this.ctx.restore();
                 });
             }
             spin() {
                 if(this.isSpinning) return;
                 this.isSpinning = true;
-                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
-                const start = performance.now();
+                sndSpin.play().catch(()=>{});
+                const total = (Math.PI*2*8) + (Math.random()*Math.PI*2);
+                const duration = 5000; const start = performance.now();
                 const anim = (now) => {
-                    const p = Math.min((now-start)/5000, 1);
-                    this.angle = total * (1 - Math.pow(1-p, 3));
+                    const t = Math.min((now-start)/duration, 1);
+                    const ease = 1 - Math.pow(1-t, 4);
+                    this.angle = total * ease;
                     this.draw();
-                    if(p < 1) requestAnimationFrame(anim);
-                    else { this.isSpinning = false; alert("GANASTE!"); }
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
                 };
                 requestAnimationFrame(anim);
+            }
+            finish() {
+                this.isSpinning = false;
+                const n = config.prizes.length;
+                const slice = 360/n;
+                const deg = (this.angle * 180 / Math.PI) % 360;
+                const idx = n - 1 - Math.floor(deg/slice);
+                const prize = config.prizes[idx];
+                
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#ffffff'] });
+                sndWin.play().catch(()=>{});
+                
+                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleString() });
+                alert("🎁 ¡FELICITACIONES! GANASTE: " + prize);
+                loadHistory();
             }
         }
         const appWheel = new Wheel();
         document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
 
-        // --- FUNCIONES ADMIN ---
-        async function checkAdmin(uid) {
-            const snap = await db.ref(`admins/${uid}`).once('value');
-            if(snap.exists()) {
-                const btn = document.getElementById('btnAdminMaster');
-                btn.style.display = 'block';
-                btn.onclick = () => {
-                    document.getElementById('modalAdmin').style.display = 'flex';
-                    loadAdminData();
-                };
-            }
+        // --- FUNCIONES DE MODALES ---
+        function openModal(id) { 
+            document.getElementById(id).style.display = 'flex'; 
+            if(id === 'modalPrizes') renderPrizeInputs();
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function renderPrizeInputs() {
+            const container = document.getElementById('prizesList');
+            container.innerHTML = "";
+            config.prizes.forEach((p, i) => {
+                container.innerHTML += `<div class="prize-item"><input type="text" value="${p}" onchange="updatePrizeVal(${i}, this.value)"><button onclick="removePrize(${i})" style="background:none; border:none; color:red; cursor:pointer;">✕</button></div>`;
+            });
+        }
+        function addPrizeInput() { config.prizes.push("NUEVO PREMIO"); renderPrizeInputs(); }
+        function removePrize(i) { config.prizes.splice(i, 1); renderPrizeInputs(); }
+        function updatePrizeVal(i, val) { config.prizes[i] = val; }
+        
+        async function savePrizes() {
+            await db.ref(`users/${currentUser.uid}/config/prizes`).set(config.prizes);
+            appWheel.draw();
+            closeModal('modalPrizes');
         }
 
-        function loadAdminData() {
-            db.ref('users').once('value', snap => {
-                const list = document.getElementById('adminUserList');
-                const dash = document.getElementById('adminDash');
-                let total = 0, active = 0;
-                list.innerHTML = "";
-                snap.forEach(u => {
-                    total++;
-                    const d = u.val();
-                    if(d.status === 'online') active++;
-                    list.innerHTML += `<tr style="border-bottom: 1px solid #111;"><td style="padding:10px;">${u.key.substring(0,6)}</td><td>${d.config?.level || 'free'}</td><td style="color:${d.status==='online'?'#28a745':'#444'}">${d.status || 'off'}</td></tr>`;
-                });
-                dash.innerHTML = `<div class="admin-card"><small>Usuarios</small><div>${total}</div></div><div class="admin-card"><small>Activos</small><div style="color:#28a745">${active}</div></div>`;
+        async function loadHistory() {
+            const snap = await db.ref(`users/${currentUser.uid}/history`).limitToLast(10).once('value');
+            const body = document.getElementById('historyBody');
+            body.innerHTML = "";
+            snap.forEach(child => {
+                const h = child.val();
+                body.innerHTML = `<tr><td>${h.date}</td><td style="color:var(--gold); font-weight:bold;">${h.prize}</td></tr>` + body.innerHTML;
             });
         }
 
-        // Login
-        document.getElementById('btnAuthAction').onclick = () => {
+        function downloadHistory() {
+            html2canvas(document.getElementById('captureArea')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Nexo_Premios.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function applyLogo(url) {
+            const btn = document.getElementById('btnSpinCenter');
+            if(url) { btn.style.backgroundImage = `url(${url})`; btn.innerText = ""; }
+            else { btn.style.backgroundImage = "none"; btn.innerText = "GIRAR"; }
+        }
+
+        async function checkAdmin(uid) {
+            const snap = await db.ref(`admins/${uid}`).once('value');
+            if(snap.exists()) document.getElementById('btnAdmin').style.display = 'block';
+        }
+
+        document.getElementById('btnAuth').onclick = () => {
             const e = document.getElementById('authEmail').value;
             const p = document.getElementById('authPin').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert("ERROR: " + err.message));
         };
     </script>
 </body>
