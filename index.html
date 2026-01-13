@@ -1351,6 +1351,97 @@ appWheel.applyReportBtnIdentity = function() {
 appWheel.applyReportBtnIdentity();
 
 /* --- FIN DEL BLOQUE DE IDENTIDAD --- */
+
+        /* ==========================================================================
+   NEXO® GLOBAL COMMAND CENTER: CRM, MESSAGING & ADS
+   Referencia: [2026-01-13] - Administración de Suscripciones y Métricas
+   ========================================================================== */
+
+// 1. Base de Datos Aditiva (db.users)
+if (typeof db === 'undefined') window.db = {};
+db.users = JSON.parse(localStorage.getItem('nexo_users')) || [
+    {id: 1, nombre: "Admin", apellido: "Nexo", tel: "000-000", email: "admin@nexo.com", nivel: "PRO", giros: 150, premios: 12, sesion: "45m", estado: "activo"},
+    {id: 2, nombre: "Usuario", apellido: "Demo", tel: "123-456", email: "user@demo.com", nivel: "FREE", giros: 5, premios: 1, sesion: "10m", estado: "activo"}
+];
+
+// 2. Estilos del Panel Cyber-Luxury
+const styleAdminGlobal = document.createElement('style');
+styleAdminGlobal.innerHTML = `
+    #nexoGlobalPanel {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.98); z-index: 10000; display: none;
+        color: #fff; font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+    .nexo-admin-header { padding: 20px; border-bottom: 1px solid #d4af37; display: flex; gap: 20px; background: #000; }
+    .tab-btn { background: transparent; border: 1px solid #333; color: #888; padding: 10px 20px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+    .tab-btn.active { border-color: #d4af37; color: #d4af37; box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+    
+    /* Grid de Tarjetas de Usuario */
+    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 30px; }
+    .user-card { 
+        background: #0a0a0a; border: 1px solid #222; padding: 20px; border-radius: 4px;
+        transition: 0.3s; position: relative; overflow: hidden;
+    }
+    .user-card:hover { border-color: #d4af37; }
+    .badge { position: absolute; top: 10px; right: 10px; padding: 4px 10px; font-size: 10px; font-weight: 900; }
+    .badge-PRO { background: #d4af37; color: #000; }
+    .badge-PPE { background: #1a1a1a; border: 1px solid #d4af37; color: #d4af37; }
+    .badge-FREE { background: #333; color: #ccc; }
+    
+    .metric-box { display: flex; justify-content: space-between; margin-top: 15px; border-top: 1px solid #1a1a1a; padding-top: 10px; }
+    .metric-val { color: #d4af37; font-weight: bold; }
+`;
+document.head.appendChild(styleAdminGlobal);
+
+// 3. Renderizado del Panel
+appWheel.openGlobalAdmin = function() {
+    const panel = document.createElement('div');
+    panel.id = 'nexoGlobalPanel';
+    panel.innerHTML = `
+        <div class="nexo-admin-header">
+            <h2 style="color:#d4af37; margin:0; margin-right:40px;">NEXO® GLOBAL CENTER</h2>
+            <button class="tab-btn active" onclick="appWheel.switchTab('users')">Usuarios</button>
+            <button class="tab-btn" onclick="appWheel.switchTab('messages')">Mensajería</button>
+            <button class="tab-btn" onclick="appWheel.switchTab('ads')">Publicidad</button>
+            <button class="tab-btn" onclick="appWheel.switchTab('live')">Reportes Live</button>
+            <button class="tab-btn" style="margin-left:auto; border-color:#ff4444; color:#ff4444;" onclick="document.getElementById('nexoGlobalPanel').remove()">SALIR</button>
+        </div>
+        <div id="adminContent" style="height: calc(100% - 80px); overflow-y: auto;">
+            </div>
+    `;
+    document.body.appendChild(panel);
+    panel.style.display = 'block';
+    this.renderUserCards();
+};
+
+appWheel.renderUserCards = function() {
+    const container = document.getElementById('adminContent');
+    let html = '<div class="user-grid">';
+    db.users.forEach(user => {
+        html += `
+            <div class="user-card">
+                <span class="badge badge-${user.nivel}">${user.nivel}</span>
+                <div style="font-size: 18px; font-weight:bold;">${user.nombre} ${user.apellido}</div>
+                <div style="color:#666; font-size:12px; margin-bottom:10px;">${user.email} | ${user.tel}</div>
+                <div class="metric-box">
+                    <span>Giros: <span class="metric-val">${user.giros}</span></span>
+                    <span>Premios: <span class="metric-val">${user.premios}</span></span>
+                    <span>Tiempo: <span class="metric-val">${user.sesion}</span></span>
+                </div>
+                <div style="margin-top:15px; display:flex; gap:5px;">
+                    <button class="btn-nexo-admin btn-nexo-edit" style="font-size:10px; padding:5px;" onclick="appWheel.changeNivel(${user.id})">Cambiar Nivel</button>
+                    <button class="btn-nexo-admin btn-nexo-delete" style="font-size:10px; padding:5px;">Suspender</button>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html + '</div>';
+};
+
+// 4. Integración en el Menú Hamburguesa
+// Se añade al final del bloque de navegación anterior
+/* --- FIN DEL BLOQUE GLOBAL --- */
     </script>
 </body>
 </html>
+
