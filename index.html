@@ -978,9 +978,138 @@ appWheel.updateVisualHistory = function() {
 };
 
 /* --- FIN DEL BLOQUE DE EXPORTACIÓN --- */
+
+        /* ==========================================================================
+   BLOQUE MAESTRO: GESTIÓN DE LISTAS, EXCEL Y NUMERACIÓN UNIVERSAL
+   Referencia: [2026-01-13] - Inyección de persistencia y orden dual
+   ========================================================================== */
+
+// 1. Estilos de Interfaz Premium y Numeración
+const styleMaster = document.createElement('style');
+styleMaster.innerHTML = `
+    .nexo-management-bar { 
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+        margin-bottom: 20px; padding: 15px; background: #111; border: 1px solid #333; border-radius: 10px;
+    }
+    .nexo-input-group { display: flex; flex-direction: column; gap: 5px; }
+    .nexo-input-group label { color: #d4af37; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+    
+    .prize-item-wrapper { display: flex; align-items: center; margin-bottom: 8px; }
+    .prize-number-label { 
+        width: 40px; color: #d4af37; font-family: monospace; font-weight: bold; 
+        font-size: 16px; text-align: left; flex-shrink: 0; 
+    }
+    .nexo-btn-action { 
+        padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 11px;
+        border: 1px solid #d4af37; background: transparent; color: #d4af37; transition: 0.3s;
+    }
+    .nexo-btn-action:hover { background: #d4af37; color: #000; }
+`;
+document.head.appendChild(styleMaster);
+
+// 2. Inyección de Controles en el Modal de Premios
+const pModal = document.querySelector('#modalPrizes .modal-content');
+const managementDiv = document.createElement('div');
+managementDiv.className = 'nexo-management-bar';
+managementDiv.innerHTML = `
+    <div class="nexo-input-group">
+        <label>Añadir Filas</label>
+        <div style="display:flex; gap:5px;">
+            <input type="number" id="nexoQtyInput" placeholder="Cant." style="width:60px; background:#000; color:#fff; border:1px solid #444;">
+            <button class="nexo-btn-action" onclick="appWheel.addCustomRows()">+ AÑADIR</button>
+        </div>
+    </div>
+    <div class="nexo-input-group">
+        <label>Gestión de Listas</label>
+        <div style="display:flex; gap:5px;">
+            <button class="nexo-btn-action" onclick="appWheel.saveCurrentList()">💾 GUARDAR</button>
+            <button class="nexo-btn-action" onclick="appWheel.openLoadMenu()">📂 ABRIR / EXCEL</button>
+        </div>
+    </div>
+`;
+pModal.insertBefore(managementDiv, document.getElementById('prizesList'));
+
+// 3. Lógica de Persistencia de Listas
+appWheel.saveCurrentList = function() {
+    const name = prompt("Nombre para esta lista:", "Lista " + new Date().toLocaleDateString());
+    if (!name) return;
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_lists')) || {};
+    savedLists[name] = [...config.prizes];
+    localStorage.setItem('nexo_saved_lists', JSON.stringify(savedLists));
+    alert("Lista '" + name + "' guardada correctamente.");
+};
+
+appWheel.openLoadMenu = function() {
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_lists')) || {};
+    const options = Object.keys(savedLists);
+    
+    let msg = "Seleccione una opción:\n\n0. SUBIR ARCHIVO EXCEL\n";
+    options.forEach((opt, i) => msg += `${i+1}. ${opt}\n`);
+    
+    const choice = prompt(msg, "0");
+    if (choice === "0") {
+        document.getElementById('excelInput').click();
+    } else if (options[parseInt(choice)-1]) {
+        config.prizes = [...savedLists[options[parseInt(choice)-1]]];
+        this.renderPListV2();
+    }
+};
+
+// 4. Numeración Universal y Renderizado
+appWheel.renderPListV2 = function() {
+    const list = document.getElementById('prizesList');
+    list.innerHTML = '';
+    config.prizes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'prize-item-wrapper';
+        div.innerHTML = `
+            <span class="prize-number-label">${(i + 1).toString().padStart(2, '0')}</span>
+            <input type="text" value="${p}" style="flex-grow:1; background:#111; color:#fff; border:1px solid #333;" onchange="appWheel.updatePrize(${i}, this.value)">
+            <button class="btn-delete" style="margin-left:10px" onclick="appWheel.deletePrize(${i})">×</button>
+        `;
+        list.appendChild(div);
+    });
+};
+
+// 5. Lógica de "Guardar Ruleta" (Orden Dual)
+// Modificamos el botón original de cerrar/guardar del modal
+const btnSaveModal = document.querySelector('#modalPrizes .btn-primary');
+btnSaveModal.onclick = function() {
+    // 1. Mantener orden en el modal (ya está en config.prizes)
+    // 2. Mezclar aleatoriamente solo para la ruleta
+    const shuffledPrizes = [...config.prizes].sort(() => Math.random() - 0.5);
+    
+    // Aplicamos la mezcla al motor de la ruleta pero NO a la lista del modal
+    config.prizes = shuffledPrizes; 
+    appWheel.draw();
+    document.getElementById('modalPrizes').style.display = 'none';
+    
+    // Feedback
+    console.log("🎲 Ruleta reordenada aleatoriamente para el sorteo.");
+};
+
+// 6. Actualización de Historial con Numeración
+const originalUpdateHist = appWheel.updateVisualHistory;
+appWheel.updateVisualHistory = function() {
+    originalUpdateHist.call(this);
+    // Aseguramos que el widget también enumere
+    const items = document.querySelectorAll('.nexo-history-item');
+    items.forEach((item, i) => {
+        if(!item.innerText.includes('.')) {
+             item.prepend(`${i+1}. `);
+        }
+    });
+};
+
+// Inicializar
+appWheel.renderPList = appWheel.renderPListV2;
+appWheel.renderPListV2();
+
+/* --- FIN DEL BLOQUE MAESTRO --- */
     </script>
 </body>
 </html>
+
 
 
 
