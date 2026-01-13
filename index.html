@@ -239,6 +239,11 @@
                 const deg = (this.angle * 180 / Math.PI) % 360;
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 const prize = config.prizes[idx];
+
+                // === INSERCIÓN ADITIVA AQUÍ ===
+                appWheel.triggerResult(prize); 
+                // ==============================
+
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#000000'] });
@@ -381,6 +386,971 @@ appWheel.triggerResult = function(premioObtenido) {
    se detiene la ruleta), solo debes llamar a: 
    appWheel.triggerResult(ganador);
 */
+
+        /* ==========================================================================
+   INYECCIÓN VISUAL: PANEL DE HISTORIAL RECIENTE NEXO®
+   Referencia: [2026-01-12] - Colores de marca y diseño Glassmorphism
+   ========================================================================== */
+
+// 1. Inyección de Estilos (CSS Aditivo)
+const styleNexo = document.createElement('style');
+styleNexo.innerHTML = `
+    .nexo-history-widget {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        width: 260px;
+        background: rgba(15, 15, 15, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid #d4af37;
+        border-radius: 20px;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .nexo-history-title {
+        color: #d4af37;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(212,175,55,0.3);
+        padding-bottom: 5px;
+    }
+    .nexo-history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #222;
+        animation: slideInNexo 0.4s ease-out;
+    }
+    .nexo-item-name { color: #fff; font-size: 12px; font-weight: 600; }
+    .nexo-item-time { color: #d4af37; font-size: 9px; opacity: 0.8; }
+    
+    @keyframes slideInNexo {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+`;
+document.head.appendChild(styleNexo);
+
+// 2. Inyección de Interfaz (HTML Aditivo)
+const historyDiv = document.createElement('div');
+historyDiv.id = 'nexo-history-container';
+historyDiv.className = 'nexo-history-widget';
+historyDiv.innerHTML = `
+    <div class="nexo-history-title">Últimos Resultados</div>
+    <div id="nexo-items-list"></div>
+`;
+document.body.appendChild(historyDiv);
+
+// 3. Lógica de Actualización Visual
+appWheel.updateVisualHistory = function() {
+    const listContainer = document.getElementById('nexo-items-list');
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    
+    // Solo mostramos los últimos 5 para mantener la elegancia
+    const recent = history.reverse().slice(0, 5);
+    
+    listContainer.innerHTML = recent.map(item => `
+        <div class="nexo-history-item">
+            <span class="nexo-item-name">${item.result}</span>
+            <span class="nexo-item-time">${new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+    `).join('');
+};
+
+// 4. Conexión Aditiva: Extendemos processEndGame para actualizar la UI
+const originalProcess = appWheel.processEndGame;
+appWheel.processEndGame = function(resultado) {
+    if (typeof originalProcess === 'function') originalProcess(resultado);
+    appWheel.updateVisualHistory();
+};
+
+// 5. Carga inicial
+appWheel.updateVisualHistory();
+
+/* --- FIN DEL BLOQUE VISUAL --- */
+
+ /* ==========================================================================
+   INYECCIÓN 2D PRO: DISEÑO DE ALTA FIDELIDAD
+   Referencia: [2026-01-13] - Optimización de rendimiento y legibilidad.
+   ========================================================================== */
+
+// 1. Mejoras de Estilo para el Canvas
+const style2DPro = document.createElement('style');
+style2DPro.innerHTML = `
+    .wheel-wrapper {
+        border: 4px solid #d4af37;
+        border-radius: 50%;
+        padding: 10px;
+        background: #000;
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+    }
+    #wheelCanvas {
+        filter: contrast(1.1) brightness(1.1);
+    }
+`;
+document.head.appendChild(style2DPro);
+
+// 2. Redibujo con Calidad Premium
+// Sobrescribimos el método draw para inyectar gradientes reales
+appWheel.draw = function() {
+    const w = 800, cx = 400, r = 385;
+    this.ctx.clearRect(0, 0, w, w);
+    const n = config.prizes.length;
+    const slice = (Math.PI * 2) / n;
+
+    config.prizes.forEach((p, i) => {
+        this.ctx.save();
+        this.ctx.beginPath();
+        
+        // --- GRADIENTES METÁLICOS ---
+        const grad = this.ctx.createRadialGradient(cx, cx, 0, cx, cx, r);
+        if (i % 2) {
+            grad.addColorStop(0, '#111');
+            grad.addColorStop(1, '#000');
+        } else {
+            grad.addColorStop(0, '#fdf5e6'); // Brillo central
+            grad.addColorStop(0.5, '#d4af37'); // Oro base
+            grad.addColorStop(1, '#8a6d1d'); // Oro oscuro
+        }
+        
+        this.ctx.fillStyle = grad;
+        this.ctx.moveTo(cx, cx);
+        this.ctx.arc(cx, cx, r, this.angle + i * slice, this.angle + (i + 1) * slice);
+        this.ctx.fill();
+        
+        // Borde fino entre secciones
+        this.ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+
+        // --- TEXTO PREMIUM ---
+        this.ctx.translate(cx, cx);
+        this.ctx.rotate(this.angle + i * slice + slice / 2);
+        this.ctx.font = "900 34px 'Segoe UI'";
+        this.ctx.textAlign = "right";
+        
+        // Sombra para el texto
+        this.ctx.shadowColor = i % 2 ? "rgba(212,175,55,0.5)" : "rgba(0,0,0,0.5)";
+        this.ctx.shadowBlur = 4;
+        
+        this.ctx.fillStyle = i % 2 ? "#d4af37" : "#000";
+        this.ctx.fillText(p.toUpperCase(), r - 50, 12);
+        this.ctx.restore();
+    });
+
+    // Anillo exterior decorativo (Stroke Gold)
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cx, r - 2, 0, Math.PI * 2);
+    this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+    this.ctx.lineWidth = 5;
+    this.ctx.stroke();
+};
+
+// Aplicar cambios inmediatamente
+appWheel.draw();
+
+/* --- FIN DEL BLOQUE 2D PRO --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE AUDIO: SISTEMA DE CLIC RÍTMICO NEXO®
+   Referencia: [2026-01-13] - Audio sintético sin dependencias externas.
+   ========================================================================== */
+
+appWheel.audioCtx = null;
+
+// 1. Inicialización del motor de audio (requiere interacción del usuario)
+appWheel.initAudio = function() {
+    if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+};
+
+// 2. Función para generar el sonido de "Tick"
+appWheel.playTick = function() {
+    if (!this.audioCtx) return;
+    
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    
+    osc.type = 'sine'; // Sonido limpio y profesional
+    osc.frequency.setValueAtTime(800, this.audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(10, this.audioCtx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
+    
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + 0.1);
+};
+
+// 3. Extensión de la lógica de giro para detectar cambio de sección
+appWheel.lastTickIndex = -1;
+
+const originalDraw = appWheel.draw;
+appWheel.draw = function() {
+    // Ejecutamos el dibujo 2D Pro que ya tenemos
+    originalDraw.call(this);
+    
+    if (this.isSpinning) {
+        const n = config.prizes.length;
+        const deg = (this.angle * 180 / Math.PI) % 360;
+        const currentIndex = Math.floor(deg / (360 / n));
+        
+        // Si la sección cambió, disparamos el sonido
+        if (currentIndex !== this.lastTickIndex) {
+            this.playTick();
+            this.lastTickIndex = currentIndex;
+        }
+    }
+};
+
+// 4. Activar audio al presionar el botón de giro
+const originalSpinBtn = document.getElementById('btnSpinCenter').onclick;
+document.getElementById('btnSpinCenter').onclick = () => {
+    appWheel.initAudio(); // Activa el contexto de audio
+    if (typeof originalSpinBtn === 'function') originalSpinBtn();
+};
+
+/* --- FIN DEL BLOQUE DE AUDIO --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE CELEBRACIÓN: EFECTO VICTORIA NEXO®
+   Referencia: [2026-01-13] - Confeti dorado y efectos de luz.
+   ========================================================================== */
+
+// 1. Estilos para el destello de victoria
+const styleWin = document.createElement('style');
+styleWin.innerHTML = `
+    .victory-flash {
+        animation: nexoFlash 0.5s ease-out;
+    }
+    @keyframes nexoFlash {
+        0% { background: rgba(212, 175, 55, 0); }
+        50% { background: rgba(212, 175, 55, 0.4); }
+        100% { background: rgba(212, 175, 55, 0); }
+    }
+    #winnerName {
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+        color: #fff !important;
+        animation: prizePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes prizePop {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+`;
+document.head.appendChild(styleWin);
+
+// 2. Extensión de la lógica de fin de juego para la celebración
+const previousProcessEnd = appWheel.processEndGame;
+appWheel.processEndGame = function(resultado) {
+    // Ejecutamos la lógica de guardado previa
+    if (typeof previousProcessEnd === 'function') previousProcessEnd(resultado);
+
+    // Activamos el destello en el contenedor principal
+    const mainContainer = document.getElementById('appMain');
+    mainContainer.classList.add('victory-flash');
+    setTimeout(() => mainContainer.classList.remove('victory-flash'), 500);
+
+    // Lanzamiento de Confeti Premium (Dorado y Negro)
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#d4af37', '#000000', '#fdf5e6']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#d4af37', '#000000', '#fdf5e6']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+};
+
+/* --- FIN DEL BLOQUE DE CELEBRACIÓN --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE CAPTURA: GENERADOR DE TICKET DE VICTORIA NEXO®
+   Referencia: [2026-01-13] - Uso de html2canvas para exportación de premios.
+   ========================================================================== */
+
+// 1. Inyectar el botón de descarga en el modal de ganador
+const modalContent = document.querySelector('#modalWinner .modal-content');
+const downloadBtn = document.createElement('button');
+downloadBtn.id = 'btnDownloadWin';
+downloadBtn.className = 'btn btn-secondary';
+downloadBtn.style.width = '100%';
+downloadBtn.style.marginTop = '10px';
+downloadBtn.style.borderColor = '#d4af37';
+downloadBtn.innerHTML = '📸 DESCARGAR TICKET';
+modalContent.insertBefore(downloadBtn, document.getElementById('btnFinishWin'));
+
+// 2. Lógica de captura y exportación
+downloadBtn.onclick = async function() {
+    const winnerArea = document.querySelector('#modalWinner .modal-content');
+    const originalBorder = winnerArea.style.border;
+    
+    // Preparación estética para la foto
+    this.style.display = 'none';
+    document.getElementById('btnFinishWin').style.display = 'none';
+    winnerArea.style.border = '5px solid #d4af37';
+    winnerArea.style.background = '#000000';
+
+    try {
+        const canvas = await html2canvas(winnerArea, {
+            backgroundColor: '#000000',
+            scale: 2, // Alta resolución
+            logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `NEXO_Premio_${new Date().getTime()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        
+        console.log("✔️ Ticket NEXO® generado con éxito.");
+    } catch (error) {
+        console.error("❌ Error al generar captura:", error);
+    } finally {
+        // Restaurar visibilidad de botones
+        this.style.display = 'block';
+        document.getElementById('btnFinishWin').style.display = 'block';
+        winnerArea.style.border = originalBorder;
+    }
+};
+
+/* --- FIN DEL BLOQUE DE CAPTURA --- */
+
+        /* ==========================================================================
+   INYECCIÓN: SELECTOR NUMÉRICO MANUAL Y ENLISTADO (NEXO® PRO)
+   Referencia: [2026-01-13] - Solo entrada manual y numeración externa.
+   ========================================================================== */
+
+// 1. Estilos Refinados para la Numeración y el Selector
+const styleSelectorManual = document.createElement('style');
+styleSelectorManual.innerHTML = `
+    .nexo-manual-row { 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+        margin-bottom: 20px; 
+        padding: 15px;
+        background: rgba(212, 175, 55, 0.05);
+        border: 1px dashed #d4af37;
+        border-radius: 10px;
+    }
+    .nexo-input-qty {
+        width: 100px;
+        background: #000;
+        border: 1px solid #d4af37;
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .prize-item-wrapper {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .prize-number {
+        width: 40px;
+        color: #d4af37;
+        font-family: 'Courier New', monospace;
+        font-weight: 900;
+        font-size: 16px;
+        text-align: left;
+        flex-shrink: 0;
+    }
+    .nexo-btn-add {
+        background: #d4af37;
+        color: #000;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .nexo-btn-add:hover { transform: scale(1.05); background: #fdf5e6; }
+`;
+document.head.appendChild(styleSelectorManual);
+
+// 2. Inyección del Selector Manual en el Modal
+const prizeListContainer = document.getElementById('prizesList');
+const manualControls = document.createElement('div');
+manualControls.className = 'nexo-manual-row';
+manualControls.innerHTML = `
+    <span style="color:#d4af37; font-size:12px; font-weight:bold;">CANTIDAD DE FILAS:</span>
+    <input type="number" id="nexoQtyInput" class="nexo-input-qty" placeholder="Ej: 100" min="1">
+    <button class="nexo-btn-add" onclick="appWheel.addCustomRows()">AÑADIR A LA LISTA</button>
+`;
+// Insertamos antes de la lista de premios
+prizeListContainer.parentNode.insertBefore(manualControls, prizeListContainer);
+
+// 3. Lógica de Enlistado Masivo
+appWheel.addCustomRows = function() {
+    const input = document.getElementById('nexoQtyInput');
+    const amount = parseInt(input.value);
+    
+    if (isNaN(amount) || amount <= 0) {
+        alert("Por favor, ingresa un número válido.");
+        return;
+    }
+
+    // Añadimos la cantidad solicitada
+    for (let i = 0; i < amount; i++) {
+        config.prizes.push(`Premio ${config.prizes.length + 1}`);
+    }
+    
+    // Limpiamos input y refrescamos visualmente
+    input.value = '';
+    this.renderPListV2();
+};
+
+// 4. Renderizado con Numeración Externa (Fuera del campo)
+appWheel.renderPListV2 = function() {
+    const list = document.getElementById('prizesList');
+    list.innerHTML = '';
+    
+    config.prizes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'prize-item-wrapper';
+        div.innerHTML = `
+            <span class="prize-number">${(i + 1).toString().padStart(2, '0')}</span>
+            <input type="text" value="${p}" 
+                   style="flex-grow:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #333;"
+                   onchange="appWheel.updatePrize(${i}, this.value)">
+            <button class="btn-delete" style="margin-left:10px" onclick="appWheel.deletePrize(${i})">×</button>
+        `;
+        list.appendChild(div);
+    });
+};
+
+// Sobrescribimos el método original para que use esta nueva versión enlistada
+appWheel.renderPList = appWheel.renderPListV2;
+appWheel.renderPListV2();
+
+/* --- FIN DEL BLOQUE SELECTOR MANUAL --- */
+
+        /* ==========================================================================
+   INYECCIÓN: EXPORTACIÓN PRO (EXCEL E IMÁGENES POR LOTES)
+   Referencia: [2026-01-13] - Exportación segmentada (5 por imagen)
+   ========================================================================== */
+
+// 1. Estilos para el Historial y Captura
+const styleHistPro = document.createElement('style');
+styleHistPro.innerHTML = `
+    .nexo-hist-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    .nexo-export-btn { 
+        flex: 1; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        border: 1px solid #d4af37; transition: 0.3s;
+    }
+    .btn-excel { background: #1D6F42; color: #fff; border-color: #1D6F42; }
+    .btn-img { background: #000; color: #d4af37; }
+    
+    /* Contenedor oculto para generación de imágenes */
+    #nexo-capture-zone {
+        position: absolute; left: -9999px; top: 0;
+        width: 500px; background: #000; color: #fff; padding: 20px;
+        border: 2px solid #d4af37;
+    }
+    .capture-header { color: #d4af37; text-align: center; border-bottom: 1px solid #d4af37; margin-bottom: 15px; padding-bottom: 10px; }
+    .capture-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
+`;
+document.head.appendChild(styleHistPro);
+
+// 2. Inyectar botones en el Modal de Historial
+const histModalBody = document.querySelector('#modalHistory .modal-content');
+const exportDiv = document.createElement('div');
+exportDiv.className = 'nexo-hist-controls';
+exportDiv.innerHTML = `
+    <button class="nexo-export-btn btn-excel" onclick="appWheel.exportToExcel()">📊 EXCEL</button>
+    <button class="nexo-export-btn btn-img" onclick="appWheel.exportToImages()">🖼️ IMÁGENES (Lotes)</button>
+    <button class="nexo-export-btn" style="background:#ff4444; color:#fff; border:none;" onclick="appWheel.resetHistory()">🔄 REINICIAR</button>
+`;
+histModalBody.insertBefore(exportDiv, document.getElementById('historyList'));
+
+// Contenedor fantasma para capturas
+const captureZone = document.createElement('div');
+captureZone.id = 'nexo-capture-zone';
+document.body.appendChild(captureZone);
+
+// 3. Lógica de Exportación a Excel
+appWheel.exportToExcel = function() {
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    if (history.length === 0) return alert("No hay datos para exportar.");
+    
+    const data = history.map((item, index) => ({
+        "Orden": index + 1,
+        "Premio": item.result,
+        "Fecha": new Date(item.timestamp).toLocaleDateString(),
+        "Hora": new Date(item.timestamp).toLocaleTimeString()
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ganadores");
+    XLSX.writeFile(wb, `NEXO_Historial_${new Date().getTime()}.xlsx`);
+};
+
+// 4. Lógica de Exportación a Imágenes (5 por imagen)
+appWheel.exportToImages = async function() {
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    if (history.length === 0) return alert("Historial vacío.");
+    
+    const chunk = 5;
+    for (let i = 0; i < history.length; i += chunk) {
+        const batch = history.slice(i, i + chunk);
+        const pageNum = (i / chunk) + 1;
+        
+        // Llenar zona de captura
+        captureZone.innerHTML = `
+            <div class="capture-header">
+                <h3>NEXO® BUSINESS PRO</h3>
+                <p>Reporte de Ganadores - Parte ${pageNum}</p>
+            </div>
+            ${batch.map((item, idx) => `
+                <div class="capture-item">
+                    <span><b>${i + idx + 1}.</b> ${item.result}</span>
+                    <span style="font-size:10px; color:#d4af37;">${new Date(item.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `).join('')}
+        `;
+        
+        const canvas = await html2canvas(captureZone, { backgroundColor: '#000' });
+        const link = document.createElement('a');
+        link.download = `NEXO_Ganadores_Parte_${pageNum}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+};
+
+// 5. Reiniciar Historial con Reordenamiento Aleatorio
+appWheel.resetHistory = function() {
+    if (confirm("¿Seguro que deseas limpiar el historial? Esto reordenará la ruleta aleatoriamente.")) {
+        localStorage.removeItem('wheel_results');
+        // Mezclamos los premios actuales aleatoriamente
+        config.prizes.sort(() => Math.random() - 0.5);
+        this.renderPListV2();
+        this.updateVisualHistory();
+        this.draw();
+        alert("Historial reiniciado y ruleta reordenada.");
+    }
+};
+
+// 6. Actualización del Orden Cronológico (Primero arriba)
+appWheel.updateVisualHistory = function() {
+    const listContainer = document.getElementById('nexo-items-list'); // Widget lateral
+    const tableContainer = document.getElementById('historyList'); // Modal
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    
+    const renderRow = (item, i) => `
+        <div class="nexo-history-item">
+            <span class="nexo-item-name"><b>${i + 1}.</b> ${item.result}</span>
+            <span class="nexo-item-time">${new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+        </div>`;
+
+    // En el widget y modal mantenemos orden 1, 2, 3...
+    if(listContainer) listContainer.innerHTML = history.slice(-5).map((item, i) => renderRow(item, history.length - 5 + i)).join('');
+    if(tableContainer) tableContainer.innerHTML = history.map((item, i) => renderRow(item, i)).join('');
+};
+
+/* --- FIN DEL BLOQUE DE EXPORTACIÓN --- */
+
+        /* ==========================================================================
+   BLOQUE MAESTRO: GESTIÓN DE LISTAS, EXCEL Y NUMERACIÓN UNIVERSAL
+   Referencia: [2026-01-13] - Inyección de persistencia y orden dual
+   ========================================================================== */
+
+// 1. Estilos de Interfaz Premium y Numeración
+const styleMaster = document.createElement('style');
+styleMaster.innerHTML = `
+    .nexo-management-bar { 
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+        margin-bottom: 20px; padding: 15px; background: #111; border: 1px solid #333; border-radius: 10px;
+    }
+    .nexo-input-group { display: flex; flex-direction: column; gap: 5px; }
+    .nexo-input-group label { color: #d4af37; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+    
+    .prize-item-wrapper { display: flex; align-items: center; margin-bottom: 8px; }
+    .prize-number-label { 
+        width: 40px; color: #d4af37; font-family: monospace; font-weight: bold; 
+        font-size: 16px; text-align: left; flex-shrink: 0; 
+    }
+    .nexo-btn-action { 
+        padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 11px;
+        border: 1px solid #d4af37; background: transparent; color: #d4af37; transition: 0.3s;
+    }
+    .nexo-btn-action:hover { background: #d4af37; color: #000; }
+`;
+document.head.appendChild(styleMaster);
+
+// 2. Inyección de Controles en el Modal de Premios
+const pModal = document.querySelector('#modalPrizes .modal-content');
+const managementDiv = document.createElement('div');
+managementDiv.className = 'nexo-management-bar';
+managementDiv.innerHTML = `
+    <div class="nexo-input-group">
+        <label>Añadir Filas</label>
+        <div style="display:flex; gap:5px;">
+            <input type="number" id="nexoQtyInput" placeholder="Cant." style="width:60px; background:#000; color:#fff; border:1px solid #444;">
+            <button class="nexo-btn-action" onclick="appWheel.addCustomRows()">+ AÑADIR</button>
+        </div>
+    </div>
+    <div class="nexo-input-group">
+        <label>Gestión de Listas</label>
+        <div style="display:flex; gap:5px;">
+            <button class="nexo-btn-action" onclick="appWheel.saveCurrentList()">💾 GUARDAR</button>
+            <button class="nexo-btn-action" onclick="appWheel.openLoadMenu()">📂 ABRIR / EXCEL</button>
+        </div>
+    </div>
+`;
+pModal.insertBefore(managementDiv, document.getElementById('prizesList'));
+
+// 3. Lógica de Persistencia de Listas
+appWheel.saveCurrentList = function() {
+    const name = prompt("Nombre para esta lista:", "Lista " + new Date().toLocaleDateString());
+    if (!name) return;
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_lists')) || {};
+    savedLists[name] = [...config.prizes];
+    localStorage.setItem('nexo_saved_lists', JSON.stringify(savedLists));
+    alert("Lista '" + name + "' guardada correctamente.");
+};
+
+appWheel.openLoadMenu = function() {
+    const savedLists = JSON.parse(localStorage.getItem('nexo_saved_lists')) || {};
+    const options = Object.keys(savedLists);
+    
+    let msg = "Seleccione una opción:\n\n0. SUBIR ARCHIVO EXCEL\n";
+    options.forEach((opt, i) => msg += `${i+1}. ${opt}\n`);
+    
+    const choice = prompt(msg, "0");
+    if (choice === "0") {
+        document.getElementById('excelInput').click();
+    } else if (options[parseInt(choice)-1]) {
+        config.prizes = [...savedLists[options[parseInt(choice)-1]]];
+        this.renderPListV2();
+    }
+};
+
+// 4. Numeración Universal y Renderizado
+appWheel.renderPListV2 = function() {
+    const list = document.getElementById('prizesList');
+    list.innerHTML = '';
+    config.prizes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'prize-item-wrapper';
+        div.innerHTML = `
+            <span class="prize-number-label">${(i + 1).toString().padStart(2, '0')}</span>
+            <input type="text" value="${p}" style="flex-grow:1; background:#111; color:#fff; border:1px solid #333;" onchange="appWheel.updatePrize(${i}, this.value)">
+            <button class="btn-delete" style="margin-left:10px" onclick="appWheel.deletePrize(${i})">×</button>
+        `;
+        list.appendChild(div);
+    });
+};
+
+// 5. Lógica de "Guardar Ruleta" (Orden Dual)
+// Modificamos el botón original de cerrar/guardar del modal
+const btnSaveModal = document.querySelector('#modalPrizes .btn-primary');
+btnSaveModal.onclick = function() {
+    // 1. Mantener orden en el modal (ya está en config.prizes)
+    // 2. Mezclar aleatoriamente solo para la ruleta
+    const shuffledPrizes = [...config.prizes].sort(() => Math.random() - 0.5);
+    
+    // Aplicamos la mezcla al motor de la ruleta pero NO a la lista del modal
+    config.prizes = shuffledPrizes; 
+    appWheel.draw();
+    document.getElementById('modalPrizes').style.display = 'none';
+    
+    // Feedback
+    console.log("🎲 Ruleta reordenada aleatoriamente para el sorteo.");
+};
+
+// 6. Actualización de Historial con Numeración
+const originalUpdateHist = appWheel.updateVisualHistory;
+appWheel.updateVisualHistory = function() {
+    originalUpdateHist.call(this);
+    // Aseguramos que el widget también enumere
+    const items = document.querySelectorAll('.nexo-history-item');
+    items.forEach((item, i) => {
+        if(!item.innerText.includes('.')) {
+             item.prepend(`${i+1}. `);
+        }
+    });
+};
+
+// Inicializar
+appWheel.renderPList = appWheel.renderPListV2;
+appWheel.renderPListV2();
+
+/* --- FIN DEL BLOQUE MAESTRO --- */
+
+        /* ==========================================================================
+   INYECCIÓN: SISTEMA DE AUDITORÍA, REPORTES Y COLOR DINÁMICO NEXO®
+   Referencia: [2026-01-13] - Gestión de reportes cronológicos y lógica impar
+   ========================================================================== */
+
+// 1. Estilos para el Panel de Reportes
+const styleAudit = document.createElement('style');
+styleAudit.innerHTML = `
+    .nexo-report-view {
+        position: fixed; top: 10%; left: 10%; width: 80%; height: 80%;
+        background: #000; border: 2px solid #d4af37; z-index: 2000;
+        color: #fff; padding: 30px; overflow-y: auto; display: none;
+        box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    }
+    .report-header { border-bottom: 2px solid #d4af37; margin-bottom: 20px; padding-bottom: 10px; }
+    .nexo-btn-report { 
+        background: #000; color: #d4af37; border: 1px solid #d4af37; 
+        padding: 10px 20px; cursor: pointer; margin-top: 10px;
+    }
+`;
+document.head.appendChild(styleAudit);
+
+// 2. Inyectar Botón "Historial de Reportes" en el UI Principal
+const mainControls = document.querySelector('.controls') || document.body;
+const btnReportHist = document.createElement('button');
+btnReportHist.className = 'btn-nexo-pro'; // Usa tu clase de estilo dorada
+btnReportHist.style.marginTop = "10px";
+btnReportHist.innerHTML = "📋 HISTORIAL DE REPORTES";
+btnReportHist.onclick = () => appWheel.showReportsLog();
+mainControls.appendChild(btnReportHist);
+
+// 3. Contenedor de Visualización de Reportes
+const reportModal = document.createElement('div');
+reportModal.id = 'nexoReportModal';
+reportModal.className = 'nexo-report-view';
+document.body.appendChild(reportModal);
+
+// 4. Lógica de Color Dinámico (Soporte para Impares)
+appWheel.draw = function() {
+    const w = 800, cx = 400, r = 385;
+    this.ctx.clearRect(0, 0, w, w);
+    const n = config.prizes.length;
+    const slice = (Math.PI * 2) / n;
+    const isOdd = n % 2 !== 0;
+
+    config.prizes.forEach((p, i) => {
+        this.ctx.save();
+        this.ctx.beginPath();
+        
+        let color;
+        if (isOdd && i === n - 1) {
+            color = '#6d5a1d'; // Mezcla Oro/Negro (Oro envejecido) para la última pieza impar
+        } else {
+            color = (i % 2) ? '#000000' : '#d4af37';
+        }
+        
+        this.ctx.fillStyle = color;
+        this.ctx.moveTo(cx, cx);
+        this.ctx.arc(cx, cx, r, this.angle + i * slice, this.angle + (i + 1) * slice);
+        this.ctx.fill();
+        
+        // Texto
+        this.ctx.translate(cx, cx);
+        this.ctx.rotate(this.angle + i * slice + slice / 2);
+        this.ctx.font = "900 30px Arial";
+        this.ctx.textAlign = "right";
+        this.ctx.fillStyle = (color === '#d4af37') ? '#000' : '#d4af37';
+        this.ctx.fillText(p.toUpperCase(), r - 40, 10);
+        this.ctx.restore();
+    });
+};
+
+// 5. Sistema de Reportes de Auditoría
+appWheel.generateFullReport = function() {
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    const report = {
+        id: 'REP-' + Date.now(),
+        fecha: new Date().toLocaleString(),
+        ganadores: history,
+        configuracion_final: [...config.prizes]
+    };
+
+    // Guardar en el Historial de Reportes
+    const allReports = JSON.parse(localStorage.getItem('nexo_audit_logs')) || [];
+    allReports.push(report);
+    localStorage.setItem('nexo_audit_logs', JSON.stringify(allReports));
+
+    // Mostrar Visualmente (No editable)
+    let html = `
+        <div class="report-header">
+            <h2>REPORTE DE AUDITORÍA NEXO®</h2>
+            <p>ID: ${report.id} | Fecha: ${report.fecha}</p>
+        </div>
+        <table style="width:100%; text-align:left; border-collapse: collapse;">
+            <tr style="color:#d4af37; border-bottom:1px solid #d4af37;">
+                <th>Orden</th><th>Resultado</th><th>Hora</th>
+            </tr>
+            ${report.ganadores.map((g, i) => `
+                <tr style="border-bottom:1px solid #222;">
+                    <td>${i+1}</td><td>${g.result}</td><td>${new Date(g.timestamp).toLocaleTimeString()}</td>
+                </tr>
+            `).join('')}
+        </table>
+        <button class="nexo-btn-report" onclick="appWheel.exportToExcel()">DESCARGAR EXCEL</button>
+        <button class="nexo-btn-report" style="color:red;" onclick="document.getElementById('nexoReportModal').style.display='none'">CERRAR REPORTE</button>
+    `;
+    
+    reportModal.innerHTML = html;
+    reportModal.style.display = 'block';
+};
+
+appWheel.showReportsLog = function() {
+    const allReports = JSON.parse(localStorage.getItem('nexo_audit_logs')) || [];
+    reportModal.innerHTML = `
+        <div class="report-header"><h2>HISTORIAL CRONOLÓGICO DE REPORTES</h2></div>
+        ${allReports.reverse().map(r => `
+            <div style="padding:10px; border:1px solid #333; margin-bottom:5px;">
+                <span><b>${r.fecha}</b> - ${r.ganadores.length} Ganadores</span>
+                <button class="nexo-btn-report" onclick="appWheel.viewSpecificReport('${r.id}')">VER</button>
+            </div>
+        `).join('')}
+        <button class="nexo-btn-report" onclick="document.getElementById('nexoReportModal').style.display='none'">VOLVER</button>
+    `;
+    reportModal.style.display = 'block';
+};
+
+// 6. Sobrescribir Reiniciar Juego para incluir Reporte
+const originalReset = appWheel.resetGame;
+appWheel.resetGame = function() {
+    if (confirm("Se generará un reporte de auditoría antes de borrar. ¿Continuar?")) {
+        this.generateFullReport(); // Genera y muestra reporte
+        // El reset real ocurre tras confirmar en el reporte o aquí
+        localStorage.removeItem('wheel_results');
+        alert("Sistema reiniciado. Reporte guardado en Historial de Reportes.");
+    }
+};
+
+// Eliminar el input redundante del modal anterior
+const redundante = document.querySelector('.nexo-input-group');
+if(redundante) redundante.remove();
+
+appWheel.draw();
+/* --- FIN DEL BLOQUE DE AUDITORÍA --- */
+
+        /* ==========================================================================
+   CORRECCIÓN: SINCRONIZACIÓN DE REINICIO Y ALINEACIÓN DE BOTONES
+   Referencia: [2026-01-13] - Ajuste de UI y limpieza de DOM
+   ========================================================================== */
+
+// 1. Re-ubicación y Estilo del Botón Historial de Reportes
+const repositionReportBtn = function() {
+    const btnReport = btnReportHist; // Referencia al botón creado antes
+    const container = document.querySelector('.controls'); // Contenedor principal de botones
+    const btnExit = document.querySelector('button[onclick*="window.close"]'); // Referencia al botón salir
+    
+    if (container && btnReport) {
+        // Estilo exacto para que encaje con los otros botones
+        btnReport.className = 'btn-control'; // Usamos la clase original de tus botones
+        btnReport.style.borderColor = '#d4af37';
+        btnReport.style.color = '#d4af37';
+        btnReport.style.background = '#000';
+        btnReport.style.margin = "5px"; // Margen estándar
+        
+        // Lo insertamos antes del botón de salir para que nunca quede abajo
+        if (btnExit) {
+            container.insertBefore(btnReport, btnExit);
+        } else {
+            container.appendChild(btnReport);
+        }
+    }
+};
+
+// 2. Corrección de la Función de Reinicio de Historial (Limpieza Instantánea)
+appWheel.resetHistory = function() {
+    if (confirm("¿Seguro que deseas limpiar el historial actual?")) {
+        // 1. Borrar datos
+        localStorage.removeItem('wheel_results');
+        
+        // 2. Limpiar el Modal visualmente de inmediato
+        const tableContainer = document.getElementById('historyList');
+        if (tableContainer) tableContainer.innerHTML = '<p style="color:#666; text-align:center;">Historial vacío.</p>';
+        
+        // 3. Limpiar el Widget lateral
+        const listContainer = document.getElementById('nexo-items-list');
+        if (listContainer) listContainer.innerHTML = '';
+        
+        // 4. Reordenar ruleta aleatoriamente
+        config.prizes.sort(() => Math.random() - 0.5);
+        this.draw();
+        
+        alert("Historial borrado y ruleta reordenada.");
+    }
+};
+
+// Ejecutar re-ubicación
+repositionReportBtn();
+
+/* --- FIN DEL BLOQUE DE CORRECCIÓN --- */
+
+        /* ==========================================================================
+   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM
+   Referencia: [2026-01-13] - Sincronización estética total
+   ========================================================================== */
+
+appWheel.applyReportBtnIdentity = function() {
+    // 1. Identificar el botón y el contenedor
+    const btnReport = document.querySelector('button[onclick*="showReportsLog"]');
+    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); // Usamos este como referencia
+    
+    if (btnReport && btnHistory) {
+        // 2. Copiar exactamente el estilo del botón Historial
+        btnReport.className = btnHistory.className; 
+        
+        // 3. Forzar los colores de marca NEXO® para asegurar consistencia
+        btnReport.style.border = "1px solid #d4af37";
+        btnReport.style.color = "#d4af37";
+        btnReport.style.backgroundColor = "#000";
+        btnReport.style.textTransform = "uppercase";
+        btnReport.style.fontWeight = "900";
+        btnReport.style.letterSpacing = "1px";
+        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
+        btnReport.style.padding = window.getComputedStyle(btnHistory).padding;
+        btnReport.style.margin = "5px";
+        btnReport.style.cursor = "pointer";
+        btnReport.style.transition = "all 0.3s ease";
+
+        // 4. Añadir efecto Hover dinámico
+        btnReport.onmouseover = function() {
+            this.style.backgroundColor = "#d4af37";
+            this.style.color = "#000";
+            this.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.4)";
+        };
+        btnReport.onmouseout = function() {
+            this.style.backgroundColor = "#000";
+            this.style.color = "#d4af37";
+            this.style.boxShadow = "none";
+        };
+    }
+};
+
+// Ejecutar la aplicación de identidad
+appWheel.applyReportBtnIdentity();
+
+/* --- FIN DEL BLOQUE DE IDENTIDAD --- */
     </script>
 </body>
 </html>
