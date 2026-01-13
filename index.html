@@ -318,5 +318,102 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
     </script>
+
+    <style>
+    /* Estilos Aditivos para Control de Layout */
+    @media (max-width: 768px) and (orientation: portrait) {
+        #appMain {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            padding-top: 20px;
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+        }
+
+        /* Título en la parte superior */
+        #appMain > div:nth-child(2) h1 {
+            order: -2;
+            margin-top: 10px;
+            font-size: 24px;
+        }
+
+        /* Ruleta en el centro */
+        .wheel-wrapper {
+            order: -1;
+            width: 85vw !important;
+            height: 85vw !important;
+            margin: 20px 0 !important;
+        }
+
+        /* Opción de auto-eliminar abajo de la ruleta */
+        #appMain > div:nth-child(2) > div:last-of-type {
+            order: 0;
+            margin-bottom: 30px !important;
+            width: 280px;
+        }
+
+        /* Panel de botones abajo */
+        .side-panel {
+            position: relative !important;
+            inset: auto !important;
+            width: 90% !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            margin-bottom: 40px !important;
+            order: 1;
+        }
+
+        .side-panel .btn {
+            flex: 1 1 45%;
+            font-size: 10px !important;
+            padding: 12px 5px !important;
+        }
+
+        /* El botón de salir en su propia fila al final */
+        .side-panel button:last-child {
+            flex: 1 1 100%;
+        }
+    }
+
+    /* Ajustes para Horizontal (Desktop y Landscape) */
+    @media (min-width: 769px) or (orientation: landscape) {
+        #appMain {
+            flex-direction: row !important;
+            gap: 40px;
+        }
+        
+        .wheel-wrapper {
+            width: 75vh !important;
+            height: 75vh !important;
+        }
+    }
+</style>
+
+<script>
+    /**
+     * EXTENSIÓN DE INTERFAZ RESPONSIVA
+     * Este bloque asegura que el contenedor principal respete el orden visual solicitado
+     * sin alterar las funciones originales de appWheel o la base de datos.
+     */
+    (function() {
+        const mainContainer = document.getElementById('appMain');
+        if (mainContainer) {
+            // Aseguramos que el contenedor de la ruleta y el título sea flexible
+            const contentCenter = mainContainer.querySelector('div[style*="text-align:center"]');
+            if (contentCenter) {
+                contentCenter.style.display = 'flex';
+                contentCenter.style.flexDirection = 'column';
+                contentCenter.style.alignItems = 'center';
+            }
+        }
+        console.log("NEXO® Master: Layout Responsivo Inyectado.");
+    })();
+</script>
 </body>
 </html>
+
