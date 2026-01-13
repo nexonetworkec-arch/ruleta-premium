@@ -1305,9 +1305,56 @@ appWheel.resetHistory = function() {
 repositionReportBtn();
 
 /* --- FIN DEL BLOQUE DE CORRECCIÓN --- */
+
+        /* ==========================================================================
+   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM
+   Referencia: [2026-01-13] - Sincronización estética total
+   ========================================================================== */
+
+appWheel.applyReportBtnIdentity = function() {
+    // 1. Identificar el botón y el contenedor
+    const btnReport = document.querySelector('button[onclick*="showReportsLog"]');
+    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); // Usamos este como referencia
+    
+    if (btnReport && btnHistory) {
+        // 2. Copiar exactamente el estilo del botón Historial
+        btnReport.className = btnHistory.className; 
+        
+        // 3. Forzar los colores de marca NEXO® para asegurar consistencia
+        btnReport.style.border = "1px solid #d4af37";
+        btnReport.style.color = "#d4af37";
+        btnReport.style.backgroundColor = "#000";
+        btnReport.style.textTransform = "uppercase";
+        btnReport.style.fontWeight = "900";
+        btnReport.style.letterSpacing = "1px";
+        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
+        btnReport.style.padding = window.getComputedStyle(btnHistory).padding;
+        btnReport.style.margin = "5px";
+        btnReport.style.cursor = "pointer";
+        btnReport.style.transition = "all 0.3s ease";
+
+        // 4. Añadir efecto Hover dinámico
+        btnReport.onmouseover = function() {
+            this.style.backgroundColor = "#d4af37";
+            this.style.color = "#000";
+            this.style.boxShadow = "0 0 15px rgba(212, 175, 55, 0.4)";
+        };
+        btnReport.onmouseout = function() {
+            this.style.backgroundColor = "#000";
+            this.style.color = "#d4af37";
+            this.style.boxShadow = "none";
+        };
+    }
+};
+
+// Ejecutar la aplicación de identidad
+appWheel.applyReportBtnIdentity();
+
+/* --- FIN DEL BLOQUE DE IDENTIDAD --- */
     </script>
 </body>
 </html>
+
 
 
 
