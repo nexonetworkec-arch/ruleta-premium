@@ -318,88 +318,78 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
 
-        // --- INYECCIÓN ADITIVA: MOTOR DE AUDIO PRO NEXO® (CORREGIDO) ---
+        // --- INYECCIÓN ADITIVA: EXPERIENCIA TOTAL NEXO® (CORRECCIÓN DE TIEMPOS Y CAPAS) ---
 (function() {
-    // 1. Definición de sonidos con rutas de alta disponibilidad
-    const soundTick = new Audio('https://www.soundjay.com/buttons/button-27.mp3'); 
-    const soundWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'); 
-    
-    // 2. Función de desbloqueo (Crucial para Navegadores)
-    const unlockAudio = () => {
-        soundTick.play().then(() => {
-            soundTick.pause();
-            soundTick.currentTime = 0;
-        }).catch(e => console.log("Esperando interacción..."));
-        
-        soundWin.play().then(() => {
-            soundWin.pause();
-            soundWin.currentTime = 0;
-        }).catch(e => console.log("Esperando interacción..."));
-        
-        window.removeEventListener('click', unlockAudio);
-    };
-    window.addEventListener('click', unlockAudio);
+    // 1. Audio con Auto-reparación
+    const sTick = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_783ef5a761.mp3'); 
+    const sWin = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_062636f33d.mp3'); 
+    sTick.volume = 0.4;
+    sWin.volume = 0.6;
 
-    // 3. Extensión del giro para el sonido de 'clic'
-    const originalSpin = appWheel.spin;
+    const unlock = () => { [sTick, sWin].forEach(s => { s.play().then(()=> {s.pause(); s.currentTime=0;}); }); window.removeEventListener('click', unlock); };
+    window.addEventListener('click', unlock);
+
+    // 2. Intercepción del Giro para Sonido de Clic
+    const orgSpin = appWheel.spin;
     appWheel.spin = function() {
         if (!this.isSpinning) {
-            // Sonido de inicio
-            soundTick.currentTime = 0;
-            soundTick.play();
-
-            // Sincronización rítmica durante el giro
-            let tickSpeed = 100;
-            const playTick = () => {
+            let lastA = 0;
+            const checkTick = () => {
                 if(this.isSpinning) {
-                    soundTick.currentTime = 0;
-                    soundTick.play().catch(()=>{});
-                    // Aumentamos el intervalo poco a poco para simular pérdida de velocidad
-                    tickSpeed += 15; 
-                    setTimeout(playTick, tickSpeed);
+                    if(Math.abs(this.angle - lastA) > 0.2) { 
+                        sTick.currentTime = 0; sTick.play().catch(()=>{}); 
+                        lastA = this.angle; 
+                    }
+                    requestAnimationFrame(checkTick);
                 }
             };
-            setTimeout(playTick, 100);
+            checkTick();
         }
-        originalSpin.apply(this, arguments);
+        orgSpin.apply(this, arguments);
     };
 
-    // 4. Extensión de Victoria para Sonido y Confeti Pantalla Completa
-    const originalFinish = appWheel.finish;
+    // 3. Intercepción de Victoria: Confeti y Audio INSTANTÁNEO
+    const orgFinish = appWheel.finish;
     appWheel.finish = function() {
-        // Sonido de Victoria
-        soundWin.currentTime = 0;
-        soundWin.play().catch(()=>{});
+        // Sonido inmediato
+        sWin.currentTime = 0;
+        sWin.play().catch(()=>{});
 
-        // Confeti Pro Pantalla Completa
-        const duration = 4 * 1000;
+        // EXPLOSIÓN DE CONFETI EN TODA LA PANTALLA (Inmediato)
+        const duration = 5 * 1000;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10002 };
 
-        const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
-        const interval = setInterval(function() {
+        const frame = () => {
             const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
+            if (timeLeft <= 0) return;
 
-            const particleCount = 50 * (timeLeft / duration);
-            // Lanzamiento desde posiciones aleatorias de la pantalla
-            confetti(Object.assign({}, defaults, { 
-                particleCount, 
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-                colors: ['#d4af37', '#000000']
-            }));
-            confetti(Object.assign({}, defaults, { 
-                particleCount, 
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-                colors: ['#d4af37', '#ffffff']
-            }));
-        }, 250);
+            const count = 3;
+            const opt = { 
+                zIndex: 100000, // POR ENCIMA DE TODO
+                particleCount: count,
+                colors: ['#d4af37', '#000000', '#ffffff'],
+                spread: 80,
+                startVelocity: 30
+            };
 
-        originalFinish.apply(this, arguments);
+            // Lluvia desde los laterales hacia el centro
+            confetti({ ...opt, origin: { x: 0, y: 0.7 }, angle: 60 });
+            confetti({ ...opt, origin: { x: 1, y: 0.7 }, angle: 120 });
+            
+            // Lluvia desde arriba (Random)
+            if (Math.random() > 0.8) {
+                confetti({ ...opt, origin: { x: Math.random(), y: -0.1 }, gravity: 0.5 });
+            }
+
+            requestAnimationFrame(frame);
+        };
+        frame();
+
+        // Ejecutar la lógica original (Mostrar modal, etc.)
+        orgFinish.apply(this, arguments);
     };
 
-    console.log("Audio y Confeti Global NEXO®: Desbloqueados y Listos.");
+    console.log("Sistema Sensorial NEXO®: Sincronización de Capas y Audio OK.");
 })();
     </script>
 </body>
