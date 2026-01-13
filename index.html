@@ -740,7 +740,121 @@ downloadBtn.onclick = async function() {
 };
 
 /* --- FIN DEL BLOQUE DE CAPTURA --- */
+
+        /* ==========================================================================
+   INYECCIÓN: SELECTOR NUMÉRICO MANUAL Y ENLISTADO (NEXO® PRO)
+   Referencia: [2026-01-13] - Solo entrada manual y numeración externa.
+   ========================================================================== */
+
+// 1. Estilos Refinados para la Numeración y el Selector
+const styleSelectorManual = document.createElement('style');
+styleSelectorManual.innerHTML = `
+    .nexo-manual-row { 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+        margin-bottom: 20px; 
+        padding: 15px;
+        background: rgba(212, 175, 55, 0.05);
+        border: 1px dashed #d4af37;
+        border-radius: 10px;
+    }
+    .nexo-input-qty {
+        width: 100px;
+        background: #000;
+        border: 1px solid #d4af37;
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .prize-item-wrapper {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .prize-number {
+        width: 40px;
+        color: #d4af37;
+        font-family: 'Courier New', monospace;
+        font-weight: 900;
+        font-size: 16px;
+        text-align: left;
+        flex-shrink: 0;
+    }
+    .nexo-btn-add {
+        background: #d4af37;
+        color: #000;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .nexo-btn-add:hover { transform: scale(1.05); background: #fdf5e6; }
+`;
+document.head.appendChild(styleSelectorManual);
+
+// 2. Inyección del Selector Manual en el Modal
+const prizeListContainer = document.getElementById('prizesList');
+const manualControls = document.createElement('div');
+manualControls.className = 'nexo-manual-row';
+manualControls.innerHTML = `
+    <span style="color:#d4af37; font-size:12px; font-weight:bold;">CANTIDAD DE FILAS:</span>
+    <input type="number" id="nexoQtyInput" class="nexo-input-qty" placeholder="Ej: 100" min="1">
+    <button class="nexo-btn-add" onclick="appWheel.addCustomRows()">AÑADIR A LA LISTA</button>
+`;
+// Insertamos antes de la lista de premios
+prizeListContainer.parentNode.insertBefore(manualControls, prizeListContainer);
+
+// 3. Lógica de Enlistado Masivo
+appWheel.addCustomRows = function() {
+    const input = document.getElementById('nexoQtyInput');
+    const amount = parseInt(input.value);
+    
+    if (isNaN(amount) || amount <= 0) {
+        alert("Por favor, ingresa un número válido.");
+        return;
+    }
+
+    // Añadimos la cantidad solicitada
+    for (let i = 0; i < amount; i++) {
+        config.prizes.push(`Premio ${config.prizes.length + 1}`);
+    }
+    
+    // Limpiamos input y refrescamos visualmente
+    input.value = '';
+    this.renderPListV2();
+};
+
+// 4. Renderizado con Numeración Externa (Fuera del campo)
+appWheel.renderPListV2 = function() {
+    const list = document.getElementById('prizesList');
+    list.innerHTML = '';
+    
+    config.prizes.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'prize-item-wrapper';
+        div.innerHTML = `
+            <span class="prize-number">${(i + 1).toString().padStart(2, '0')}</span>
+            <input type="text" value="${p}" 
+                   style="flex-grow:1; background:rgba(255,255,255,0.05); color:#fff; border:1px solid #333;"
+                   onchange="appWheel.updatePrize(${i}, this.value)">
+            <button class="btn-delete" style="margin-left:10px" onclick="appWheel.deletePrize(${i})">×</button>
+        `;
+        list.appendChild(div);
+    });
+};
+
+// Sobrescribimos el método original para que use esta nueva versión enlistada
+appWheel.renderPList = appWheel.renderPListV2;
+appWheel.renderPListV2();
+
+/* --- FIN DEL BLOQUE SELECTOR MANUAL --- */
     </script>
 </body>
 </html>
+
 
