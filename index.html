@@ -1250,9 +1250,65 @@ if(redundante) redundante.remove();
 
 appWheel.draw();
 /* --- FIN DEL BLOQUE DE AUDITORÍA --- */
+
+        /* ==========================================================================
+   CORRECCIÓN: SINCRONIZACIÓN DE REINICIO Y ALINEACIÓN DE BOTONES
+   Referencia: [2026-01-13] - Ajuste de UI y limpieza de DOM
+   ========================================================================== */
+
+// 1. Re-ubicación y Estilo del Botón Historial de Reportes
+const repositionReportBtn = function() {
+    const btnReport = btnReportHist; // Referencia al botón creado antes
+    const container = document.querySelector('.controls'); // Contenedor principal de botones
+    const btnExit = document.querySelector('button[onclick*="window.close"]'); // Referencia al botón salir
+    
+    if (container && btnReport) {
+        // Estilo exacto para que encaje con los otros botones
+        btnReport.className = 'btn-control'; // Usamos la clase original de tus botones
+        btnReport.style.borderColor = '#d4af37';
+        btnReport.style.color = '#d4af37';
+        btnReport.style.background = '#000';
+        btnReport.style.margin = "5px"; // Margen estándar
+        
+        // Lo insertamos antes del botón de salir para que nunca quede abajo
+        if (btnExit) {
+            container.insertBefore(btnReport, btnExit);
+        } else {
+            container.appendChild(btnReport);
+        }
+    }
+};
+
+// 2. Corrección de la Función de Reinicio de Historial (Limpieza Instantánea)
+appWheel.resetHistory = function() {
+    if (confirm("¿Seguro que deseas limpiar el historial actual?")) {
+        // 1. Borrar datos
+        localStorage.removeItem('wheel_results');
+        
+        // 2. Limpiar el Modal visualmente de inmediato
+        const tableContainer = document.getElementById('historyList');
+        if (tableContainer) tableContainer.innerHTML = '<p style="color:#666; text-align:center;">Historial vacío.</p>';
+        
+        // 3. Limpiar el Widget lateral
+        const listContainer = document.getElementById('nexo-items-list');
+        if (listContainer) listContainer.innerHTML = '';
+        
+        // 4. Reordenar ruleta aleatoriamente
+        config.prizes.sort(() => Math.random() - 0.5);
+        this.draw();
+        
+        alert("Historial borrado y ruleta reordenada.");
+    }
+};
+
+// Ejecutar re-ubicación
+repositionReportBtn();
+
+/* --- FIN DEL BLOQUE DE CORRECCIÓN --- */
     </script>
 </body>
 </html>
+
 
 
 
