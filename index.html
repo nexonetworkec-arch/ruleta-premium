@@ -239,6 +239,11 @@
                 const deg = (this.angle * 180 / Math.PI) % 360;
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 const prize = config.prizes[idx];
+
+                // === INSERCIÓN ADITIVA AQUÍ ===
+                appWheel.triggerResult(prize); 
+                // ==============================
+
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#000000'] });
@@ -384,4 +389,5 @@ appWheel.triggerResult = function(premioObtenido) {
     </script>
 </body>
 </html>
+
 
