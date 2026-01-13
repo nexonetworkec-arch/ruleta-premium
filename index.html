@@ -1306,32 +1306,33 @@ repositionReportBtn();
 
 /* --- FIN DEL BLOQUE DE CORRECCIÓN --- */
 
-        /* ==========================================================================
-   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM
-   Referencia: [2026-01-13] - Sincronización estética total
+    /* ==========================================================================
+   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM (RESPONSIVE)
+   Referencia: [2026-01-13] - Sincronización estética y flexibilidad móvil
    ========================================================================== */
 
 appWheel.applyReportBtnIdentity = function() {
     // 1. Identificar el botón y el contenedor
     const btnReport = document.querySelector('button[onclick*="showReportsLog"]');
-    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); // Usamos este como referencia
+    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); 
     
     if (btnReport && btnHistory) {
-        // 2. Copiar exactamente el estilo del botón Historial
+        // 2. Copiar la clase para heredar el comportamiento responsivo del CSS
         btnReport.className = btnHistory.className; 
         
-        // 3. Forzar los colores de marca NEXO® para asegurar consistencia
+        // 3. Forzar Identidad Visual NEXO® sin romper la flexibilidad
+        // Eliminamos padding y margin fijos para que el CSS (Media Queries) tome el control
         btnReport.style.border = "1px solid #d4af37";
         btnReport.style.color = "#d4af37";
         btnReport.style.backgroundColor = "#000";
         btnReport.style.textTransform = "uppercase";
         btnReport.style.fontWeight = "900";
         btnReport.style.letterSpacing = "1px";
-        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
-        btnReport.style.padding = window.getComputedStyle(btnHistory).padding;
-        btnReport.style.margin = "5px";
         btnReport.style.cursor = "pointer";
         btnReport.style.transition = "all 0.3s ease";
+        btnReport.style.display = "inline-flex";
+        btnReport.style.alignItems = "center";
+        btnReport.style.justifyContent = "center";
 
         // 4. Añadir efecto Hover dinámico
         btnReport.onmouseover = function() {
@@ -1344,13 +1345,16 @@ appWheel.applyReportBtnIdentity = function() {
             this.style.color = "#d4af37";
             this.style.boxShadow = "none";
         };
+
+        // 5. Ajuste de fuente dinámico según el botón de referencia
+        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
     }
 };
 
 // Ejecutar la aplicación de identidad
 appWheel.applyReportBtnIdentity();
 
-/* --- FIN DEL BLOQUE DE IDENTIDAD --- */
+/* --- FIN DEL BLOQUE DE IDENTIDAD CORREGIDO --- */
     </script>
 
     <style>
@@ -1443,4 +1447,5 @@ appWheel.applyReportBtnIdentity();
 </script>
 </body>
 </html>
+
 
