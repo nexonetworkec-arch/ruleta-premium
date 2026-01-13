@@ -475,93 +475,91 @@ appWheel.updateVisualHistory();
 
 /* --- FIN DEL BLOQUE VISUAL --- */
 
-        /* ==========================================================================
-   INYECCIÓN DE ESTÉTICA 3D PREMIUM (NEXO® PRO)
-   Referencia: [2026-01-13] - Mejora visual sin afectar la lógica core.
+ /* ==========================================================================
+   INYECCIÓN 2D PRO: DISEÑO DE ALTA FIDELIDAD
+   Referencia: [2026-01-13] - Optimización de rendimiento y legibilidad.
    ========================================================================== */
 
-// 1. Estilos para el contenedor y efectos de iluminación
-const style3D = document.createElement('style');
-style3D.innerHTML = `
+// 1. Mejoras de Estilo para el Canvas
+const style2DPro = document.createElement('style');
+style2DPro.innerHTML = `
     .wheel-wrapper {
-        perspective: 1000px;
-        filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.2));
+        border: 4px solid #d4af37;
+        border-radius: 50%;
+        padding: 10px;
+        background: #000;
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
     }
     #wheelCanvas {
-        border: none !important; /* Eliminamos el borde plano original */
-        transition: transform 0.5s ease-out;
-    }
-    /* El "Anillo de Oro" 3D */
-    .wheel-wrapper::after {
-        content: '';
-        position: absolute;
-        inset: -15px;
-        border-radius: 50%;
-        border: 15px solid #d4af37;
-        background: transparent;
-        pointer-events: none;
-        box-shadow: 
-            inset 0 0 20px rgba(0,0,0,0.8),
-            0 5px 15px rgba(0,0,0,0.5);
-        background: linear-gradient(135deg, #8a6d1d 0%, #d4af37 45%, #fdf5e6 50%, #d4af37 55%, #8a6d1d 100%);
-        z-index: 10;
-    }
-    /* Reflejo de cristal superior */
-    .wheel-wrapper::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
-        z-index: 11;
-        pointer-events: none;
+        filter: contrast(1.1) brightness(1.1);
     }
 `;
-document.head.appendChild(style3D);
+document.head.appendChild(style2DPro);
 
-// 2. Modificación Aditiva de los Colores de la Ruleta
-// Redefinimos los colores de dibujo para que usen gradientes brillantes
-appWheel.drawOriginal = appWheel.draw; 
+// 2. Redibujo con Calidad Premium
+// Sobrescribimos el método draw para inyectar gradientes reales
 appWheel.draw = function() {
-    const ctx = this.ctx;
-    const cx = 400;
-    
-    // Dibujamos el fondo base con profundidad
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cx, 390, 0, Math.PI * 2);
-    ctx.fillStyle = '#050505';
-    ctx.fill();
-    ctx.shadowBlur = 50;
-    ctx.shadowColor = 'rgba(212, 175, 55, 0.3)';
-    ctx.restore();
+    const w = 800, cx = 400, r = 385;
+    this.ctx.clearRect(0, 0, w, w);
+    const n = config.prizes.length;
+    const slice = (Math.PI * 2) / n;
 
-    // Llamamos al dibujo original de las porciones
-    appWheel.drawOriginal();
+    config.prizes.forEach((p, i) => {
+        this.ctx.save();
+        this.ctx.beginPath();
+        
+        // --- GRADIENTES METÁLICOS ---
+        const grad = this.ctx.createRadialGradient(cx, cx, 0, cx, cx, r);
+        if (i % 2) {
+            grad.addColorStop(0, '#111');
+            grad.addColorStop(1, '#000');
+        } else {
+            grad.addColorStop(0, '#fdf5e6'); // Brillo central
+            grad.addColorStop(0.5, '#d4af37'); // Oro base
+            grad.addColorStop(1, '#8a6d1d'); // Oro oscuro
+        }
+        
+        this.ctx.fillStyle = grad;
+        this.ctx.moveTo(cx, cx);
+        this.ctx.arc(cx, cx, r, this.angle + i * slice, this.angle + (i + 1) * slice);
+        this.ctx.fill();
+        
+        // Borde fino entre secciones
+        this.ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
 
-    // Añadimos un "Centro Maestro" con efecto de botón físico
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cx, 50, 0, Math.PI * 2);
-    const grad = ctx.createLinearGradient(cx-50, cx-50, cx+50, cx+50);
-    grad.addColorStop(0, '#d4af37');
-    grad.addColorStop(0.5, '#fdf5e6');
-    grad.addColorStop(1, '#8a6d1d');
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
+        // --- TEXTO PREMIUM ---
+        this.ctx.translate(cx, cx);
+        this.ctx.rotate(this.angle + i * slice + slice / 2);
+        this.ctx.font = "900 34px 'Segoe UI'";
+        this.ctx.textAlign = "right";
+        
+        // Sombra para el texto
+        this.ctx.shadowColor = i % 2 ? "rgba(212,175,55,0.5)" : "rgba(0,0,0,0.5)";
+        this.ctx.shadowBlur = 4;
+        
+        this.ctx.fillStyle = i % 2 ? "#d4af37" : "#000";
+        this.ctx.fillText(p.toUpperCase(), r - 50, 12);
+        this.ctx.restore();
+    });
+
+    // Anillo exterior decorativo (Stroke Gold)
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cx, r - 2, 0, Math.PI * 2);
+    this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+    this.ctx.lineWidth = 5;
+    this.ctx.stroke();
 };
 
-// Re-dibujar para aplicar cambios inmediatamente
+// Aplicar cambios inmediatamente
 appWheel.draw();
 
-/* --- FIN DEL BLOQUE 3D --- */
+/* --- FIN DEL BLOQUE 2D PRO --- */
     </script>
 </body>
 </html>
+
 
 
 
