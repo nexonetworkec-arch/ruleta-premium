@@ -621,12 +621,73 @@ document.getElementById('btnSpinCenter').onclick = () => {
 };
 
 /* --- FIN DEL BLOQUE DE AUDIO --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE CELEBRACIÓN: EFECTO VICTORIA NEXO®
+   Referencia: [2026-01-13] - Confeti dorado y efectos de luz.
+   ========================================================================== */
+
+// 1. Estilos para el destello de victoria
+const styleWin = document.createElement('style');
+styleWin.innerHTML = `
+    .victory-flash {
+        animation: nexoFlash 0.5s ease-out;
+    }
+    @keyframes nexoFlash {
+        0% { background: rgba(212, 175, 55, 0); }
+        50% { background: rgba(212, 175, 55, 0.4); }
+        100% { background: rgba(212, 175, 55, 0); }
+    }
+    #winnerName {
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+        color: #fff !important;
+        animation: prizePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes prizePop {
+        0% { transform: scale(0.5); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+`;
+document.head.appendChild(styleWin);
+
+// 2. Extensión de la lógica de fin de juego para la celebración
+const previousProcessEnd = appWheel.processEndGame;
+appWheel.processEndGame = function(resultado) {
+    // Ejecutamos la lógica de guardado previa
+    if (typeof previousProcessEnd === 'function') previousProcessEnd(resultado);
+
+    // Activamos el destello en el contenedor principal
+    const mainContainer = document.getElementById('appMain');
+    mainContainer.classList.add('victory-flash');
+    setTimeout(() => mainContainer.classList.remove('victory-flash'), 500);
+
+    // Lanzamiento de Confeti Premium (Dorado y Negro)
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#d4af37', '#000000', '#fdf5e6']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#d4af37', '#000000', '#fdf5e6']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+};
+
+/* --- FIN DEL BLOQUE DE CELEBRACIÓN --- */
     </script>
 </body>
 </html>
-
-
-
-
-
-
