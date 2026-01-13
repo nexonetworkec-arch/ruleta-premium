@@ -318,100 +318,88 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
 
-        // --- INYECCIÓN ADITIVA: MOTOR DE AUDIO NATIVO NEXO® (SIN ARCHIVOS EXTERNOS) ---
+        // --- INYECCIÓN ADITIVA: EXPERIENCIA AUDITIVA PREMIUM NEXO® ---
 (function() {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // 1. Carga de Assets de Alta Fidelidad (Pestaña abierta para evitar bloqueos)
+    const audioTick = new Audio('https://www.soundjay.com/communication/sounds/typewriter-key-1.mp3'); 
+    const audioWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3');
+    
+    audioTick.volume = 0.5;
+    audioWin.volume = 0.7;
 
-    // Generador de Clic (Frecuencia corta y seca)
-    function playTick() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-    }
+    // Pre-carga forzada
+    const preload = () => {
+        audioTick.play().then(() => { audioTick.pause(); audioTick.currentTime = 0; });
+        audioWin.play().then(() => { audioWin.pause(); audioWin.currentTime = 0; });
+        window.removeEventListener('pointerdown', preload);
+    };
+    window.addEventListener('pointerdown', preload);
 
-    // Generador de Victoria (Acorde triunfal armónico)
-    function playWinSound() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const notes = [261.63, 329.63, 392.00, 523.25]; // Acorde de Do Mayor
-        notes.forEach((freq, i) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (i * 0.1));
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (i * 0.1));
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime + (i * 0.1));
-            osc.stop(audioCtx.currentTime + 2);
-        });
-    }
-
-    // 1. Intercepción del Giro para Sonido de Clic por Grados
+    // 2. Lógica de "Pines Virtuales" (Para un clic rítmico perfecto)
     const orgSpin = appWheel.spin;
     appWheel.spin = function() {
         if (!this.isSpinning) {
-            let lastA = 0;
-            const checkTick = () => {
+            let lastSegment = -1;
+            
+            const trackRotation = () => {
                 if(this.isSpinning) {
-                    // Cada vez que la ruleta avanza un tramo pequeño, suena el clic
-                    if(Math.abs(this.angle - lastA) > 0.25) { 
-                        playTick();
-                        lastA = this.angle; 
+                    const numSegments = config.prizes.length;
+                    // Calculamos en qué segmento está el puntero actualmente
+                    const currentSegment = Math.floor(((this.angle * 180 / Math.PI) % 360) / (360 / numSegments));
+                    
+                    if (currentSegment !== lastSegment) {
+                        // Cada vez que cambia de segmento, suena un clic real
+                        audioTick.currentTime = 0;
+                        audioTick.play().catch(()=>{});
+                        lastSegment = currentSegment;
                     }
-                    requestAnimationFrame(checkTick);
+                    requestAnimationFrame(trackRotation);
                 }
             };
-            checkTick();
+            trackRotation();
         }
         orgSpin.apply(this, arguments);
     };
 
-    // 2. Intercepción de Victoria: Confeti y Audio NATIVO
+    // 3. Victoria con Confeti y Fanfarria Sincronizada
     const orgFinish = appWheel.finish;
     appWheel.finish = function() {
-        playWinSound(); // Audio instantáneo sin lag de descarga
+        // Sonido de victoria inmediato
+        audioWin.currentTime = 0;
+        audioWin.play().catch(()=>{});
 
-        const duration = 5 * 1000;
-        const animationEnd = Date.now() + duration;
+        // Lluvia de Oro Total
+        const duration = 4 * 1000;
+        const end = Date.now() + duration;
 
-        const frame = () => {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return;
-
-            const opt = { 
-                zIndex: 100000, 
-                particleCount: 3,
+        (function frame() {
+            confetti({
+                particleCount: 4,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 },
                 colors: ['#d4af37', '#000000'],
-                spread: 70
-            };
+                zIndex: 100000
+            });
+            confetti({
+                particleCount: 4,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 },
+                colors: ['#d4af37', '#ffffff'],
+                zIndex: 100000
+            });
 
-            confetti({ ...opt, origin: { x: 0, y: 0.8 }, angle: 60 });
-            confetti({ ...opt, origin: { x: 1, y: 0.8 }, angle: 120 });
-            
-            if (Math.random() > 0.9) {
-                confetti({ ...opt, origin: { x: 0.5, y: -0.1 }, gravity: 1.2, scalar: 1.2 });
-            }
-            requestAnimationFrame(frame);
-        };
-        frame();
+            if (Date.now() < end) requestAnimationFrame(frame);
+        }());
 
         orgFinish.apply(this, arguments);
     };
 
-    // Desbloqueo del contexto de audio al primer toque
-    window.addEventListener('click', () => { if(audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
-
-    console.log("Audio Master NEXO®: Motor de Síntesis Digital Activo.");
+    console.log("NEXO® Audio: Motor de Pines Virtuales Activado.");
 })();
     </script>
 </body>
 </html>
+
 
