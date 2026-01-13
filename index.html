@@ -320,100 +320,114 @@
     </script>
 
     <style>
-    /* Estilos Aditivos para Control de Layout */
+    /* Forzamos el comportamiento del contenedor principal en móviles */
     @media (max-width: 768px) and (orientation: portrait) {
+        body { 
+            overflow-y: auto !important; 
+            display: block !important; 
+        }
+
         #appMain {
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
-            align-items: center !important;
-            padding-top: 20px;
-            overflow-y: auto !important;
             height: auto !important;
-            min-height: 100vh;
+            min-height: 100vh !important;
+            padding: 20px 10px !important;
+            align-items: center !important;
         }
 
-        /* Título en la parte superior */
-        #appMain > div:nth-child(2) h1 {
-            order: -2;
-            margin-top: 10px;
-            font-size: 24px;
+        /* 1. EL TÍTULO VA ARRIBA */
+        #appMain > div:nth-child(2) {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            width: 100% !important;
+            order: 1 !important; /* Posición jerárquica */
         }
 
-        /* Ruleta en el centro */
+        #appMain h1 {
+            order: -2 !important; 
+            margin-bottom: 20px !important;
+            font-size: 22px !important;
+        }
+
+        /* 2. LA RULETA EN EL CENTRO */
         .wheel-wrapper {
-            order: -1;
+            order: -1 !important;
             width: 85vw !important;
             height: 85vw !important;
-            margin: 20px 0 !important;
+            max-width: 400px !important;
+            max-height: 400px !important;
+            margin: 10px auto !important;
         }
 
-        /* Opción de auto-eliminar abajo de la ruleta */
+        /* 3. AUTO-ELIMINAR ABAJO DE LA RULETA */
         #appMain > div:nth-child(2) > div:last-of-type {
-            order: 0;
-            margin-bottom: 30px !important;
-            width: 280px;
+            order: 0 !important;
+            margin: 20px 0 !important;
+            display: inline-block !important;
         }
 
-        /* Panel de botones abajo */
+        /* 4. BOTONES ABAJO DEL TODO */
         .side-panel {
             position: relative !important;
-            inset: auto !important;
-            width: 90% !important;
+            right: auto !important;
+            top: auto !important;
+            width: 100% !important;
+            max-width: 320px !important;
             flex-direction: row !important;
             flex-wrap: wrap !important;
             justify-content: center !important;
             gap: 10px !important;
-            margin-bottom: 40px !important;
-            order: 1;
+            margin: 20px 0 50px 0 !important;
+            order: 2 !important;
         }
 
         .side-panel .btn {
-            flex: 1 1 45%;
-            font-size: 10px !important;
-            padding: 12px 5px !important;
+            flex: 1 1 45% !important;
+            font-size: 9px !important;
+            padding: 14px 5px !important;
         }
 
-        /* El botón de salir en su propia fila al final */
-        .side-panel button:last-child {
-            flex: 1 1 100%;
+        /* Botón salir a ancho completo */
+        .side-panel button[onclick*="signOut"] {
+            flex: 1 1 100% !important;
         }
     }
 
-    /* Ajustes para Horizontal (Desktop y Landscape) */
-    @media (min-width: 769px) or (orientation: landscape) {
+    /* Ajuste para modo Horizontal (Landscape) */
+    @media (max-height: 500px) and (orientation: landscape) {
         #appMain {
             flex-direction: row !important;
-            gap: 40px;
+            justify-content: center !important;
+            gap: 20px !important;
         }
-        
         .wheel-wrapper {
-            width: 75vh !important;
-            height: 75vh !important;
+            width: 70vh !important;
+            height: 70vh !important;
         }
+        .side-panel {
+            width: 180px !important;
+            scale: 0.8;
+        }
+        h1 { display: none; } /* Ocultamos título en horizontal móvil para ganar espacio */
     }
 </style>
 
 <script>
-    /**
-     * EXTENSIÓN DE INTERFAZ RESPONSIVA
-     * Este bloque asegura que el contenedor principal respete el orden visual solicitado
-     * sin alterar las funciones originales de appWheel o la base de datos.
-     */
+    /* Inyección Aditiva para asegurar que el DOM responda a los cambios */
     (function() {
-        const mainContainer = document.getElementById('appMain');
-        if (mainContainer) {
-            // Aseguramos que el contenedor de la ruleta y el título sea flexible
-            const contentCenter = mainContainer.querySelector('div[style*="text-align:center"]');
-            if (contentCenter) {
-                contentCenter.style.display = 'flex';
-                contentCenter.style.flexDirection = 'column';
-                contentCenter.style.alignItems = 'center';
-            }
+        console.log("NEXO® Master: Aplicando corrección de jerarquía visual...");
+        // Forzamos que el div del título se comporte como flex para el ordenamiento
+        const contentDiv = document.querySelector('#appMain > div[style*="text-align:center"]');
+        if (contentDiv) {
+            contentDiv.style.display = 'flex';
+            contentDiv.style.flexDirection = 'column';
+            contentDiv.style.alignItems = 'center';
         }
-        console.log("NEXO® Master: Layout Responsivo Inyectado.");
     })();
 </script>
-</body>
+   </body>
 </html>
+
 
