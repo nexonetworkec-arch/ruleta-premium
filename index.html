@@ -831,6 +831,54 @@
                 }
             });
         })();
+
+        /* --- INYECCIÓN ADITIVA: CORRECCIÓN VISIBILIDAD "GIRAR" Y OPTIMIZACIÓN PANEL ADMIN --- */
+(function() {
+    // 1. Corrección de la palabra "GIRAR"
+    const fixSpinButton = () => {
+        const btnSpin = document.getElementById('btnSpinCenter');
+        if (btnSpin) {
+            // Aseguramos que el texto sea visible si no hay una imagen cargada
+            if (!btnSpin.querySelector('img')) {
+                btnSpin.innerText = "GIRAR";
+                btnSpin.style.color = "#000"; // Color negro original
+                btnSpin.style.fontWeight = "900";
+                btnSpin.style.fontSize = "14px";
+                btnSpin.style.display = "flex";
+                btnSpin.style.alignItems = "center";
+                btnSpin.style.justifyContent = "center";
+            }
+        }
+    };
+
+    // 2. Optimización del Panel de Administrador (Carga 100%)
+    const optimizeAdminPanel = () => {
+        const btnAdmin = document.getElementById('btnAdminMaster');
+        if (btnAdmin) {
+            // Sobrescribimos el click para asegurar carga inmediata
+            btnAdmin.addEventListener('click', () => {
+                if (typeof injectMasterAdminStyles === 'function') injectMasterAdminStyles();
+                if (typeof updateAdminTableFull === 'function') updateAdminTableFull();
+                
+                const modalAdmin = document.getElementById('modalAdmin');
+                if (modalAdmin) {
+                    modalAdmin.style.display = 'flex';
+                }
+            });
+        }
+    };
+
+    // Ejecución inmediata y tras carga de Firebase
+    fixSpinButton();
+    optimizeAdminPanel();
+    
+    // Observador para cambios en la base de datos que afecten al logo/botón
+    const settingsRef = firebase.database().ref('settings');
+    settingsRef.on('value', () => {
+        setTimeout(fixSpinButton, 500);
+    });
+})();
     </script>
 </body>
 </html>
+
