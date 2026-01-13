@@ -556,9 +556,75 @@ appWheel.draw = function() {
 appWheel.draw();
 
 /* --- FIN DEL BLOQUE 2D PRO --- */
+
+        /* ==========================================================================
+   INYECCIÓN DE AUDIO: SISTEMA DE CLIC RÍTMICO NEXO®
+   Referencia: [2026-01-13] - Audio sintético sin dependencias externas.
+   ========================================================================== */
+
+appWheel.audioCtx = null;
+
+// 1. Inicialización del motor de audio (requiere interacción del usuario)
+appWheel.initAudio = function() {
+    if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+};
+
+// 2. Función para generar el sonido de "Tick"
+appWheel.playTick = function() {
+    if (!this.audioCtx) return;
+    
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    
+    osc.type = 'sine'; // Sonido limpio y profesional
+    osc.frequency.setValueAtTime(800, this.audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(10, this.audioCtx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
+    
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + 0.1);
+};
+
+// 3. Extensión de la lógica de giro para detectar cambio de sección
+appWheel.lastTickIndex = -1;
+
+const originalDraw = appWheel.draw;
+appWheel.draw = function() {
+    // Ejecutamos el dibujo 2D Pro que ya tenemos
+    originalDraw.call(this);
+    
+    if (this.isSpinning) {
+        const n = config.prizes.length;
+        const deg = (this.angle * 180 / Math.PI) % 360;
+        const currentIndex = Math.floor(deg / (360 / n));
+        
+        // Si la sección cambió, disparamos el sonido
+        if (currentIndex !== this.lastTickIndex) {
+            this.playTick();
+            this.lastTickIndex = currentIndex;
+        }
+    }
+};
+
+// 4. Activar audio al presionar el botón de giro
+const originalSpinBtn = document.getElementById('btnSpinCenter').onclick;
+document.getElementById('btnSpinCenter').onclick = () => {
+    appWheel.initAudio(); // Activa el contexto de audio
+    if (typeof originalSpinBtn === 'function') originalSpinBtn();
+};
+
+/* --- FIN DEL BLOQUE DE AUDIO --- */
     </script>
 </body>
 </html>
+
 
 
 
