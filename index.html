@@ -1351,9 +1351,168 @@ appWheel.applyReportBtnIdentity = function() {
 appWheel.applyReportBtnIdentity();
 
 /* --- FIN DEL BLOQUE DE IDENTIDAD --- */
+
+        /* ==========================================================================
+   BLOQUE MAESTRO INTEGRAL: NAVEGACIÓN, LIMPIEZA Y GESTIÓN DE LISTAS
+   Referencia: [2026-01-13] - Sistema Consolidado NEXO® Pro
+   ========================================================================== */
+
+// 1. ESTILOS GLOBALES (Interfaz, Menú, Gestor y Blur)
+const styleNexoMaster = document.createElement('style');
+styleNexoMaster.innerHTML = `
+    /* Limpieza de botones originales */
+    .controls, .main-actions, .btn-control, .btn-primary { display: none !important; }
+    
+    /* Efecto Blur Cinematográfico */
+    .canvas-container, #wheel-wrapper { transition: filter 0.5s ease; }
+    .nexo-blur-active { filter: blur(8px) brightness(0.4); }
+
+    /* Botón Hamburguesa */
+    #nexo-hb-trigger {
+        position: fixed; bottom: 30px; right: 30px;
+        width: 65px; height: 65px; background: #000;
+        border: 2px solid #d4af37; border-radius: 50%;
+        color: #d4af37; font-size: 28px; cursor: pointer;
+        z-index: 5000; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); transition: 0.3s;
+    }
+    #nexo-hb-trigger:hover { transform: scale(1.1) rotate(90deg); }
+
+    /* Panel Lateral de Navegación */
+    #nexo-side-nav {
+        position: fixed; top: 0; right: -320px; width: 320px; height: 100%;
+        background: rgba(0, 0, 0, 0.98); border-left: 1px solid #d4af37;
+        z-index: 4999; transition: 0.4s ease;
+        display: flex; flex-direction: column; padding: 100px 25px 40px 25px;
+    }
+    #nexo-side-nav.active { right: 0; }
+
+    /* Gestor de Listas (Modal Superior) */
+    .nexo-list-admin {
+        position: fixed; top: 10%; left: 10%; width: 80%; height: 80%;
+        background: #000; border: 2px solid #d4af37; z-index: 9999;
+        color: #fff; padding: 30px; display: none; overflow-y: auto;
+        box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    }
+    .nexo-search-box {
+        width: 100%; background: #111; border: 1px solid #d4af37;
+        color: #fff; padding: 12px; margin: 20px 0; outline: none;
+        text-transform: uppercase; font-size: 12px;
+    }
+    .nexo-nav-item, .btn-nexo-admin {
+        background: transparent; border: 1px solid #333; color: #fff;
+        padding: 15px; margin-bottom: 10px; cursor: pointer;
+        text-transform: uppercase; font-weight: 900; letter-spacing: 1px;
+        transition: 0.3s; font-size: 12px; display: block; width: 100%; text-align: left;
+    }
+    .nexo-nav-item:hover, .btn-nexo-edit:hover { border-color: #d4af37; color: #d4af37; padding-left: 25px; }
+    .btn-nexo-delete:hover { border-color: #ff4444; color: #ff4444; }
+    
+    .list-table { width: 100%; border-collapse: collapse; }
+    .list-table th { color: #d4af37; text-align: left; padding: 12px; border-bottom: 2px solid #d4af37; }
+    .list-table td { padding: 12px; border-bottom: 1px solid #222; }
+`;
+document.head.appendChild(styleNexoMaster);
+
+// 2. CONSTRUCCIÓN DE ELEMENTOS (Menú y Gestor)
+const hbBtn = document.createElement('div');
+hbBtn.id = 'nexo-hb-trigger';
+hbBtn.innerHTML = '☰';
+
+const sideNav = document.createElement('nav');
+sideNav.id = 'nexo-side-nav';
+sideNav.innerHTML = `
+    <div style="color:#d4af37; font-size: 20px; font-weight:900; margin-bottom:40px; letter-spacing:4px; border-bottom:1px solid #d4af37; padding-bottom:15px;">NEXO® PRO</div>
+    <button class="nexo-nav-item" onclick="showPrizes(); appWheel.toggleNexoMenu()">⚙️ PREMIOS</button>
+    <button class="nexo-nav-item" onclick="showHistory(); appWheel.toggleNexoMenu()">🏆 GANADORES</button>
+    <button class="nexo-nav-item" onclick="appWheel.showReportsLog(); appWheel.toggleNexoMenu()">📋 REPORTE DE SESIONES</button>
+    <button class="nexo-nav-item" style="color:#ff4444;" onclick="appWheel.resetGame(); appWheel.toggleNexoMenu()">🔄 REINICIAR</button>
+    <div style="flex-grow: 1;"></div>
+    <button class="nexo-nav-item" style="border-color:#666;" onclick="window.close()">🚪 SALIR</button>
+`;
+
+const listAdmin = document.createElement('div');
+listAdmin.id = 'nexoListAdminModal';
+listAdmin.className = 'nexo-list-admin';
+
+document.body.appendChild(hbBtn);
+document.body.appendChild(sideNav);
+document.body.appendChild(listAdmin);
+
+// 3. LÓGICA DE NAVEGACIÓN Y BLUR
+appWheel.toggleNexoMenu = function() {
+    const nav = document.getElementById('nexo-side-nav');
+    const wheel = document.querySelector('.canvas-container') || document.querySelector('canvas');
+    nav.classList.toggle('active');
+    nav.classList.contains('active') ? wheel.classList.add('nexo-blur-active') : wheel.classList.remove('nexo-blur-active');
+};
+hbBtn.onclick = () => appWheel.toggleNexoMenu();
+
+// 4. LÓGICA DEL GESTOR DE LISTAS
+appWheel.openListManager = function() {
+    const saved = JSON.parse(localStorage.getItem('nexo_saved_prizes')) || {};
+    const modal = document.getElementById('nexoListAdminModal');
+    let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="color:#d4af37; margin:0;">GESTIÓN DE LISTAS</h2>
+            <button class="btn-nexo-admin" style="width:auto;" onclick="document.getElementById('nexoListAdminModal').style.display='none'">CERRAR</button>
+        </div>
+        <input type="text" id="nexoListSearch" class="nexo-search-box" placeholder="Buscar lista..." onkeyup="appWheel.filterLists()">
+        <table class="list-table">
+            <thead><tr><th>NOMBRE</th><th>ITEMS</th><th>ACCIONES</th></tr></thead>
+            <tbody>`;
+    Object.keys(saved).forEach(name => {
+        html += `
+            <tr class="nexo-list-row" data-name="${name}">
+                <td style="font-weight:bold;">${name.toUpperCase()}</td>
+                <td style="color:#888;">${saved[name].length} premios</td>
+                <td>
+                    <button class="btn-nexo-admin btn-nexo-edit" style="display:inline; width:auto;" onclick="appWheel.editSavedList('${name}')">EDITAR</button>
+                    <button class="btn-nexo-admin btn-nexo-delete" style="display:inline; width:auto;" onclick="appWheel.deleteSavedList('${name}')">BORRAR</button>
+                </td>
+            </tr>`;
+    });
+    modal.innerHTML = html + `</tbody></table>`;
+    modal.style.display = 'block';
+};
+
+appWheel.filterLists = function() {
+    const q = document.getElementById('nexoListSearch').value.toLowerCase();
+    document.querySelectorAll('.nexo-list-row').forEach(row => {
+        row.style.display = row.getAttribute('data-name').toLowerCase().includes(q) ? '' : 'none';
+    });
+};
+
+appWheel.deleteSavedList = function(name) {
+    if (confirm(`¿Eliminar "${name}"?`)) {
+        let s = JSON.parse(localStorage.getItem('nexo_saved_prizes'));
+        delete s[name];
+        localStorage.setItem('nexo_saved_prizes', JSON.stringify(s));
+        this.openListManager();
+    }
+};
+
+appWheel.editSavedList = function(name) {
+    const s = JSON.parse(localStorage.getItem('nexo_saved_prizes'));
+    config.prizes = [...s[name]];
+    if (this.updatePrizesList) this.updatePrizesList();
+    this.draw();
+    document.getElementById('nexoListAdminModal').style.display = 'none';
+};
+
+// 5. INTERCEPTOR DE BOTÓN "GUARDAR"
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.getAttribute('onclick') && e.target.getAttribute('onclick').includes('saveCurrentList')) {
+        e.preventDefault(); e.stopPropagation();
+        appWheel.openListManager();
+    }
+}, true);
+
+/* --- FIN DEL BLOQUE MAESTRO --- */
     </script>
 </body>
 </html>
+
 
 
 
