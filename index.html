@@ -318,84 +318,89 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
 
-        // --- INYECCIÓN ADITIVA: MÓDULO SENSORIAL NEXO® PRO ---
-// Integración de Sonidos Premium y Confeti de Pantalla Completa
+        // --- INYECCIÓN ADITIVA: MOTOR DE AUDIO PRO NEXO® (CORREGIDO) ---
 (function() {
-    // 1. Recursos de Sonido (Carga rápida desde CDN estable)
-    const soundTick = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'); // Clic de ruleta
-    const soundWin = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');  // Fanfarria victoria
-    soundTick.volume = 0.3;
-    soundWin.volume = 0.5;
+    // 1. Definición de sonidos con rutas de alta disponibilidad
+    const soundTick = new Audio('https://www.soundjay.com/buttons/button-27.mp3'); 
+    const soundWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'); 
+    
+    // 2. Función de desbloqueo (Crucial para Navegadores)
+    const unlockAudio = () => {
+        soundTick.play().then(() => {
+            soundTick.pause();
+            soundTick.currentTime = 0;
+        }).catch(e => console.log("Esperando interacción..."));
+        
+        soundWin.play().then(() => {
+            soundWin.pause();
+            soundWin.currentTime = 0;
+        }).catch(e => console.log("Esperando interacción..."));
+        
+        window.removeEventListener('click', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio);
 
-    // 2. Extensión del motor de la ruleta para Sonido
-    const originalDraw = appWheel.draw;
-    let lastPrizeIndex = -1;
-
-    // Monitorizamos el ángulo para disparar el sonido de 'clic'
+    // 3. Extensión del giro para el sonido de 'clic'
     const originalSpin = appWheel.spin;
     appWheel.spin = function() {
-        soundTick.play().catch(() => console.log("Audio requiere interacción"));
+        if (!this.isSpinning) {
+            // Sonido de inicio
+            soundTick.currentTime = 0;
+            soundTick.play();
+
+            // Sincronización rítmica durante el giro
+            let tickSpeed = 100;
+            const playTick = () => {
+                if(this.isSpinning) {
+                    soundTick.currentTime = 0;
+                    soundTick.play().catch(()=>{});
+                    // Aumentamos el intervalo poco a poco para simular pérdida de velocidad
+                    tickSpeed += 15; 
+                    setTimeout(playTick, tickSpeed);
+                }
+            };
+            setTimeout(playTick, 100);
+        }
         originalSpin.apply(this, arguments);
-        
-        // Efecto de sonido rítmico mientras gira
-        const tickInterval = setInterval(() => {
-            if(this.isSpinning) {
-                soundTick.currentTime = 0;
-                soundTick.play().catch(()=>{});
-            } else {
-                clearInterval(tickInterval);
-            }
-        }, 150); // Ajuste rítmico del clic
     };
 
-    // 3. Extensión de Victoria para Confeti de Pantalla Completa
+    // 4. Extensión de Victoria para Sonido y Confeti Pantalla Completa
     const originalFinish = appWheel.finish;
     appWheel.finish = function() {
-        // Disparar sonido de victoria
+        // Sonido de Victoria
+        soundWin.currentTime = 0;
         soundWin.play().catch(()=>{});
 
-        // Lanzamiento de Confeti Oro/Negro en TODA la pantalla
-        const end = Date.now() + (3 * 1000); // 3 segundos de lluvia
-        const colors = ['#d4af37', '#000000', '#ffffff'];
+        // Confeti Pro Pantalla Completa
+        const duration = 4 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10002 };
 
-        (function frame() {
-            confetti({
-                particleCount: 5,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 }, // Desde la izquierda
-                colors: colors,
-                zIndex: 10001
-            });
-            confetti({
-                particleCount: 5,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 }, // Desde la derecha
-                colors: colors,
-                zIndex: 10001
-            });
+        const randomInRange = (min, max) => Math.random() * (max - min) + min;
 
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
-        }());
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
 
-        // Confeti central explosivo
-        confetti({
-            particleCount: 150,
-            spread: 100,
-            origin: { y: 0.5 },
-            colors: ['#d4af37', '#000000'],
-            zIndex: 10001
-        });
+            const particleCount = 50 * (timeLeft / duration);
+            // Lanzamiento desde posiciones aleatorias de la pantalla
+            confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                colors: ['#d4af37', '#000000']
+            }));
+            confetti(Object.assign({}, defaults, { 
+                particleCount, 
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                colors: ['#d4af37', '#ffffff']
+            }));
+        }, 250);
 
         originalFinish.apply(this, arguments);
     };
 
-    console.log("Inyección Sensorial NEXO®: Activa (Pantalla Completa + Audio)");
+    console.log("Audio y Confeti Global NEXO®: Desbloqueados y Listos.");
 })();
     </script>
 </body>
 </html>
-
