@@ -318,5 +318,110 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
     </script>
+
+    <style>
+    /* Refinamiento visual del contenedor y botones */
+    .wheel-wrapper::after {
+        content: '';
+        position: absolute;
+        inset: -15px;
+        border: 2px solid #d4af37; /* Color de marca Oro */
+        border-radius: 50%;
+        pointer-events: none;
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), inset 0 0 20px rgba(212, 175, 55, 0.1);
+    }
+
+    #wheelCanvas {
+        filter: drop-shadow(0 0 20px rgba(0,0,0,0.8));
+    }
+
+    #btnSpinCenter {
+        background: radial-gradient(circle, #1a1a1a 0%, #000 100%) !important;
+        box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+        border: 2px solid #d4af37 !important;
+        transition: all 0.3s ease;
+    }
+
+    #btnSpinCenter:hover {
+        box-shadow: 0 0 45px rgba(212, 175, 55, 0.6);
+        transform: translate(-50%, -50%) scale(1.05) !important; /* Mantiene centrado */
+    }
+</style>
+
+<script>
+/**
+ * EXTENSIÓN DE MOTOR GRÁFICO (Inyección Aditiva)
+ * Basado en los criterios de marca: Dorado (#d4af37) y Negro (#000000)
+ */
+(function() {
+    if (typeof appWheel !== 'undefined') {
+        
+        // Redefinición del método Draw para acabado Metálico
+        appWheel.draw = function() {
+            const w = 800, cx = 400, r = 385;
+            this.ctx.clearRect(0, 0, w, w);
+            const n = config.prizes.length; [cite: 62]
+            const slice = (Math.PI * 2) / n;
+
+            config.prizes.forEach((p, i) => {
+                this.ctx.save();
+                this.ctx.beginPath();
+                
+                // Gradientes Metálicos Dinámicos
+                const grad = this.ctx.createRadialGradient(cx, cx, 0, cx, cx, r);
+                if (i % 2) {
+                    grad.addColorStop(0, "#151515");
+                    grad.addColorStop(1, "#000000");
+                } else {
+                    grad.addColorStop(0, "#d4af37"); // Gold [cite: 2]
+                    grad.addColorStop(0.5, "#8a6d1d"); // Gold Dark [cite: 2]
+                    grad.addColorStop(1, "#d4af37");
+                }
+
+                this.ctx.fillStyle = grad;
+                this.ctx.moveTo(cx, cx);
+                this.ctx.arc(cx, cx, r, this.angle + i * slice, this.angle + (i + 1) * slice);
+                this.ctx.fill();
+                
+                // Separadores de segmento elegantes
+                this.ctx.strokeStyle = "rgba(212, 175, 55, 0.2)";
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+
+                // Renderizado de Texto Curvado y Sofisticado
+                this.ctx.translate(cx, cx);
+                this.ctx.rotate(this.angle + i * slice + slice / 2);
+                this.ctx.font = "900 28px 'Segoe UI'";
+                this.ctx.textAlign = "right";
+                
+                // Efecto de relieve en texto
+                this.ctx.shadowColor = i % 2 ? "rgba(212, 175, 55, 0.4)" : "rgba(0,0,0,0.7)";
+                this.ctx.shadowBlur = 5;
+                
+                this.ctx.fillStyle = i % 2 ? "#d4af37" : "#000000";
+                this.ctx.fillText(p.toUpperCase(), r - 55, 10);
+                this.ctx.restore();
+            });
+
+            // Capa de Brillo Cristalino Superior
+            this.ctx.save();
+            const glass = this.ctx.createLinearGradient(0, 0, w, w);
+            glass.addColorStop(0, "rgba(255,255,255,0.15)");
+            glass.addColorStop(0.5, "transparent");
+            glass.addColorStop(1, "rgba(0,0,0,0.1)");
+            this.ctx.fillStyle = glass;
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cx, r, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        };
+
+        // Forzar redibujado inicial con el nuevo estilo
+        appWheel.draw();
+        console.log("NEXO® Engine: Visuales Premium Inyectados.");
+    }
+})();
+</script>
 </body>
 </html>
+
