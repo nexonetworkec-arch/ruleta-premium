@@ -853,8 +853,134 @@ appWheel.renderPList = appWheel.renderPListV2;
 appWheel.renderPListV2();
 
 /* --- FIN DEL BLOQUE SELECTOR MANUAL --- */
+
+        /* ==========================================================================
+   INYECCIÓN: EXPORTACIÓN PRO (EXCEL E IMÁGENES POR LOTES)
+   Referencia: [2026-01-13] - Exportación segmentada (5 por imagen)
+   ========================================================================== */
+
+// 1. Estilos para el Historial y Captura
+const styleHistPro = document.createElement('style');
+styleHistPro.innerHTML = `
+    .nexo-hist-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    .nexo-export-btn { 
+        flex: 1; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;
+        border: 1px solid #d4af37; transition: 0.3s;
+    }
+    .btn-excel { background: #1D6F42; color: #fff; border-color: #1D6F42; }
+    .btn-img { background: #000; color: #d4af37; }
+    
+    /* Contenedor oculto para generación de imágenes */
+    #nexo-capture-zone {
+        position: absolute; left: -9999px; top: 0;
+        width: 500px; background: #000; color: #fff; padding: 20px;
+        border: 2px solid #d4af37;
+    }
+    .capture-header { color: #d4af37; text-align: center; border-bottom: 1px solid #d4af37; margin-bottom: 15px; padding-bottom: 10px; }
+    .capture-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
+`;
+document.head.appendChild(styleHistPro);
+
+// 2. Inyectar botones en el Modal de Historial
+const histModalBody = document.querySelector('#modalHistory .modal-content');
+const exportDiv = document.createElement('div');
+exportDiv.className = 'nexo-hist-controls';
+exportDiv.innerHTML = `
+    <button class="nexo-export-btn btn-excel" onclick="appWheel.exportToExcel()">📊 EXCEL</button>
+    <button class="nexo-export-btn btn-img" onclick="appWheel.exportToImages()">🖼️ IMÁGENES (Lotes)</button>
+    <button class="nexo-export-btn" style="background:#ff4444; color:#fff; border:none;" onclick="appWheel.resetHistory()">🔄 REINICIAR</button>
+`;
+histModalBody.insertBefore(exportDiv, document.getElementById('historyList'));
+
+// Contenedor fantasma para capturas
+const captureZone = document.createElement('div');
+captureZone.id = 'nexo-capture-zone';
+document.body.appendChild(captureZone);
+
+// 3. Lógica de Exportación a Excel
+appWheel.exportToExcel = function() {
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    if (history.length === 0) return alert("No hay datos para exportar.");
+    
+    const data = history.map((item, index) => ({
+        "Orden": index + 1,
+        "Premio": item.result,
+        "Fecha": new Date(item.timestamp).toLocaleDateString(),
+        "Hora": new Date(item.timestamp).toLocaleTimeString()
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ganadores");
+    XLSX.writeFile(wb, `NEXO_Historial_${new Date().getTime()}.xlsx`);
+};
+
+// 4. Lógica de Exportación a Imágenes (5 por imagen)
+appWheel.exportToImages = async function() {
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    if (history.length === 0) return alert("Historial vacío.");
+    
+    const chunk = 5;
+    for (let i = 0; i < history.length; i += chunk) {
+        const batch = history.slice(i, i + chunk);
+        const pageNum = (i / chunk) + 1;
+        
+        // Llenar zona de captura
+        captureZone.innerHTML = `
+            <div class="capture-header">
+                <h3>NEXO® BUSINESS PRO</h3>
+                <p>Reporte de Ganadores - Parte ${pageNum}</p>
+            </div>
+            ${batch.map((item, idx) => `
+                <div class="capture-item">
+                    <span><b>${i + idx + 1}.</b> ${item.result}</span>
+                    <span style="font-size:10px; color:#d4af37;">${new Date(item.timestamp).toLocaleTimeString()}</span>
+                </div>
+            `).join('')}
+        `;
+        
+        const canvas = await html2canvas(captureZone, { backgroundColor: '#000' });
+        const link = document.createElement('a');
+        link.download = `NEXO_Ganadores_Parte_${pageNum}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+};
+
+// 5. Reiniciar Historial con Reordenamiento Aleatorio
+appWheel.resetHistory = function() {
+    if (confirm("¿Seguro que deseas limpiar el historial? Esto reordenará la ruleta aleatoriamente.")) {
+        localStorage.removeItem('wheel_results');
+        // Mezclamos los premios actuales aleatoriamente
+        config.prizes.sort(() => Math.random() - 0.5);
+        this.renderPListV2();
+        this.updateVisualHistory();
+        this.draw();
+        alert("Historial reiniciado y ruleta reordenada.");
+    }
+};
+
+// 6. Actualización del Orden Cronológico (Primero arriba)
+appWheel.updateVisualHistory = function() {
+    const listContainer = document.getElementById('nexo-items-list'); // Widget lateral
+    const tableContainer = document.getElementById('historyList'); // Modal
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    
+    const renderRow = (item, i) => `
+        <div class="nexo-history-item">
+            <span class="nexo-item-name"><b>${i + 1}.</b> ${item.result}</span>
+            <span class="nexo-item-time">${new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+        </div>`;
+
+    // En el widget y modal mantenemos orden 1, 2, 3...
+    if(listContainer) listContainer.innerHTML = history.slice(-5).map((item, i) => renderRow(item, history.length - 5 + i)).join('');
+    if(tableContainer) tableContainer.innerHTML = history.map((item, i) => renderRow(item, i)).join('');
+};
+
+/* --- FIN DEL BLOQUE DE EXPORTACIÓN --- */
     </script>
 </body>
 </html>
+
 
 
