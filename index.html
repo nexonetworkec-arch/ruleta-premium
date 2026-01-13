@@ -386,8 +386,97 @@ appWheel.triggerResult = function(premioObtenido) {
    se detiene la ruleta), solo debes llamar a: 
    appWheel.triggerResult(ganador);
 */
+
+        /* ==========================================================================
+   INYECCIÓN VISUAL: PANEL DE HISTORIAL RECIENTE NEXO®
+   Referencia: [2026-01-12] - Colores de marca y diseño Glassmorphism
+   ========================================================================== */
+
+// 1. Inyección de Estilos (CSS Aditivo)
+const styleNexo = document.createElement('style');
+styleNexo.innerHTML = `
+    .nexo-history-widget {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        width: 260px;
+        background: rgba(15, 15, 15, 0.85);
+        backdrop-filter: blur(15px);
+        border: 1px solid #d4af37;
+        border-radius: 20px;
+        padding: 15px;
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        font-family: 'Segoe UI', sans-serif;
+    }
+    .nexo-history-title {
+        color: #d4af37;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(212,175,55,0.3);
+        padding-bottom: 5px;
+    }
+    .nexo-history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #222;
+        animation: slideInNexo 0.4s ease-out;
+    }
+    .nexo-item-name { color: #fff; font-size: 12px; font-weight: 600; }
+    .nexo-item-time { color: #d4af37; font-size: 9px; opacity: 0.8; }
+    
+    @keyframes slideInNexo {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+`;
+document.head.appendChild(styleNexo);
+
+// 2. Inyección de Interfaz (HTML Aditivo)
+const historyDiv = document.createElement('div');
+historyDiv.id = 'nexo-history-container';
+historyDiv.className = 'nexo-history-widget';
+historyDiv.innerHTML = `
+    <div class="nexo-history-title">Últimos Resultados</div>
+    <div id="nexo-items-list"></div>
+`;
+document.body.appendChild(historyDiv);
+
+// 3. Lógica de Actualización Visual
+appWheel.updateVisualHistory = function() {
+    const listContainer = document.getElementById('nexo-items-list');
+    const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+    
+    // Solo mostramos los últimos 5 para mantener la elegancia
+    const recent = history.reverse().slice(0, 5);
+    
+    listContainer.innerHTML = recent.map(item => `
+        <div class="nexo-history-item">
+            <span class="nexo-item-name">${item.result}</span>
+            <span class="nexo-item-time">${new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+    `).join('');
+};
+
+// 4. Conexión Aditiva: Extendemos processEndGame para actualizar la UI
+const originalProcess = appWheel.processEndGame;
+appWheel.processEndGame = function(resultado) {
+    if (typeof originalProcess === 'function') originalProcess(resultado);
+    appWheel.updateVisualHistory();
+};
+
+// 5. Carga inicial
+appWheel.updateVisualHistory();
+
+/* --- FIN DEL BLOQUE VISUAL --- */
     </script>
 </body>
 </html>
+
 
 
