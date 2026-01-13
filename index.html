@@ -1352,5 +1352,95 @@ appWheel.applyReportBtnIdentity();
 
 /* --- FIN DEL BLOQUE DE IDENTIDAD --- */
     </script>
+
+    <style>
+    /* 1. Ajustes para Tablets y Móviles (Breakpoints) */
+    @media (max-width: 768px) {
+        body {
+            overflow-y: auto !important; /* Permitir scroll si el contenido excede */
+            height: auto;
+            min-height: 100vh;
+        }
+
+        /* Re-centrado del Login */
+        #loginScreen > div {
+            width: 90% !important;
+            padding: 30px !important;
+        }
+
+        /* Transformación del Side Panel en Menú Inferior o Superior */
+        .side-panel {
+            position: relative !important;
+            right: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .side-panel .btn {
+            flex: 1 1 40%; /* Dos botones por fila */
+            padding: 12px 10px !important;
+            font-size: 9px !important;
+        }
+
+        /* Ajuste de Ruleta para Móviles */
+        .wheel-wrapper {
+            width: 90vw !important;
+            height: 90vw !important;
+            max-width: 340px !important;
+            max-height: 340px !important;
+            margin: 20px auto;
+        }
+
+        /* Títulos Responsivos */
+        h1 {
+            font-size: 1.5rem !important;
+            letter-spacing: 2px !important;
+        }
+
+        /* Modales Adaptables */
+        .modal-content {
+            padding: 20px !important;
+            width: 95% !important;
+            border-radius: 20px !important;
+        }
+        
+        #winnerName {
+            font-size: 28px !important;
+        }
+
+        /* Widget de historial móvil */
+        .nexo-history-widget {
+            left: 10px !important;
+            bottom: 10px !important;
+            width: 180px !important;
+            font-size: 8px !important;
+        }
+    }
+
+    /* 2. Soporte para pantallas extra pequeñas */
+    @media (max-width: 380px) {
+        .side-panel .btn {
+            flex: 1 1 100%; /* Un botón por fila en pantallas muy pequeñas */
+        }
+    }
+</style>
+
+<script>
+    // Lógica adicional para asegurar que el Canvas se redibuje al cambiar la orientación
+    window.addEventListener('resize', () => {
+        if (typeof appWheel !== 'undefined' && typeof appWheel.draw === 'function') {
+            appWheel.draw();
+        }
+    });
+
+    console.log("📱 Motor de Adaptabilidad Móvil NEXO® activado.");
+</script>
 </body>
 </html>
+
