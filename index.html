@@ -901,6 +901,81 @@
     initAdminFix();
     setTimeout(() => { forceGirarText(); initAdminFix(); }, 1500);
 })();
+
+        /* --- INYECCIÓN ADITIVA: ESTABILIZACIÓN DE INTERFAZ Y MONITOR DE GANADORES --- */
+(function() {
+    // 1. REEMPLAZO DE LÓGICA DE LOGO (Sin parpadeos)
+    window.applyLogoToWheel = (url) => {
+        const btn = document.getElementById('btnSpinCenter');
+        if (!btn) return;
+        
+        if (url && url.trim() !== "") {
+            btn.style.backgroundImage = `url(${url})`;
+            btn.style.backgroundSize = 'contain';
+            btn.style.backgroundRepeat = 'no-repeat';
+            btn.style.backgroundPosition = 'center';
+            btn.style.color = "transparent";
+            btn.innerText = "";
+        } else {
+            btn.style.backgroundImage = "none";
+            btn.style.color = "#000";
+            btn.innerText = "GIRAR";
+        }
+    };
+
+    // Listener de Logo Optimizado (Fuera de bucles repetitivos)
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            db.ref(`users/${user.uid}/config/customLogoURL`).on('value', s => {
+                window.applyLogoToWheel(s.val());
+            });
+        }
+    });
+
+    // 2. CAPTURA DE GANADORES EN TIEMPO REAL
+    const originalShowWinner = window.showWinner; // Guardamos la función original
+    window.showWinner = function(prize) {
+        // Ejecutamos la función original (Sonido, Confeti, UI)
+        if (typeof originalShowWinner === 'function') {
+            originalShowWinner.apply(this, arguments);
+        }
+
+        // Enviamos el ganador al Monitor Global
+        if (currentUser) {
+            const spinData = {
+                userName: currentUser.displayName || currentUser.email,
+                prize: prize,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                dateStr: new Date().toLocaleTimeString()
+            };
+            db.ref('live_monitor/last_spin').set(spinData);
+        }
+    };
+
+    // 3. ESTABILIZACIÓN DEL BOTÓN DE MARCA (BRANDING)
+    const stabilizeBranding = () => {
+        const side = document.querySelector('.side-panel');
+        const btnExisting = document.getElementById('btnBranding');
+        
+        if (side && !btnExisting && config && config.level !== 'free') {
+            const btn = document.createElement('button');
+            btn.id = 'btnBranding';
+            btn.className = 'btn btn-secondary';
+            btn.style.color = 'var(--gold)';
+            btn.style.borderColor = 'var(--gold)';
+            btn.innerText = '✨ CONFIG. MARCA';
+            btn.onclick = () => {
+                const url = prompt("URL del Logo (PNG transparente):", config.customLogoURL || "");
+                if (url !== null) db.ref(`users/${currentUser.uid}/config/customLogoURL`).set(url);
+            };
+            side.insertBefore(btn, document.getElementById('btnResetApp'));
+        }
+    };
+
+    // Ejecución de seguridad
+    setInterval(stabilizeBranding, 3000); // Verifica cada 3 seg para asegurar que no desaparezca
+})();
     </script>
 </body>
 </html>
+
