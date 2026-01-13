@@ -1306,33 +1306,32 @@ repositionReportBtn();
 
 /* --- FIN DEL BLOQUE DE CORRECCIÓN --- */
 
-    /* ==========================================================================
-   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM (RESPONSIVE)
-   Referencia: [2026-01-13] - Sincronización estética y flexibilidad móvil
+        /* ==========================================================================
+   CORRECCIÓN DE IDENTIDAD: BOTÓN REPORTES NEXO® PREMIUM
+   Referencia: [2026-01-13] - Sincronización estética total
    ========================================================================== */
 
 appWheel.applyReportBtnIdentity = function() {
     // 1. Identificar el botón y el contenedor
     const btnReport = document.querySelector('button[onclick*="showReportsLog"]');
-    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); 
+    const btnHistory = document.querySelector('button[onclick*="showHistory"]'); // Usamos este como referencia
     
     if (btnReport && btnHistory) {
-        // 2. Copiar la clase para heredar el comportamiento responsivo del CSS
+        // 2. Copiar exactamente el estilo del botón Historial
         btnReport.className = btnHistory.className; 
         
-        // 3. Forzar Identidad Visual NEXO® sin romper la flexibilidad
-        // Eliminamos padding y margin fijos para que el CSS (Media Queries) tome el control
+        // 3. Forzar los colores de marca NEXO® para asegurar consistencia
         btnReport.style.border = "1px solid #d4af37";
         btnReport.style.color = "#d4af37";
         btnReport.style.backgroundColor = "#000";
         btnReport.style.textTransform = "uppercase";
         btnReport.style.fontWeight = "900";
         btnReport.style.letterSpacing = "1px";
+        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
+        btnReport.style.padding = window.getComputedStyle(btnHistory).padding;
+        btnReport.style.margin = "5px";
         btnReport.style.cursor = "pointer";
         btnReport.style.transition = "all 0.3s ease";
-        btnReport.style.display = "inline-flex";
-        btnReport.style.alignItems = "center";
-        btnReport.style.justifyContent = "center";
 
         // 4. Añadir efecto Hover dinámico
         btnReport.onmouseover = function() {
@@ -1345,192 +1344,13 @@ appWheel.applyReportBtnIdentity = function() {
             this.style.color = "#d4af37";
             this.style.boxShadow = "none";
         };
-
-        // 5. Ajuste de fuente dinámico según el botón de referencia
-        btnReport.style.fontSize = window.getComputedStyle(btnHistory).fontSize;
     }
 };
 
 // Ejecutar la aplicación de identidad
 appWheel.applyReportBtnIdentity();
 
-/* --- FIN DEL BLOQUE DE IDENTIDAD CORREGIDO --- */
+/* --- FIN DEL BLOQUE DE IDENTIDAD --- */
     </script>
-
-    <style>
-    /* 1. Ajustes para Tablets y Móviles (Breakpoints) */
-    @media (max-width: 768px) {
-        body {
-            overflow-y: auto !important; /* Permitir scroll si el contenido excede */
-            height: auto;
-            min-height: 100vh;
-        }
-
-        /* Re-centrado del Login */
-        #loginScreen > div {
-            width: 90% !important;
-            padding: 30px !important;
-        }
-
-        /* Transformación del Side Panel en Menú Inferior o Superior */
-        .side-panel {
-            position: relative !important;
-            right: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            padding: 20px;
-            z-index: 1000;
-        }
-
-        .side-panel .btn {
-            flex: 1 1 40%; /* Dos botones por fila */
-            padding: 12px 10px !important;
-            font-size: 9px !important;
-        }
-
-        /* Ajuste de Ruleta para Móviles */
-        .wheel-wrapper {
-            width: 90vw !important;
-            height: 90vw !important;
-            max-width: 340px !important;
-            max-height: 340px !important;
-            margin: 20px auto;
-        }
-
-        /* Títulos Responsivos */
-        h1 {
-            font-size: 1.5rem !important;
-            letter-spacing: 2px !important;
-        }
-
-        /* Modales Adaptables */
-        .modal-content {
-            padding: 20px !important;
-            width: 95% !important;
-            border-radius: 20px !important;
-        }
-        
-        #winnerName {
-            font-size: 28px !important;
-        }
-
-        /* Widget de historial móvil */
-        .nexo-history-widget {
-            left: 10px !important;
-            bottom: 10px !important;
-            width: 180px !important;
-            font-size: 8px !important;
-        }
-    }
-
-    /* 2. Soporte para pantallas extra pequeñas */
-    @media (max-width: 380px) {
-        .side-panel .btn {
-            flex: 1 1 100%; /* Un botón por fila en pantallas muy pequeñas */
-        }
-    }
-</style>
-
-<script>
-    // Lógica adicional para asegurar que el Canvas se redibuje al cambiar la orientación
-    window.addEventListener('resize', () => {
-        if (typeof appWheel !== 'undefined' && typeof appWheel.draw === 'function') {
-            appWheel.draw();
-        }
-    });
-
-    console.log("📱 Motor de Adaptabilidad Móvil NEXO® activado.");
-</script>
-
-    <style>
-    /* Usamos un breakpoint agresivo para asegurar que el cambio ocurra */
-    @media screen and (max-width: 850px) {
-        
-        /* 1. Forzar el contenedor principal a fluir hacia abajo */
-        body {
-            display: flex !important;
-            flex-direction: column !important;
-            height: auto !important;
-            min-height: 100vh !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            padding-bottom: 50px !important;
-        }
-
-        /* 2. Mover la ruleta al centro superior */
-        .wheel-wrapper {
-            position: relative !important;
-            margin: 20px auto !important;
-            left: 0 !important;
-            top: 0 !important;
-            transform: none !important;
-            width: 80vw !important;
-            height: 80vw !important;
-        }
-
-        /* 3. FORZAR PANEL DE BOTONES ABAJO */
-        .side-panel {
-            position: relative !important;
-            display: flex !important;
-            flex-direction: row !important; /* Alineación horizontal */
-            flex-wrap: wrap !important;     /* Permite bajar a la siguiente línea si no caben */
-            justify-content: center !important;
-            align-items: center !important;
-            width: 100% !important;
-            right: auto !important;
-            top: auto !important;
-            bottom: 0 !important;
-            margin-top: 40px !important;
-            padding: 15px !important;
-            gap: 10px !important;
-            background: rgba(0,0,0,0.5) !important;
-        }
-
-        /* 4. UNIFICACIÓN DE BOTONES (Incluye el de Reportes) */
-        .side-panel button, 
-        button[onclick*="showReportsLog"],
-        .btn {
-            flex: 1 1 42% !important; /* Obliga a que queden 2 por fila */
-            min-width: 130px !important;
-            max-width: 180px !important;
-            height: 45px !important;
-            margin: 0 !important; /* Elimina márgenes rebeldes */
-            padding: 5px !important;
-            font-size: 10px !important;
-            position: relative !important;
-            top: auto !important;
-            right: auto !important;
-        }
-    }
-</style>
-
-<script>
-    /* Script de Ajuste de Emergencia */
-    (function() {
-        function aplicarAjusteMovil() {
-            if (window.innerWidth <= 850) {
-                const panel = document.querySelector('.side-panel');
-                const wheel = document.querySelector('.wheel-wrapper');
-                
-                if (panel && wheel) {
-                    // Inyectamos el panel después de la ruleta en el DOM dinámicamente
-                    wheel.parentNode.insertBefore(panel, wheel.nextSibling);
-                    console.log("✅ NEXO® Engine: Panel reubicado dinámicamente abajo.");
-                }
-            }
-        }
-        
-        window.addEventListener('load', aplicarAjusteMovil);
-        window.addEventListener('resize', aplicarAjusteMovil);
-        setTimeout(aplicarAjusteMovil, 1000); // Ejecución retardada por seguridad
-    })();
-</script>
 </body>
 </html>
-
-
-
