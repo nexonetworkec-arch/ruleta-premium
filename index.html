@@ -13,10 +13,9 @@
 
     <style>
         :root { 
-            --bg-color: #0a0a0a; --card-bg: #161616; --gold: #d4af37; --white: #ffffff; --danger: #ff4d4d; --gray: #222;
+            --bg-color: #0a0a0a; --card-bg: #161616; --gold: #d4af37; --white: #ffffff; --danger: #ff4d4d;
         }
 
-        /* CAPA DE ESTABILIDAD: EVITA EL PANTALLAZO DEL LOGIN */
         #loading-overlay {
             position: fixed; inset: 0; background: var(--bg-color); z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -24,142 +23,143 @@
         .spinner { width: 50px; height: 50px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         body { 
-            background-color: var(--bg-color); color: var(--white); font-family: 'Segoe UI', system-ui, sans-serif; 
+            background-color: var(--bg-color); color: var(--white); font-family: 'Segoe UI', sans-serif; 
             margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
             background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 40px 40px;
         }
 
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; }
 
-        /* ESTÉTICA DE BOTONES ORIGINALES NEXO® */
+        /* INPUTS CON TEXTO COLOR ORO */
+        input[type="text"], input[type="email"], input[type="password"] {
+            color: var(--gold) !important;
+            font-weight: 700;
+            caret-color: var(--gold);
+        }
+
+        /* BOTONES PREMIUM */
         .btn { 
             padding: 16px 24px; border: none; border-radius: 20px; font-weight: 800; cursor: pointer; 
-            text-transform: uppercase; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 11px; letter-spacing: 1px;
+            text-transform: uppercase; transition: 0.3s; font-size: 11px; letter-spacing: 1px;
         }
-        .btn-primary { 
-            background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000; 
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-        }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), #8a6d1d); color: #000; }
         .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid #333; }
-        .btn:active { transform: scale(0.95); }
+        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 
-        /* RULETA Y MARCADORES */
-        .wheel-wrapper { position: relative; width: 85vh; height: 85vh; max-width: 580px; max-height: 580px; }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 12px solid #111; box-shadow: 0 0 80px rgba(0,0,0,0.9); }
+        /* RULETA */
+        .wheel-wrapper { position: relative; width: 82vh; height: 82vh; max-width: 550px; max-height: 550px; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 12px solid #111; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
         #pointer { 
             position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
-            width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--gold);
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8));
+            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 50px solid var(--gold);
         }
         #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
         #btnSpinCenter { 
-            width: 110px; height: 110px; border-radius: 50%; border: 4px solid var(--gold);
+            width: 105px; height: 105px; border-radius: 50%; border: 3px solid var(--gold);
             background: radial-gradient(circle, #d4af37, #8a6d1d); color: #000; font-weight: 900;
-            cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.6); font-size: 14px;
-            background-size: cover !important;
+            cursor: pointer; background-size: cover !important;
         }
 
-        /* PANELES LATERALES */
-        .side-panel { position: absolute; right: 40px; top: 40px; display: flex; flex-direction: column; gap: 15px; width: 220px; z-index: 500; }
+        .side-panel { position: absolute; right: 30px; top: 30px; display: flex; flex-direction: column; gap: 12px; width: 210px; z-index: 500; }
+
+        /* MODALES */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
+        .modal-content { background: var(--card-bg); padding: 35px; border-radius: 35px; border: 1px solid #333; width: 90%; max-width: 500px; text-align: center; }
         
-        /* PANEL ADMIN MASTER COMPLETO */
-        .admin-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
-        .admin-card { background: #000; border: 1px solid #222; padding: 20px; border-radius: 20px; text-align: center; }
-        .admin-card small { color: var(--gold); font-size: 10px; text-transform: uppercase; font-weight: 800; }
-        .admin-card div { font-size: 24px; font-weight: 900; margin-top: 5px; }
-
-        /* MODALES CRISTAL */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
-        .modal-content { 
-            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid #333; 
-            width: 90%; max-width: 550px; max-height: 85vh; overflow-y: auto; text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-        }
-
-        /* TARJETA DEL GANADOR ORIGINAL */
-        #modalWinner .winner-card { 
-            background: linear-gradient(145deg, #1a1a1a, #000); padding: 50px; border-radius: 40px; 
-            border: 2px solid var(--gold); box-shadow: 0 0 100px rgba(212,175,55,0.2);
-        }
-
-        @media (max-width: 800px) {
-            .side-panel { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; flex-direction: row; background: #000; padding: 15px; border-top: 1px solid #222; }
-            .side-panel .btn { flex: 1; padding: 12px; font-size: 9px; }
-        }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #ccc; font-size: 12px; }
+        th { color: var(--gold); padding: 12px; border-bottom: 1px solid #333; }
+        td { padding: 12px; border-bottom: 1px solid #111; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <p style="color: var(--gold); margin-top: 25px; font-weight: 900; letter-spacing: 4px; font-size: 12px;">NEXO® SECURE LOAD</p>
+        <p style="color: var(--gold); margin-top: 20px; font-weight: 900; font-size: 10px; letter-spacing: 3px;">NEXO® PRO LOAD</p>
     </div>
 
     <div id="loginScreen">
-        <div style="background: var(--card-bg); padding: 50px; border-radius: 45px; border: 1px solid #333; text-align: center; width: 400px; box-shadow: 0 40px 100px rgba(0,0,0,0.8);">
-            <h2 style="color: var(--gold); font-size: 32px; font-weight: 900; margin: 0;">NEXO®</h2>
-            <p style="color: #444; font-size: 10px; letter-spacing: 5px; margin-bottom: 40px;">BUSINESS PRO</p>
-            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; padding:20px; margin-bottom:15px; border-radius:20px; border:1px solid #333; background:#000; color:white; font-weight: 700;">
-            <input type="password" id="authPin" placeholder="PIN" style="width:100%; padding:20px; margin-bottom:30px; border-radius:20px; border:1px solid #333; background:#000; color:white; font-weight: 700;">
-            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
+        <div style="background: var(--card-bg); padding: 45px; border-radius: 40px; border: 1px solid #333; text-align: center; width: 380px;">
+            <h2 style="color: var(--gold); font-size: 28px; margin-bottom: 35px;">ACCESO NEXO®</h2>
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; padding:18px; margin-bottom:15px; border-radius:18px; border:1px solid #333; background:#000;">
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; padding:18px; margin-bottom:30px; border-radius:18px; border:1px solid #333; background:#000;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR</button>
         </div>
     </div>
 
     <div class="app-container" id="appMain">
         <div class="side-panel">
-            <button onclick="openModal('modalPrizes')" class="btn btn-secondary">🎁 PREMIOS</button>
-            <button onclick="openModal('modalHistory')" class="btn btn-secondary">📜 HISTORIAL</button>
+            <button onclick="openModal('modalPrizes')" class="btn btn-secondary">🎁 EDITAR PREMIOS</button>
+            <button onclick="openModal('modalHistory')" class="btn btn-secondary">📜 VER HISTORIAL</button>
+            <button onclick="resetGame()" class="btn btn-danger" style="font-size: 10px;">🔄 REINICIAR JUEGO</button>
             <button id="btnAdminMaster" class="btn btn-secondary" style="display:none; color:var(--gold); border-color:var(--gold);">👑 ADMIN MASTER</button>
-            <button onclick="auth.signOut()" class="btn btn-secondary" style="color:var(--danger);">CERRAR SESIÓN</button>
+            <button onclick="auth.signOut()" class="btn btn-secondary" style="margin-top:20px; color:var(--danger);">SALIR</button>
         </div>
 
         <div style="text-align:center;">
-            <h1 style="color:var(--gold); font-weight:900; letter-spacing:3px; margin-bottom:35px; text-shadow: 0 10px 20px rgba(0,0,0,0.5);">SISTEMA DE SORTEO</h1>
+            <h1 style="color:var(--gold); font-weight:900; letter-spacing:2px; margin-bottom:30px;">SISTEMA DE SORTEO</h1>
             <div class="wheel-wrapper">
                 <div id="pointer"></div>
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
                 <canvas id="wheelCanvas" width="800" height="800"></canvas>
             </div>
 
-            <div style="margin-top:40px; display:inline-block; background:rgba(0,0,0,0.6); padding:15px 30px; border-radius:25px; border: 1px solid #222;">
-                <label style="color:#888; cursor:pointer; display:flex; align-items:center; gap:12px; font-size:12px; font-weight:800;">
-                    <input type="checkbox" id="chkRemoveWinner" style="width:20px; height:20px; accent-color:var(--gold);"> 
+            <div style="margin-top:35px; background:rgba(0,0,0,0.5); padding:15px 25px; border-radius:20px; border:1px solid #222; display:inline-block;">
+                <label style="color:#777; cursor:pointer; display:flex; align-items:center; gap:10px; font-size:11px; font-weight:bold;">
+                    <input type="checkbox" id="chkRemoveWinner" style="width:18px; height:18px; accent-color:var(--gold);"> 
                     AUTO-ELIMINAR GANADOR
                 </label>
             </div>
         </div>
     </div>
 
-    <div id="modalAdmin" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <h2 style="color:var(--gold); font-weight: 900;">ADMIN MASTER DASHBOARD</h2>
-            <div id="adminDash" class="admin-dashboard"></div>
-            <div style="background:#000; border-radius:25px; padding:10px; max-height: 400px; overflow-y: auto; border: 1px solid #222;">
-                <table style="width:100%; text-align: left;">
-                    <thead style="position: sticky; top: 0; background: #000; color: var(--gold);">
-                        <tr><th style="padding:15px;">USUARIO</th><th style="padding:15px;">NIVEL</th><th style="padding:15px;">ESTADO</th><th style="padding:15px;">ACCIÓN</th></tr>
-                    </thead>
-                    <tbody id="adminUserList"></tbody>
+    <div id="modalPrizes" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--gold);">LISTA DE PREMIOS</h3>
+            <div id="prizesList" style="max-height: 300px; overflow-y: auto; margin: 20px 0;"></div>
+            <button onclick="addPrizeRow()" class="btn btn-secondary" style="width:100%;">+ AÑADIR OPCIÓN</button>
+            <button onclick="savePrizes()" class="btn btn-primary" style="width:100%; margin-top:15px;">GUARDAR CAMBIOS</button>
+            <button onclick="closeModal('modalPrizes')" class="btn btn-secondary" style="width:100%; margin-top:10px;">CERRAR</button>
+        </div>
+    </div>
+
+    <div id="modalHistory" class="modal">
+        <div class="modal-content" id="captureArea">
+            <h3 style="color:var(--gold);">GANADORES RECIENTES</h3>
+            <div style="max-height: 350px; overflow-y: auto;">
+                <table>
+                    <thead><tr><th>HORA</th><th>PREMIO</th></tr></thead>
+                    <tbody id="historyBody"></tbody>
                 </table>
             </div>
-            <button onclick="closeModal('modalAdmin')" class="btn btn-secondary" style="width:100%; margin-top:25px;">SALIR DEL PANEL</button>
+            <div style="margin-top:25px; display:flex; gap:10px;">
+                <button onclick="downloadHistory()" class="btn btn-primary" style="flex:1;">📸 CAPTURA</button>
+                <button onclick="closeModal('modalHistory')" class="btn btn-secondary" style="flex:1;">CERRAR</button>
+            </div>
         </div>
     </div>
 
     <div id="modalWinner" class="modal">
-        <div class="modal-content winner-card">
-            <p style="color:var(--gold); font-weight:900; letter-spacing:5px;">¡ATENCIÓN!</p>
-            <h1 style="font-size: 48px; margin: 20px 0; color: #fff;">GANADOR</h1>
-            <div id="winnerPrizeName" style="font-size: 32px; color: var(--gold); font-weight: 900; background: rgba(212,175,55,0.1); padding: 20px; border-radius: 20px;">---</div>
-            <button id="btnCloseWinner" class="btn btn-primary" style="margin-top:40px; width: 100%;">CONTINUAR</button>
+        <div class="modal-content" style="border: 2px solid var(--gold); background: linear-gradient(to bottom, #161616, #000);">
+            <h4 style="color:var(--gold); letter-spacing:4px;">¡GANASTE!</h4>
+            <div id="winnerName" style="font-size: 35px; font-weight: 900; margin: 25px 0; color: #fff;">---</div>
+            <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+        </div>
+    </div>
+
+    <div id="modalAdmin" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h2 style="color:var(--gold);">DASHBOARD MONITOR</h2>
+            <div id="adminStats" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;"></div>
+            <div style="background:#000; border-radius:20px; overflow:hidden; border:1px solid #222;">
+                <table style="width:100%;"><tbody id="adminUsers"></tbody></table>
+            </div>
+            <button onclick="closeModal('modalAdmin')" class="btn btn-secondary" style="width:100%; margin-top:20px;">SALIR</button>
         </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE ORIGINAL
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -173,9 +173,9 @@
         const auth = firebase.auth(); const db = firebase.database();
 
         let currentUser = null;
-        let config = { prizes: ["PREMIO 1", "INTENTA DE NUEVO"], colorA: "#d4af37", colorB: "#111" };
+        let config = { prizes: ["OPCIÓN A", "OPCIÓN B", "OPCIÓN C"], colorA: "#d4af37", colorB: "#111" };
 
-        // --- MANEJO DE ESTADO Y ADMIN ---
+        // --- ESTADO INICIAL ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if(user) {
@@ -185,10 +185,10 @@
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appMain').style.display = 'flex';
                 
-                checkAdminStatus(user.uid);
+                checkAdmin(user.uid);
                 applyBranding(config.customLogoURL);
                 appWheel.draw();
-                updatePresence(user.uid);
+                loadHistory();
             } else {
                 document.getElementById('appMain').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'flex';
@@ -196,7 +196,7 @@
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // --- MOTOR DE LA RULETA ---
+        // --- MOTOR RULETA ---
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
@@ -217,7 +217,7 @@
                     this.ctx.fill();
                     this.ctx.translate(cx,cx);
                     this.ctx.rotate(this.angle+i*slice+slice/2);
-                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.font = "900 30px Segoe UI";
                     this.ctx.textAlign="right";
                     this.ctx.fillStyle = i%2 ? "#fff" : "#000";
                     this.ctx.fillText(p.toUpperCase(), r-50, 10);
@@ -225,13 +225,13 @@
                 });
             }
             spin() {
-                if(this.isSpinning) return;
+                if(this.isSpinning || config.prizes.length < 2) return;
                 this.isSpinning = true;
                 const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
                 const duration = 5000; const start = performance.now();
                 const anim = (now) => {
                     const t = Math.min((now-start)/duration, 1);
-                    const ease = 1 - Math.pow(1-t, 4);
+                    const ease = 1 - Math.pow(1-t, 3);
                     this.angle = total * ease;
                     this.draw();
                     if(t < 1) requestAnimationFrame(anim);
@@ -246,90 +246,95 @@
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 const prize = config.prizes[idx];
                 
-                document.getElementById('winnerPrizeName').innerText = prize;
+                document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
-                confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 }, colors: ['#d4af37', '#ffffff'] });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#ffffff'] });
 
-                // Lógica de auto-eliminar
-                document.getElementById('btnCloseWinner').onclick = async () => {
+                document.getElementById('btnFinishWin').onclick = async () => {
                     if(document.getElementById('chkRemoveWinner').checked) {
                         config.prizes.splice(idx, 1);
-                        if(config.prizes.length === 0) config.prizes = ["SORTEO FINALIZADO"];
+                        if(config.prizes.length === 0) config.prizes = ["FIN DEL JUEGO"];
                         await db.ref(`users/${currentUser.uid}/config/prizes`).set(config.prizes);
                         this.draw();
                     }
                     document.getElementById('modalWinner').style.display = 'none';
                 };
-                
-                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleString() });
+                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleTimeString() });
+                loadHistory();
             }
         }
         const appWheel = new Wheel();
         document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
 
-        // --- FUNCIONES ADMIN MASTER ---
-        async function checkAdminStatus(uid) {
-            const snap = await db.ref(`admins/${uid}`).once('value');
-            if(snap.exists()) {
-                const btn = document.getElementById('btnAdminMaster');
-                btn.style.display = 'block';
-                btn.onclick = () => {
+        // --- NUEVA FUNCIÓN: REINICIAR JUEGO ---
+        async function resetGame() {
+            if(!confirm("¿ESTÁS SEGURO? Se borrará el historial y los premios volverán al estado inicial.")) return;
+            const defaultPrizes = ["OPCIÓN 1", "OPCIÓN 2", "OPCIÓN 3", "OPCIÓN 4"];
+            await db.ref(`users/${currentUser.uid}/history`).remove();
+            await db.ref(`users/${currentUser.uid}/config/prizes`).set(defaultPrizes);
+            config.prizes = defaultPrizes;
+            appWheel.draw();
+            loadHistory();
+            alert("JUEGO REINICIADO CON ÉXITO");
+        }
+
+        // --- GESTIÓN DE PREMIOS ---
+        function renderPrizeList() {
+            const container = document.getElementById('prizesList');
+            container.innerHTML = "";
+            config.prizes.forEach((p, i) => {
+                container.innerHTML += `<div style="display:flex; gap:10px; margin-bottom:10px;"><input type="text" value="${p}" onchange="config.prizes[${i}]=this.value" style="flex:1; padding:12px; background:#000; border:1px solid #333; border-radius:12px;"><button onclick="config.prizes.splice(${i},1);renderPrizeList()" style="background:none; border:none; color:red; cursor:pointer;">✕</button></div>`;
+            });
+        }
+        function addPrizeRow() { config.prizes.push("NUEVA OPCIÓN"); renderPrizeList(); }
+        async function savePrizes() {
+            await db.ref(`users/${currentUser.uid}/config/prizes`).set(config.prizes);
+            appWheel.draw();
+            closeModal('modalPrizes');
+        }
+
+        // --- HISTORIAL ---
+        async function loadHistory() {
+            const snap = await db.ref(`users/${currentUser.uid}/history`).limitToLast(10).once('value');
+            const body = document.getElementById('historyBody');
+            body.innerHTML = "";
+            snap.forEach(c => {
+                const h = c.val();
+                body.innerHTML = `<tr><td>${h.date}</td><td style="color:var(--gold); font-weight:bold;">${h.prize}</td></tr>` + body.innerHTML;
+            });
+        }
+
+        // --- ADMIN ---
+        async function checkAdmin(uid) {
+            const s = await db.ref(`admins/${uid}`).once('value');
+            if(s.exists()) {
+                document.getElementById('btnAdminMaster').style.display = 'block';
+                document.getElementById('btnAdminMaster').onclick = () => {
                     openModal('modalAdmin');
                     loadAdminData();
                 };
             }
         }
-
         function loadAdminData() {
             db.ref('users').on('value', snap => {
-                const list = document.getElementById('adminUserList');
-                const dash = document.getElementById('adminDash');
-                let total = 0, active = 0;
+                const list = document.getElementById('adminUsers');
                 list.innerHTML = "";
                 snap.forEach(u => {
-                    total++;
                     const d = u.val();
-                    const isOnline = d.status?.state === 'online';
-                    if(isOnline) active++;
-                    list.innerHTML += `<tr>
-                        <td style="padding:15px; font-weight:bold;">${d.email || u.key}</td>
-                        <td style="padding:15px;">${d.config?.level || 'FREE'}</td>
-                        <td style="padding:15px; color:${isOnline ? '#28a745':'#444'}; font-weight:bold;">${isOnline ? '● ONLINE' : '○ OFF'}</td>
-                        <td style="padding:15px;"><button class="btn btn-secondary" style="padding:5px 10px; font-size:8px;" onclick="upgradeVIP('${u.key}')">UPGRADE</button></td>
-                    </tr>`;
+                    list.innerHTML += `<tr style="border-bottom:1px solid #111;"><td style="padding:10px;">${d.email || u.key}</td><td style="color:var(--gold)">${d.config?.level || 'FREE'}</td></tr>`;
                 });
-                dash.innerHTML = `<div class="admin-card"><small>Usuarios</small><div>${total}</div></div><div class="admin-card"><small>En Línea</small><div style="color:#28a745">${active}</div></div>`;
-            });
-        }
-
-        function upgradeVIP(uid) {
-            const level = prompt("Nivel (free/premium/gold):", "premium");
-            if(level) db.ref(`users/${uid}/config/level`).set(level);
-        }
-
-        function updatePresence(uid) {
-            const statusRef = db.ref(`users/${uid}/status`);
-            db.ref('.info/connected').on('value', snap => {
-                if(snap.val() === false) return;
-                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
             });
         }
 
         // --- AUXILIARES ---
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='modalPrizes') renderPrizeList(); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function applyBranding(url) {
-            if(url) {
-                const btn = document.getElementById('btnSpinCenter');
-                btn.style.backgroundImage = `url(${url})`;
-                btn.innerText = "";
-            }
-        }
-
+        function applyBranding(url) { if(url) { document.getElementById('btnSpinCenter').style.backgroundImage = `url(${url})`; document.getElementById('btnSpinCenter').innerText = ""; } }
+        function downloadHistory() { html2canvas(document.getElementById('captureArea')).then(c => { const a = document.createElement('a'); a.download='Nexo_Win.png'; a.href=c.toDataURL(); a.click(); }); }
         document.getElementById('btnAuth').onclick = () => {
             const e = document.getElementById('authEmail').value;
             const p = document.getElementById('authPin').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("ERROR: " + err.message));
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
         };
     </script>
 </body>
