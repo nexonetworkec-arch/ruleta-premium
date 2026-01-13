@@ -318,88 +318,51 @@
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
 
-        // --- INYECCIÓN ADITIVA: EXPERIENCIA AUDITIVA PREMIUM NEXO® ---
-(function() {
-    // 1. Carga de Assets de Alta Fidelidad (Pestaña abierta para evitar bloqueos)
-    const audioTick = new Audio('https://www.soundjay.com/communication/sounds/typewriter-key-1.mp3'); 
-    const audioWin = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-04.mp3');
+        /* ==========================================================================
+   INYECCIÓN ADITIVA: MÓDULO DE PERSISTENCIA Y EVENTOS
+   Referencia: [2026-01-12] - Agregar al final sin afectar lo anterior.
+   ========================================================================== */
+
+// 1. Extensión del objeto de base de datos (db)
+// Permite que la aplicación guarde datos en el navegador
+db.saveToLocalStorage = function(data) {
+    try {
+        const history = JSON.parse(localStorage.getItem('wheel_results')) || [];
+        history.push({
+            timestamp: new Date().toISOString(),
+            result: data,
+            id: Math.random().toString(36).substr(2, 9)
+        });
+        localStorage.setItem('wheel_results', JSON.stringify(history));
+        console.log("✔️ Datos sincronizados con el almacenamiento local.");
+    } catch (e) {
+        console.error("❌ Error al guardar en db:", e);
+    }
+};
+
+// 2. Extensión del objeto appWheel (Lógica de finalización)
+// Se conecta a la ejecución principal sin modificar el bucle de animación
+appWheel.processEndGame = function(resultadoFinal) {
+    // Registra el resultado usando la función del bloque anterior
+    db.saveToLocalStorage(resultadoFinal);
     
-    audioTick.volume = 0.5;
-    audioWin.volume = 0.7;
+    // Feedback visual en consola con estilo (usando lógica de marca)
+    console.log(
+        `%c 🎉 Resultado Final: ${resultadoFinal} `,
+        "color: #ffffff; background-color: #000000; padding: 5px 10px; border-radius: 5px; font-weight: bold;"
+    );
+    
+    // Aquí se activarán futuras funciones de UI/Premios
+    if (typeof appWheel.showWinModal === 'function') {
+        appWheel.showWinModal(resultadoFinal);
+    }
+};
 
-    // Pre-carga forzada
-    const preload = () => {
-        audioTick.play().then(() => { audioTick.pause(); audioTick.currentTime = 0; });
-        audioWin.play().then(() => { audioWin.pause(); audioWin.currentTime = 0; });
-        window.removeEventListener('pointerdown', preload);
-    };
-    window.addEventListener('pointerdown', preload);
+// 3. Comentario de Anclaje para futuras actualizaciones
+// Insertar nuevas funcionalidades de UI después de esta línea
+/* --- FIN DEL BLOQUE DE INYECCIÓN --- */
 
-    // 2. Lógica de "Pines Virtuales" (Para un clic rítmico perfecto)
-    const orgSpin = appWheel.spin;
-    appWheel.spin = function() {
-        if (!this.isSpinning) {
-            let lastSegment = -1;
-            
-            const trackRotation = () => {
-                if(this.isSpinning) {
-                    const numSegments = config.prizes.length;
-                    // Calculamos en qué segmento está el puntero actualmente
-                    const currentSegment = Math.floor(((this.angle * 180 / Math.PI) % 360) / (360 / numSegments));
-                    
-                    if (currentSegment !== lastSegment) {
-                        // Cada vez que cambia de segmento, suena un clic real
-                        audioTick.currentTime = 0;
-                        audioTick.play().catch(()=>{});
-                        lastSegment = currentSegment;
-                    }
-                    requestAnimationFrame(trackRotation);
-                }
-            };
-            trackRotation();
-        }
-        orgSpin.apply(this, arguments);
-    };
-
-    // 3. Victoria con Confeti y Fanfarria Sincronizada
-    const orgFinish = appWheel.finish;
-    appWheel.finish = function() {
-        // Sonido de victoria inmediato
-        audioWin.currentTime = 0;
-        audioWin.play().catch(()=>{});
-
-        // Lluvia de Oro Total
-        const duration = 4 * 1000;
-        const end = Date.now() + duration;
-
-        (function frame() {
-            confetti({
-                particleCount: 4,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 },
-                colors: ['#d4af37', '#000000'],
-                zIndex: 100000
-            });
-            confetti({
-                particleCount: 4,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 },
-                colors: ['#d4af37', '#ffffff'],
-                zIndex: 100000
-            });
-
-            if (Date.now() < end) requestAnimationFrame(frame);
-        }());
-
-        orgFinish.apply(this, arguments);
-    };
-
-    console.log("NEXO® Audio: Motor de Pines Virtuales Activado.");
-})();
+        
     </script>
 </body>
 </html>
-
-
