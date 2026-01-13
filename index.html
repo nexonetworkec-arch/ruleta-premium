@@ -362,7 +362,26 @@ appWheel.processEndGame = function(resultadoFinal) {
 // Insertar nuevas funcionalidades de UI después de esta línea
 /* --- FIN DEL BLOQUE DE INYECCIÓN --- */
 
-        
+        /* ==========================================================================
+   CONEXIÓN DE EVENTOS (TRIGGER)
+   Este bloque vincula el fin del giro con el guardado de datos.
+   ========================================================================== */
+
+// Función que "dispara" la acción de guardado
+appWheel.triggerResult = function(premioObtenido) {
+    console.log("🎯 Disparando guardado para:", premioObtenido);
+    
+    // Llamamos a la función de procesamiento que definimos antes
+    if (typeof appWheel.processEndGame === 'function') {
+        appWheel.processEndGame(premioObtenido);
+    }
+};
+
+/* NOTA: Para activar esto, dentro de tu función principal de giro (donde 
+   se detiene la ruleta), solo debes llamar a: 
+   appWheel.triggerResult(ganador);
+*/
     </script>
 </body>
 </html>
+
