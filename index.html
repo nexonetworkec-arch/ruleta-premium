@@ -1351,9 +1351,90 @@ appWheel.applyReportBtnIdentity = function() {
 appWheel.applyReportBtnIdentity();
 
 /* --- FIN DEL BLOQUE DE IDENTIDAD --- */
+
+        /* ==========================================================================
+   NEXO® MENU NAVIGATION: SISTEMA HAMBURGUESA INFERIOR DERECHA
+   Referencia: [2026-01-13] - Navegación lateral y limpieza de UI
+   ========================================================================== */
+
+// 1. Estilos del Menú y Botón Hamburguesa
+const styleMenu = document.createElement('style');
+styleMenu.innerHTML = `
+    /* Botón Hamburguesa */
+    #nexo-hb-trigger {
+        position: fixed; bottom: 30px; right: 30px;
+        width: 60px; height: 60px; background: #000;
+        border: 2px solid #d4af37; border-radius: 50%;
+        color: #d4af37; font-size: 24px; cursor: pointer;
+        z-index: 3000; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        transition: 0.3s ease;
+    }
+    #nexo-hb-trigger:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); }
+
+    /* Panel de Navegación Lateral */
+    #nexo-side-nav {
+        position: fixed; top: 0; right: -300px; width: 300px; height: 100%;
+        background: rgba(0, 0, 0, 0.95); border-left: 2px solid #d4af37;
+        z-index: 2999; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex; flex-direction: column; padding: 100px 20px 40px 20px;
+    }
+    #nexo-side-nav.active { right: 0; }
+    
+    /* Botones dentro del menú */
+    .nexo-nav-item {
+        background: transparent; border: 1px solid #333; color: #fff;
+        padding: 15px; margin-bottom: 10px; text-align: left;
+        font-weight: bold; text-transform: uppercase; letter-spacing: 2px;
+        cursor: pointer; transition: 0.3s; font-size: 13px;
+    }
+    .nexo-nav-item:hover { border-color: #d4af37; color: #d4af37; padding-left: 25px; }
+    
+    /* Ocultar botones originales de la interfaz */
+    .controls { display: none !important; }
+`;
+document.head.appendChild(styleMenu);
+
+// 2. Creación de Elementos del Menú
+const hbTrigger = document.createElement('div');
+hbTrigger.id = 'nexo-hb-trigger';
+hbTrigger.innerHTML = '☰';
+hbTrigger.onclick = () => document.getElementById('nexo-side-nav').classList.toggle('active');
+
+const sideNav = document.createElement('nav');
+sideNav.id = 'nexo-side-nav';
+sideNav.innerHTML = `
+    <div style="color:#d4af37; font-weight:900; margin-bottom:30px; border-bottom:1px solid #d4af37; padding-bottom:10px;">NEXO® MENU</div>
+    <button class="nexo-nav-item" onclick="showPrizes(); appWheel.closeNexoMenu()">⚙️ Configurar Premios</button>
+    <button class="nexo-nav-item" onclick="showHistory(); appWheel.closeNexoMenu()">🏆 Ganadores</button>
+    <button class="nexo-nav-item" onclick="appWheel.showReportsLog(); appWheel.closeNexoMenu()">📋 Reporte de Sesiones</button>
+    <button class="nexo-nav-item" style="color:#ff4444;" onclick="appWheel.resetGame(); appWheel.closeNexoMenu()">🔄 Reiniciar Juego</button>
+    <div style="flex-grow: 1;"></div>
+    <button class="nexo-nav-item" style="border-color:#666;" onclick="window.close()">🚪 Salir</button>
+`;
+
+document.body.appendChild(hbTrigger);
+document.body.appendChild(sideNav);
+
+// 3. Utilidades del Menú
+appWheel.closeNexoMenu = function() {
+    document.getElementById('nexo-side-nav').classList.remove('active');
+};
+
+// Cerrar menú al hacer clic fuera
+document.addEventListener('click', (e) => {
+    const nav = document.getElementById('nexo-side-nav');
+    const trigger = document.getElementById('nexo-hb-trigger');
+    if (!nav.contains(e.target) && !trigger.contains(e.target)) {
+        nav.classList.remove('active');
+    }
+});
+
+/* --- FIN DEL BLOQUE DE MENÚ HAMBURGUESA --- */
     </script>
 </body>
 </html>
+
 
 
 
