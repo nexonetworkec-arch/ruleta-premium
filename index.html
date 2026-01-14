@@ -1,1 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEXO® Business Pro - Sistema de Sorteo Premium</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
+    <style>
+        :root { 
+            --bg-color: #000000;
+            --card-bg: rgba(15, 15, 15, 0.95); 
+            --gold: #d4af37; 
+            --gold-dark: #8a6d1d;
+        }
+
+        /* CAPA DE CARGA */
+        #loading-overlay {
+            position: fixed;
+            inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%;
+            border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            background-color: var(--bg-color);
+            color: var(--gold); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
+        }
+
+        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
+
+        /* INPUTS ORO */
+        input {
+            color: var(--gold) !important;
+            font-weight: 800; caret-color: var(--gold);
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center;
+        }
+
+        /* BOTONES NEXO® */
+        .btn { 
+            padding: 16px 24px;
+            border: none; border-radius: 20px; font-weight: 900; cursor: pointer; 
+            text-transform: uppercase; transition: 0.3s; font-size: 11px; letter-spacing: 2px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
+        .btn-secondary { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+        .btn:active { transform: scale(0.95); }
+
+        /* RULETA */
+        .wheel-wrapper { position: relative; width: 80vh; height: 80vh; max-width: 550px; max-height: 550px; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        #pointer { 
+            position: absolute;
+            top: -20px; left: 50%; transform: translateX(-50%); z-index: 100;
+            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
+            border-top: 50px solid var(--gold);
+        }
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        #btnSpinCenter { 
+            width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; color: var(--gold); font-weight: 900; cursor: pointer;
+        }
+
+        /* MODALES */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
+        .modal-content { 
+            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
+            width: 90%; max-width: 500px; text-align: center; color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="color: var(--gold); margin-top: 20px; font-weight: 900; letter-spacing: 4px;">NEXO® MASTER</p>
+    </div>
+
+    <div id="loginScreen">
+        <div style="background: #000; padding: 50px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: 360px;">
+            <h2 style="letter-spacing: 4px; margin-bottom: 40px;">NEXO®</h2>
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:30px;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR</button>
+        </div>
+    </div>
+
+    <div class="app-container" id="appMain">
+        <div style="text-align:center;">
+            <h1 style="letter-spacing:5px; margin-bottom:30px; font-weight: 900;">SORTEO PREMIUM</h1>
+            <div class="wheel-wrapper">
+                <div id="pointer"></div>
+                <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
+                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 3px;">
+        <h4 style="letter-spacing:5px; color: var(--gold-dark);">GANADOR</h4>
+        <div id="winnerName" style="font-size: 40px; font-weight: 900; margin: 30px 0;">---</div>
+        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+    </div></div>
+
+    <script>
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
+            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+            projectId: "ruletapremiumbusiness-4db7e",
+            storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
+            messagingSenderId: "822563863112",
+            appId: "1:822563863112:web:d134d015736e2fafb5367d",
+            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.database();
+
+        let currentUser = null;
+        let config = { prizes: ["NEXO 1", "NEXO 2"], colorA: "#d4af37", colorB: "#000000" };
+
+        // ESTADO DE AUTENTICACIÓN
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if(user) {
+                const snap = await db.ref(`users/${user.uid}/config`).once('value');
+                if(snap.exists()) config = {...config, ...snap.val()};
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appMain').style.display = 'flex';
+                updatePresence(user.uid);
+                appWheel.draw();
+            } else {
+                document.getElementById('appMain').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+
+        // MOTOR DE LA RULETA
+        class Wheel {
+            constructor() {
+                this.canvas = document.getElementById('wheelCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.angle = 0; this.isSpinning = false;
+            }
+            draw() {
+                const w = 800, cx = 400, r = 385;
+                this.ctx.clearRect(0,0,w,w);
+                const n = config.prizes.length;
+                const slice = (Math.PI*2)/n;
+                config.prizes.forEach((p, i) => {
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.fillStyle = i%2 ? "#000000" : "#d4af37";
+                    this.ctx.moveTo(cx,cx);
+                    this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
+                    this.ctx.fill();
+                    this.ctx.translate(cx,cx);
+                    this.ctx.rotate(this.angle+i*slice+slice/2);
+                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.textAlign="right";
+                    this.ctx.fillStyle = i%2 ? "#d4af37" : "#000000";
+                    this.ctx.fillText(p.toUpperCase(), r-40, 10);
+                    this.ctx.restore();
+                });
+            }
+            spin() {
+                if(this.isSpinning || config.prizes.length < 2) return;
+                this.isSpinning = true;
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
+                const duration = 5000; const start = performance.now();
+                const anim = (now) => {
+                    const t = Math.min((now-start)/duration, 1);
+                    const ease = 1 - Math.pow(1-t, 4);
+                    this.angle = total * ease;
+                    this.draw();
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
+                };
+                requestAnimationFrame(anim);
+            }
+            finish() {
+                this.isSpinning = false;
+                const n = config.prizes.length;
+                const deg = (this.angle * 180 / Math.PI) % 360;
+                const idx = n - 1 - Math.floor(deg/(360/n));
+                const prize = config.prizes[idx];
+                document.getElementById('winnerName').innerText = prize;
+                document.getElementById('modalWinner').style.display = 'flex';
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#000000'] });
+                
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                };
+                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleTimeString() });
+            }
+        }
+
+        const appWheel = new Wheel();
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
+
+        // PRESENCIA ONLINE
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`);
+            db.ref('.info/connected').on('value', s => {
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+            });
+        }
+
+        // LOGIN
+        document.getElementById('btnAuth').onclick = () => {
+            auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
+        };
+    </script>
+</body>
+</html>
