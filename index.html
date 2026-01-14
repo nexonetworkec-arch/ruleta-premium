@@ -19,7 +19,6 @@
             --gold-dark: #8a6d1d;
         }
 
-        /* CAPA DE CARGA */
         #loading-overlay {
             position: fixed;
             inset: 0; background: #000; z-index: 10000;
@@ -40,39 +39,41 @@
 
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
 
-        /* INPUTS ORO */
         input {
-            color: var(--gold) !important;
-            font-weight: 800; caret-color: var(--gold);
+            color: var(--gold) !important; font-weight: 800; caret-color: var(--gold);
             background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center;
         }
 
-        /* BOTONES NEXO® */
         .btn { 
-            padding: 16px 24px;
-            border: none; border-radius: 20px; font-weight: 900; cursor: pointer; 
+            padding: 16px 24px; border: none; border-radius: 20px; font-weight: 900; cursor: pointer; 
             text-transform: uppercase; transition: 0.3s; font-size: 11px; letter-spacing: 2px;
         }
         .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
         .btn-secondary { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
-        .btn:active { transform: scale(0.95); }
 
-        /* RULETA */
-        .wheel-wrapper { position: relative; width: 80vh; height: 80vh; max-width: 550px; max-height: 550px; }
+        /* CEREBRO RULETA: CORRECCIÓN RESPONSIVA */
+        .wheel-wrapper { 
+            position: relative; 
+            width: min(85vh, 90vw); 
+            height: min(85vh, 90vw); 
+            max-width: 550px; 
+            max-height: 550px; 
+        }
         #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
         #pointer { 
-            position: absolute;
-            top: -20px; left: 50%; transform: translateX(-50%); z-index: 100;
-            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
-            border-top: 50px solid var(--gold);
-        }
-        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
-        #btnSpinCenter { 
-            width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--gold);
-            background: #000; color: var(--gold); font-weight: 900; cursor: pointer;
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
+            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent;
+            border-top: min(50px, 10vw) solid var(--gold);
         }
 
-        /* MODALES */
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        
+        #btnSpinCenter { 
+            width: min(95px, 20vw); height: min(95px, 20vw); border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; color: var(--gold); font-weight: 900; cursor: pointer; font-size: min(14px, 3vw);
+        }
+
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
         .modal-content { 
             background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
@@ -88,7 +89,7 @@
     </div>
 
     <div id="loginScreen">
-        <div style="background: #000; padding: 50px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: 360px;">
+        <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 90%);">
             <h2 style="letter-spacing: 4px; margin-bottom: 40px;">NEXO®</h2>
             <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
             <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:30px;">
@@ -97,8 +98,8 @@
     </div>
 
     <div class="app-container" id="appMain">
-        <div style="text-align:center;">
-            <h1 style="letter-spacing:5px; margin-bottom:30px; font-weight: 900;">SORTEO PREMIUM</h1>
+        <div style="text-align:center; padding: 20px;">
+            <h1 style="letter-spacing:5px; margin-bottom:20px; font-weight: 900; font-size: min(2rem, 6vw);">SORTEO PREMIUM</h1>
             <div class="wheel-wrapper">
                 <div id="pointer"></div>
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
@@ -109,12 +110,11 @@
 
     <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 3px;">
         <h4 style="letter-spacing:5px; color: var(--gold-dark);">GANADOR</h4>
-        <div id="winnerName" style="font-size: 40px; font-weight: 900; margin: 30px 0;">---</div>
+        <div id="winnerName" style="font-size: min(40px, 8vw); font-weight: 900; margin: 30px 0;">---</div>
         <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
     </div></div>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -128,9 +128,8 @@
         const auth = firebase.auth(); const db = firebase.database();
 
         let currentUser = null;
-        let config = { prizes: ["NEXO 1", "NEXO 2"], colorA: "#d4af37", colorB: "#000000" };
+        let config = { prizes: ["OPCIÓN 1", "OPCIÓN 2", "OPCIÓN 3"], colorA: "#d4af37", colorB: "#000000" };
 
-        // ESTADO DE AUTENTICACIÓN
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if(user) {
@@ -147,7 +146,6 @@
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // MOTOR DE LA RULETA
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
@@ -199,10 +197,7 @@
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#d4af37', '#000000'] });
-                
-                document.getElementById('btnFinishWin').onclick = () => {
-                    document.getElementById('modalWinner').style.display = 'none';
-                };
+                document.getElementById('btnFinishWin').onclick = () => document.getElementById('modalWinner').style.display = 'none';
                 db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleTimeString() });
             }
         }
@@ -210,7 +205,6 @@
         const appWheel = new Wheel();
         document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
 
-        // PRESENCIA ONLINE
         function updatePresence(uid) {
             const statusRef = db.ref(`users/${uid}/status`);
             db.ref('.info/connected').on('value', s => {
@@ -219,7 +213,6 @@
             });
         }
 
-        // LOGIN
         document.getElementById('btnAuth').onclick = () => {
             auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
         };
