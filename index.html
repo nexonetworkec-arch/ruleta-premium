@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEXO® FORGE - Enterprise Edition</title>
+    <title>NEXO® FORGE - Sistema de Control Total</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -20,12 +20,13 @@
             --card-bg: rgba(5, 5, 5, 0.98);
         }
 
-        /* REGLAS MAESTRAS: ORO Y MAYÚSCULAS */
+        /* REGLAS MAESTRAS */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        input, select, h1, h2, h3, .btn, #winnerName, .dynamic-title, .status-msg {
+        input, select, h1, h2, h3, .btn, #winnerName, .dynamic-title {
             color: var(--gold-forge) !important; text-transform: uppercase !important; letter-spacing: 2px; font-weight: 900;
         }
 
+        /* EXCEPCIÓN LOGIN */
         input[type="email"], input[type="password"] { text-transform: none !important; letter-spacing: 1px; font-weight: 400; }
 
         body { 
@@ -42,7 +43,6 @@
         .btn { padding: 18px 40px; border: none; border-radius: 50px; cursor: pointer; transition: 0.4s; font-size: 12px; width: min(400px, 100%); }
         .btn-primary { background: linear-gradient(to bottom, var(--gold-bright), var(--gold-forge)); color: #000 !important; }
 
-        /* RULETA */
         .wheel-outer-frame {
             position: relative; width: min(85vw, 550px); height: min(85vw, 550px);
             border-radius: 50%; background: #000; padding: 10px;
@@ -51,8 +51,8 @@
         }
         #btnSpinCenter { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold-forge); 
-            background: #000; z-index: 100; cursor: pointer; color: var(--gold-forge); font-weight: 900;
+            width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--gold-forge); 
+            background: #000; z-index: 150; cursor: pointer; color: var(--gold-forge); font-weight: 900;
         }
         
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
@@ -62,37 +62,40 @@
 
     <div id="loading-overlay">
         <div style="width: 40px; height: 40px; border: 3px solid rgba(197,160,89,0.1); border-radius: 50%; border-top-color: var(--gold-forge); animation: spin 0.8s linear infinite;"></div>
-        <p style="margin-top: 20px; font-weight: 900; font-size: 10px; letter-spacing: 5px;">NEXO® REPAIRING CORE</p>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px; letter-spacing: 5px;">NEXO® SECURE LOGON</p>
     </div>
 
     <div id="loginScreen" class="screen">
-        <h2 style="font-size: 2rem; margin-bottom: 30px;">NEXO® LOGIN</h2>
-        <input type="email" id="authEmail" placeholder="EMAIL">
-        <input type="password" id="authPin" placeholder="PASSWORD">
-        <button id="btnAuth" class="btn btn-primary">ENTRAR</button>
+        <h2 style="font-size: 2.5rem; margin-bottom: 40px;">NEXO® FORGE</h2>
+        <input type="email" id="authEmail" placeholder="USUARIO">
+        <input type="password" id="authPass" placeholder="CONTRASEÑA">
+        <button id="btnAuth" class="btn btn-primary">AUTENTICAR</button>
     </div>
 
     <div id="activationScreen" class="screen">
         <h2 style="font-size: 1.5rem; margin-bottom: 10px;">LICENCIA REQUERIDA</h2>
-        <p style="font-size: 10px; margin-bottom: 30px; color: #ff4444 !important;">SU PERIODO FREE HA TERMINADO</p>
-        <input type="text" id="licenseKeyInput" placeholder="INTRODUZCA CÓDIGO PREMIUM">
-        <button id="btnActivate" class="btn btn-primary">ACTIVAR LICENCIA</button>
+        <p style="font-size: 10px; margin-bottom: 30px; color: #ff4444 !important;">EL PERIODO FREE HA CADUCADO</p>
+        <input type="text" id="licenseKey" placeholder="CÓDIGO DE ACTIVACIÓN">
+        <button id="btnActivate" class="btn btn-primary">ACTIVAR PREMIUM</button>
     </div>
 
     <div id="appMain" class="screen">
-        <div id="adminBadge" style="display:none; color: var(--cyan-glow); font-size: 10px; margin-bottom: 10px;">MODO ADMINISTRADOR ACTIVO</div>
-        <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px;"></h1>
+        <div id="adminBadge" style="display:none; color: var(--cyan-glow); font-size: 10px; margin-bottom: 10px; letter-spacing: 5px;">ADMIN PRIVILEGES ACTIVE</div>
+        <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; text-align:center;"></h1>
         <div class="wheel-outer-frame">
             <button id="btnSpinCenter">GIRAR</button>
             <canvas id="wheelCanvas" width="1000" height="1000" style="width:100%; height:100%;"></canvas>
         </div>
-        <p id="trialTimer" style="margin-top: 20px; font-size: 10px;"></p>
+        <p id="trialTimer" style="margin-top: 25px; font-size: 11px; color: var(--gold-bright) !important;"></p>
     </div>
 
-    <div id="modalWinner" class="modal"><div style="text-align:center;">
-        <h2 id="winnerName" style="font-size: 3rem;">---</h2>
-        <button onclick="document.getElementById('modalWinner').style.display='none'" class="btn btn-primary">CERRAR</button>
-    </div></div>
+    <div id="modalWinner" class="modal">
+        <div style="background:var(--card-bg); border: 2px solid var(--gold-forge); padding: 50px; border-radius: 40px; text-align:center;">
+            <p style="font-size: 10px; letter-spacing: 5px;">PREMIO OBTENIDO</p>
+            <h2 id="winnerName" style="font-size: 3rem; margin: 20px 0;">---</h2>
+            <button onclick="document.getElementById('modalWinner').style.display='none'" class="btn btn-primary">RECLAMAR</button>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -107,15 +110,15 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
 
+        // CONFIGURACIÓN INICIAL
         let config = { tituloSorteo: "NEXO FORGE", prizes: ["Elite Gold", "Obsidian Card", "Nexo Nexus", "Forge Credit", "Aura Premium"] };
-        const ADMIN_EMAIL = "admin@nexo.com";
+        const ADMIN_EMAIL = "admin@nexo.com"; // TU CORREO ADMIN
 
         class Wheel {
             constructor() { 
                 this.canvas = document.getElementById('wheelCanvas'); 
                 this.ctx = this.canvas.getContext('2d'); 
-                this.angle = 0; 
-                this.isSpinning = false;
+                this.angle = 0; this.isSpinning = false;
             }
             draw() {
                 const cx = 500, cy = 500, r = 480, n = config.prizes.length, slice = (Math.PI*2)/n;
@@ -155,10 +158,16 @@
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 document.getElementById('winnerName').innerText = config.prizes[idx];
                 document.getElementById('modalWinner').style.display = 'flex';
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#c5a059', '#ffffff'] });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#c5a059', '#ffffff', '#00f2ff'] });
             }
         }
         const appWheel = new Wheel();
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            const el = document.getElementById(id);
+            if(el) el.style.display = 'flex';
+        }
 
         function validateAccess(userData, user) {
             const now = Date.now();
@@ -166,24 +175,21 @@
                 document.getElementById('adminBadge').style.display = 'block';
                 showScreen('appMain'); return;
             }
+            
             if (!userData || !userData.expiryDate) {
-                const expiry = now + (24 * 60 * 60 * 1000);
-                db.ref(`users/${user.uid}/config`).update({ expiryDate: expiry, licenseType: 'FREE' });
+                const expiry = now + (24 * 60 * 60 * 1000); // 24H FREE
+                db.ref(`users/${user.uid}/config`).update({ expiryDate: expiry, licenseType: 'FREE', licenseActive: true });
                 showScreen('appMain');
             } else if (now > userData.expiryDate && !userData.isPremium) {
                 showScreen('activationScreen');
             } else {
                 showScreen('appMain');
-                const timeLeft = Math.round((userData.expiryDate - now) / 3600000);
-                document.getElementById('trialTimer').innerText = `TIEMPO FREE: ${timeLeft}h RESTANTES`;
+                const hrs = Math.ceil((userData.expiryDate - now) / 3600000);
+                document.getElementById('trialTimer').innerText = `LICENCIA FREE ACTIVA: ${hrs} HORAS RESTANTES`;
             }
         }
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
-        }
-
+        // CONTROLADOR DE ESTADO FIREBASE
         auth.onAuthStateChanged(user => {
             if(user) {
                 db.ref(`users/${user.uid}/config`).on('value', snap => {
@@ -193,15 +199,25 @@
                     document.querySelectorAll('.dynamic-title').forEach(el => el.innerText = config.tituloSorteo);
                     appWheel.draw();
                 });
-            } else { showScreen('loginScreen'); }
+            } else {
+                showScreen('loginScreen');
+                appWheel.draw(); // Dibuja la ruleta de fondo incluso sin login
+            }
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
+        // BOTONES DE ACCIÓN
+        document.getElementById('btnAuth').addEventListener('click', () => {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPass').value;
+            if(!email || !pass) return alert("COMPLETE LOS CAMPOS");
+            
+            auth.signInWithEmailAndPassword(email, pass).catch(e => {
+                alert("ERROR DE ACCESO: REVISE SUS CREDENCIALES");
+            });
+        });
+
         document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
-        document.getElementById('btnAuth').onclick = () => {
-            auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value)
-                .catch(e => alert("ACCESO DENEGADO"));
-        };
     </script>
 </body>
-</html>
+    </html> 
