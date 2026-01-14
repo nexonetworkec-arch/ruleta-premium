@@ -20,21 +20,16 @@
         }
 
         /* CONSTANTES DE MARCA: ORO Y MAYÚSCULAS */
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            outline: none;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
-        /* Regla Maestra para textos editables y dinámicos */
-        input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName {
+        input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
             color: var(--gold) !important;
             text-transform: uppercase !important;
             letter-spacing: 2px;
+            font-weight: 900;
         }
         
-        /* Estilo para los placeholders (el texto guía dentro de los inputs) */
-        ::placeholder { color: rgba(212, 175, 55, 0.5) !important; text-transform: uppercase; }
+        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
 
         body { 
             background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
@@ -52,16 +47,13 @@
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
 
         input {
-            font-weight: 800; caret-color: var(--gold);
             background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
         }
 
-        .btn { 
-            padding: 16px 24px; border: none; border-radius: 20px; font-weight: 900; cursor: pointer; 
-            transition: 0.3s; font-size: 11px;
-        }
+        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
         .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
 
+        /* MOTOR VISUAL */
         .wheel-wrapper { 
             position: relative; 
             width: min(82vh, 88vw); height: min(82vh, 88vw); 
@@ -78,7 +70,7 @@
         #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
         #btnSpinCenter { 
             width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
-            background: #000; font-weight: 900; cursor: pointer; font-size: min(13px, 3vw);
+            background: #000; cursor: pointer; font-size: min(13px, 3vw);
             box-shadow: 0 0 20px rgba(212,175,55,0.2);
         }
 
@@ -107,7 +99,7 @@
 
     <div class="app-container" id="appMain">
         <div style="text-align:center; padding: 20px;">
-            <h1 id="mainTitle" style="color: #fff !important;">SORTEO PREMIUM</h1>
+            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
             <div class="wheel-wrapper">
                 <div id="pointer"></div>
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
@@ -117,8 +109,8 @@
     </div>
 
     <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
-        <p style="font-weight: 900; font-size: 12px; color: var(--gold-dark) !important;">RESULTADO</p>
-        <div id="winnerName" style="font-size: min(42px, 9vw); font-weight: 900; margin: 25px 0;">---</div>
+        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
         <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
     </div></div>
 
@@ -137,11 +129,20 @@
 
         let currentUser = null;
         let config = { 
+            tituloSorteo: "SORTEO PREMIUM",
             prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
             colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
             modoRegistro: false,
             isValidated: false
         };
+
+        // FUNCIÓN MAESTRA DE ACTUALIZACIÓN VISUAL
+        function syncUI() {
+            document.querySelectorAll('.dynamic-title').forEach(el => {
+                el.innerText = config.tituloSorteo;
+            });
+            appWheel.draw();
+        }
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -149,7 +150,7 @@
                 db.ref(`users/${user.uid}/config`).on('value', snap => {
                     if(snap.exists()) {
                         config = {...config, ...snap.val()};
-                        appWheel.draw();
+                        syncUI();
                     }
                 });
                 document.getElementById('loginScreen').style.display = 'none';
