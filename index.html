@@ -16,6 +16,7 @@
             --gold-bright: #fdf2cf;
             --gold-forge: #c5a059;
             --gold-deep: #7a5c2f;
+            --gold-mix: #6A571B; /* COLOR DE TRANSICIÓN PARA IMPARES */
             --cyan-glow: #00f2ff;
             --obsidian: #0a0a0a;
             --card-bg: rgba(5, 5, 5, 0.98);
@@ -31,7 +32,6 @@
             font-weight: 900;
         }
 
-        /* EXCEPCIÓN DE SEGURIDAD */
         input[type="email"], input[type="password"], .no-caps {
             text-transform: none !important;
             letter-spacing: 1px;
@@ -45,7 +45,6 @@
             margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
-        /* ATMÓSFERA FORGE */
         body::before {
             content: ''; position: absolute; inset: 0;
             background: radial-gradient(circle at center, #0d1b1e 0%, #000 100%);
@@ -68,7 +67,6 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 15px rgba(197, 160, 89, 0.2);
         }
 
-        /* MOTOR VISUAL FORGE */
         .wheel-outer-frame {
             position: relative;
             width: min(88vw, 580px); height: min(88vw, 580px);
@@ -97,6 +95,7 @@
             width: min(100px, 20vw); height: min(100px, 20vw); border-radius: 50%;
             border: 2px solid var(--gold-forge); background: radial-gradient(circle at 30% 30%, #444, #000);
             cursor: pointer; z-index: 150; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            color: var(--gold-forge); font-weight: 900; font-size: 12px;
         }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
@@ -161,7 +160,7 @@
         let currentUser = null;
         let config = { 
             tituloSorteo: "NEXO FORGE",
-            prizes: ["Elite Gold", "Obsidian Card", "Nexo Nexus", "Forge Credit", "Aura Premium", "Royal Mint"], 
+            prizes: ["Elite Gold", "Obsidian Card", "Nexo Nexus", "Forge Credit", "Aura Premium"], 
             modoRegistro: false, isValidated: false
         };
 
@@ -203,7 +202,12 @@
                     this.ctx.moveTo(cx,cy);
                     
                     let grad = this.ctx.createRadialGradient(cx, cy, 100, cx, cy, r);
-                    if(i % 2 === 0) {
+                    
+                    // LÓGICA DE BALANCE PARA IMPARES
+                    if (n % 2 !== 0 && i === n - 1) {
+                        // Color Mix de transición para evitar choque visual
+                        grad.addColorStop(0, '#6A571B'); grad.addColorStop(1, '#332a0d');
+                    } else if(i % 2 === 0) {
                         grad.addColorStop(0, '#c5a059'); grad.addColorStop(0.5, '#7a5c2f'); grad.addColorStop(1, '#fdf2cf');
                     } else {
                         grad.addColorStop(0, '#1a1a1a'); grad.addColorStop(1, '#000');
@@ -213,7 +217,6 @@
                     this.ctx.arc(cx, cy, r, this.angle+i*slice, this.angle+(i+1)*slice);
                     this.ctx.fill();
                     
-                    // LÍNEAS DE CORTE CIAN SUTIL
                     this.ctx.strokeStyle = 'rgba(0, 242, 255, 0.05)';
                     this.ctx.lineWidth = 2;
                     this.ctx.stroke();
@@ -222,12 +225,18 @@
                     this.ctx.rotate(this.angle+i*slice+slice/2);
                     this.ctx.textAlign="right";
                     this.ctx.font = "900 35px Segoe UI";
-                    this.ctx.fillStyle = i % 2 === 0 ? "#000" : "#c5a059";
+                    
+                    // Ajuste de color de texto según fondo
+                    if (n % 2 !== 0 && i === n - 1) {
+                        this.ctx.fillStyle = "#fdf2cf";
+                    } else {
+                        this.ctx.fillStyle = i % 2 === 0 ? "#000" : "#c5a059";
+                    }
+                    
                     this.ctx.fillText(p.toUpperCase(), r-60, 12);
                     this.ctx.restore();
                 });
 
-                // NÚCLEO CENTRAL
                 this.ctx.beginPath();
                 this.ctx.arc(cx,cy, 70, 0, Math.PI*2);
                 this.ctx.fillStyle = '#000'; this.ctx.fill();
@@ -280,6 +289,5 @@
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
     </script>
-    
-    </body>
-            </html>
+</body>
+    </html>
