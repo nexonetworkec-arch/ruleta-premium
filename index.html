@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
     <style>
@@ -17,48 +16,46 @@
             --card-bg: rgba(15, 15, 15, 0.95); 
             --gold: #d4af37; 
             --gold-dark: #8a6d1d;
-            --gold-mix: #6A571B; /* Color de mezcla para impares */
+            --gold-mix: #6A571B; /* Mezcla perfecta para secciones impares */
         }
 
-        #loading-overlay {
-            position: fixed;
-            inset: 0; background: #000; z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%;
-            border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        /* RESET & BASE */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        
         body { 
-            background-color: var(--bg-color);
-            color: var(--gold); font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
             background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
         }
 
+        /* CAPA DE CARGA */
+        #loading-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* CONTENEDORES PRINCIPALES */
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
 
+        /* FORMULARIOS PREMIUM */
         input {
             color: var(--gold) !important; font-weight: 800; caret-color: var(--gold);
-            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center;
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
         }
-
         .btn { 
             padding: 16px 24px; border: none; border-radius: 20px; font-weight: 900; cursor: pointer; 
             text-transform: uppercase; transition: 0.3s; font-size: 11px; letter-spacing: 2px;
         }
         .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000; }
 
+        /* MOTOR VISUAL: RULETA AUTOAJUSTABLE */
         .wheel-wrapper { 
             position: relative; 
-            width: min(85vh, 90vw); 
-            height: min(85vh, 90vw); 
-            max-width: 550px; 
-            max-height: 550px; 
+            width: min(82vh, 88vw); height: min(82vh, 88vw); 
+            max-width: 550px; max-height: 550px; 
         }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
         
         #pointer { 
             position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
@@ -67,16 +64,17 @@
         }
 
         #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
-        
         #btnSpinCenter { 
-            width: min(95px, 20vw); height: min(95px, 20vw); border-radius: 50%; border: 3px solid var(--gold);
-            background: #000; color: var(--gold); font-weight: 900; cursor: pointer; font-size: min(14px, 3vw);
+            width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; color: var(--gold); font-weight: 900; cursor: pointer; font-size: min(13px, 3vw);
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
         }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
+        /* MODALES NATIVOS */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
         .modal-content { 
             background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
-            width: 90%; max-width: 500px; text-align: center; color: var(--gold);
+            width: min(500px, 90%); text-align: center; color: var(--gold);
         }
     </style>
 </head>
@@ -84,21 +82,21 @@
 
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <p style="color: var(--gold); margin-top: 20px; font-weight: 900; letter-spacing: 4px;">NEXO® MASTER</p>
+        <p style="color: var(--gold); margin-top: 20px; font-weight: 900; letter-spacing: 4px; font-size: 10px;">NEXO® MASTER ENGINE</p>
     </div>
 
     <div id="loginScreen">
-        <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 90%);">
-            <h2 style="letter-spacing: 4px; margin-bottom: 40px;">NEXO®</h2>
+        <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 85%);">
+            <h2 style="letter-spacing: 5px; margin-bottom: 30px; font-weight: 900;">NEXO®</h2>
             <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
-            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:30px;">
-            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR</button>
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
         </div>
     </div>
 
     <div class="app-container" id="appMain">
         <div style="text-align:center; padding: 20px;">
-            <h1 style="letter-spacing:5px; margin-bottom:20px; font-weight: 900; font-size: min(2rem, 6vw);">SORTEO PREMIUM</h1>
+            <h1 id="mainTitle" style="letter-spacing:6px; margin-bottom:20px; font-weight: 900; font-size: min(1.8rem, 6vw); color: #fff;">SORTEO PREMIUM</h1>
             <div class="wheel-wrapper">
                 <div id="pointer"></div>
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
@@ -107,13 +105,14 @@
         </div>
     </div>
 
-    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 3px;">
-        <h4 style="letter-spacing:5px; color: var(--gold-dark);">GANADOR</h4>
-        <div id="winnerName" style="font-size: min(40px, 8vw); font-weight: 900; margin: 30px 0;">---</div>
-        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
+        <p style="letter-spacing:4px; color: var(--gold-dark); font-weight: 900; font-size: 12px;">RESULTADO</p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); font-weight: 900; margin: 25px 0; text-transform: uppercase;">---</div>
+        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
     </div></div>
 
     <script>
+        // CONFIGURACIÓN ESTRUCTURAL DE FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
@@ -126,18 +125,29 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
 
+        // ESTADO GLOBAL DEL CEREBRO
         let currentUser = null;
-        let config = { prizes: ["PREMIO A", "PREMIO B", "PREMIO C"], colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B" };
+        let config = { 
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
+            modoRegistro: false, // Variable clave para el futuro Panel Admin
+            isValidated: false   // Control de sesión actual
+        };
 
+        // LISTENER DE AUTENTICACIÓN Y SINCRONIZACIÓN
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if(user) {
-                const snap = await db.ref(`users/${user.uid}/config`).once('value');
-                if(snap.exists()) config = {...config, ...snap.val()};
+                // Sincronización en tiempo real de la configuración
+                db.ref(`users/${user.uid}/config`).on('value', snap => {
+                    if(snap.exists()) {
+                        config = {...config, ...snap.val()};
+                        appWheel.draw();
+                    }
+                });
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('appMain').style.display = 'flex';
                 updatePresence(user.uid);
-                appWheel.draw();
             } else {
                 document.getElementById('appMain').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'flex';
@@ -145,6 +155,7 @@
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
+        // MOTOR DE LA RULETA (MATH & RENDER)
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
@@ -162,35 +173,42 @@
                     this.ctx.beginPath();
                     this.ctx.moveTo(cx,cx);
                     
-                    // LÓGICA DE COLOR PARA IMPARES
-                    if (n % 2 !== 0 && i === n - 1) {
-                        this.ctx.fillStyle = config.colorMix; // Tercer color si es el último de un impar
-                    } else {
-                        this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA;
-                    }
+                    // Lógica de color premium para impares
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
                     
                     this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
                     this.ctx.fill();
                     
-                    // DIBUJO DE TEXTO
                     this.ctx.translate(cx,cx);
                     this.ctx.rotate(this.angle+i*slice+slice/2);
                     this.ctx.font = "900 32px Segoe UI";
                     this.ctx.textAlign="right";
                     
-                    // Color de texto dinámico para contraste
-                    if (n % 2 !== 0 && i === n - 1) {
-                        this.ctx.fillStyle = "#FFFFFF"; // Blanco sobre el color mezcla
-                    } else {
-                        this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB;
-                    }
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
                     
                     this.ctx.fillText(p.toUpperCase(), r-40, 10);
                     this.ctx.restore();
                 });
             }
-            spin() {
-                if(this.isSpinning || config.prizes.length < 2) return;
+            
+            // Lógica de Giro con Interceptor de Estado
+            handleSpinClick() {
+                if(this.isSpinning) return;
+
+                // INTERCEPTOR: ¿Requiere registro previo?
+                if(config.modoRegistro && !config.isValidated) {
+                    // Aquí es donde la inyección aditiva insertará el modal de registro
+                    console.log("Cerebro: Bloqueado - Requiere Registro");
+                    alert("Por favor, regístrese para girar (Función en desarrollo)"); 
+                    return;
+                }
+
+                this.executeSpin();
+            }
+
+            executeSpin() {
                 this.isSpinning = true;
                 const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
                 const duration = 5000; const start = performance.now();
@@ -204,23 +222,38 @@
                 };
                 requestAnimationFrame(anim);
             }
+
             finish() {
                 this.isSpinning = false;
                 const n = config.prizes.length;
                 const deg = (this.angle * 180 / Math.PI) % 360;
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 const prize = config.prizes[idx];
+                
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
+                
                 confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
-                document.getElementById('btnFinishWin').onclick = () => document.getElementById('modalWinner').style.display = 'none';
-                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleTimeString() });
+                
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                    // Al terminar, si había registro, podemos resetear la validación
+                    if(config.modoRegistro) config.isValidated = false;
+                };
+
+                // Registro automático en historial
+                db.ref(`users/${currentUser.uid}/history`).push({ 
+                    prize, 
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
             }
         }
 
         const appWheel = new Wheel();
-        document.getElementById('btnSpinCenter').onclick = () => appWheel.spin();
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
 
+        // UTILIDADES DE SISTEMA
         function updatePresence(uid) {
             const statusRef = db.ref(`users/${uid}/status`);
             db.ref('.info/connected').on('value', s => {
@@ -230,7 +263,9 @@
         }
 
         document.getElementById('btnAuth').onclick = () => {
-            auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value).catch(err => alert(err.message));
+            const email = document.getElementById('authEmail').value;
+            const pin = document.getElementById('authPin').value;
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("Acceso denegado: " + err.message));
         };
     </script>
 </body>
