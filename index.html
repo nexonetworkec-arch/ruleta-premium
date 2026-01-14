@@ -261,5 +261,196 @@
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
     </script>
+
+    <style>
+    /* Estilos del Panel Admin - Inyectados al final */
+    #adminPanel {
+        position: fixed; inset: 0; background: #000; z-index: 9999;
+        display: none; flex-direction: column; padding: 20px;
+        overflow-y: auto; font-family: 'Segoe UI', sans-serif;
+    }
+    .admin-header {
+        display: flex; justify-content: space-between; align-items: center;
+        border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 20px;
+    }
+    .grid-stats {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px; margin-bottom: 30px;
+    }
+    .stat-card {
+        background: rgba(212, 175, 55, 0.05); border: 1px solid var(--gold-dark);
+        padding: 20px; border-radius: 20px; text-align: center;
+    }
+    .stat-value { font-size: 24px; color: var(--gold); display: block; }
+    .stat-label { font-size: 10px; opacity: 0.7; }
+
+    .admin-section {
+        background: #0a0a0a; border-radius: 25px; padding: 20px;
+        margin-bottom: 20px; border: 1px solid #222;
+    }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .admin-table th { text-align: left; color: var(--gold-dark); padding: 10px; border-bottom: 1px solid #222; }
+    .admin-table td { padding: 10px; border-bottom: 1px solid #111; }
+
+    /* Botón flotante para invocar Panel (Solo visible para Admin) */
+    #btnOpenAdmin {
+        position: fixed; bottom: 20px; right: 20px; width: 40px; height: 40px;
+        background: var(--gold); border-radius: 50%; display: none;
+        align-items: center; justify-content: center; cursor: pointer; z-index: 999;
+        box-shadow: 0 0 15px rgba(212,175,55,0.4);
+    }
+    
+    /* Pantalla de Bloqueo por Licencia */
+    #licenseLock {
+        position: fixed; inset: 0; background: #000; z-index: 10001;
+        display: none; align-items: center; justify-content: center; text-align: center;
+    }
+</style>
+
+<div id="btnOpenAdmin">⚙️</div>
+
+<div id="adminPanel">
+    <div class="admin-header">
+        <h2 style="margin:0;">NEXO® ADMIN PRO</h2>
+        <button id="btnCloseAdmin" class="btn" style="background: #222;">CERRAR</button>
+    </div>
+
+    <div class="grid-stats">
+        <div class="stat-card"><span id="statTotalSpins" class="stat-value">0</span><span class="stat-label">GIROS TOTALES</span></div>
+        <div class="stat-card"><span id="statConversion" class="stat-value">0%</span><span class="stat-label">CONVERSIÓN REGISTRO</span></div>
+        <div class="stat-card"><span id="statOnline" class="stat-value">0</span><span class="stat-label">USUARIOS ONLINE</span></div>
+        <div class="stat-card"><span id="statLicenseStatus" class="stat-value">ACTIVA</span><span class="stat-label">ESTADO LICENCIA</span></div>
+    </div>
+
+    <div class="admin-section">
+        <h3>CONTROLES DE SISTEMA</h3>
+        <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <button id="toggleModoReg" class="btn btn-primary">ALTERNAR MODO REGISTRO</button>
+            <button id="btnResetHistory" class="btn" style="background: #800; color:#fff !important;">LIMPIAR HISTORIAL</button>
+            <button id="btnExportData" class="btn" style="background: var(--gold-mix);">EXPORTAR DATA</button>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <h3>AUDITORÍA DE GANADORES</h3>
+        <div style="overflow-x: auto;">
+            <table class="admin-table" id="tableWinners">
+                <thead>
+                    <tr><th>FECHA</th><th>PREMIO</th><th>USUARIO</th><th>ESTADO</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="licenseLock">
+    <div style="border: 2px solid var(--gold); padding: 50px; border-radius: 40px; width: 80%;">
+        <h1 style="font-size: 40px;">SISTEMA SUSPENDIDO</h1>
+        <p>LICENCIA VENCIDA O INACTIVA</p>
+        <p style="color: var(--gold-dark); font-size: 12px;">CONTACTE CON SOPORTE NEXO® BUSINESS</p>
+    </div>
+</div>
+
+<script>
+    // LÓGICA DE LA INYECIÓN 1
+    (function() {
+        const adminBtn = document.getElementById('btnOpenAdmin');
+        const adminPanel = document.getElementById('adminPanel');
+        const lockScreen = document.getElementById('licenseLock');
+
+        // 1. Mostrar botón de admin solo si es el dueño
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                // Aquí podrías filtrar por un email específico de admin
+                adminBtn.style.display = 'flex';
+                checkLicense(user.uid);
+            }
+        });
+
+        // 2. Control de Licencias y Suscripciones
+        function checkLicense(uid) {
+            db.ref(`users/${uid}/license`).on('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    const now = Date.now();
+                    const expiration = data.expiryDate || now + 10000;
+                    
+                    if(data.status === 'inactive' || now > expiration) {
+                        lockScreen.style.display = 'flex';
+                        // Cortamos el cable del botón de giro (Cerebro protegido)
+                        document.getElementById('btnSpinCenter').style.pointerEvents = 'none';
+                        document.getElementById('btnSpinCenter').style.opacity = '0.3';
+                    } else {
+                        lockScreen.style.display = 'none';
+                        document.getElementById('btnSpinCenter').style.pointerEvents = 'auto';
+                        document.getElementById('btnSpinCenter').style.opacity = '1';
+                    }
+                    document.getElementById('statLicenseStatus').innerText = data.status.toUpperCase();
+                }
+            });
+        }
+
+        // 3. Estadísticas y Analytics
+        function updateAnalytics() {
+            db.ref(`users/${currentUser.uid}/history`).on('value', snap => {
+                const history = snap.val() || {};
+                const total = Object.keys(history).length;
+                document.getElementById('statTotalSpins').innerText = total;
+                
+                // Actualizar tabla de ganadores
+                const tbody = document.querySelector('#tableWinners tbody');
+                tbody.innerHTML = '';
+                Object.values(history).reverse().slice(0, 10).forEach(entry => {
+                    const row = `<tr>
+                        <td>${entry.date}</td>
+                        <td>${entry.prize}</td>
+                        <td>SISTEMA</td>
+                        <td style="color:var(--gold)">ENTREGADO</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            });
+
+            db.ref(`users/${currentUser.uid}/status`).parent.on('value', snap => {
+                let onlineCount = 0;
+                snap.forEach(child => { if(child.val().status?.state === 'online') onlineCount++; });
+                document.getElementById('statOnline').innerText = onlineCount;
+            });
+        }
+
+        // 4. Eventos del Panel
+        adminBtn.onclick = () => {
+            const pin = prompt("INGRESE PIN DE ADMINISTRADOR:");
+            // Aquí validamos contra el PIN de config
+            if(pin === "1234") { // Cambiar por validación real de db
+                adminPanel.style.display = 'flex';
+                updateAnalytics();
+            } else {
+                alert("ACCESO DENEGADO");
+            }
+        };
+
+        document.getElementById('btnCloseAdmin').onclick = () => adminPanel.style.display = 'none';
+
+        document.getElementById('toggleModoReg').onclick = () => {
+            const nuevoEstado = !config.modoRegistro;
+            db.ref(`users/${currentUser.uid}/config/modoRegistro`).set(nuevoEstado);
+            alert("MODO REGISTRO: " + (nuevoEstado ? "ACTIVADO" : "DESACTIVADO"));
+        };
+
+        document.getElementById('btnExportData').onclick = () => {
+            db.ref(`users/${currentUser.uid}/history`).once('value', snap => {
+                const data = JSON.stringify(snap.val(), null, 2);
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'nexo_analytics.json';
+                a.click();
+            });
+        };
+    })();
+</script>
 </body>
 </html>
+
