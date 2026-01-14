@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEXO® FORGE - Sistema de Sorteo con Licencia</title>
+    <title>NEXO® FORGE - Enterprise Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -16,93 +16,71 @@
             --gold-bright: #fdf2cf;
             --gold-forge: #c5a059;
             --gold-deep: #7a5c2f;
-            --gold-mix: #6A571B;
             --cyan-glow: #00f2ff;
             --card-bg: rgba(5, 5, 5, 0.98);
-            --error-red: #ff4444;
         }
 
-        /* REGLAS DE ORO Y MAYÚSCULAS */
+        /* REGLAS MAESTRAS: ORO Y MAYÚSCULAS */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        input, select, textarea, h1, h2, h3, .btn, #winnerName, .dynamic-title, .status-msg {
+        input, select, h1, h2, h3, .btn, #winnerName, .dynamic-title, .status-msg {
             color: var(--gold-forge) !important; text-transform: uppercase; letter-spacing: 2px; font-weight: 900;
         }
 
-        /* EXCEPCIÓN CREDENCIALES */
-        input[type="email"], input[type="password"], .no-caps {
-            text-transform: none !important; letter-spacing: 1px; font-weight: 400;
-        }
+        input[type="email"], input[type="password"] { text-transform: none !important; letter-spacing: 1px; font-weight: 400; }
 
         body { 
             background-color: var(--bg-deep); color: var(--gold-forge); font-family: 'Segoe UI', sans-serif; 
             margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-        body::before {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at center, #0d1b1e 0%, #000 100%); z-index: -1;
-        }
+        body::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at center, #0d1b1e 0%, #000 100%); z-index: -1; }
 
-        #loading-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
+        #loading-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-        #loginScreen, #activationScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; z-index: 10; }
-
-        input { background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px; margin-bottom: 15px; width: 100%; }
-        .btn { padding: 18px 40px; border: none; border-radius: 50px; cursor: pointer; transition: 0.4s; font-size: 12px; width: 100%; }
+        .screen { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; z-index: 10; padding: 20px; }
+        
+        input { background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px; margin-bottom: 15px; width: min(400px, 100%); }
+        .btn { padding: 18px 40px; border: none; border-radius: 50px; cursor: pointer; transition: 0.4s; font-size: 12px; width: min(400px, 100%); }
         .btn-primary { background: linear-gradient(to bottom, var(--gold-bright), var(--gold-forge)); color: #000 !important; }
 
-        /* INTERFAZ FORGE */
+        /* RULETA */
         .wheel-outer-frame {
-            position: relative; width: min(88vw, 580px); height: min(88vw, 580px);
-            border-radius: 50%; background: linear-gradient(145deg, #1a1a1a, #000, #222); padding: 10px;
+            position: relative; width: min(85vw, 550px); height: min(85vw, 550px);
+            border-radius: 50%; background: #000; padding: 10px;
             box-shadow: 0 0 80px rgba(0, 242, 255, 0.1), 0 0 0 6px var(--gold-forge);
             display: flex; align-items: center; justify-content: center;
         }
-        .diamond-pointer { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); z-index: 100; width: 50px; }
-        #btnSpinCenter { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100px; height: 100px; border-radius: 50%; border: 2px solid var(--gold-forge);
-            background: #000; cursor: pointer; z-index: 150; color: var(--gold-forge); font-weight: 900;
-        }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(20px); }
+        #btnSpinCenter { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold-forge); background: #000; z-index: 100; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="loading-overlay">
         <div style="width: 40px; height: 40px; border: 3px solid rgba(197,160,89,0.1); border-radius: 50%; border-top-color: var(--gold-forge); animation: spin 0.8s linear infinite;"></div>
-        <p style="margin-top: 20px; font-weight: 900; font-size: 10px; letter-spacing: 5px;">NEXO® GUARD ACTIVE</p>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px; letter-spacing: 5px;">NEXO® SECURE LOAD</p>
     </div>
 
-    <div id="loginScreen">
-        <div style="background: var(--card-bg); padding: 50px; border-radius: 40px; border: 1px solid var(--gold-forge); text-align: center; width: min(400px, 90%);">
-            <h2 style="font-size: 2rem; margin-bottom: 30px;">NEXO® ACCESS</h2>
-            <input type="email" id="authEmail" placeholder="USUARIO">
-            <input type="password" id="authPin" placeholder="PASSWORD">
-            <button id="btnAuth" class="btn btn-primary">ENTRAR AL SISTEMA</button>
-        </div>
+    <div id="loginScreen" class="screen">
+        <h2 style="font-size: 2rem; margin-bottom: 30px;">NEXO® LOGIN</h2>
+        <input type="email" id="authEmail" placeholder="EMAIL">
+        <input type="password" id="authPin" placeholder="PASSWORD">
+        <button id="btnAuth" class="btn btn-primary">ENTRAR</button>
     </div>
 
-    <div id="activationScreen">
-        <div style="background: var(--card-bg); padding: 50px; border-radius: 40px; border: 1px solid var(--gold-forge); text-align: center; width: min(400px, 90%);">
-            <h2 style="font-size: 1.5rem; margin-bottom: 20px;">ACTIVAR LICENCIA</h2>
-            <p style="font-size: 10px; margin-bottom: 30px;">EL SISTEMA REQUIERE UNA LICENCIA VÁLIDA</p>
-            <input type="text" id="licenseKeyInput" placeholder="XXXX-XXXX-XXXX-XXXX">
-            <button id="btnActivateLicense" class="btn btn-primary">ACTIVAR AHORA</button>
-            <p id="licenseError" style="color: var(--error-red) !important; font-size: 10px; margin-top: 15px; display: none;">LICENCIA INVÁLIDA O EXPIRADA</p>
-        </div>
+    <div id="activationScreen" class="screen">
+        <h2 style="font-size: 1.5rem; margin-bottom: 10px;">LICENCIA REQUERIDA</h2>
+        <p style="font-size: 10px; margin-bottom: 30px; color: #ff4444 !important;">SU PERIODO FREE HA TERMINADO</p>
+        <input type="text" id="licenseKeyInput" placeholder="INTRODUZCA CÓDIGO PREMIUM">
+        <button id="btnActivate" class="btn btn-primary">ACTIVAR LICENCIA</button>
     </div>
 
-    <div class="app-container" id="appMain">
-        <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:30px; font-size: min(2rem, 7vw);"></h1>
+    <div id="appMain" class="screen">
+        <div id="adminBadge" style="display:none; color: var(--cyan-glow); font-size: 10px; margin-bottom: 10px;">MODO ADMINISTRADOR ACTIVO</div>
+        <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px;"></h1>
         <div class="wheel-outer-frame">
-            <svg class="diamond-pointer" viewBox="0 0 100 120"><polygon points="50,120 100,50 50,0 0,50" fill="white"/></svg>
             <button id="btnSpinCenter">GIRAR</button>
-            <canvas id="wheelCanvas" width="1000" height="1000"></canvas>
+            <canvas id="wheelCanvas" width="1000" height="1000" style="width:100%; height:100%;"></canvas>
         </div>
+        <p id="trialTimer" style="margin-top: 20px; font-size: 10px;"></p>
     </div>
 
     <script>
@@ -118,53 +96,58 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
 
-        let currentUser = null;
-        let config = { 
-            tituloSorteo: "NEXO FORGE",
-            prizes: ["Elite Gold", "Obsidian Card", "Nexo Nexus", "Forge Credit", "Aura Premium"], 
-            licenseActive: false, licenseKey: null
-        };
+        let config = { tituloSorteo: "NEXO FORGE", prizes: ["Premio 1", "Premio 2", "Premio 3"] };
+        const ADMIN_EMAIL = "admin@nexo.com"; // Define tu email aquí
 
-        function checkLicense(userConfig) {
-            if(userConfig && userConfig.licenseActive) {
-                document.getElementById('activationScreen').style.display = 'none';
-                document.getElementById('appMain').style.display = 'flex';
+        function validateAccess(userData, user) {
+            const now = Date.now();
+            const is_admin = user.email === ADMIN_EMAIL;
+            
+            if (is_admin) {
+                document.getElementById('adminBadge').style.display = 'block';
+                showScreen('appMain');
+                return;
+            }
+
+            // Lógica Free 24h
+            if (!userData || !userData.expiryDate) {
+                const expiry = now + (24 * 60 * 60 * 1000); // 24h desde ahora
+                db.ref(`users/${user.uid}/config`).update({ 
+                    expiryDate: expiry, 
+                    licenseType: 'FREE',
+                    licenseActive: true 
+                });
+                showScreen('appMain');
+            } else if (now > userData.expiryDate && !userData.isPremium) {
+                showScreen('activationScreen');
             } else {
-                document.getElementById('appMain').style.display = 'none';
-                document.getElementById('activationScreen').style.display = 'flex';
+                showScreen('appMain');
+                const timeLeft = Math.round((userData.expiryDate - now) / 3600000);
+                document.getElementById('trialTimer').innerText = `TIEMPO FREE RESTANTE: ${timeLeft} HORAS`;
             }
         }
 
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+        }
+
         auth.onAuthStateChanged(user => {
-            currentUser = user;
             if(user) {
                 db.ref(`users/${user.uid}/config`).on('value', snap => {
-                    if(snap.exists()) {
-                        config = {...config, ...snap.val()};
-                        checkLicense(config);
-                        document.querySelectorAll('.dynamic-title').forEach(el => el.innerText = config.tituloSorteo);
-                        appWheel.draw();
-                    } else {
-                        checkLicense(null);
-                    }
+                    const data = snap.val();
+                    if(data) config = {...config, ...data};
+                    validateAccess(data, user);
+                    document.querySelectorAll('.dynamic-title').forEach(el => el.innerText = config.tituloSorteo);
+                    appWheel.draw();
                 });
-                document.getElementById('loginScreen').style.display = 'none';
             } else {
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('appMain').style.display = 'none';
-                document.getElementById('activationScreen').style.display = 'none';
+                showScreen('loginScreen');
             }
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // LÓGICA DE ACTIVACIÓN (Se conectará al Panel de Admin)
-        document.getElementById('btnActivateLicense').onclick = async () => {
-            const key = document.getElementById('licenseKeyInput').value;
-            // Aquí irá la validación contra la DB de licencias
-            alert("SISTEMA DE VALIDACIÓN EN PROCESO DE INYECCIÓN");
-        };
-
-        // --- MOTOR DE RULETA MANTENIDO ---
+        // El motor de la ruleta se mantiene idéntico (v2.0) para integridad
         class Wheel {
             constructor() { this.canvas = document.getElementById('wheelCanvas'); this.ctx = this.canvas.getContext('2d'); this.angle = 0; }
             draw() {
@@ -185,10 +168,9 @@
             }
         }
         const appWheel = new Wheel();
+
         document.getElementById('btnAuth').onclick = () => {
-            const email = document.getElementById('authEmail').value;
-            const pin = document.getElementById('authPin').value;
-            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
+            auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPin').value);
         };
     </script>
 </body>
