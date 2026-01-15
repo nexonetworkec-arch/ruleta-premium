@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEXO® Business Pro</title>
+    <title>NEXO® Business Pro - Sistema de Sorteo Premium</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -20,117 +20,117 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
-            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
+
+        input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
+            color: var(--gold) !important;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
         }
 
-        /* LOGIN OVERLAY */
-        #nexoAuthOverlay { position: fixed; inset: 0; background: #000; z-index: 20000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: #0a0a0a; border: 1px solid var(--gold); border-radius: 30px; width: 90%; max-width: 400px; padding: 30px; box-shadow: 0 0 50px rgba(212,175,55,0.1); }
-        .auth-tabs { display: flex; gap: 20px; margin-bottom: 25px; border-bottom: 1px solid #222; }
-        .auth-tab { padding-bottom: 10px; cursor: pointer; color: #666; font-size: 11px; font-weight: 900; }
-        .auth-tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .auth-input { width: 100%; background: #000; border: 1px solid #222; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: #fff; }
-        .auth-btn { width: 100%; background: var(--gold); border: none; padding: 15px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
-        .toggle-pass { position: absolute; right: 15px; top: 15px; cursor: pointer; color: var(--gold); }
-
-        /* APP MAIN */
-        .app-container { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
-        .wheel-wrapper { position: relative; width: min(82vh, 88vw); height: min(82vh, 88vw); max-width: 550px; }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; }
-        #pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 50px solid var(--gold); }
-        #btnSpinCenter { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--gold); background: #000; cursor: pointer; color: var(--gold); font-weight: 900; }
-
-        /* MENU HAMBURGUESA CUADRADO */
-        #nexoMenuBtn { position: fixed; bottom: 25px; right: 25px; width: 55px; height: 55px; background: var(--gold); border-radius: 12px; border: none; z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
-        .bar { width: 25px; height: 3px; background: #000; border-radius: 2px; }
-        #nexoMenuContent { position: fixed; bottom: 90px; right: 25px; width: 220px; background: #0a0a0a; border: 1px solid var(--gold); border-radius: 15px; display: none; flex-direction: column; z-index: 24000; overflow: hidden; }
-        .menu-item { padding: 18px; font-size: 11px; font-weight: 900; color: #fff; border-bottom: 1px solid #111; cursor: pointer; }
-        .menu-item:hover { background: rgba(212,175,55,0.1); }
-
-        /* MODAL GANADOR */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; justify-content: center; align-items: center; z-index: 30000; backdrop-filter: blur(10px); }
+        input[type="email"], input[type="password"], input[type="tel"], input[type="text"], .no-caps {
+            text-transform: none !important;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
         
+        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
+
+        body { 
+            background-color: var(--bg-color);
+            color: var(--gold); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
+        }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
+
+        input {
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 14px;
+        }
+
+        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
+
+        .wheel-wrapper { position: relative; width: min(82vh, 88vw); height: min(82vh, 88vw); max-width: 550px; max-height: 550px; }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
+        #pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100; width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent; border-top: min(50px, 10vw) solid var(--gold); }
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        #btnSpinCenter { width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold); background: #000; cursor: pointer; font-size: min(13px, 3vw); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); width: min(500px, 90%); text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay" style="position:fixed; inset:0; background:#000; z-index:40000; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-        <div style="width:40px; height:40px; border:3px solid rgba(212,175,55,0.1); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-        <p style="color:var(--gold); font-size:10px; margin-top:20px; font-weight:900; letter-spacing:2px;">NEXO® MASTER ENGINE</p>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px;">NEXO® MASTER ENGINE</p>
     </div>
 
-    <div id="nexoAuthOverlay">
-        <div class="auth-card">
-            <h2 style="text-align:center; letter-spacing:5px; margin-bottom:25px;">NEXO®</h2>
-            <div id="authContent">
-                <div class="auth-tabs">
-                    <div class="auth-tab active" onclick="switchAuth('login')">INGRESO</div>
-                    <div class="auth-tab" onclick="switchAuth('register')">REGISTRO</div>
+    <div id="loginScreen">
+        <div id="authCard" style="background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(400px, 90%); box-shadow: 0 0 30px rgba(212,175,55,0.15);">
+            <h2 style="margin-top:0;">NEXO®</h2>
+            
+            <div id="loginForm">
+                <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
+                <div style="position:relative; margin-bottom:25px;">
+                    <input type="password" id="authPin" placeholder="PIN" style="width:100%;">
+                    <span onclick="togglePass('authPin')" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:12px; opacity:0.6;">👁️</span>
                 </div>
-                <div id="loginForm">
-                    <input type="email" id="logEmail" class="auth-input" placeholder="EMAIL">
-                    <div style="position:relative">
-                        <input type="password" id="logPass" class="auth-input" placeholder="PASSWORD">
-                        <span class="toggle-pass" onclick="togglePass('logPass')">👁️</span>
-                    </div>
-                    <button class="auth-btn" onclick="handleLogin()">Entrar</button>
-                    <p style="text-align:center; font-size:9px; margin-top:15px; cursor:pointer;" onclick="handleReset()">¿OLVIDASTE TU CONTRASEÑA?</p>
-                </div>
-                <div id="registerForm" style="display:none">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <input type="text" id="regName" class="auth-input" placeholder="NOMBRE">
-                        <input type="text" id="regLast" class="auth-input" placeholder="APELLIDO">
-                    </div>
-                    <div style="display:grid; grid-template-columns:80px 1fr; gap:10px;">
-                        <input type="text" id="regCountry" class="auth-input" value="+57">
-                        <input type="tel" id="regPhone" class="auth-input" placeholder="CELULAR">
-                    </div>
-                    <input type="email" id="regEmail" class="auth-input" placeholder="EMAIL">
-                    <div style="position:relative">
-                        <input type="password" id="regPass" class="auth-input" placeholder="PASSWORD">
-                        <span class="toggle-pass" onclick="togglePass('regPass')">👁️</span>
-                    </div>
-                    <div style="position:relative">
-                        <input type="password" id="regPassConf" class="auth-input" placeholder="CONFIRMAR">
-                        <span class="toggle-pass" onclick="togglePass('regPassConf')">👁️</span>
-                    </div>
-                    <button class="auth-btn" onclick="handleRegister()">Crear Cuenta</button>
-                </div>
+                <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
+                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="toggleAuthMode()">¿NO TIENES CUENTA? REGÍSTRATE</p>
             </div>
-            <div id="verifyView" style="display:none; text-align:center;">
-                <p style="font-size:12px; margin-bottom:20px; line-height:1.6;">HEMOS ENVIADO UN ENLACE DE VERIFICACIÓN A TU CORREO.</p>
-                <button class="auth-btn" style="background:transparent; border:1px solid var(--gold); color:var(--gold);" onclick="resendEmail()">Reenviar Correo</button>
-                <button style="background:none; border:none; color:#666; font-size:10px; margin-top:15px; cursor:pointer;" onclick="auth.signOut()">Volver al Login</button>
+
+            <div id="registerForm" style="display:none;">
+                <input type="text" id="regName" placeholder="NOMBRE COMPLETO" style="width:100%; margin-bottom:10px;">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="text" id="regCountry" placeholder="+593" style="width:25%;" maxlength="4">
+                    <input type="tel" id="regPhone" placeholder="TELÉFONO" style="width:75%;">
+                </div>
+                <input type="email" id="regEmail" placeholder="EMAIL" style="width:100%; margin-bottom:10px;">
+                <div style="position:relative; margin-bottom:10px;">
+                    <input type="password" id="regPass" placeholder="CONTRASEÑA" style="width:100%;">
+                    <span onclick="togglePass('regPass')" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:12px; opacity:0.6;">👁️</span>
+                </div>
+                <button id="btnRegister" class="btn btn-primary" style="width:100%; margin-top:10px;">CREAR CUENTA</button>
+                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="toggleAuthMode()">VOLVER AL INGRESO</p>
+            </div>
+
+            <div id="verifyView" style="display:none;">
+                <p style="font-size:12px;">VALIDACIÓN REQUERIDA</p>
+                <p style="font-size:11px; color:#aaa; margin-bottom:20px;">Revisa tu correo para activar tu cuenta.</p>
+                <button id="btnResend" class="btn" style="width:100%; border:1px solid var(--gold); margin-bottom:10px;">REENVIAR CORREO</button>
+                <button onclick="auth.signOut()" class="btn" style="width:100%; font-size:9px; opacity:0.7;">CANCELAR / SALIR</button>
             </div>
         </div>
     </div>
 
     <div class="app-container" id="appMain">
-        <h1 class="dynamic-title" style="color:#fff !important; margin-bottom:30px; letter-spacing:4px;">SORTEO PREMIUM</h1>
-        <div class="wheel-wrapper">
-            <div id="pointer"></div>
-            <button id="btnSpinCenter" onclick="appWheel.handleSpinClick()">GIRAR</button>
-            <canvas id="wheelCanvas" width="800" height="800"></canvas>
+        <div style="text-align:center; padding: 20px;">
+            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
+            <div class="wheel-wrapper">
+                <div id="pointer"></div>
+                <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
+                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+            </div>
         </div>
     </div>
 
-    <button id="nexoMenuBtn" onclick="toggleMenu()"><div class="bar"></div><div class="bar"></div><div class="bar"></div></button>
-    <div id="nexoMenuContent">
-        <div class="menu-item" id="optMaster" style="display:none; color:var(--gold);">⚙️ PANEL MASTER</div>
-        <div class="menu-item">👤 MI PERFIL</div>
-        <div class="menu-item" style="color:#ff4444" onclick="handleLogout()">🚪 CERRAR SESIÓN</div>
-    </div>
-
-    <div id="modalWinner" class="modal">
-        <div style="background:var(--card-bg); padding:40px; border-radius:40px; border:1px solid var(--gold); text-align:center; width:90%; max-width:450px;">
-            <p style="font-size:12px; color:var(--gold-dark); letter-spacing:2px;">¡FELICIDADES!</p>
-            <div id="winnerName" style="font-size:42px; margin:25px 0; font-weight:900; color:var(--gold);">---</div>
-            <button class="auth-btn" onclick="document.getElementById('modalWinner').style.display='none'">Aceptar</button>
-        </div>
-    </div>
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
+        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
+        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
+    </div></div>
 
     <script>
         const firebaseConfig = {
@@ -144,15 +144,95 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
-        const MASTER_ID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+        const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
 
         let currentUser = null;
         let config = { 
-            tituloSorteo: "SORTEO PREMIUM", prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"],
-            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B"
+            tituloSorteo: "SORTEO PREMIUM",
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
+            modoRegistro: false,
+            isValidated: false
         };
 
-        // MOTOR DE LA RUEDA (CEREBRO)
+        function togglePass(id) {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
+        }
+
+        function toggleAuthMode() {
+            const isLogin = document.getElementById('loginForm').style.display !== 'none';
+            document.getElementById('loginForm').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('registerForm').style.display = isLogin ? 'block' : 'none';
+        }
+
+        function syncUI() {
+            document.querySelectorAll('.dynamic-title').forEach(el => { el.innerText = config.tituloSorteo; });
+            appWheel.draw();
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            const loginScreen = document.getElementById('loginScreen');
+            const appMain = document.getElementById('appMain');
+            const verifyView = document.getElementById('verifyView');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+
+            if(user) {
+                if(user.uid === MASTER_UID || user.emailVerified) {
+                    loginScreen.style.display = 'none';
+                    appMain.style.display = 'flex';
+                    db.ref(`users/${user.uid}/config`).on('value', snap => {
+                        if(snap.exists()) { config = {...config, ...snap.val()}; syncUI(); }
+                    });
+                    updatePresence(user.uid);
+                } else {
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'none';
+                    verifyView.style.display = 'block';
+                    loginScreen.style.display = 'flex';
+                    appMain.style.display = 'none';
+                }
+            } else {
+                appMain.style.display = 'none';
+                loginScreen.style.display = 'flex';
+                verifyView.style.display = 'none';
+                loginForm.style.display = 'block';
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+
+        // ACCIONES DE AUTENTICACIÓN
+        document.getElementById('btnAuth').onclick = () => {
+            const email = document.getElementById('authEmail').value;
+            const pin = document.getElementById('authPin').value;
+            if(!email || !pin) return alert("LLENE LOS CAMPOS");
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
+        };
+
+        document.getElementById('btnRegister').onclick = () => {
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regCountry').value + document.getElementById('regPhone').value;
+
+            if(!email || !pass || !name) return alert("DATOS INCOMPLETOS");
+
+            auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+                cred.user.sendEmailVerification();
+                db.ref(`users/${cred.user.uid}/profile`).set({
+                    name: name, phone: phone, email: email,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                alert("REGISTRO EXITOSO. VERIFICA TU EMAIL.");
+            }).catch(err => alert("ERROR: " + err.message));
+        };
+
+        document.getElementById('btnResend').onclick = () => {
+            if(currentUser) currentUser.sendEmailVerification().then(() => alert("CORREO REENVIADO"));
+        };
+
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
@@ -160,115 +240,77 @@
                 this.angle = 0; this.isSpinning = false;
             }
             draw() {
-                if(!this.canvas) return;
                 const w = 800, cx = 400, r = 385;
                 this.ctx.clearRect(0,0,w,w);
-                const n = config.prizes.length; const slice = (Math.PI*2)/n;
+                const n = config.prizes.length;
+                const slice = (Math.PI*2)/n;
                 config.prizes.forEach((p, i) => {
-                    this.ctx.save(); this.ctx.beginPath(); this.ctx.moveTo(cx,cx);
-                    this.ctx.fillStyle = (n % 2 !== 0 && i === n - 1) ? config.colorMix : (i % 2 ? config.colorB : config.colorA);
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx,cx);
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
                     this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
-                    this.ctx.fill(); this.ctx.translate(cx,cx);
+                    this.ctx.fill();
+                    this.ctx.translate(cx,cx);
                     this.ctx.rotate(this.angle+i*slice+slice/2);
-                    this.ctx.font = "900 32px Segoe UI"; this.ctx.textAlign="right";
-                    this.ctx.fillStyle = (n % 2 !== 0 && i === n - 1) ? "#FFF" : (i % 2 ? config.colorA : config.colorB);
-                    this.ctx.fillText(p.toUpperCase(), r-40, 10); this.ctx.restore();
+                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.textAlign="right";
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
+                    this.ctx.fillText(p.toUpperCase(), r-40, 10);
+                    this.ctx.restore();
                 });
             }
-            handleSpinClick() { if(this.isSpinning) return; this.executeSpin(); }
+            handleSpinClick() {
+                if(this.isSpinning) return;
+                if(config.modoRegistro && !config.isValidated) { alert("REGISTRO REQUERIDO"); return; }
+                this.executeSpin();
+            }
             executeSpin() {
-                this.isSpinning = true; const total = (Math.PI*2*15) + (Math.random()*Math.PI*2);
+                this.isSpinning = true;
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
                 const duration = 5000; const start = performance.now();
                 const anim = (now) => {
                     const t = Math.min((now-start)/duration, 1);
-                    this.angle = total * (1 - Math.pow(1-t, 4)); this.draw();
-                    if(t < 1) requestAnimationFrame(anim); else this.finish();
+                    const ease = 1 - Math.pow(1-t, 4);
+                    this.angle = total * ease;
+                    this.draw();
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
                 };
                 requestAnimationFrame(anim);
             }
             finish() {
-                this.isSpinning = false; const n = config.prizes.length;
+                this.isSpinning = false;
+                const n = config.prizes.length;
                 const deg = (this.angle * 180 / Math.PI) % 360;
                 const idx = n - 1 - Math.floor(deg/(360/n));
                 const prize = config.prizes[idx];
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleString() });
-            }
-        }
-        const appWheel = new Wheel();
-
-        // CONTROL DE SESIÓN Y VISTAS
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            const overlay = document.getElementById('nexoAuthOverlay');
-            const app = document.getElementById('appMain');
-            const verify = document.getElementById('verifyView');
-            const content = document.getElementById('authContent');
-            const menuBtn = document.getElementById('nexoMenuBtn');
-
-            if(user) {
-                // EXCEPCIÓN MASTER O VERIFICADO
-                if(user.emailVerified || user.uid === MASTER_ID) {
-                    overlay.style.display = 'none'; app.style.display = 'flex';
-                    menuBtn.style.display = 'flex';
-                    document.getElementById('optMaster').style.display = (user.uid === MASTER_ID) ? 'block' : 'none';
-                    appWheel.draw();
-                    db.ref(`users/${user.uid}/config`).on('value', snap => {
-                        if(snap.exists()) { config = {...config, ...snap.val()}; syncUI(); }
-                    });
-                } else {
-                    content.style.display = 'none'; verify.style.display = 'block';
-                }
-            } else {
-                overlay.style.display = 'flex'; app.style.display = 'none';
-                content.style.display = 'block'; verify.style.display = 'none';
-                menuBtn.style.display = 'none';
-            }
-            document.getElementById('loading-overlay').style.display = 'none';
-        });
-
-        // FUNCIONES AUXILIARES
-        function switchAuth(t) {
-            document.getElementById('loginForm').style.display = t === 'login' ? 'block' : 'none';
-            document.getElementById('registerForm').style.display = t === 'register' ? 'block' : 'none';
-            document.querySelectorAll('.auth-tab').forEach((el, i) => el.classList.toggle('active', (t==='login'&&i===0)||(t==='register'&&i===1)));
-        }
-        function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
-        function toggleMenu() { const m = document.getElementById('nexoMenuContent'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
-        function syncUI() { document.querySelectorAll('.dynamic-title').forEach(el => el.innerText = config.tituloSorteo); appWheel.draw(); }
-        
-        async function handleLogin() {
-            const e = document.getElementById('logEmail').value;
-            const p = document.getElementById('logPass').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("ERROR: " + err.message));
-        }
-
-        async function handleRegister() {
-            const p = document.getElementById('regPass').value;
-            if(p !== document.getElementById('regPassConf').value) return alert("PASSWORD NO COINCIDE");
-            try {
-                const res = await auth.createUserWithEmailAndPassword(document.getElementById('regEmail').value, p);
-                await res.user.sendEmailVerification();
-                await db.ref(`users/${res.user.uid}`).set({
-                    perfil: { 
-                        nombre: document.getElementById('regName').value, 
-                        apellido: document.getElementById('regLast').value,
-                        telefono: document.getElementById('regCountry').value + document.getElementById('regPhone').value 
-                    },
-                    config: config, registroFecha: new Date().toLocaleDateString()
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                    if(config.modoRegistro) config.isValidated = false;
+                };
+                db.ref(`users/${currentUser.uid}/history`).push({ 
+                    prize, date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
                 });
-                alert("REGISTRO EXITOSO. VERIFICA TU CORREO.");
-            } catch(err) { alert(err.message); }
+            }
         }
 
-        function handleLogout() { auth.signOut().then(() => location.reload()); }
-        function resendEmail() { auth.currentUser.sendEmailVerification().then(() => alert("REENVIADO")); }
-        function handleReset() { const e = prompt("EMAIL:"); if(e) auth.sendPasswordResetEmail(e).then(() => alert("ENVIADO")); }
+        const appWheel = new Wheel();
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
 
-        // AUTO-DETECCION PAIS
-        fetch('https://ipapi.co/json/').then(r => r.json()).then(d => { if(d.country_calling_code) document.getElementById('regCountry').value = d.country_calling_code; });
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`);
+            db.ref('.info/connected').on('value', s => {
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+            });
+        }
     </script>
 </body>
 </html>
