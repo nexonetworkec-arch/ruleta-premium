@@ -2419,6 +2419,77 @@
         };
     })();
 </script>
+
+   <script>
+    (function() {
+        console.log("NEXO: Inicializando Motor de Reparación de Vouchers...");
+
+        // 1. Aseguramos la función en el objeto Global Window
+        window.generateNexoVoucher = function() {
+            const resultDiv = document.getElementById('vResult');
+            const durationEl = document.getElementById('vDuration');
+            
+            if (!durationEl) {
+                console.error("NEXO: No se encontró el selector de duración.");
+                return;
+            }
+
+            const days = parseInt(durationEl.value);
+            // Generamos un código legible y robusto
+            const code = 'NX-' + Math.random().toString(36).substr(2, 5).toUpperCase() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            
+            if(resultDiv) resultDiv.innerText = "GENERANDO...";
+
+            // 2. Intento de escritura en Firebase con Catch de errores
+            db.ref(`vouchers/${code}`).set({
+                days: days,
+                used: false,
+                createdAt: new Date().toISOString(),
+                createdBy: auth.currentUser ? auth.currentUser.email : 'admin'
+            })
+            .then(() => {
+                console.log("NEXO: Voucher creado con éxito -> " + code);
+                if(resultDiv) {
+                    resultDiv.innerHTML = `
+                        <div style="border: 2px dashed var(--gold); padding: 10px; margin-top: 10px; background: rgba(212,175,55,0.1);">
+                            <small style="display:block; font-size:8px; opacity:0.6;">CÓDIGO GENERADO:</small>
+                            <strong style="font-size:16px;">${code}</strong>
+                            <button onclick="copyVoucherToClipboard('${code}')" style="display:block; margin: 5px auto; font-size:8px; background:var(--gold); border:none; padding:2px 5px; border-radius:3px; cursor:pointer;">COPIAR</button>
+                        </div>
+                    `;
+                }
+                alert("¡CÓDIGO CREADO!\n\n" + code + "\n\nDuración: " + days + " días.");
+            })
+            .catch((error) => {
+                console.error("NEXO: Error al crear voucher:", error);
+                alert("ERROR DE PERMISOS: Asegúrate de que las reglas de Firebase permitan escribir en el nodo 'vouchers'.");
+                if(resultDiv) resultDiv.innerText = "ERROR AL CREAR";
+            });
+        };
+
+        // 3. Función auxiliar para copiar el código al portapapeles
+        window.copyVoucherToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Código copiado al portapapeles");
+            });
+        };
+
+        // 4. Parche de Re-vinculación de Eventos
+        // Esta función busca el botón "CREAR" y le asigna el evento manualmente si el onclick falló
+        setInterval(() => {
+            const btn = document.querySelector('button[onclick="generateNexoVoucher()"]');
+            if (btn && !btn.dataset.fixed) {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    window.generateNexoVoucher();
+                };
+                btn.dataset.fixed = "true";
+                console.log("NEXO: Botón de vouchers vinculado manualmente.");
+            }
+        }, 2000);
+
+    })();
+   </script>
     
 </body>
 </html>
