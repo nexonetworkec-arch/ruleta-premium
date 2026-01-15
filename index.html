@@ -1183,7 +1183,43 @@
     });
 })();
 </script>
+
+    // [RE-INYECCIÓN DE EMERGENCIA: GESTOR DE PUBLICIDAD]
+(function() {
+    const adminPanel = document.getElementById('adminPanel');
+    
+    // Si el panel existe pero no tiene el campo de Ad, lo creamos de nuevo
+    if (adminPanel && !document.getElementById('editAdUrl')) {
+        const adFix = document.createElement('div');
+        adFix.className = 'admin-section';
+        adFix.style.borderTop = "1px solid var(--gold)";
+        adFix.style.marginTop = "20px";
+        adFix.style.paddingTop = "10px";
+        
+        adFix.innerHTML = `
+            <h4 style="font-size: 10px; color: var(--gold); margin-bottom:10px;">
+                🚀 GESTIÓN DE BANNER PUBLICITARIO (PRO)
+            </h4>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="editAdUrl" placeholder="URL de imagen (Ej: https://tudominio.com/banner.jpg)" 
+                       style="width:100%; background:#000; border:1px solid #333; color:white; padding:8px; border-radius:5px; font-size:10px;">
+                <p style="font-size: 8px; color: #777;">
+                    Este banner aparecerá automáticamente mientras la ruleta esté girando.
+                </p>
+            </div>
+        `;
+        
+        // Lo insertamos justo antes del botón de cerrar o al final
+        adminPanel.appendChild(adFix);
+        
+        // Sincronizar con el valor actual en DB si existe
+        if(typeof config !== 'undefined' && config.adUrl) {
+            document.getElementById('editAdUrl').value = config.adUrl;
+        }
+    }
+})();
 </body>
 </html>
+
 
 
