@@ -262,7 +262,7 @@
         };
     </script>
 
-  <style>
+    <style>
     #adminDashboard {
         display: none; position: fixed; inset: 0; background: #000;
         z-index: 9500; padding: 40px; overflow-y: auto; font-family: 'Segoe UI', sans-serif;
@@ -523,10 +523,22 @@
 </script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intl-tel-input.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intl-tel-input.min.js"></script>
-
 <style>
-    /* Estilos Aditivos para el nuevo Login */
+    /* Ajustes para que la lista de países sea visible y elegante */
+    .iti { width: 100%; margin-bottom: 15px; }
+    .iti__country-list { 
+        background-color: #111 !important; 
+        border: 1px solid var(--gold) !important;
+        color: white !important;
+        max-width: 400px;
+    }
+    .iti__country.iti__highlight { background-color: var(--gold-dark) !important; }
+    .iti__country-name, .iti__dial-code { color: #fff !important; font-size: 12px; }
+    
+    /* Forzar que el placeholder sea visible */
+    #regPhone::placeholder { color: rgba(212, 175, 55, 0.4) !important; }
+    
+    /* Estilos del contenedor avanzado */
     #advancedAuthContainer {
         position: fixed; inset: 0; background: var(--bg-color); z-index: 9999;
         display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -542,40 +554,27 @@
         border-bottom: 2px solid #222; font-size: 11px; transition: 0.3s;
     }
     .auth-tab.active { border-color: var(--gold); color: var(--gold); }
-    
     .form-group { margin-bottom: 15px; position: relative; }
-    .form-group label { display: block; font-size: 9px; margin-bottom: 5px; color: var(--gold); }
-    .iti { width: 100%; } /* Ajuste para el selector de países */
-    
-    .pass-toggle {
-        position: absolute; right: 15px; top: 32px; cursor: pointer; font-size: 14px;
-    }
-    .auth-link { 
-        display: block; text-align: center; font-size: 10px; margin-top: 15px; 
-        text-decoration: none; color: rgba(212, 175, 55, 0.6);
-    }
+    .pass-toggle { position: absolute; right: 15px; top: 18px; cursor: pointer; z-index: 10; }
     #registerForm { display: none; }
 </style>
 
 <div id="advancedAuthContainer">
     <div class="auth-card">
         <h2 style="text-align: center; margin-bottom: 30px;">NEXO® BUSINESS</h2>
-        
         <div class="auth-tabs">
             <div id="tabLogin" class="auth-tab active" onclick="switchAuthMode('login')">INICIAR SESIÓN</div>
             <div id="tabReg" class="auth-tab" onclick="switchAuthMode('reg')">REGISTRO</div>
         </div>
 
         <div id="loginForm">
-            <div class="form-group">
-                <input type="email" id="advEmail" class="no-caps" placeholder="CORREO ELECTRÓNICO" style="width:100%">
-            </div>
+            <div class="form-group"><input type="email" id="advEmail" class="no-caps" placeholder="CORREO ELECTRÓNICO" style="width:100%"></div>
             <div class="form-group">
                 <input type="password" id="advPass" class="no-caps" placeholder="CONTRASEÑA" style="width:100%">
                 <span class="pass-toggle" onclick="togglePass('advPass')">👁️</span>
             </div>
             <button class="btn btn-primary" style="width:100%" onclick="handleAdvLogin()">ENTRAR</button>
-            <a href="#" class="auth-link" onclick="handleResetPass()">¿OLVIDASTE TU CONTRASEÑA?</a>
+            <a href="#" class="auth-link" style="display:block; text-align:center; font-size:10px; margin-top:15px; color:var(--gold);" onclick="handleResetPass()">¿OLVIDASTE TU CONTRASEÑA?</a>
         </div>
 
         <div id="registerForm">
@@ -584,35 +583,27 @@
                 <div class="form-group"><input type="text" id="regLast" placeholder="APELLIDO" style="width:100%"></div>
             </div>
             <div class="form-group">
-                <input type="tel" id="regPhone" style="width:100%">
+                <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%">
             </div>
-            <div class="form-group">
-                <input type="email" id="regEmail" class="no-caps" placeholder="CORREO" style="width:100%">
-            </div>
-            <div class="form-group">
-                <input type="email" id="regEmailConf" class="no-caps" placeholder="CONFIRMAR CORREO" style="width:100%">
-            </div>
+            <div class="form-group"><input type="email" id="regEmail" class="no-caps" placeholder="CORREO" style="width:100%"></div>
+            <div class="form-group"><input type="email" id="regEmailConf" class="no-caps" placeholder="CONFIRMAR CORREO" style="width:100%"></div>
             <div class="form-group">
                 <input type="password" id="regPass" class="no-caps" placeholder="CONTRASEÑA" style="width:100%">
                 <span class="pass-toggle" onclick="togglePass('regPass')">👁️</span>
             </div>
-            <div class="form-group">
-                <input type="password" id="regPassConf" class="no-caps" placeholder="VERIFICAR CONTRASEÑA" style="width:100%">
-            </div>
+            <div class="form-group"><input type="password" id="regPassConf" class="no-caps" placeholder="VERIFICAR CONTRASEÑA" style="width:100%"></div>
             <button class="btn btn-primary" style="width:100%" onclick="handleAdvRegister()">CREAR CUENTA</button>
-            <a href="#" class="auth-link" onclick="handleResendVerification()">REENVIAR ENLACE DE ACTIVACIÓN</a>
         </div>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intl-tel-input.min.js"></script>
 <script>
-    // Inicializar selector de países
+    // INICIALIZACIÓN DEL SELECTOR DE PAÍSES CON LISTA DESPLEGABLE COMPLETA
     const phoneInput = window.intlTelInput(document.getElementById("regPhone"), {
-        initialCountry: "auto",
-        geoIpLookup: callback => {
-            fetch("https://ipapi.co/json").then(res => res.json()).then(data => callback(data.country_code));
-        },
-        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+        separateDialCode: true, // Esto muestra el código del país fuera del input
+        preferredCountries: ["ec", "co", "mx", "us"],
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     });
 
     function switchAuthMode(mode) {
@@ -627,25 +618,16 @@
         input.type = input.type === 'password' ? 'text' : 'password';
     }
 
-    // Ocultar login original y mostrar el avanzado
+    // Lógica de autenticación (se mantiene conectada al "Cerebro")
     auth.onAuthStateChanged(user => {
         const container = document.getElementById('advancedAuthContainer');
         if(user) {
             container.style.display = 'none';
-            // Sincronizar estado online
-            db.ref(`users/${user.uid}/status`).set({state: 'online', last_login: new Date().toISOString()});
+            db.ref(`users/${user.uid}/status`).set({state: 'online'});
         } else {
             container.style.display = 'flex';
         }
     });
-
-    async function handleAdvLogin() {
-        const e = document.getElementById('advEmail').value;
-        const p = document.getElementById('advPass').value;
-        try {
-            await auth.signInWithEmailAndPassword(e, p);
-        } catch(err) { alert("ERROR: " + err.message); }
-    }
 
     async function handleAdvRegister() {
         const name = document.getElementById('regName').value;
@@ -654,34 +636,34 @@
         const emailConf = document.getElementById('regEmailConf').value;
         const pass = document.getElementById('regPass').value;
         const passConf = document.getElementById('regPassConf').value;
-        const phone = phoneInput.getNumber();
+        const fullPhone = phoneInput.getNumber(); // Captura código + número
 
         if(email !== emailConf) return alert("LOS CORREOS NO COINCIDEN");
         if(pass !== passConf) return alert("LAS CONTRASEÑAS NO COINCIDEN");
-        if(!name || !last || !phone) return alert("COMPLETE TODOS LOS CAMPOS");
+        if(!name || !last || !phoneInput.isValidNumber()) return alert("DATOS O TELÉFONO INVÁLIDOS");
 
         try {
             const res = await auth.createUserWithEmailAndPassword(email, pass);
             await res.user.sendEmailVerification();
             await db.ref(`users/${res.user.uid}/perfil`).set({
                 nombre: `${name} ${last}`,
-                telefono: phone,
+                telefono: fullPhone,
                 registroFecha: new Date().toLocaleDateString()
             });
-            alert("REGISTRO EXITOSO. POR FAVOR VERIFIQUE SU CORREO.");
+            alert("REGISTRO EXITOSO. VERIFIQUE SU CORREO.");
             switchAuthMode('login');
         } catch(err) { alert("ERROR: " + err.message); }
     }
 
-    function handleResetPass() {
-        const email = prompt("INGRESE SU CORREO PARA RECUPERAR:");
-        if(email) auth.sendPasswordResetEmail(email).then(() => alert("ENLACE ENVIADO"));
+    async function handleAdvLogin() {
+        const e = document.getElementById('advEmail').value;
+        const p = document.getElementById('advPass').value;
+        auth.signInWithEmailAndPassword(e, p).catch(err => alert("ERROR: " + err.message));
     }
 
-    function handleResendVerification() {
-        const user = auth.currentUser;
-        if(user) user.sendEmailVerification().then(() => alert("ENLACE REENVIADO"));
-        else alert("POR FAVOR INICIE SESIÓN PRIMERO");
+    function handleResetPass() {
+        const email = prompt("INGRESE CORREO DE RECUPERACIÓN:");
+        if(email) auth.sendPasswordResetEmail(email).then(() => alert("CORREO ENVIADO"));
     }
 </script>
 </body>
