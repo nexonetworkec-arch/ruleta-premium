@@ -263,36 +263,33 @@
     </script>
 
     <style>
-    /* 1. NÚCLEO VISUAL DEL DASHBOARD */
     #adminDashboard {
         display: none; position: fixed; inset: 0; background: #000;
-        z-index: 9500; padding: 40px; overflow-y: auto; color: #fff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        z-index: 9500; padding: 40px; overflow-y: auto; font-family: 'Segoe UI', sans-serif;
     }
-    
-    /* GRILLA DE KPIs MÉTRICOS */
     .admin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
     .kpi-card { 
         background: var(--card-bg); border: 1px solid var(--gold-dark); 
         padding: 25px; text-align: center; border-radius: 20px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .kpi-title { font-size: 10px; letter-spacing: 2px; color: var(--gold); font-weight: 900; display: block; }
-    .kpi-value { font-size: 38px; color: #fff; font-weight: 900; margin-top: 10px; display: block; }
+    .kpi-title { font-size: 10px; letter-spacing: 2px; color: var(--gold); font-weight: 900; }
+    .kpi-value { font-size: 38px; display: block; margin-top: 10px; color: #fff; font-weight: 900; }
 
-    /* TABLA MAESTRA DE USUARIOS */
     .admin-table-container { 
-        background: var(--card-bg); border-radius: 25px; border: 1px solid var(--gold-mix); 
-        padding: 25px; margin-bottom: 30px;
+        background: var(--card-bg); border-radius: 25px; 
+        border: 1px solid var(--gold-mix); padding: 25px; margin-bottom: 30px;
     }
     .admin-table { width: 100%; border-collapse: collapse; }
-    .admin-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--gold-mix); color: var(--gold); font-size: 11px; }
+    .admin-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--gold-mix); font-size: 11px; color: var(--gold); }
     .admin-table td { padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 13px; color: #ccc; }
-    .row-admin-master { background: rgba(212, 175, 55, 0.1); font-weight: 900; color: var(--gold) !important; }
+    .row-admin-master td { color: var(--gold) !important; font-weight: 900; background: rgba(212, 175, 55, 0.05); }
 
-    /* CONSTRUCTORES (MENSAJES Y LICENCIAS) */
-    .admin-module-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-    .admin-box { background: var(--card-bg); border: 2px solid var(--gold-dark); border-radius: 30px; padding: 35px; }
+    .admin-box-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .msg-builder, .license-builder {
+        background: var(--card-bg); border: 2px solid var(--gold-dark);
+        border-radius: 30px; padding: 35px;
+    }
     .admin-field { width: 100%; margin-bottom: 20px; }
     .admin-field label { display: block; font-size: 10px; margin-bottom: 8px; color: var(--gold); font-weight: 900; }
     .admin-control { 
@@ -300,82 +297,75 @@
         padding: 15px; border-radius: 12px; color: #fff; font-family: inherit;
     }
 
-    /* ELEMENTOS DE ACCIÓN */
-    .btn-admin-action {
+    .btn-admin-view {
         background: transparent; border: 1px solid var(--gold); color: var(--gold);
-        padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 10px;
-        transition: 0.3s; text-transform: uppercase;
+        padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 10px; transition: 0.3s;
     }
-    .btn-admin-action:hover { background: var(--gold); color: #000; }
+    .btn-admin-view:hover { background: var(--gold); color: #000; }
     .close-admin { position: fixed; top: 30px; right: 30px; cursor: pointer; font-size: 24px; color: var(--gold); z-index: 9600; }
 
-    /* MODAL DE EDICIÓN */
     #userModalDetail {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
         z-index: 10000; align-items: center; justify-content: center; padding: 20px;
     }
     .user-card { background: #000; border: 2px solid var(--gold); border-radius: 30px; width: 100%; max-width: 450px; padding: 35px; }
-    .switch-group { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 11px; }
+    .switch-group { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 11px; text-transform: uppercase; }
 </style>
 
 <div id="adminDashboard">
     <div class="close-admin" onclick="document.getElementById('adminDashboard').style.display='none'">✕</div>
-    <h1 style="font-size: 22px; margin-bottom: 40px; letter-spacing: 2px;">NEXO® BUSINESS PRO <span style="font-weight:100; color:var(--gold-dark)">| MASTER CONTROL</span></h1>
+    <h1 style="font-size: 24px; margin-bottom: 40px;">NEXO® BUSINESS PRO <span style="font-weight:100; color:var(--gold-dark)">| ADMIN</span></h1>
 
     <div class="admin-grid">
         <div class="kpi-card"><span class="kpi-title">USUARIOS REGISTRADOS</span><span id="kpi-total" class="kpi-value">0</span></div>
         <div class="kpi-card"><span class="kpi-title">USUARIOS ONLINE</span><span id="kpi-online" class="kpi-value">0</span></div>
-        <div class="kpi-card"><span class="kpi-title">CADUCIDAD PRÓXIMA</span><span id="kpi-expiring" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">EXPIRACIÓN PRÓXIMA</span><span id="kpi-expiring" class="kpi-value">0</span></div>
     </div>
 
     <div class="admin-table-container">
-        <h3 style="margin-top:0; font-size:14px; margin-bottom:20px; color:var(--gold)">GESTIÓN ESTATAL DE USUARIOS</h3>
+        <h3 style="margin-top:0; font-size:14px; margin-bottom:20px;">GESTIÓN ESTATAL DE USUARIOS</h3>
         <table class="admin-table">
             <thead>
-                <tr>
-                    <th>USUARIO</th>
-                    <th>UID</th>
-                    <th>REGISTRO</th>
-                    <th>SUSCRIPCIÓN</th>
-                    <th>ACCIONES</th>
-                </tr>
+                <tr><th>USUARIO</th><th>UID</th><th>REGISTRO</th><th>SUSCRIPCIÓN</th><th>ACCIONES</th></tr>
             </thead>
             <tbody id="adminUserTable"></tbody>
         </table>
     </div>
 
-    <div class="admin-module-flex">
-        <div class="admin-box">
-            <h3 style="margin-top:0; font-size:13px; margin-bottom:25px;">COMUNICACIÓN GLOBAL</h3>
+    <div class="admin-box-flex">
+        <div class="msg-builder">
+            <h3 style="margin-top:0; font-size:14px; margin-bottom:25px;">COMUNICACIÓN GLOBAL</h3>
             <div class="admin-field">
-                <label>FORMATO Y SEGMENTO</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <select id="admMsgType" class="admin-control" onchange="updateMsgUI()">
-                        <option value="text">TEXTO</option>
-                        <option value="hybrid">HÍBRIDO (IMG+TXT)</option>
-                    </select>
-                    <select id="admMsgTarget" class="admin-control">
-                        <option value="all">TODOS</option>
-                        <option value="gold">GOLD</option>
-                        <option value="platinum">PLATINUM</option>
-                    </select>
-                </div>
+                <label>FORMATO DE MENSAJE</label>
+                <select id="admMsgType" class="admin-control" onchange="updateMsgUI()">
+                    <option value="text">SOLO TEXTO</option>
+                    <option value="image">SOLO IMAGEN</option>
+                    <option value="hybrid">TEXTO + IMAGEN</option>
+                </select>
             </div>
             <div class="admin-field" id="admMsgTextGroup">
                 <label>MENSAJE</label>
-                <textarea id="admMsgText" class="admin-control" rows="3" placeholder="Escriba aquí..."></textarea>
+                <textarea id="admMsgText" class="admin-control" rows="4" placeholder="ESCRIBA EL COMUNICADO..."></textarea>
             </div>
             <div class="admin-field" id="admMsgImgGroup" style="display:none;">
-                <label>URL IMAGEN</label>
+                <label>URL DE IMAGEN</label>
                 <input type="text" id="admMsgImg" class="admin-control" placeholder="https://...">
             </div>
-            <button class="btn btn-primary" style="width:100%" onclick="broadcastNexoMessage()">ENVIAR COMUNICADO</button>
+            <div class="admin-field">
+                <label>SEGMENTACIÓN</label>
+                <select id="admMsgTarget" class="admin-control">
+                    <option value="all">TODOS LOS NIVELES</option>
+                    <option value="gold">SOLO GOLD</option>
+                    <option value="platinum">SOLO PLATINUM</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="broadcastNexoMessage()">ENVIAR AHORA</button>
         </div>
 
-        <div class="admin-box">
-            <h3 style="margin-top:0; font-size:13px; margin-bottom:25px;">GENERADOR DE LICENCIAS</h3>
+        <div class="license-builder">
+            <h3 style="margin-top:0; font-size:14px; margin-bottom:25px;">GENERADOR DE LICENCIAS</h3>
             <div class="admin-field">
-                <label>NIVEL DE SUSCRIPCIÓN</label>
+                <label>NIVEL DE ACCESO</label>
                 <select id="licLevel" class="admin-control">
                     <option value="basic">BASIC</option>
                     <option value="gold">GOLD</option>
@@ -384,69 +374,67 @@
             </div>
             <div class="admin-field">
                 <label>DURACIÓN (DÍAS)</label>
-                <input type="number" id="licDays" class="admin-control" placeholder="Ej: 30, 90, 365">
+                <input type="number" id="licDays" class="admin-control" placeholder="Ej: 30">
             </div>
-            <button class="btn btn-primary" style="width:100%" onclick="uiGenerateLicense()">GENERAR CÓDIGO ÚNICO</button>
+            <button class="btn btn-primary" style="width:100%" onclick="uiGenerateLicense()">GENERAR CÓDIGO</button>
         </div>
     </div>
 </div>
 
 <div id="userModalDetail">
     <div class="user-card">
-        <h2 id="detName" style="color:var(--gold); margin-top:0; margin-bottom:5px;">USUARIO</h2>
+        <h2 id="detName" style="color:var(--gold); margin-top:0;">USUARIO</h2>
         <p id="detUID" style="font-size:9px; opacity:0.5; margin-bottom:25px; font-family:monospace;"></p>
-        
         <div style="background:#080808; padding:20px; border-radius:15px; border:1px solid #222;">
-            <label style="font-size:9px; color:var(--gold); font-weight:bold;">NIVEL DE ACCESO MANUAL</label>
+            <label style="font-size:9px; color:var(--gold); font-weight:bold;">NIVEL DE SUSCRIPCIÓN</label>
             <select id="detLevel" class="admin-control" style="margin-top:8px; margin-bottom:20px;" onchange="autoCheckPerms()">
                 <option value="basic">BASIC</option>
                 <option value="gold">GOLD</option>
                 <option value="platinum">PLATINUM</option>
             </select>
-            
             <div class="switch-group"><span>EDITAR PREMIOS</span><input type="checkbox" id="perm_prizes"></div>
             <div class="switch-group"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="perm_colors"></div>
             <div class="switch-group"><span>MODO REGISTRO</span><input type="checkbox" id="perm_reg"></div>
             <div class="switch-group"><span>VER HISTORIAL</span><input type="checkbox" id="perm_hist"></div>
         </div>
-        
         <button class="btn btn-primary" style="width:100%; margin-top:25px;" onclick="saveUserAdmin()">GUARDAR CAMBIOS</button>
         <button class="btn" style="width:100%; margin-top:10px; background:transparent; border:none;" onclick="document.getElementById('userModalDetail').style.display='none'">CANCELAR</button>
     </div>
 </div>
 
 <script>
-    const MASTER_ID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
-    let selectedUserForEdit = "";
+    const MASTER_ADMIN_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+    let activeUserEdit = "";
 
-    // ÚNICO PUNTO DE ENTRADA AL DASHBOARD
     auth.onAuthStateChanged(user => {
-        if(user && user.uid === MASTER_ID) {
-            const adminBtn = document.createElement('div');
-            adminBtn.innerHTML = `<button class="btn" style="position:fixed; bottom:20px; left:20px; z-index:9000; background:rgba(0,0,0,0.85); border:1px solid var(--gold); font-size:9px; letter-spacing:1px;">MASTER PANEL</button>`;
-            adminBtn.onclick = () => {
-                document.getElementById('adminDashboard').style.display = 'block';
-                startAdminSync();
-            };
-            document.body.appendChild(adminBtn);
+        if(user && user.uid === MASTER_ADMIN_UID) {
+            setupAdminEntry();
+            startAdminRealtimeSync();
         }
     });
 
-    function startAdminSync() {
+    function setupAdminEntry() {
+        if(document.getElementById('masterBtn')) return;
+        const btn = document.createElement('button');
+        btn.id = 'masterBtn'; btn.className = "btn";
+        btn.style = "position:fixed; bottom:20px; left:20px; z-index:9000; background:rgba(0,0,0,0.8); border:1px solid var(--gold); font-size:9px;";
+        btn.innerText = "PANEL CONTROL";
+        btn.onclick = () => document.getElementById('adminDashboard').style.display = 'block';
+        document.body.appendChild(btn);
+    }
+
+    function startAdminRealtimeSync() {
         db.ref('users').on('value', snap => {
             const data = snap.val();
-            renderStats(data);
-            renderTable(data);
+            renderAdminStats(data);
+            renderAdminTable(data);
         });
     }
 
-    function renderStats(users) {
-        let t = 0, o = 0, e = 0;
-        const now = Date.now();
-        const limit = 7 * 24 * 60 * 60 * 1000;
+    function renderAdminStats(users) {
+        let t = 0, o = 0, e = 0; const now = Date.now(); const limit = 7 * 24 * 60 * 60 * 1000;
         for(let id in users) {
-            t++;
-            if(users[id].status?.state === 'online') o++;
+            t++; if(users[id].status?.state === 'online') o++;
             if(users[id].expiryDate && (users[id].expiryDate - now) < limit) e++;
         }
         document.getElementById('kpi-total').innerText = t;
@@ -454,37 +442,24 @@
         document.getElementById('kpi-expiring').innerText = e;
     }
 
-    function renderTable(users) {
-        const table = document.getElementById('adminUserTable');
-        table.innerHTML = '';
-
-        // Fila Admin Maestro
-        const mRow = document.createElement('tr');
-        mRow.className = 'row-admin-master';
-        mRow.innerHTML = `<td>NEXO MASTER (TÚ)</td><td>${MASTER_ID}</td><td>SISTEMA</td><td>UNLIMITED</td><td>---</td>`;
+    function renderAdminTable(users) {
+        const table = document.getElementById('adminUserTable'); table.innerHTML = '';
+        const mRow = document.createElement('tr'); mRow.className = 'row-admin-master';
+        mRow.innerHTML = `<td>NEXO MASTER (ADMIN)</td><td style="font-size:9px; opacity:0.5;">${MASTER_ADMIN_UID}</td><td>SISTEMA</td><td>UNLIMITED</td><td><button class="btn-admin-view" onclick="alert('ACCESO TOTAL')">GESTIONAR</button></td>`;
         table.appendChild(mRow);
 
         for(let id in users) {
-            if(id === MASTER_ID) continue;
-            const u = users[id];
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${(u.perfil?.nombre || 'USUARIO').toUpperCase()}</td>
-                <td style="font-family:monospace; font-size:9px;">${id}</td>
-                <td>${u.registroFecha || '---'}</td>
-                <td>${(u.config?.tipoSub || 'BASIC').toUpperCase()}</td>
-                <td><button class="btn-admin-action" onclick="openEditModal('${id}')">GESTIONAR</button></td>
-            `;
+            if(id === MASTER_ADMIN_UID) continue;
+            const u = users[id]; const row = document.createElement('tr');
+            row.innerHTML = `<td>${(u.perfil?.nombre || 'USUARIO').toUpperCase()}</td><td style="font-size:9px; opacity:0.5;">${id}</td><td>${u.registroFecha || '---'}</td><td>${(u.config?.tipoSub || 'BASIC').toUpperCase()}</td><td><button class="btn-admin-view" onclick="showUserCard('${id}')">GESTIONAR</button></td>`;
             table.appendChild(row);
         }
     }
 
-    async function openEditModal(uid) {
-        selectedUserForEdit = uid;
-        const s = await db.ref(`users/${uid}`).once('value');
-        const u = s.val();
+    async function showUserCard(uid) {
+        activeUserEdit = uid; const s = await db.ref(`users/${uid}`).once('value'); const u = s.val();
         document.getElementById('detName').innerText = (u.perfil?.nombre || 'USUARIO').toUpperCase();
-        document.getElementById('detUID').innerText = "ID: " + uid;
+        document.getElementById('detUID').innerText = "UID: " + uid;
         document.getElementById('detLevel').value = u.config?.tipoSub || 'basic';
         document.getElementById('perm_prizes').checked = u.config?.permisos?.editPrizes || false;
         document.getElementById('perm_colors').checked = u.config?.permisos?.editColors || false;
@@ -509,34 +484,28 @@
             "config/permisos/modeRegistry": document.getElementById('perm_reg').checked,
             "config/permisos/viewHistory": document.getElementById('perm_hist').checked
         };
-        db.ref(`users/${selectedUserForEdit}`).update(up).then(() => {
-            alert("USUARIO ACTUALIZADO");
-            document.getElementById('userModalDetail').style.display = 'none';
+        db.ref(`users/${activeUserEdit}`).update(up).then(() => {
+            alert("USUARIO ACTUALIZADO"); document.getElementById('userModalDetail').style.display = 'none';
         });
     }
 
     function updateMsgUI() {
         const type = document.getElementById('admMsgType').value;
-        document.getElementById('admMsgImgGroup').style.display = type === 'hybrid' ? 'block' : 'none';
+        document.getElementById('admMsgTextGroup').style.display = type === 'image' ? 'none' : 'block';
+        document.getElementById('admMsgImgGroup').style.display = type === 'text' ? 'none' : 'block';
     }
 
     function uiGenerateLicense() {
-        const l = document.getElementById('licLevel').value;
-        const d = document.getElementById('licDays').value;
-        if(!d) return alert("Indique los días");
+        const l = document.getElementById('licLevel').value; const d = document.getElementById('licDays').value;
+        if(!d) return alert("Indique días");
         const code = `NEXO-${l.toUpperCase()}-${Math.random().toString(36).substr(2,7).toUpperCase()}`;
-        db.ref('licenses/'+code).set({ level:l, days:parseInt(d), used:false, createdAt: firebase.database.ServerValue.TIMESTAMP })
+        db.ref('licenses/'+code).set({level:l, days:parseInt(d), used:false, createdAt: firebase.database.ServerValue.TIMESTAMP})
           .then(() => alert("LICENCIA GENERADA: " + code));
     }
 
     function broadcastNexoMessage() {
-        const m = { 
-            text: document.getElementById('admMsgText').value, 
-            image: document.getElementById('admMsgImg').value, 
-            target: document.getElementById('admMsgTarget').value,
-            time: firebase.database.ServerValue.TIMESTAMP
-        };
-        db.ref('global_announcements').push(m).then(() => alert("COMUNICADO DISTRIBUIDO"));
+        const msg = { text: document.getElementById('admMsgText').value, image: document.getElementById('admMsgImg').value, target: document.getElementById('admMsgTarget').value, time: firebase.database.ServerValue.TIMESTAMP };
+        db.ref('global_announcements').push(msg).then(() => alert("COMUNICADO ENVIADO"));
     }
 </script>
 </body>
