@@ -1083,6 +1083,115 @@
 
     })();
 </script>
+
+    <style>
+    /* Contenedor Principal del Dashboard */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    /* Tarjetas de Acceso Rápido */
+    .menu-card {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .menu-card:hover {
+        border-color: var(--gold);
+        background: rgba(212, 175, 55, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    .menu-card i { font-size: 24px; color: var(--gold); }
+    .menu-card span { font-size: 10px; font-weight: bold; letter-spacing: 1px; color: #fff; }
+
+    /* Estilo para las secciones ahora convertidas en Tarjetas de Contenido */
+    .admin-section {
+        border: 1px solid #222;
+        background: #0a0a0a;
+        padding: 25px;
+        border-radius: 30px;
+        margin-bottom: 30px;
+        scroll-margin-top: 20px; /* Para que al navegar no quede pegado al techo */
+    }
+
+    .admin-section h3 {
+        border-left: 3px solid var(--gold);
+        padding-left: 15px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        font-size: 16px;
+    }
+
+    /* Ocultar scrollbar pero mantener funcionalidad */
+    #adminPanel::-webkit-scrollbar { width: 0px; }
+</style>
+
+<script>
+    (function() {
+        // 1. Crear el Menú de Tarjetas
+        const dashboardMenu = document.createElement('div');
+        dashboardMenu.className = 'dashboard-grid';
+        dashboardMenu.innerHTML = `
+            <div class="menu-card" onclick="document.getElementById('nexoProfileCard').scrollIntoView({behavior:'smooth'})">
+                <i>👤</i><span>PERFIL</span>
+            </div>
+            <div class="menu-card" onclick="document.querySelector('.admin-section:nth-of-type(1)').scrollIntoView({behavior:'smooth'})">
+                <i>⚙️</i><span>CONTROLES</span>
+            </div>
+            <div class="menu-card" onclick="document.getElementById('stockListContainer').parentElement.scrollIntoView({behavior:'smooth'})">
+                <i>🎯</i><span>PROBABILIDAD</span>
+            </div>
+            <div class="menu-card" onclick="document.querySelector('.admin-section:last-of-type').scrollIntoView({behavior:'smooth'})">
+                <i>🎨</i><span>BRANDING</span>
+            </div>
+            <div class="menu-card" onclick="document.getElementById('tableWinners').parentElement.parentElement.scrollIntoView({behavior:'smooth'})">
+                <i>📊</i><span>HISTORIAL</span>
+            </div>
+            <div class="menu-card" onclick="window.open('https://firebase.google.com', '_blank')">
+                <i>☁️</i><span>CLOUD DB</span>
+            </div>
+        `;
+
+        // 2. Insertar el Menú al inicio del Panel (después del header)
+        const injectMenu = () => {
+            const adminPanel = document.getElementById('adminPanel');
+            const header = adminPanel.querySelector('.admin-header');
+            if (header) {
+                header.insertAdjacentElement('afterend', dashboardMenu);
+            }
+        };
+
+        // 3. Organizar todas las secciones previas como "Tarjetas de Módulo"
+        const organizeSections = () => {
+            const sections = document.querySelectorAll('.admin-section');
+            sections.forEach(sec => {
+                sec.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+                sec.style.border = "1px solid #1a1a1a";
+            });
+        };
+
+        // Ejecutar organización
+        setTimeout(() => {
+            injectMenu();
+            organizeSections();
+        }, 1200);
+
+    })();
+</script>
     
 </body>
 </html>
