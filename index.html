@@ -938,6 +938,151 @@
         };
     })();
 </script>
+
+    <style>
+    .user-profile-card {
+        background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+        border: 1px solid var(--gold-dark);
+        border-radius: 25px;
+        padding: 25px;
+        margin-bottom: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .profile-header { display: flex; align-items: center; gap: 20px; }
+    .profile-avatar {
+        width: 70px; height: 70px; border-radius: 50%;
+        background: var(--gold); display: flex; align-items: center;
+        justify-content: center; font-size: 30px; border: 2px solid #000;
+    }
+    .profile-info h4 { margin: 0; font-size: 20px; color: var(--gold); }
+    .profile-info p { margin: 2px 0; font-size: 11px; opacity: 0.6; font-family: monospace; }
+    
+    .badge-tier {
+        display: inline-block; padding: 4px 12px; border-radius: 10px;
+        font-size: 10px; font-weight: bold; margin-top: 5px;
+        background: var(--gold); color: #000;
+    }
+
+    .deep-stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px; border-top: 1px solid #333; pt: 15px; margin-top: 10px;
+    }
+    .deep-stat-item { text-align: left; }
+    .deep-stat-label { font-size: 9px; opacity: 0.5; display: block; }
+    .deep-stat-value { font-size: 14px; color: #fff; font-weight: 500; }
+</style>
+
+<script>
+    (function() {
+        // Función para inyectar la Tarjeta de Usuario en el Panel
+        function injectUserProfile() {
+            const adminPanel = document.getElementById('adminPanel');
+            const oldHeader = adminPanel.querySelector('.admin-header');
+            
+            // Creamos la nueva tarjeta de perfil
+            const profileCard = document.createElement('div');
+            profileCard.className = 'user-profile-card';
+            profileCard.id = 'nexoProfileCard';
+            
+            // Estructura de la tarjeta
+            profileCard.innerHTML = `
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profInitials">N</div>
+                    <div class="profile-info">
+                        <h4 id="profName">CARGANDO...</h4>
+                        <p id="profUid">UID: -</p>
+                        <p id="profEmail">EMAIL: -</p>
+                        <span class="badge-tier" id="profTier">PLAN PREMIUM</span>
+                    </div>
+                </div>
+                <div class="deep-stats-grid">
+                    <div class="deep-stat-item">
+                        <span class="deep-stat-label">REGISTRO</span>
+                        <span class="deep-stat-value" id="profJoined">-</span>
+                    </div>
+                    <div class="deep-stat-item">
+                        <span class="deep-stat-label">ANTIGÜEDAD</span>
+                        <span class="deep-stat-value" id="profAge">-</span>
+                    </div>
+                    <div class="deep-stat-item">
+                        <span class="deep-stat-label">TOTAL LEADS</span>
+                        <span class="deep-stat-value" id="profLeads">0</span>
+                    </div>
+                    <div class="deep-stat-item">
+                        <span class="deep-stat-label">EFECTIVIDAD</span>
+                        <span class="deep-stat-value" id="profEff">0%</span>
+                    </div>
+                    <div class="deep-stat-item">
+                        <span class="deep-stat-label">ÚLTIMA ACTIVIDAD</span>
+                        <span class="deep-stat-value" id="profLastAct">-</span>
+                    </div>
+                </div>
+            `;
+
+            // Insertamos la tarjeta después del header original
+            if (oldHeader) {
+                oldHeader.insertAdjacentElement('afterend', profileCard);
+            }
+        }
+
+        // Función para actualizar los datos en tiempo real
+        function updateProfileData() {
+            const user = auth.currentUser;
+            if(!user) return;
+
+            // Datos Básicos de Auth
+            document.getElementById('profName').innerText = user.displayName || "USUARIO NEXO";
+            document.getElementById('profUid').innerText = `UID: ${user.uid}`;
+            document.getElementById('profEmail').innerText = `EMAIL: ${user.email}`;
+            document.getElementById('profInitials').innerText = (user.displayName || "N").charAt(0).toUpperCase();
+
+            // Datos de la DB
+            db.ref(`users/${user.uid}`).once('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+
+                // 1. Fecha de Registro
+                const joinedDate = new Date(user.metadata.creationTime);
+                document.getElementById('profJoined').innerText = joinedDate.toLocaleDateString();
+                
+                // 2. Antigüedad (Días)
+                const diffTime = Math.abs(new Date() - joinedDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                document.getElementById('profAge').innerText = `${diffDays} DÍAS`;
+
+                // 3. Estadísticas de Leads
+                const leadsCount = data.leads ? Object.keys(data.leads).length : 0;
+                const spinsCount = data.history ? Object.keys(data.history).length : 0;
+                document.getElementById('profLeads').innerText = leadsCount;
+
+                // 4. Efectividad (Leads vs Giros)
+                const eff = spinsCount > 0 ? ((leadsCount / spinsCount) * 100).toFixed(1) : 0;
+                document.getElementById('profEff').innerText = `${eff}%`;
+
+                // 5. Suscripción
+                if(data.license && data.license.tier) {
+                    document.getElementById('profTier').innerText = `PLAN ${data.license.tier.toUpperCase()}`;
+                }
+
+                // 6. Última actividad (del último registro en el historial)
+                if(data.history) {
+                    const lastEntry = Object.values(data.history).pop();
+                    document.getElementById('profLastAct').innerText = lastEntry.date.split(',')[0];
+                }
+            });
+        }
+
+        // Ejecutar inyección al cargar
+        setTimeout(() => {
+            injectUserProfile();
+            // Cada vez que se abra el panel, actualizar datos
+            document.getElementById('btnOpenAdmin').addEventListener('click', updateProfileData);
+        }, 1000);
+
+    })();
+</script>
     
 </body>
 </html>
