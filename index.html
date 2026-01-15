@@ -493,6 +493,127 @@
           .then(() => alert("COMUNICADO DISTRIBUIDO EXITOSAMENTE"));
     }
 </script>
+
+    <style>
+    /* MODAL DE USUARIO TIPO TARJETA */
+    #userModalDetail {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        z-index: 10000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .user-card {
+        background: var(--card-bg); border: 2px solid var(--gold); border-radius: 30px;
+        width: 100%; max-width: 500px; padding: 30px; position: relative;
+    }
+    .stat-box { background: #080808; border: 1px solid #222; border-radius: 15px; padding: 15px; margin-top: 15px; }
+    .switch-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    
+    /* GENERADOR DE LICENCIAS */
+    .license-section { margin-top: 30px; border-top: 1px solid var(--gold-mix); pt: 20px; }
+    .license-code { font-family: monospace; font-size: 18px; color: var(--gold); background: #111; padding: 10px; display: block; text-align: center; border: 1px dashed var(--gold); margin: 10px 0; }
+</style>
+
+<div id="userModalDetail">
+    <div class="user-card">
+        <div class="close-admin" onclick="document.getElementById('userModalDetail').style.display='none'">✕</div>
+        <div id="userHeaderDetail">
+            <h2 id="detailName" style="color:var(--gold); margin-bottom:5px;">NOMBRE USUARIO</h2>
+            <p id="detailUID" style="font-size:9px; opacity:0.5; margin-bottom:20px;">UID: ---</p>
+        </div>
+
+        <div class="stat-box">
+            <label style="font-size:10px; color:var(--gold)">NIVEL DE SUSCRIPCIÓN (MANUAL)</label>
+            <select id="editSubLevel" class="admin-control" style="margin-bottom:15px;" onchange="updateUserPermissions()">
+                <option value="basic">BASIC</option>
+                <option value="gold">GOLD</option>
+                <option value="platinum">PLATINUM</option>
+            </select>
+            
+            <div class="switch-group"><span>EDITAR PREMIOS</span><input type="checkbox" id="p_editPrizes"></div>
+            <div class="switch-group"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="p_editColors"></div>
+            <div class="switch-group"><span>MODO REGISTRO</span><input type="checkbox" id="p_modeRegistry"></div>
+            <div class="switch-group"><span>VER HISTORIAL</span><input type="checkbox" id="p_viewHistory"></div>
+        </div>
+
+        <div class="stat-box">
+            <h4 style="margin:0 0 10px 0; font-size:12px;">ESTADÍSTICAS DE USO</h4>
+            <p style="font-size:11px;">GIROS TOTALES: <span id="statSpins" style="color:var(--gold)">0</span></p>
+            <p style="font-size:11px;">ÚLTIMA VICTORIA: <span id="statLastWin" style="color:var(--gold)">---</span></p>
+        </div>
+        
+        <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="saveUserConfig()">GUARDAR CAMBIOS</button>
+    </div>
+</div>
+
+<script>
+    let currentUserInModal = "";
+
+    // FUNCIÓN PARA ABRIR MODAL DETALLADA
+    async function showUserCard(uid) {
+        currentUserInModal = uid;
+        const snap = await db.ref(`users/${uid}`).once('value');
+        const u = snap.val();
+        
+        document.getElementById('detailName').innerText = (u.perfil?.nombre || "USUARIO").toUpperCase();
+        document.getElementById('detailUID').innerText = "UID: " + uid;
+        document.getElementById('editSubLevel').value = u.config?.tipoSub || "basic";
+        
+        // Cargar permisos actuales
+        document.getElementById('p_editPrizes').checked = u.config?.permisos?.editPrizes || false;
+        document.getElementById('p_editColors').checked = u.config?.permisos?.editColors || false;
+        document.getElementById('p_modeRegistry').checked = u.config?.permisos?.modeRegistry || false;
+        document.getElementById('p_viewHistory').checked = u.config?.permisos?.viewHistory || false;
+
+        // Cargar Estadísticas
+        const history = u.history ? Object.values(u.history) : [];
+        document.getElementById('statSpins').innerText = history.length;
+        document.getElementById('statLastWin').innerText = history.length > 0 ? history[history.length-1].prize : "NINGUNA";
+
+        document.getElementById('userModalDetail').style.display = 'flex';
+    }
+
+    // AUTO-CONFIGURAR PERMISOS POR NIVEL
+    function updateUserPermissions() {
+        const level = document.getElementById('editSubLevel').value;
+        document.getElementById('p_editPrizes').checked = (level === 'gold' || level === 'platinum');
+        document.getElementById('p_editColors').checked = (level === 'gold' || level === 'platinum');
+        document.getElementById('p_modeRegistry').checked = (level === 'platinum');
+        document.getElementById('p_viewHistory').checked = (level === 'platinum');
+    }
+
+    function saveUserConfig() {
+        const updates = {
+            "config/tipoSub": document.getElementById('editSubLevel').value,
+            "config/permisos/editPrizes": document.getElementById('p_editPrizes').checked,
+            "config/permisos/editColors": document.getElementById('p_editColors').checked,
+            "config/permisos/modeRegistry": document.getElementById('p_modeRegistry').checked,
+            "config/permisos/viewHistory": document.getElementById('p_viewHistory').checked
+        };
+        
+        db.ref(`users/${currentUserInModal}`).update(updates)
+          .then(() => {
+              alert("USUARIO ACTUALIZADO EXITOSAMENTE");
+              document.getElementById('userModalDetail').style.display = 'none';
+          });
+    }
+
+    // GENERADOR DE LICENCIAS HÍBRIDO
+    function generateLicense(level, days) {
+        const code = `NEXO-${level.toUpperCase()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const licenseData = {
+            code: code,
+            level: level,
+            durationDays: days,
+            used: false,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        db.ref('licenses').child(code).set(licenseData).then(() => {
+            alert("LICENCIA GENERADA: " + code);
+            console.log("Nueva Licencia:", licenseData);
+        });
+    }
+</script>
 </body>
 </html>
+
 
