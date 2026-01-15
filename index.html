@@ -2508,6 +2508,108 @@
         });
     })();
     </script>
+
+    <script>
+    (function() {
+        // 1. RE-ESTRUCTURACIÓN DEL MENÚ (Jerarquía de Visibilidad)
+        window.rebuildMenu = function(isAdmin) {
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if(!hubMenu) return;
+
+            // Limpiamos el menú para reconstruir
+            hubMenu.innerHTML = '<div style="font-size: 12px; font-weight: bold; color: var(--gold); padding: 15px; border-bottom: 1px solid #222; text-align: center; letter-spacing: 2px;">NEXO® LUX</div>';
+
+            // OPCIONES PARA TODOS (Usuarios y Admin)
+            const commonOptions = [
+                { id: 'modalStock', icon: '🎁', label: 'PREMIOS Y STOCK' },
+                { id: 'modalHistory', icon: '🏆', label: 'GANADORES' },
+                { id: 'modalLeads', icon: '👥', label: 'LEADS CAPTURADOS' },
+                { id: 'modalBranding', icon: '🎨', label: 'MARCA Y LOGO' }
+            ];
+
+            commonOptions.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'nexo-menu-item';
+                btn.innerHTML = `<span>${opt.icon}</span> ${opt.label}`;
+                btn.onclick = () => openNexoModal(opt.id);
+                hubMenu.appendChild(btn);
+            });
+
+            // OPCIÓN EXCLUSIVA: PANEL MASTER (Solo si es Admin)
+            if (isAdmin) {
+                const adminBtn = document.createElement('div');
+                adminBtn.className = 'nexo-menu-item';
+                adminBtn.style.borderTop = "1px solid var(--gold)";
+                adminBtn.style.color = "var(--gold)";
+                adminBtn.innerHTML = `<span>👑</span> PANEL MASTER`;
+                adminBtn.onclick = () => openNexoModal('modalSuperAdmin');
+                hubMenu.appendChild(adminBtn);
+            }
+
+            // BOTÓN CERRAR SESIÓN (Al final para todos)
+            const logoutBtn = document.createElement('div');
+            logoutBtn.className = 'nexo-menu-item';
+            logoutBtn.style.opacity = "0.6";
+            logoutBtn.innerHTML = `<span>🚪</span> CERRAR SESIÓN`;
+            logoutBtn.onclick = () => auth.signOut();
+            hubMenu.appendChild(logoutBtn);
+
+            // Inyectar Contador de Días si no es Admin
+            if(!isAdmin) {
+                injectDaysCounter(hubMenu);
+            }
+        };
+
+        // 2. FUNCIÓN DE BIENVENIDA TRAS CANJE
+        const originalPromptVoucher = window.promptVoucher;
+        window.promptVoucher = function() {
+            // Re-utilizamos la lógica del prompt pero mejoramos el éxito
+            const code = prompt("INGRESE SU CÓDIGO DE ACTIVACIÓN:");
+            if(!code) return;
+
+            db.ref(`vouchers/${code}`).once('value', snap => {
+                const data = snap.val();
+                if(data && !data.used) {
+                    const user = auth.currentUser;
+                    db.ref(`users/${user.uid}/license`).once('value', uLicSnap => {
+                        const currentLic = uLicSnap.val() || { expiry: new Date().toISOString() };
+                        let baseDate = new Date(currentLic.expiry);
+                        if(baseDate < new Date()) baseDate = new Date();
+                        
+                        baseDate.setDate(baseDate.getDate() + data.days);
+                        
+                        db.ref(`users/${user.uid}/license`).update({
+                            status: 'active',
+                            expiry: baseDate.toISOString().split('T')[0]
+                        });
+                        db.ref(`vouchers/${code}/used`).set(true);
+                        
+                        // MENSAJE DE BIENVENIDA PERSONALIZADO
+                        alert(`¡LICENCIA ACTIVADA CON ÉXITO!\n\nSe han sumado ${data.days} días a tu cuenta.\n\nBienvenido a la red NEXO®. Tu ruleta ya está operativa.`);
+                        location.reload();
+                    });
+                } else {
+                    alert("CÓDIGO INVÁLIDO O YA UTILIZADO.");
+                }
+            });
+        };
+
+        function injectDaysCounter(container) {
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    db.ref(`users/${user.uid}/license`).once('value', snap => {
+                        const lic = snap.val() || {};
+                        const days = window.getDaysRemaining ? window.getDaysRemaining(lic.expiry) : 0;
+                        const counter = document.createElement('div');
+                        counter.style = "padding: 10px; background: rgba(212,175,55,0.05); text-align: center; font-size: 10px;";
+                        counter.innerHTML = `<span style="color:var(--gold)">⏱️ Días restantes:</span> ${days} <br> <button onclick="promptVoucher()" style="background:none; border:none; color:#777; font-size:9px; cursor:pointer; text-decoration:underline;">Canjear Código</button>`;
+                        container.insertBefore(counter, container.children[1]);
+                    });
+                }
+            });
+        }
+    })();
+    </script>
     
 </body>
 </html>
