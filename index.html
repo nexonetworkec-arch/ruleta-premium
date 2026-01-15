@@ -1192,6 +1192,151 @@
 
     })();
 </script>
+
+    <style>
+    /* 1. Botón Hamburguesa Inferior Derecho */
+    #nexoHubBtn {
+        position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px;
+        background: var(--gold); border-radius: 50%; display: flex;
+        align-items: center; justify-content: center; cursor: pointer;
+        z-index: 10002; box-shadow: 0 0 20px rgba(212,175,55,0.5);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #nexoHubBtn:active { transform: scale(0.9); }
+    #nexoHubBtn i { color: #000; font-size: 24px; font-style: normal; font-weight: bold; }
+
+    /* 2. Menú Desplegable */
+    #nexoHubMenu {
+        position: fixed; bottom: 95px; right: 25px; background: #000;
+        border: 2px solid var(--gold); border-radius: 20px; width: 220px;
+        display: none; flex-direction: column; padding: 10px; z-index: 10002;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .hub-option {
+        padding: 15px; color: #fff; font-size: 11px; font-weight: bold;
+        border-radius: 12px; cursor: pointer; transition: 0.2s;
+        display: flex; align-items: center; gap: 10px; text-transform: uppercase;
+    }
+    .hub-option:hover { background: rgba(212, 175, 55, 0.15); color: var(--gold); }
+    .hub-option.danger { color: #ff4444; }
+
+    /* 3. Estilo General de Modales Independientes */
+    .nexo-modal {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+        z-index: 10005; display: none; align-items: center; justify-content: center;
+        backdrop-filter: blur(15px); padding: 20px;
+    }
+    .nexo-modal-content {
+        background: #0a0a0a; border: 1px solid var(--gold-dark);
+        width: 100%; max-width: 500px; max-height: 85vh; border-radius: 30px;
+        position: relative; overflow-y: auto; padding: 30px;
+    }
+    .close-modal {
+        position: absolute; top: 20px; right: 20px; color: var(--gold);
+        cursor: pointer; font-size: 20px; font-weight: bold;
+    }
+</style>
+
+<div id="nexoHubBtn"><i>☰</i></div>
+<div id="nexoHubMenu">
+    <div class="hub-option" onclick="openNexoModal('modalStock')">🎯 Premios / Stock</div>
+    <div class="hub-option" onclick="openNexoModal('modalHistory')">🏆 Ganadores</div>
+    <div class="hub-option" onclick="openNexoModal('modalLeads')">👥 Registro Leads</div>
+    <div class="hub-option" onclick="confirmReset()">🔄 Reiniciar Juego</div>
+    <div class="hub-option danger" onclick="appWheel.logout()">🚪 Salir</div>
+</div>
+
+<div id="modalStock" class="nexo-modal">
+    <div class="nexo-modal-content">
+        <span class="close-modal" onclick="closeNexoModals()">&times;</span>
+        <h2 style="color:var(--gold)">CONFIG. PREMIOS</h2>
+        <div id="stockInjectedContent"></div>
+    </div>
+</div>
+
+<div id="modalHistory" class="nexo-modal">
+    <div class="nexo-modal-content">
+        <span class="close-modal" onclick="closeNexoModals()">&times;</span>
+        <h2 style="color:var(--gold)">HISTORIAL DE GANADORES</h2>
+        <div id="historyInjectedContent"></div>
+    </div>
+</div>
+
+<div id="modalLeads" class="nexo-modal">
+    <div class="nexo-modal-content">
+        <span class="close-modal" onclick="closeNexoModals()">&times;</span>
+        <h2 style="color:var(--gold)">REGISTRO DE LEADS</h2>
+        <div id="leadsInjectedContent"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const hubBtn = document.getElementById('nexoHubBtn');
+        const hubMenu = document.getElementById('nexoHubMenu');
+
+        // Toggle Menú Hamburguesa
+        hubBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isVisible = hubMenu.style.display === 'flex';
+            hubMenu.style.display = isVisible ? 'none' : 'flex';
+        };
+
+        // Cerrar menú al hacer clic fuera
+        window.onclick = () => hubMenu.style.display = 'none';
+
+        // Función para abrir modales con validación
+        window.openNexoModal = function(modalId) {
+            const pin = prompt("SEGURIDAD NEXO - INGRESE CONTRASEÑA:");
+            if(pin === "1234") {
+                // Cerramos menú y abrimos modal
+                hubMenu.style.display = 'none';
+                document.getElementById(modalId).style.display = 'flex';
+                loadModalData(modalId);
+            } else {
+                alert("CONTRASEÑA INCORRECTA");
+            }
+        };
+
+        window.closeNexoModals = function() {
+            document.querySelectorAll('.nexo-modal').forEach(m => m.style.display = 'none');
+        };
+
+        // Carga Dinámica de Datos por Modal
+        function loadModalData(id) {
+            if(id === 'modalStock') {
+                // Mueve el contenido de stock de la inyección anterior aquí
+                const stockSource = document.getElementById('stockListContainer');
+                document.getElementById('stockInjectedContent').innerHTML = stockSource.parentElement.innerHTML;
+            }
+            if(id === 'modalHistory') {
+                const historySource = document.getElementById('tableWinners');
+                document.getElementById('historyInjectedContent').innerHTML = historySource.parentElement.innerHTML;
+            }
+            if(id === 'modalLeads') {
+                // Aquí podrías filtrar solo los datos de leads
+                db.ref(`users/${currentUser.uid}/leads`).once('value', snap => {
+                    let html = '<table class="admin-table"><thead><tr><th>NOMBRE</th><th>TEL</th></tr></thead><tbody>';
+                    snap.forEach(child => {
+                        const d = child.val();
+                        html += `<tr><td>${d.name}</td><td>${d.phone}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    document.getElementById('leadsInjectedContent').innerHTML = html;
+                });
+            }
+        }
+
+        window.confirmReset = function() {
+            if(confirm("¿ESTÁ SEGURO DE REINICIAR TODO EL JUEGO? Se borrarán registros e historial.")) {
+                db.ref(`users/${currentUser.uid}/history`).remove();
+                db.ref(`users/${currentUser.uid}/leads`).remove();
+                alert("SISTEMA REINICIADO");
+                location.reload();
+            }
+        };
+    })();
+            </script>
     
 </body>
 </html>
