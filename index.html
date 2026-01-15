@@ -360,6 +360,89 @@
     });
 })();
 </script>
+
+    <style>
+    .pro-lock-overlay {
+        background: rgba(0,0,0,0.8);
+        border: 1px dashed var(--gold);
+        padding: 15px;
+        border-radius: 15px;
+        margin-top: 15px;
+        text-align: center;
+    }
+    .upgrade-link {
+        color: var(--gold);
+        font-size: 10px;
+        text-decoration: underline;
+        cursor: pointer;
+        display: block;
+        margin-top: 10px;
+    }
+    .locked-feature {
+        opacity: 0.4;
+        pointer-events: none;
+        filter: grayscale(1);
+    }
+</style>
+
+<script>
+(function() {
+    // Función para aplicar restricciones visuales y de lógica
+    function applySubscriptionLimits() {
+        const nivel = config.licenseLevel || "FREE";
+        const isAdminPanelActive = document.getElementById('adminPanel').classList.contains('active');
+        
+        // 1. Identificar elementos a bloquear
+        const proElements = [
+            { id: 'editColors', label: 'PERSONALIZACIÓN DE COLORES' },
+            { id: 'editModeRegistro', label: 'MODO REGISTRO AVANZADO' }
+        ];
+
+        // 2. Insertar Banner de Upgrade si es FREE
+        let upgradeBanner = document.getElementById('upgradeBanner');
+        if (nivel === "FREE") {
+            if (!upgradeBanner) {
+                const banner = document.createElement('div');
+                banner.id = 'upgradeBanner';
+                banner.className = 'pro-lock-overlay';
+                banner.innerHTML = `
+                    <div style="font-size:11px; font-weight:900;">FUNCIÓN PRO RESTRINGIDA</div>
+                    <div style="font-size:9px; color:#888; margin-top:5px;">DESBLOQUEA COLORES Y REGISTROS ILIMITADOS</div>
+                    <a href="https://wa.me/TU_NUMERO" target="_blank" class="upgrade-link">SOLICITAR LICENCIA PRO</a>
+                `;
+                document.getElementById('adminPanel').insertBefore(banner, document.getElementById('btnSaveConfig'));
+            }
+        } else if (upgradeBanner) {
+            upgradeBanner.remove();
+        }
+
+        // 3. Bloqueo de lógica en el motor original (Referencia aditiva)
+        // Si el usuario es FREE, forzamos que el modo registro esté desactivado en el config local
+        if(nivel === "FREE") {
+            config.modoRegistro = false; [cite: 49]
+        }
+    }
+
+    // Extensión del Listener de Firebase existente
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                // Ejecutamos la validación cada vez que cambien los datos
+                setTimeout(applySubscriptionLimits, 500);
+            });
+        }
+    });
+
+    // Añadimos una sección de "Estado de Cuenta" al Admin Panel de forma aditiva
+    const adminPanel = document.getElementById('adminPanel');
+    const statusDiv = document.createElement('div');
+    statusDiv.style.marginTop = "20px";
+    statusDiv.innerHTML = `<p style="font-size:9px; color:rgba(212,175,55,0.5);">ID SESIÓN: ${currentUser ? currentUser.uid.substring(0,8) : '---'}</p>`;
+    adminPanel.appendChild(statusDiv);
+
+})();
+</script>
 </body>
 </html>
+
 
