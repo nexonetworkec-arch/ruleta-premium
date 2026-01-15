@@ -2102,6 +2102,95 @@
 
     })();
     </script>
+
+    <style>
+    #inspectBar {
+        display: none; position: fixed; top: 0; left: 0; right: 0; 
+        background: var(--gold); color: black; padding: 10px;
+        text-align: center; font-size: 10px; font-weight: bold;
+        z-index: 10006; letter-spacing: 1px;
+    }
+    #inspectBar button {
+        margin-left: 15px; background: black; color: white; border: none;
+        padding: 2px 8px; border-radius: 4px; cursor: pointer;
+    }
+</style>
+
+<div id="inspectBar">
+    GESTIONANDO CLIENTE: <span id="inspectingName">...</span>
+    <button onclick="stopInspecting()">SALIR DE GESTIÓN</button>
+</div>
+
+<script>
+    (function() {
+        window.targetUserUID = null; // El UID del cliente que estamos inspeccionando
+
+        // 1. Función principal del botón "GESTIONAR"
+        window.inspectUser = function(uid) {
+            db.ref(`users/${uid}/profile`).once('value', snap => {
+                const p = snap.val() || {};
+                window.targetUserUID = uid;
+                
+                // Mostrar barra de aviso
+                const bar = document.getElementById('inspectBar');
+                document.getElementById('inspectingName').innerText = `${p.nombres || ''} ${p.apellidos || ''}`.toUpperCase();
+                bar.style.display = 'block';
+
+                // Cerrar el modal global para permitir abrir los específicos
+                closeNexoModals();
+                alert("ENTRANDO AL MODO GESTIÓN: Ahora los modales de Premios, Ganadores y Leads mostrarán la data de este cliente.");
+            });
+        };
+
+        // 2. Función para dejar de inspeccionar
+        window.stopInspecting = function() {
+            window.targetUserUID = null;
+            document.getElementById('inspectBar').style.display = 'none';
+            alert("Has vuelto a tu cuenta administrativa.");
+        };
+
+        // 3. PARCHE MAESTRO PARA CARGA DE DATOS (Redirección de Puntero)
+        // Sobrescribimos la carga de datos para que sea dinámica
+        const originalLoadData = window.loadModalData;
+        window.loadModalData = function(id) {
+            // Si estamos inspeccionando, usamos targetUserUID, si no, el del usuario actual
+            const activeUID = window.targetUserUID || (auth.currentUser ? auth.currentUser.uid : null);
+            
+            if(!activeUID) return;
+
+            if(id === 'modalLeads') {
+                db.ref(`users/${activeUID}/leads`).on('value', snap => {
+                    let html = '<table class="admin-table"><thead><tr><th>NOMBRE</th><th>TEL</th></tr></thead><tbody>';
+                    snap.forEach(child => {
+                        const d = child.val();
+                        html += `<tr><td>${d.name || 'N/A'}</td><td>${d.phone || 'N/A'}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    document.getElementById('leadsInjectedContent').innerHTML = html;
+                });
+            }
+            
+            if(id === 'modalHistory') {
+                db.ref(`users/${activeUID}/history`).on('value', snap => {
+                    let html = '<table class="admin-table"><thead><tr><th>FECHA</th><th>PREMIO</th></tr></thead><tbody>';
+                    snap.forEach(child => {
+                        const d = child.val();
+                        html += `<tr><td>${d.date || ''}</td><td>${d.prize || ''}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    document.getElementById('historyInjectedContent').innerHTML = html;
+                });
+            }
+
+            // Para el stock, avisamos a la función de renderizado de la Inyección 3
+            if(id === 'modalStock' && typeof renderStockSettings === 'function') {
+                // Modificamos la ruta de renderizado si existe
+                renderStockSettings(activeUID); 
+            }
+        };
+
+    })();
+</script>
     
 </body>
 </html>
