@@ -795,5 +795,106 @@
         });
     })();
 </script>
+
+    <style>
+    #prizesParticipantsPanel {
+        position: fixed !important; inset: 0 !important; background: rgba(0,0,0,0.98) !important;
+        z-index: 31000 !important; display: none; flex-direction: column; align-items: center;
+        padding: 40px; overflow-y: auto; backdrop-filter: blur(25px);
+    }
+    .list-container-nexo {
+        width: min(500px, 95%); background: #080808; border: 1px solid var(--gold);
+        border-radius: 30px; padding: 25px; margin-top: 20px;
+    }
+    .list-item-nexo {
+        display: flex; justify-content: space-between; padding: 15px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1); font-size: 13px;
+    }
+    .list-item-nexo span:first-child { color: var(--gold); font-weight: 900; }
+    .tab-nexo-active { color: var(--gold) !important; border-bottom: 2px solid var(--gold); }
+</style>
+
+<div id="prizesParticipantsPanel">
+    <div style="position:absolute; top:40px; right:40px; color:#D4AF37; font-size:35px; cursor:pointer;" 
+         onclick="document.getElementById('prizesParticipantsPanel').style.display='none'">✕</div>
+    
+    <h1 style="color:#D4AF37; letter-spacing:5px; font-size:22px; margin-bottom:30px;">PREMIO / PARTICIPANTES</h1>
+
+    <div style="display:flex; gap:20px; margin-bottom:20px;">
+        <span id="tabViewPrizes" class="auth-tab active" onclick="switchListTab('prizes')" style="cursor:pointer">LISTA DE PREMIOS</span>
+        <span id="tabViewParts" class="auth-tab" onclick="switchListTab('participants')" style="cursor:pointer">PARTICIPANTES</span>
+    </div>
+
+    <div id="prizesListView" class="list-container-nexo">
+        </div>
+
+    <div id="participantsListView" class="list-container-nexo" style="display:none;">
+        <p style="font-size:10px; opacity:0.6; text-align:center;">USUARIOS REGISTRADOS EN EL SISTEMA</p>
+        <div id="partsContent"></div>
+    </div>
+</div>
+
+<script>
+    // 1. Inyectar opción en el menú principal sin borrar nada
+    (function injectMenuOption() {
+        const menuPanel = document.getElementById('nexoMenuPanel');
+        if (menuPanel) {
+            const newItem = document.createElement('div');
+            newItem.className = 'menu-item-nexo';
+            newItem.innerText = 'PREMIO / PARTICIPANTES';
+            newItem.onclick = () => {
+                closeNexoMenu();
+                showPrizesParticipants();
+            };
+            // Insertar antes del botón de cerrar sesión
+            const logoutBtn = menuPanel.querySelector('div[onclick*="handleLogout"]');
+            menuPanel.insertBefore(newItem, logoutBtn);
+        }
+    })();
+
+    function showPrizesParticipants() {
+        document.getElementById('prizesParticipantsPanel').style.display = 'flex';
+        renderPrizesList();
+        renderParticipantsList();
+    }
+
+    function switchListTab(mode) {
+        document.getElementById('prizesListView').style.display = (mode === 'prizes') ? 'block' : 'none';
+        document.getElementById('participantsListView').style.display = (mode === 'participants') ? 'block' : 'none';
+        document.getElementById('tabViewPrizes').className = 'auth-tab ' + (mode === 'prizes' ? 'active' : '');
+        document.getElementById('tabViewParts').className = 'auth-tab ' + (mode === 'participants' ? 'active' : '');
+    }
+
+    function renderPrizesList() {
+        const container = document.getElementById('prizesListView');
+        container.innerHTML = '<h3 style="font-size:10px; color:var(--gold); text-align:center;">CONFIGURACIÓN ACTUAL</h3>';
+        config.prizes.forEach((p, i) => {
+            container.innerHTML += `
+                <div class="list-item-nexo">
+                    <span>SLOT ${i + 1}</span>
+                    <span>${p.toUpperCase()}</span>
+                </div>`;
+        });
+    }
+
+    function renderParticipantsList() {
+        const content = document.getElementById('partsContent');
+        content.innerHTML = '';
+        db.ref('users').limitToLast(20).once('value', snap => {
+            const users = snap.val();
+            if(!users) return content.innerHTML = '<p style="text-align:center">NO HAY REGISTROS</p>';
+            
+            for(let id in users) {
+                const name = users[id].perfil?.nombre || "USUARIO ANÓNIMO";
+                content.innerHTML += `
+                    <div class="list-item-nexo">
+                        <span>${name.toUpperCase()}</span>
+                        <span style="font-size:9px; opacity:0.5;">${id.substring(0,8)}...</span>
+                    </div>`;
+            }
+        });
+    }
+</script>
 </body>
 </html>
+
