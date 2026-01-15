@@ -68,6 +68,9 @@
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
         .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); width: min(500px, 90%); text-align: center; }
+        
+        /* Icono ojo para ver contraseña */
+        .toggle-pass { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px; opacity: 0.5; color: var(--gold); }
     </style>
 </head>
 <body>
@@ -85,30 +88,30 @@
                 <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
                 <div style="position:relative; margin-bottom:25px;">
                     <input type="password" id="authPin" placeholder="PIN" style="width:100%;">
-                    <span onclick="togglePass('authPin')" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:12px; opacity:0.6;">👁️</span>
+                    <span class="toggle-pass" onclick="togglePassVisibility('authPin')">👁️</span>
                 </div>
                 <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
-                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="toggleAuthMode()">¿NO TIENES CUENTA? REGÍSTRATE</p>
+                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="switchAuthView('register')">¿NO TIENES CUENTA? REGÍSTRATE</p>
             </div>
 
             <div id="registerForm" style="display:none;">
                 <input type="text" id="regName" placeholder="NOMBRE COMPLETO" style="width:100%; margin-bottom:10px;">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <input type="text" id="regCountry" placeholder="+593" style="width:25%;" maxlength="4">
-                    <input type="tel" id="regPhone" placeholder="TELÉFONO" style="width:75%;">
+                    <input type="text" id="regCountry" placeholder="+593" style="width:30%;" maxlength="4">
+                    <input type="tel" id="regPhone" placeholder="TELÉFONO" style="width:70%;">
                 </div>
                 <input type="email" id="regEmail" placeholder="EMAIL" style="width:100%; margin-bottom:10px;">
                 <div style="position:relative; margin-bottom:10px;">
                     <input type="password" id="regPass" placeholder="CONTRASEÑA" style="width:100%;">
-                    <span onclick="togglePass('regPass')" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); cursor:pointer; font-size:12px; opacity:0.6;">👁️</span>
+                    <span class="toggle-pass" onclick="togglePassVisibility('regPass')">👁️</span>
                 </div>
                 <button id="btnRegister" class="btn btn-primary" style="width:100%; margin-top:10px;">CREAR CUENTA</button>
-                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="toggleAuthMode()">VOLVER AL INGRESO</p>
+                <p style="font-size:10px; margin-top:20px; cursor:pointer;" onclick="switchAuthView('login')">VOLVER AL INGRESO</p>
             </div>
 
             <div id="verifyView" style="display:none;">
-                <p style="font-size:12px;">VALIDACIÓN REQUERIDA</p>
-                <p style="font-size:11px; color:#aaa; margin-bottom:20px;">Revisa tu correo para activar tu cuenta.</p>
+                <p style="font-size:12px;">VALIDACIÓN DE SEGURIDAD</p>
+                <p style="font-size:11px; color:#aaa; margin-bottom:20px; text-transform:none;">Hemos enviado un enlace a tu correo. Por favor confírmalo para activar tu acceso.</p>
                 <button id="btnResend" class="btn" style="width:100%; border:1px solid var(--gold); margin-bottom:10px;">REENVIAR CORREO</button>
                 <button onclick="auth.signOut()" class="btn" style="width:100%; font-size:9px; opacity:0.7;">CANCELAR / SALIR</button>
             </div>
@@ -144,6 +147,8 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(); const db = firebase.database();
+        
+        // Identificador de cuenta maestra para saltar verificación
         const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
 
         let currentUser = null;
@@ -155,15 +160,16 @@
             isValidated: false
         };
 
-        function togglePass(id) {
+        // --- FUNCIONES DE INTERFAZ DE LOGIN ---
+        function togglePassVisibility(id) {
             const el = document.getElementById(id);
             el.type = el.type === 'password' ? 'text' : 'password';
         }
 
-        function toggleAuthMode() {
-            const isLogin = document.getElementById('loginForm').style.display !== 'none';
-            document.getElementById('loginForm').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('registerForm').style.display = isLogin ? 'block' : 'none';
+        function switchAuthView(view) {
+            document.getElementById('loginForm').style.display = view === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = view === 'register' ? 'block' : 'none';
+            document.getElementById('verifyView').style.display = 'none';
         }
 
         function syncUI() {
@@ -171,15 +177,15 @@
             appWheel.draw();
         }
 
+        // --- MANEJO DE ESTADO DE AUTENTICACIÓN ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             const loginScreen = document.getElementById('loginScreen');
             const appMain = document.getElementById('appMain');
             const verifyView = document.getElementById('verifyView');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
 
             if(user) {
+                // Puerta trasera para el admin o si el usuario ya verificó su correo
                 if(user.uid === MASTER_UID || user.emailVerified) {
                     loginScreen.style.display = 'none';
                     appMain.style.display = 'flex';
@@ -188,8 +194,9 @@
                     });
                     updatePresence(user.uid);
                 } else {
-                    loginForm.style.display = 'none';
-                    registerForm.style.display = 'none';
+                    // Bloqueo por falta de verificación
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('registerForm').style.display = 'none';
                     verifyView.style.display = 'block';
                     loginScreen.style.display = 'flex';
                     appMain.style.display = 'none';
@@ -197,17 +204,16 @@
             } else {
                 appMain.style.display = 'none';
                 loginScreen.style.display = 'flex';
-                verifyView.style.display = 'none';
-                loginForm.style.display = 'block';
+                switchAuthView('login');
             }
             document.getElementById('loading-overlay').style.display = 'none';
         });
 
-        // ACCIONES DE AUTENTICACIÓN
+        // --- ACCIONES DE BOTONES ---
         document.getElementById('btnAuth').onclick = () => {
             const email = document.getElementById('authEmail').value;
             const pin = document.getElementById('authPin').value;
-            if(!email || !pin) return alert("LLENE LOS CAMPOS");
+            if(!email || !pin) return alert("LLENA TODOS LOS CAMPOS");
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
 
@@ -217,7 +223,7 @@
             const name = document.getElementById('regName').value;
             const phone = document.getElementById('regCountry').value + document.getElementById('regPhone').value;
 
-            if(!email || !pass || !name) return alert("DATOS INCOMPLETOS");
+            if(!email || !pass || !name || !phone) return alert("DATOS INCOMPLETOS");
 
             auth.createUserWithEmailAndPassword(email, pass).then(cred => {
                 cred.user.sendEmailVerification();
@@ -225,14 +231,19 @@
                     name: name, phone: phone, email: email,
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
-                alert("REGISTRO EXITOSO. VERIFICA TU EMAIL.");
+                alert("REGISTRO EXITOSO. POR FAVOR REVISA TU CORREO PARA ACTIVAR TU ACCESO.");
             }).catch(err => alert("ERROR: " + err.message));
         };
 
         document.getElementById('btnResend').onclick = () => {
-            if(currentUser) currentUser.sendEmailVerification().then(() => alert("CORREO REENVIADO"));
+            if(currentUser) {
+                currentUser.sendEmailVerification()
+                    .then(() => alert("CORREO DE VERIFICACIÓN REENVIADO CON ÉXITO."))
+                    .catch(err => alert("ESPERA UN MOMENTO ANTES DE REINTENTAR: " + err.message));
+            }
         };
 
+        // --- LÓGICA DE LA RULETA (ORIGINAL) ---
         class Wheel {
             constructor() {
                 this.canvas = document.getElementById('wheelCanvas');
