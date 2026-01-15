@@ -730,5 +730,86 @@
     });
 })();
 </script>
+
+    <script>
+(function() {
+    // 1. Configuración de recursos de audio (Links de alta fidelidad)
+    const audioFiles = {
+        spin: 'https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3', // Tic de la ruleta
+        win: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',  // Fanfarria
+        bg: 'https://assets.mixkit.co/active_storage/sfx/134/134-preview.mp3'      // Ambiente (PRO)
+    };
+
+    const sfxSpin = new Audio(audioFiles.spin);
+    const sfxWin = new Audio(audioFiles.win);
+    const sfxBg = new Audio(audioFiles.bg);
+    sfxBg.loop = true;
+    sfxBg.volume = 0.2;
+
+    // 2. Interfaz de Control de Audio
+    const appContainer = document.getElementById('appMain');
+    const audioControl = document.createElement('div');
+    audioControl.style = "position:fixed; bottom:20px; left:20px; z-index:9000; cursor:pointer; font-size:20px;";
+    audioControl.id = "uiAudioControl";
+    audioControl.innerHTML = "🔇"; // Por defecto muteado por políticas de navegador
+    appContainer.appendChild(audioControl);
+
+    let isMuted = true;
+    audioControl.onclick = () => {
+        isMuted = !isMuted;
+        audioControl.innerHTML = isMuted ? "🔇" : "🔊";
+        if(!isMuted && (config.licenseLevel !== "FREE")) sfxBg.play().catch(()=>{});
+        else sfxBg.pause();
+    };
+
+    // 3. Inyección en el Ciclo de Giro (Referenciación Aditiva)
+    const originalDraw = appWheel.draw;
+    let lastSlice = -1;
+
+    appWheel.draw = function() {
+        originalDraw.call(this);
+        
+        if(this.isSpinning && !isMuted) {
+            const n = config.prizes.length;
+            const currentSlice = Math.floor(((this.angle * 180 / Math.PI) % 360) / (360/n));
+            
+            // Cada vez que la ruleta cruza a un nuevo premio, suena un "tic"
+            if(currentSlice !== lastSlice) {
+                sfxSpin.currentTime = 0;
+                sfxSpin.play().catch(()=>{});
+                lastSlice = currentSlice;
+            }
+        }
+    };
+
+    // 4. Inyección en el Clímax (Victoria)
+    const originalFinish = appWheel.finish;
+    appWheel.finish = function() {
+        if(!isMuted) {
+            sfxSpin.pause();
+            sfxWin.play().catch(()=>{});
+        }
+        originalFinish.call(this);
+    };
+
+    // 5. Gestión PRO en el Admin Panel
+    const adminPanel = document.getElementById('adminPanel');
+    const audioSection = document.createElement('div');
+    audioSection.className = 'admin-section';
+    audioSection.innerHTML = `
+        <h4 style="font-size: 10px; margin-bottom:10px;">CONFIGURACIÓN DE AUDIO</h4>
+        <div class="weight-row" id="audioProRow">
+            <span style="font-size:9px;">MÚSICA DE FONDO (PRO)</span>
+            <input type="checkbox" id="checkBgMusic" ${config.licenseLevel === "FREE" ? 'disabled' : ''}>
+        </div>
+    `;
+    adminPanel.insertBefore(audioSection, document.getElementById('btnSaveConfig'));
+    
+    // Bloqueo visual si es FREE
+    if(config.licenseLevel === "FREE") audioSection.classList.add('locked-feature');
+
+})();
+</script>
 </body>
 </html>
+
