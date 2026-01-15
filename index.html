@@ -2292,6 +2292,133 @@
         }
     })();
 </script>
+
+    <style>
+    .license-badge {
+        padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: bold;
+        background: rgba(212, 175, 55, 0.15); color: var(--gold); border: 1px solid var(--gold);
+    }
+    .voucher-box {
+        background: #111; border: 1px solid #333; border-radius: 10px; padding: 15px; margin-top: 15px;
+    }
+</style>
+
+<script>
+    (function() {
+        // --- 1. LÓGICA DE CÁLCULO DE DÍAS ---
+        window.getDaysRemaining = function(expiryDate) {
+            if (!expiryDate) return 0;
+            const diff = new Date(expiryDate) - new Date();
+            return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+        };
+
+        // --- 2. VISTA USUARIO: ACTUALIZAR MENÚ CON DÍAS Y CANJE ---
+        const originalRebuildMenu = window.rebuildMenu;
+        window.rebuildMenu = function(isAdmin) {
+            // Primero llamamos a la lógica original de la Inyección 12
+            originalRebuildMenu(isAdmin);
+            
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if(!hubMenu || isAdmin) return; // Solo añadimos info de días a usuarios
+
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    db.ref(`users/${user.uid}/license`).once('value', snap => {
+                        const lic = snap.val() || {};
+                        const days = getDaysRemaining(lic.expiry);
+                        
+                        // Inyectar visualizador de días al inicio del menú
+                        const infoDiv = document.createElement('div');
+                        infoDiv.style = "padding: 15px; border-bottom: 1px solid #222; text-align: center;";
+                        infoDiv.innerHTML = `
+                            <div style="font-size: 10px; opacity: 0.6;">ESTADO DE LICENCIA</div>
+                            <div style="font-size: 14px; font-weight: bold; color: ${days < 5 ? '#ff4444' : 'var(--gold)'};">
+                                ⏱️ ${days} DÍAS RESTANTES
+                            </div>
+                            <button onclick="promptVoucher()" style="margin-top: 8px; font-size: 9px; background: none; border: 1px solid #444; color: #aaa; padding: 4px 10px; border-radius: 5px; cursor: pointer;">
+                                CANJEAR CÓDIGO
+                            </button>
+                        `;
+                        hubMenu.prepend(infoDiv);
+                    });
+                }
+            });
+        };
+
+        // --- 3. VISTA ADMIN: ACTUALIZAR TARJETAS Y GENERADOR ---
+        // Extendemos el cargador de la Inyección 16
+        const originalLoadGlobal = window.loadGlobalUsers;
+        window.loadGlobalUsers = function() {
+            originalLoadGlobal(); // Carga las tarjetas base
+            
+            // Añadir sección de Generación de Vouchers al final del panel
+            const panel = document.querySelector('#modalSuperAdmin .nexo-modal-content');
+            if(panel && !document.getElementById('adminVoucherSection')) {
+                const vSection = document.createElement('div');
+                vSection.id = 'adminVoucherSection';
+                vSection.className = 'voucher-box';
+                vSection.innerHTML = `
+                    <h4 style="color:var(--gold); margin:0 0 10px 0; font-size:12px;">GENERADOR DE LICENCIAS</h4>
+                    <div style="display:flex; gap:5px;">
+                        <select id="vDuration" class="lux-input" style="margin:0; flex:1;">
+                            <option value="30">30 DÍAS</option>
+                            <option value="90">90 DÍAS</option>
+                            <option value="365">1 AÑO</option>
+                        </select>
+                        <button onclick="generateNexoVoucher()" class="lux-btn" style="margin:0; width:auto; padding:10px;">CREAR</button>
+                    </div>
+                    <div id="vResult" style="margin-top:10px; font-family:monospace; color:var(--gold); text-align:center; font-size:14px;"></div>
+                `;
+                panel.appendChild(vSection);
+            }
+        };
+
+        // --- 4. FUNCIONES DE OPERACIÓN ---
+        window.generateNexoVoucher = function() {
+            const code = 'NEXO-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+            const days = document.getElementById('vDuration').value;
+            
+            db.ref(`vouchers/${code}`).set({
+                days: parseInt(days),
+                used: false
+            }).then(() => {
+                document.getElementById('vResult').innerText = code;
+                alert("CÓDIGO GENERADO: " + code);
+            });
+        };
+
+        window.promptVoucher = function() {
+            const code = prompt("INGRESE SU CÓDIGO DE ACTIVACIÓN:");
+            if(!code) return;
+
+            db.ref(`vouchers/${code}`).once('value', snap => {
+                const data = snap.val();
+                if(data && !data.used) {
+                    const user = auth.currentUser;
+                    db.ref(`users/${user.uid}/license`).once('value', uLicSnap => {
+                        const currentLic = uLicSnap.val() || { expiry: new Date().toISOString() };
+                        let baseDate = new Date(currentLic.expiry);
+                        if(baseDate < new Date()) baseDate = new Date();
+                        
+                        baseDate.setDate(baseDate.getDate() + data.days);
+                        
+                        // Actualizar usuario y quemar voucher
+                        db.ref(`users/${user.uid}/license`).update({
+                            status: 'active',
+                            expiry: baseDate.toISOString().split('T')[0]
+                        });
+                        db.ref(`vouchers/${code}/used`).set(true);
+                        
+                        alert("¡LICENCIA ACTIVADA CON ÉXITO! +" + data.days + " DÍAS.");
+                        location.reload();
+                    });
+                } else {
+                    alert("CÓDIGO INVÁLIDO O YA UTILIZADO.");
+                }
+            });
+        };
+    })();
+</script>
     
 </body>
 </html>
