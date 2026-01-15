@@ -1556,6 +1556,169 @@
         }
     })();
         </script>
+
+    <style>
+    /* Estilos del nuevo formulario de autenticación */
+    #authCenter {
+        display: flex; flex-direction: column; gap: 12px;
+    }
+    .auth-toggle-link {
+        font-size: 11px; color: var(--gold); cursor: pointer;
+        text-align: center; margin-top: 15px; text-decoration: underline;
+    }
+    .password-wrapper { position: relative; width: 100%; }
+    .toggle-pass {
+        position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+        cursor: pointer; font-size: 14px; opacity: 0.6; color: #fff;
+    }
+    .email-unverified-msg {
+        background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444;
+        padding: 10px; border-radius: 10px; font-size: 10px; color: #ff4444;
+        margin-bottom: 15px; display: none;
+    }
+</style>
+
+<script>
+    (function() {
+        // 1. Re-mapeo del Contenedor de Auth
+        const authContainer = document.querySelector('.auth-container');
+        if (!authContainer) return;
+
+        // Inyectamos la estructura completa de Login/Registro/Recuperación
+        authContainer.innerHTML = `
+            <img id="customLogo" style="max-width:150px; margin-bottom:20px; display:none;">
+            <h2 id="authTitle">INICIAR SESIÓN</h2>
+            <div id="verifyMessage" class="email-unverified-msg">⚠️ Por favor, verifica tu correo electrónico antes de entrar.</div>
+            
+            <div id="authCenter">
+                </div>
+            
+            <button id="btnMainAuth" class="btn btn-primary" style="margin-top:15px; width:100%;">ENTRAR</button>
+            <p id="toggleAuthMode" class="auth-toggle-link">¿No tienes cuenta? Regístrate aquí</p>
+            <p id="forgotPass" class="auth-toggle-link" style="font-size:10px; opacity:0.7;">Olvidé mi contraseña</p>
+        `;
+
+        let authMode = 'login'; // login, register, reset
+
+        function renderFields() {
+            const container = document.getElementById('authCenter');
+            const title = document.getElementById('authTitle');
+            const btn = document.getElementById('btnMainAuth');
+            container.innerHTML = '';
+
+            if (authMode === 'login') {
+                title.innerText = "BIENVENIDO";
+                btn.innerText = "ENTRAR";
+                container.innerHTML = `
+                    <input type="email" id="email" placeholder="CORREO ELECTRÓNICO" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" placeholder="CONTRASEÑA" required>
+                        <span class="toggle-pass" onclick="appWheel.togglePassVisibility('password')">👁️</span>
+                    </div>
+                `;
+            } else if (authMode === 'register') {
+                title.innerText = "CREAR CUENTA";
+                btn.innerText = "REGISTRARME";
+                container.innerHTML = `
+                    <input type="text" id="regNames" placeholder="NOMBRES" required>
+                    <input type="text" id="regLastnames" placeholder="APELLIDOS" required>
+                    <input type="tel" id="regPhone" placeholder="TELÉFONO" required>
+                    <input type="email" id="email" placeholder="CORREO ELECTRÓNICO" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" placeholder="CONTRASEÑA" required>
+                        <span class="toggle-pass" onclick="appWheel.togglePassVisibility('password')">👁️</span>
+                    </div>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirmPassword" placeholder="CONFIRMAR CONTRASEÑA" required>
+                        <span class="toggle-pass" onclick="appWheel.togglePassVisibility('confirmPassword')">👁️</span>
+                    </div>
+                `;
+            } else if (authMode === 'reset') {
+                title.innerText = "RECUPERAR";
+                btn.innerText = "ENVIAR ENLACE";
+                container.innerHTML = `<input type="email" id="email" placeholder="CORREO PARA RECUPERACIÓN" required>`;
+            }
+        }
+
+        // 2. Lógica de Funciones Globales
+        appWheel.togglePassVisibility = (id) => {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        };
+
+        // 3. Acción Principal (Login / Registro / Reset)
+        document.getElementById('btnMainAuth').onclick = async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password')?.value;
+
+            try {
+                if (authMode === 'login') {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    if (!userCredential.user.emailVerified) {
+                        document.getElementById('verifyMessage').style.display = 'block';
+                        auth.signOut();
+                    }
+                } else if (authMode === 'register') {
+                    const confirmPass = document.getElementById('confirmPassword').value;
+                    if (password !== confirmPass) throw new Error("Las contraseñas no coinciden");
+
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    await userCredential.user.sendEmailVerification();
+                    
+                    // Guardar metadata extra
+                    await db.ref(`users/${userCredential.user.uid}/profile`).set({
+                        nombres: document.getElementById('regNames').value,
+                        apellidos: document.getElementById('regLastnames').value,
+                        telefono: document.getElementById('regPhone').value,
+                        email: email
+                    });
+
+                    alert("Registro exitoso. Revisa tu correo para verificar la cuenta.");
+                    authMode = 'login';
+                    renderFields();
+                } else if (authMode === 'reset') {
+                    await auth.sendPasswordResetEmail(email);
+                    alert("Enlace de recuperación enviado al correo.");
+                    authMode = 'login';
+                    renderFields();
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        };
+
+        // 4. Cambios de modo
+        document.getElementById('toggleAuthMode').onclick = () => {
+            authMode = authMode === 'login' ? 'register' : 'login';
+            document.getElementById('toggleAuthMode').innerText = authMode === 'login' ? '¿No tienes cuenta? Regístrate aquí' : 'Ya tengo cuenta, entrar';
+            renderFields();
+        };
+
+        document.getElementById('forgotPass').onclick = () => {
+            authMode = 'reset';
+            renderFields();
+        };
+
+        // 5. FUNCIÓN DE SALIDA (LOGOUT) REFORZADA
+        // Reemplazamos cualquier función anterior de logout
+        appWheel.logout = () => {
+            if(confirm("¿Deseas cerrar sesión?")) {
+                auth.signOut().then(() => {
+                    // Limpieza total
+                    closeNexoModals();
+                    document.getElementById('nexoHubMenu').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'none';
+                    authContainer.style.display = 'block';
+                    authMode = 'login';
+                    renderFields();
+                });
+            }
+        };
+
+        // Inicializar vista
+        renderFields();
+    })();
+                        </script>
     
 </body>
 </html>
