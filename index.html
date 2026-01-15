@@ -1719,6 +1719,70 @@
         renderFields();
     })();
                         </script>
+
+    <script>
+    (function() {
+        // 1. Escucha Global de Clics (Interceptor)
+        document.addEventListener('click', function(e) {
+            // Buscamos si el clic fue en un elemento que contenga la palabra "SALIR"
+            // o que tenga la clase 'danger' dentro del Hub
+            const target = e.target.closest('.hub-option');
+            
+            if (target && (target.innerText.includes('SALIR') || target.classList.contains('danger'))) {
+                e.preventDefault();
+                e.stopPropagation();
+                ejecutarSalidaMaestra();
+            }
+        }, true); // El 'true' hace que esta escucha sea prioritaria
+
+        // 2. Función de Salida Definitiva
+        window.ejecutarSalidaMaestra = function() {
+            if (confirm("¿ESTÁS SEGURO QUE DESEAS CERRAR SESIÓN?")) {
+                // Desconexión de Firebase
+                if (typeof auth !== 'undefined') {
+                    auth.signOut().then(() => {
+                        console.log("NEXO: Sesión cerrada en Firebase");
+                        finalizarYLimpiar();
+                    }).catch(() => {
+                        finalizarYLimpiar(); // Salimos aunque falle Firebase
+                    });
+                } else {
+                    finalizarYLimpiar();
+                }
+            }
+        };
+
+        // 3. Limpieza Total de Interfaz
+        function finalizarYLimpiar() {
+            // Ocultamos el Menú y Botón Hamburguesa
+            const hub = document.getElementById('nexoHubMenu');
+            const btn = document.getElementById('nexoHubBtn');
+            if(hub) hub.style.display = 'none';
+            if(btn) btn.style.display = 'none';
+
+            // Ocultamos todos los contenedores de la aplicación
+            // Buscamos dinámicamente cualquier div que parezca un contenedor principal
+            document.querySelectorAll('div').forEach(div => {
+                if(div.id.toLowerCase().includes('container') || 
+                   div.id.toLowerCase().includes('app') || 
+                   div.id.toLowerCase().includes('wheel')) {
+                    div.style.display = 'none';
+                }
+            });
+
+            // Forzamos la aparición del Login
+            const authContainer = document.querySelector('.auth-container');
+            if (authContainer) {
+                authContainer.style.setProperty('display', 'block', 'important');
+                // Si existe la función de renderizado de campos, la llamamos
+                if (typeof renderFields === 'function') renderFields();
+            } else {
+                // Si todo falla, recargamos la página para asegurar el estado de Login
+                window.location.reload();
+            }
+        }
+    })();
+    </script>
     
 </body>
 </html>
