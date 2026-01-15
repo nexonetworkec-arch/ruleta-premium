@@ -799,87 +799,95 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-    /* DISEÑO PRO NEUMÓRFICO SECTORIZADO */
+    /* MODAL PRO - PRIORIDAD MÁXIMA */
     #nexoListManager {
         position: fixed !important; inset: 0 !important;
         background: radial-gradient(circle at center, #111 0%, #000 100%) !important;
-        z-index: 70000 !important; display: none; flex-direction: column; align-items: center;
-        padding: 20px; font-family: 'Segoe UI', Roboto, sans-serif;
+        z-index: 99999 !important; display: none; flex-direction: column; align-items: center;
+        padding: 20px; font-family: 'Segoe UI', sans-serif;
     }
 
     .pro-card {
-        width: 100%; max-width: 500px; height: 90vh; background: #0a0a0a;
-        border: 1px solid #D4AF37; border-radius: 30px;
-        padding: 25px; display: flex; flex-direction: column;
-        box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+        width: 100%; max-width: 480px; height: 90vh; background: #0a0a0a;
+        border: 1px solid #D4AF37; border-radius: 25px; padding: 25px;
+        display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,1);
     }
 
+    /* FILAS Y CONTROLES */
     .setup-bar {
-        background: #151515; padding: 15px; border-radius: 15px;
-        display: flex; align-items: center; justify-content: space-between; 
-        border: 1px solid #222; margin-bottom: 20px;
+        background: #151515; padding: 12px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 15px;
     }
+    .nexo-input-num { width: 55px; background: #000; border: 1px solid #D4AF37; color: #D4AF37; text-align: center; border-radius: 5px; padding: 5px; }
+    
+    .list-viewport { flex-grow: 1; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
+    .pro-row { display: flex; align-items: center; gap: 10px; background: #111; padding: 10px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #1a1a1a; }
+    .pro-num { color: #D4AF37; font-weight: bold; width: 20px; font-size: 12px; }
+    .pro-input { flex-grow: 1; background: transparent !important; border: none !important; color: #fff; outline: none; font-size: 14px; }
 
-    .nexo-input-num {
-        width: 60px; background: #000; border: 1px solid #D4AF37; color: #D4AF37;
-        padding: 8px; border-radius: 8px; text-align: center; font-weight: bold;
+    /* BOTONES */
+    .btn-nexo-pro { 
+        background: #D4AF37; color: #000; border: none; padding: 10px; 
+        border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase;
     }
-
-    .btn-action-pro {
-        background: #D4AF37; color: #000; border: none; padding: 10px 15px;
-        border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px;
-        text-transform: uppercase; transition: 0.3s;
-    }
-
-    .list-viewport {
-        flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 15px;
-    }
-
-    .pro-row {
-        display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
-        background: #111; padding: 10px; border-radius: 10px; border: 1px solid #1a1a1a;
-    }
-
-    .pro-num { color: #D4AF37; font-weight: bold; font-family: monospace; width: 25px; }
-    .pro-input { flex-grow: 1; background: transparent !important; border: none !important; color: #fff; outline: none; }
-
-    .pro-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-outline { background: transparent; border: 1px solid #333; color: #888; margin-top: 5px; }
 </style>
 
 <div id="nexoListManager">
     <div class="pro-card">
-        <h2 style="color:#D4AF37; text-align:center; letter-spacing:4px; margin-bottom:20px; font-size:18px;">EDITOR NEXO® PRO</h2>
+        <h3 style="color:#D4AF37; text-align:center; letter-spacing:3px; margin-bottom:15px;">PREMIOS / PARTICIPANTES</h3>
         
         <div class="setup-bar">
+            <span style="font-size:10px; color:#aaa;">FILAS:</span>
             <input type="number" id="nexoRowInput" value="8" min="1" class="nexo-input-num">
-            <button class="btn-action-pro" onclick="window.createManualRows()">CREAR FILAS</button>
-            <button class="btn-action-pro" onclick="window.exportToExcel()" style="background:#222; color:#D4AF37; border:1px solid #D4AF37;">↓ EXCEL</button>
+            <button class="btn-nexo-pro" onclick="window.createManualRows()">CREAR</button>
+            <button class="btn-nexo-pro" style="background:#222; color:#D4AF37; border:1px solid #D4AF37;" onclick="window.exportToExcel()">EXCEL</button>
         </div>
 
         <div id="nexoListBody" class="list-viewport"></div>
 
-        <div class="pro-footer">
-            <button class="btn-action-pro" onclick="window.saveListToCloud()" style="grid-column: span 2; padding: 15px; font-size: 13px;">GUARDAR Y ACTIVAR EN RULETA</button>
-            <button class="btn-action-pro" onclick="window.openSavedListsModal()" style="background:#151515; color:#fff; border:1px solid #333;">MIS LISTAS</button>
-            <button class="btn-action-pro" onclick="window.deleteSavedList()" style="background:#151515; color:#ff4444; border:1px solid #441111;">BORRAR LISTA</button>
-            <button class="btn-action-pro" onclick="window.closeListManager()" style="grid-column: span 2; background:transparent; color:#555;">SALIR DEL EDITOR</button>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <button class="btn-nexo-pro" style="grid-column: span 2; padding:15px;" onclick="window.saveListToCloud()">GUARDAR Y ACTIVAR RULETA</button>
+            <button class="btn-nexo-pro" style="background:#151515; color:#fff;" onclick="window.openSavedListsModal()">MIS LISTAS</button>
+            <button class="btn-nexo-pro" style="background:#151515; color:#ff4444;" onclick="window.deleteSavedList()">BORRAR</button>
+            <button class="btn-nexo-pro btn-outline" style="grid-column: span 2;" onclick="window.closeListManager()">CERRAR EDITOR</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ASIGNACIÓN GLOBAL DE FUNCIONES (PUENTE DE MANDO)
+    // --- LÓGICA DE INTEGRACIÓN CON EL MENÚ ---
+    (function syncMenu() {
+        const interval = setInterval(() => {
+            const menuPanel = document.getElementById('nexoMenuPanel');
+            if (menuPanel) {
+                // Inyectamos el botón directamente si no existe
+                if (!document.getElementById('btnOpenEditor')) {
+                    const btn = document.createElement('div');
+                    btn.id = 'btnOpenEditor';
+                    btn.className = 'menu-item-nexo';
+                    btn.innerHTML = 'PREMIOS / PARTICIPANTES';
+                    btn.onclick = window.openListManager;
+                    
+                    // Lo colocamos antes de Cerrar Sesión
+                    const items = menuPanel.querySelectorAll('.menu-item-nexo');
+                    menuPanel.insertBefore(btn, items[items.length - 1]);
+                }
+            }
+        }, 1000);
+    })();
+
+    // --- FUNCIONES GLOBALES DEL EDITOR ---
     window.openListManager = function() {
         if(typeof closeNexoMenu === 'function') closeNexoMenu();
         document.getElementById('nexoListManager').style.display = 'flex';
-        // Si está vacío, cargar ejemplos
         if(document.getElementById('nexoListBody').children.length === 0) {
-            window.renderProRows(["Premio A", "Premio B", "Premio C", "Premio D", "Premio E"]);
+            window.renderProRows(["Premio Ejemplo 1", "Premio Ejemplo 2", "Premio Ejemplo 3", "Premio Ejemplo 4"]);
         }
     };
 
-    window.closeListManager = function() {
-        document.getElementById('nexoListManager').style.display = 'none';
+    window.closeListManager = function() { 
+        document.getElementById('nexoListManager').style.display = 'none'; 
     };
 
     window.createManualRows = function() {
@@ -891,39 +899,38 @@
         const body = document.getElementById('nexoListBody');
         const count = forceCount || (data ? data.length : 8);
         const currentValues = data || Array.from(document.querySelectorAll('.pro-input')).map(i => i.value);
-        
         body.innerHTML = '';
         for(let i = 1; i <= count; i++) {
             const val = currentValues[i-1] || '';
             body.innerHTML += `
                 <div class="pro-row">
-                    <span class="pro-num">${i.toString().padStart(2, '0')}</span>
-                    <input type="text" class="pro-input" placeholder="Escribir contenido..." value="${val}">
+                    <span class="pro-num">${i}</span>
+                    <input type="text" class="pro-input" placeholder="Escribir..." value="${val}">
                 </div>`;
         }
     };
 
     window.saveListToCloud = async function() {
-        const name = prompt("NOMBRE DE LA LISTA PARA TU BIBLIOTECA:");
+        const name = prompt("NOMBRE DE LA LISTA:");
         if(!name) return;
         const items = Array.from(document.querySelectorAll('.pro-input')).map(i => i.value.trim()).filter(v => v !== "");
-        if(items.length === 0) return alert("LISTA VACÍA");
+        if(items.length === 0) return;
 
         try {
-            // Guardar en orden para la biblioteca
+            // Biblioteca: Orden Original
             await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${name}`).set(items);
-            // Activar aleatorio para la ruleta
+            // Ruleta: Orden Aleatorio
             const shuffled = [...items].sort(() => Math.random() - 0.5);
-            await db.ref('config/ruleta_actual').set({ items: shuffled, original_name: name });
-            alert("ÉXITO: Lista guardada y activada aleatoriamente.");
+            await db.ref('config/ruleta_actual').set({ items: shuffled, name: name });
+            alert("LISTA GUARDADA Y RULETA ACTUALIZADA");
         } catch(e) { alert("Error: " + e.message); }
     };
 
     window.openSavedListsModal = async function() {
         const snap = await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas`).once('value');
         const listas = snap.val();
-        if(!listas) return alert("NO HAY LISTAS GUARDADAS");
-        const elegir = prompt("CARGAR LISTA:\n" + Object.keys(listas).join("\n"));
+        if(!listas) return alert("NO HAY LISTAS");
+        const elegir = prompt("LISTAS:\n" + Object.keys(listas).join("\n"));
         if(listas[elegir]) {
             document.getElementById('nexoRowInput').value = listas[elegir].length;
             window.renderProRows(listas[elegir]);
@@ -932,7 +939,7 @@
 
     window.deleteSavedList = async function() {
         const name = prompt("NOMBRE DE LA LISTA A ELIMINAR:");
-        if(name && confirm(`¿Borrar "${name}"?`)) {
+        if(name) {
             await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${name}`).remove();
             alert("ELIMINADA");
         }
@@ -940,20 +947,11 @@
 
     window.exportToExcel = function() {
         const rows = Array.from(document.querySelectorAll('.pro-input')).map((i, idx) => [idx+1, i.value]);
-        const ws = XLSX.utils.aoa_to_sheet([["FILA", "CONTENIDO"], ...rows]);
+        const ws = XLSX.utils.aoa_to_sheet([["ID", "CONTENIDO"], ...rows]);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "NexoList");
-        XLSX.writeFile(wb, "Nexo_Editor.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "NexoData");
+        XLSX.writeFile(wb, "Nexo_Lista.xlsx");
     };
-
-    // Aseguramos que la opción del menú llame a la función global corregida
-    const checkMenuBtn = setInterval(() => {
-        const btn = document.getElementById('btnEditorPro') || document.getElementById('optGestionListas');
-        if(btn) {
-            btn.onclick = window.openListManager;
-            clearInterval(checkMenuBtn);
-        }
-    }, 1500);
 </script>
 </body>
 </html>
