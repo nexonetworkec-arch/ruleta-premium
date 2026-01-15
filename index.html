@@ -796,56 +796,164 @@
     })();
 </script>
 
-    <script>
-    (function() {
-        // Función de monitoreo constante para el menú
-        const fixMenuInterval = setInterval(() => {
-            const menuPanel = document.getElementById('nexoMenuPanel');
-            const menuList = document.querySelector('.menu-list') || menuPanel;
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-            if (menuPanel && menuList) {
-                // Si el botón no existe, lo creamos físicamente
-                if (!document.getElementById('btnEditorPro')) {
-                    const btn = document.createElement('div');
-                    btn.id = 'btnEditorPro';
-                    btn.className = 'menu-item-nexo';
-                    btn.style.border = '1px dashed #D4AF37'; // Diferenciador visual
-                    btn.innerHTML = 'PREMIOS / PARTICIPANTES';
-                    
-                    // Al hacer clic, abre el gestor y cierra el menú
-                    btn.onclick = function() {
-                        if(typeof closeNexoMenu === 'function') closeNexoMenu();
-                        document.getElementById('nexoListManager').style.display = 'flex';
-                        // Cargamos datos de ejemplo si está vacío
-                        const body = document.getElementById('nexoListBody');
-                        if(body && body.children.length === 0) {
-                            renderProRows(["Premio A", "Premio B", "Premio C", "Premio D"]);
-                        }
-                    };
+<style>
+    /* DISEÑO PRO NEUMÓRFICO SECTORIZADO */
+    #nexoListManager {
+        position: fixed !important; inset: 0 !important;
+        background: radial-gradient(circle at center, #111 0%, #000 100%) !important;
+        z-index: 70000 !important; display: none; flex-direction: column; align-items: center;
+        padding: 20px; font-family: 'Segoe UI', Roboto, sans-serif;
+    }
 
-                    // Lo insertamos antes del botón de Cerrar Sesión
-                    const logoutBtn = [...menuList.querySelectorAll('.menu-item-nexo')].find(el => el.textContent.includes('SESIÓN'));
-                    if (logoutBtn) {
-                        menuList.insertBefore(btn, logoutBtn);
-                    } else {
-                        menuList.appendChild(btn);
-                    }
-                    
-                    console.log("NEXO®: Opción de Editor Pro inyectada en el menú.");
-                }
-                // Una vez inyectado con éxito, podríamos limpiar el intervalo, 
-                // pero lo dejamos activo para asegurar persistencia si el DOM cambia.
-            }
-        }, 1500);
+    .pro-card {
+        width: 100%; max-width: 500px; height: 90vh; background: #0a0a0a;
+        border: 1px solid #D4AF37; border-radius: 30px;
+        padding: 25px; display: flex; flex-direction: column;
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
+    }
 
-        // Asegurar que el z-index del modal sea el más alto
-        const style = document.createElement('style');
-        style.innerHTML = `
-            #nexoListManager { z-index: 60000 !important; }
-            .menu-item-nexo#btnEditorPro:hover { background: rgba(212, 175, 55, 0.1) !important; }
-        `;
-        document.head.appendChild(style);
-    })();
+    .setup-bar {
+        background: #151515; padding: 15px; border-radius: 15px;
+        display: flex; align-items: center; justify-content: space-between; 
+        border: 1px solid #222; margin-bottom: 20px;
+    }
+
+    .nexo-input-num {
+        width: 60px; background: #000; border: 1px solid #D4AF37; color: #D4AF37;
+        padding: 8px; border-radius: 8px; text-align: center; font-weight: bold;
+    }
+
+    .btn-action-pro {
+        background: #D4AF37; color: #000; border: none; padding: 10px 15px;
+        border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px;
+        text-transform: uppercase; transition: 0.3s;
+    }
+
+    .list-viewport {
+        flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 15px;
+    }
+
+    .pro-row {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+        background: #111; padding: 10px; border-radius: 10px; border: 1px solid #1a1a1a;
+    }
+
+    .pro-num { color: #D4AF37; font-weight: bold; font-family: monospace; width: 25px; }
+    .pro-input { flex-grow: 1; background: transparent !important; border: none !important; color: #fff; outline: none; }
+
+    .pro-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style>
+
+<div id="nexoListManager">
+    <div class="pro-card">
+        <h2 style="color:#D4AF37; text-align:center; letter-spacing:4px; margin-bottom:20px; font-size:18px;">EDITOR NEXO® PRO</h2>
+        
+        <div class="setup-bar">
+            <input type="number" id="nexoRowInput" value="8" min="1" class="nexo-input-num">
+            <button class="btn-action-pro" onclick="window.createManualRows()">CREAR FILAS</button>
+            <button class="btn-action-pro" onclick="window.exportToExcel()" style="background:#222; color:#D4AF37; border:1px solid #D4AF37;">↓ EXCEL</button>
+        </div>
+
+        <div id="nexoListBody" class="list-viewport"></div>
+
+        <div class="pro-footer">
+            <button class="btn-action-pro" onclick="window.saveListToCloud()" style="grid-column: span 2; padding: 15px; font-size: 13px;">GUARDAR Y ACTIVAR EN RULETA</button>
+            <button class="btn-action-pro" onclick="window.openSavedListsModal()" style="background:#151515; color:#fff; border:1px solid #333;">MIS LISTAS</button>
+            <button class="btn-action-pro" onclick="window.deleteSavedList()" style="background:#151515; color:#ff4444; border:1px solid #441111;">BORRAR LISTA</button>
+            <button class="btn-action-pro" onclick="window.closeListManager()" style="grid-column: span 2; background:transparent; color:#555;">SALIR DEL EDITOR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ASIGNACIÓN GLOBAL DE FUNCIONES (PUENTE DE MANDO)
+    window.openListManager = function() {
+        if(typeof closeNexoMenu === 'function') closeNexoMenu();
+        document.getElementById('nexoListManager').style.display = 'flex';
+        // Si está vacío, cargar ejemplos
+        if(document.getElementById('nexoListBody').children.length === 0) {
+            window.renderProRows(["Premio A", "Premio B", "Premio C", "Premio D", "Premio E"]);
+        }
+    };
+
+    window.closeListManager = function() {
+        document.getElementById('nexoListManager').style.display = 'none';
+    };
+
+    window.createManualRows = function() {
+        const count = document.getElementById('nexoRowInput').value;
+        window.renderProRows(null, count);
+    };
+
+    window.renderProRows = function(data = null, forceCount = null) {
+        const body = document.getElementById('nexoListBody');
+        const count = forceCount || (data ? data.length : 8);
+        const currentValues = data || Array.from(document.querySelectorAll('.pro-input')).map(i => i.value);
+        
+        body.innerHTML = '';
+        for(let i = 1; i <= count; i++) {
+            const val = currentValues[i-1] || '';
+            body.innerHTML += `
+                <div class="pro-row">
+                    <span class="pro-num">${i.toString().padStart(2, '0')}</span>
+                    <input type="text" class="pro-input" placeholder="Escribir contenido..." value="${val}">
+                </div>`;
+        }
+    };
+
+    window.saveListToCloud = async function() {
+        const name = prompt("NOMBRE DE LA LISTA PARA TU BIBLIOTECA:");
+        if(!name) return;
+        const items = Array.from(document.querySelectorAll('.pro-input')).map(i => i.value.trim()).filter(v => v !== "");
+        if(items.length === 0) return alert("LISTA VACÍA");
+
+        try {
+            // Guardar en orden para la biblioteca
+            await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${name}`).set(items);
+            // Activar aleatorio para la ruleta
+            const shuffled = [...items].sort(() => Math.random() - 0.5);
+            await db.ref('config/ruleta_actual').set({ items: shuffled, original_name: name });
+            alert("ÉXITO: Lista guardada y activada aleatoriamente.");
+        } catch(e) { alert("Error: " + e.message); }
+    };
+
+    window.openSavedListsModal = async function() {
+        const snap = await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas`).once('value');
+        const listas = snap.val();
+        if(!listas) return alert("NO HAY LISTAS GUARDADAS");
+        const elegir = prompt("CARGAR LISTA:\n" + Object.keys(listas).join("\n"));
+        if(listas[elegir]) {
+            document.getElementById('nexoRowInput').value = listas[elegir].length;
+            window.renderProRows(listas[elegir]);
+        }
+    };
+
+    window.deleteSavedList = async function() {
+        const name = prompt("NOMBRE DE LA LISTA A ELIMINAR:");
+        if(name && confirm(`¿Borrar "${name}"?`)) {
+            await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${name}`).remove();
+            alert("ELIMINADA");
+        }
+    };
+
+    window.exportToExcel = function() {
+        const rows = Array.from(document.querySelectorAll('.pro-input')).map((i, idx) => [idx+1, i.value]);
+        const ws = XLSX.utils.aoa_to_sheet([["FILA", "CONTENIDO"], ...rows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "NexoList");
+        XLSX.writeFile(wb, "Nexo_Editor.xlsx");
+    };
+
+    // Aseguramos que la opción del menú llame a la función global corregida
+    const checkMenuBtn = setInterval(() => {
+        const btn = document.getElementById('btnEditorPro') || document.getElementById('optGestionListas');
+        if(btn) {
+            btn.onclick = window.openListManager;
+            clearInterval(checkMenuBtn);
+        }
+    }, 1500);
 </script>
 </body>
 </html>
