@@ -323,5 +323,266 @@
             });
         }
     </script>
+
+    <style>
+    #adminDashboard {
+        display: none; position: fixed; inset: 0; background: #000;
+        z-index: 9500; padding: 40px; overflow-y: auto; font-family: 'Segoe UI', sans-serif;
+        color: #fff;
+    }
+    /* KPIs */
+    .admin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+    .kpi-card { background: #111; border: 1px solid var(--gold-dark); padding: 25px; text-align: center; border-radius: 20px; }
+    .kpi-title { font-size: 10px; letter-spacing: 2px; color: var(--gold); font-weight: 900; text-transform: uppercase; }
+    .kpi-value { font-size: 38px; display: block; margin-top: 10px; color: #fff; font-weight: 900; }
+
+    /* TABLA */
+    .admin-table-container { background: #080808; border-radius: 25px; border: 1px solid #222; padding: 25px; margin-bottom: 30px; }
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--gold); color: var(--gold); font-size: 11px; }
+    .admin-table td { padding: 15px; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+    .row-master-admin { color: var(--gold) !important; font-weight: 900; background: rgba(212,175,55,0.05); }
+
+    /* MÓDULOS */
+    .admin-flex { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .admin-panel-box { background: #111; border: 1px solid #333; border-radius: 25px; padding: 30px; }
+    .admin-field { margin-bottom: 20px; }
+    .admin-field label { display: block; font-size: 9px; color: var(--gold); font-weight: 900; margin-bottom: 8px; }
+    .admin-input { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; font-family: inherit; }
+
+    /* BOTONES */
+    .btn-manage { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 7px 15px; border-radius: 8px; cursor: pointer; font-size: 10px; }
+    .btn-manage:hover { background: var(--gold); color: #000; }
+    .close-panel { position: fixed; top: 30px; right: 30px; cursor: pointer; font-size: 24px; color: var(--gold); z-index: 9600; }
+
+    /* MODAL DE GESTIÓN */
+    #userModalDetail { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; align-items: center; justify-content: center; }
+    .user-card { background: #000; border: 2px solid var(--gold); border-radius: 30px; width: 450px; padding: 35px; }
+    .perm-switch { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 11px; text-transform: uppercase; }
+</style>
+
+<div id="adminDashboard">
+    <div class="close-panel" onclick="document.getElementById('adminDashboard').style.display='none'">✕</div>
+    <h1 style="font-size: 20px; letter-spacing: 3px; margin-bottom: 40px; color: var(--gold);">NEXO® MASTER CONTROL PANEL</h1>
+
+    <div class="admin-grid">
+        <div class="kpi-card"><span class="kpi-title">USUARIOS REGISTRADOS</span><span id="kpi-total" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">USUARIOS ONLINE</span><span id="kpi-online" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">LICENCIAS ACTIVAS</span><span id="kpi-lic" class="kpi-value">0</span></div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr><th>NOMBRE Y APELLIDO</th><th>UID</th><th>REGISTRO</th><th>SUSCRIPCIÓN</th><th>ACCIONES</th></tr>
+            </thead>
+            <tbody id="adminUserTable"></tbody>
+        </table>
+    </div>
+
+    <div class="admin-flex">
+        <div class="admin-panel-box">
+            <h3 style="font-size:12px; color:var(--gold); margin-top:0;">COMUNICACIÓN GLOBAL</h3>
+            <div class="admin-field">
+                <label>TIPO DE COMUNICADO</label>
+                <select id="admMsgType" class="admin-input" onchange="updateMsgUI()">
+                    <option value="text">SOLO TEXTO</option>
+                    <option value="image">SOLO IMAGEN</option>
+                    <option value="hybrid">TEXTO + IMAGEN</option>
+                </select>
+            </div>
+            <div id="admMsgTextGroup" class="admin-field">
+                <label>MENSAJE</label>
+                <textarea id="admMsgText" class="admin-input" rows="3"></textarea>
+            </div>
+            <div id="admMsgImgGroup" class="admin-field" style="display:none;">
+                <label>IMAGEN (LOCAL O URL)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="admMsgImg" class="admin-input" placeholder="https://...">
+                    <button class="btn" onclick="document.getElementById('localFile').click()">📁</button>
+                    <input type="file" id="localFile" style="display:none" onchange="uploadLocalFile(this)" accept="image/*">
+                </div>
+                <div id="upStatus" style="font-size:9px; color:var(--gold); margin-top:5px; display:none;"></div>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="broadcastNexoMessage()">ENVIAR AHORA</button>
+        </div>
+
+        <div class="admin-panel-box">
+            <h3 style="font-size:12px; color:var(--gold); margin-top:0;">GENERADOR DE LICENCIAS</h3>
+            <div class="admin-field"><label>NIVEL</label><select id="licLevel" class="admin-input"><option value="basic">BASIC</option><option value="gold">GOLD</option><option value="platinum">PLATINUM</option></select></div>
+            <div class="admin-field"><label>DÍAS DE DURACIÓN</label><input type="number" id="licDays" class="admin-input" placeholder="30"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="uiGenerateLicense()">GENERAR CÓDIGO ÚNICO</button>
+        </div>
+    </div>
+</div>
+
+<div id="userModalDetail">
+    <div class="user-card">
+        <h2 id="detName" style="color:var(--gold); margin:0;">USUARIO</h2>
+        <p id="detUID" style="font-size:9px; opacity:0.5; margin-bottom:20px; font-family:monospace;"></p>
+        
+        <div style="background:#080808; padding:20px; border-radius:15px; border:1px solid #222;">
+            <label style="font-size:9px; color:var(--gold); font-weight:900;">NIVEL DE ACCESO MANUAL</label>
+            <select id="detLevel" class="admin-input" style="margin-bottom:20px;" onchange="autoCheckPerms()">
+                <option value="basic">BASIC</option>
+                <option value="gold">GOLD</option>
+                <option value="platinum">PLATINUM</option>
+            </select>
+            
+            <div class="perm-switch"><span>EDITAR PREMIOS</span><input type="checkbox" id="perm_prizes"></div>
+            <div class="perm-switch"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="perm_colors"></div>
+            <div class="perm-switch"><span>MODO REGISTRO</span><input type="checkbox" id="perm_reg"></div>
+            <div class="perm-switch"><span>VER HISTORIAL</span><input type="checkbox" id="perm_hist"></div>
+        </div>
+        
+        <button class="btn btn-primary" style="width:100%; margin-top:25px;" onclick="saveUserAdmin()">GUARDAR CAMBIOS</button>
+        <button class="btn" style="width:100%; margin-top:10px; border:none;" onclick="document.getElementById('userModalDetail').style.display='none'">CANCELAR</button>
+    </div>
+</div>
+
+<script>
+    const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+    let targetUID = "";
+
+    // INICIALIZACIÓN
+    auth.onAuthStateChanged(u => {
+        if(u && u.uid === MASTER_UID) {
+            console.log("NEXO Master Logged In");
+            renderMasterEntry();
+            startAdminSync();
+        }
+    });
+
+    function renderMasterEntry() {
+        if(document.getElementById('mBtn')) return;
+        const b = document.createElement('button');
+        b.id = 'mBtn'; b.className = "btn"; b.innerText = "PANEL MASTER";
+        b.style = "position:fixed; bottom:20px; left:20px; z-index:9000; font-size:9px; border:1px solid var(--gold); background:#000;";
+        b.onclick = () => document.getElementById('adminDashboard').style.display = 'block';
+        document.body.appendChild(b);
+    }
+
+    // SINCRONIZACIÓN TOTAL (KPIs + TABLA)
+    function startAdminSync() {
+        db.ref('users').on('value', snap => {
+            const users = snap.val();
+            const tbody = document.getElementById('adminUserTable');
+            let count = 0, online = 0;
+            tbody.innerHTML = '';
+
+            // Fila Admin Maestro
+            const mRow = document.createElement('tr'); mRow.className = 'row-master-admin';
+            mRow.innerHTML = `<td>MASTER ADMIN (TÚ)</td><td>${MASTER_UID}</td><td>SISTEMA</td><td>UNLIMITED</td><td>---</td>`;
+            tbody.appendChild(mRow);
+
+            if(users) {
+                for(let id in users) {
+                    if(id === MASTER_UID) continue;
+                    count++;
+                    if(users[id].status?.state === 'online') online++;
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${(users[id].perfil?.nombre || 'SIN NOMBRE').toUpperCase()}</td>
+                        <td style="font-family:monospace; font-size:9px; opacity:0.6;">${id}</td>
+                        <td>${users[id].registroFecha || '---'}</td>
+                        <td style="font-weight:bold; color:var(--gold)">${(users[id].config?.tipoSub || 'BASIC').toUpperCase()}</td>
+                        <td><button class="btn-manage" onclick="openUserCard('${id}')">GESTIONAR</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+            document.getElementById('kpi-total').innerText = count;
+            document.getElementById('kpi-online').innerText = online;
+        });
+    }
+
+    // GESTIÓN DE USUARIO (ABRIR TARJETA)
+    async function openUserCard(uid) {
+        targetUID = uid;
+        const s = await db.ref(`users/${uid}`).once('value');
+        const u = s.val();
+        if(!u) return;
+
+        document.getElementById('detName').innerText = (u.perfil?.nombre || 'USUARIO').toUpperCase();
+        document.getElementById('detUID').innerText = "UID: " + uid;
+        document.getElementById('detLevel').value = u.config?.tipoSub || 'basic';
+        
+        // Cargar permisos solicitados
+        document.getElementById('perm_prizes').checked = u.config?.permisos?.editPrizes || false;
+        document.getElementById('perm_colors').checked = u.config?.permisos?.editColors || false;
+        document.getElementById('perm_reg').checked = u.config?.permisos?.modeRegistry || false;
+        document.getElementById('perm_hist').checked = u.config?.permisos?.viewHistory || false;
+        
+        document.getElementById('userModalDetail').style.display = 'flex';
+    }
+
+    function autoCheckPerms() {
+        const l = document.getElementById('detLevel').value;
+        document.getElementById('perm_prizes').checked = (l !== 'basic');
+        document.getElementById('perm_colors').checked = (l !== 'basic');
+        document.getElementById('perm_reg').checked = (l === 'platinum');
+        document.getElementById('perm_hist').checked = (l === 'platinum');
+    }
+
+    function saveUserAdmin() {
+        const updates = {
+            "config/tipoSub": document.getElementById('detLevel').value,
+            "config/permisos/editPrizes": document.getElementById('perm_prizes').checked,
+            "config/permisos/editColors": document.getElementById('perm_colors').checked,
+            "config/permisos/modeRegistry": document.getElementById('perm_reg').checked,
+            "config/permisos/viewHistory": document.getElementById('perm_hist').checked
+        };
+        db.ref(`users/${targetUID}`).update(updates).then(() => {
+            alert("SISTEMA NEXO® ACTUALIZADO");
+            document.getElementById('userModalDetail').style.display = 'none';
+        });
+    }
+
+    // MENSAJERÍA Y STORAGE
+    function updateMsgUI() {
+        const t = document.getElementById('admMsgType').value;
+        document.getElementById('admMsgTextGroup').style.display = (t === 'image') ? 'none' : 'block';
+        document.getElementById('admMsgImgGroup').style.display = (t === 'text') ? 'none' : 'block';
+    }
+
+    function uploadLocalFile(input) {
+        if(!input.files[0]) return;
+        const file = input.files[0];
+        const status = document.getElementById('upStatus');
+        status.style.display = 'block';
+        const ref = firebase.storage().ref('admin_broadcasts/' + file.name);
+        const task = ref.put(file);
+        
+        task.on('state_changed', 
+            s => status.innerText = `CARGANDO AL DISPOSITIVO: ${Math.round((s.bytesTransferred/s.totalBytes)*100)}%`,
+            e => alert("Error en Storage"),
+            () => task.snapshot.ref.getDownloadURL().then(url => {
+                document.getElementById('admMsgImg').value = url;
+                status.innerText = "¡IMAGEN LISTA PARA ENVIAR!";
+            })
+        );
+    }
+
+    function uiGenerateLicense() {
+        const l = document.getElementById('licLevel').value;
+        const d = document.getElementById('licDays').value;
+        if(!d) return alert("Indique los días");
+        const code = `NEXO-${l.toUpperCase()}-${Math.random().toString(36).substr(2,7).toUpperCase()}`;
+        db.ref('licenses/'+code).set({level:l, days:parseInt(d), used:false, createdAt: firebase.database.ServerValue.TIMESTAMP})
+          .then(() => alert("LICENCIA GENERADA CON ÉXITO:\n" + code));
+    }
+
+    function broadcastNexoMessage() {
+        const m = {
+            text: document.getElementById('admMsgText').value,
+            image: document.getElementById('admMsgImg').value,
+            type: document.getElementById('admMsgType').value,
+            time: firebase.database.ServerValue.TIMESTAMP
+        };
+        db.ref('global_announcements').push(m).then(() => alert("COMUNICADO DISTRIBUIDO"));
+    }
+</script>
 </body>
 </html>
+
