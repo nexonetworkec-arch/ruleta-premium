@@ -2490,6 +2490,24 @@
 
     })();
    </script>
+
+    <script>
+    (function() {
+        // Actualizamos a la identidad correcta en minúsculas
+        window.NEXO_ADMIN_EMAIL = "nexonetwork.ec@gmail.com";
+
+        // Forzamos la actualización del sistema de permisos
+        auth.onAuthStateChanged(user => {
+            if (user && user.email.toLowerCase() === window.NEXO_ADMIN_EMAIL) {
+                console.log("NEXO: Super Admin Detectado Correctamente: " + user.email);
+                // Si estamos en el panel, disparamos la carga global
+                if(typeof loadGlobalUsers === 'function') {
+                    setTimeout(loadGlobalUsers, 500);
+                }
+            }
+        });
+    })();
+    </script>
     
 </body>
 </html>
