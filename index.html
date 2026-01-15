@@ -262,6 +262,270 @@
         };
     </script>
 
+    <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEXO® Business Pro - Sistema de Sorteo Premium</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root { 
+            --bg-color: #000000;
+            --card-bg: rgba(15, 15, 15, 0.95); 
+            --gold: #d4af37; 
+            --gold-dark: #8a6d1d;
+            --gold-mix: #6A571B;
+        }
+
+        /* CONSTANTES DE MARCA */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        /* REGLA GENERAL: ORO Y MAYÚSCULAS */
+        input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
+            color: var(--gold) !important;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
+        }
+
+        /* EXCEPCIÓN DE SEGURIDAD: CREDENCIALES EN MINÚSCULAS */
+        input[type="email"], 
+        input[type="password"], 
+        .no-caps {
+            text-transform: none !important;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
+        
+        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
+
+        body { 
+            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
+        }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
+
+        input {
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
+        }
+
+        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
+
+        .wheel-wrapper { 
+            position: relative; 
+            width: min(82vh, 88vw); height: min(82vh, 88vw); 
+            max-width: 550px; max-height: 550px; 
+        }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
+        #pointer { 
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
+            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent;
+            border-top: min(50px, 10vw) solid var(--gold);
+        }
+
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        #btnSpinCenter { 
+            width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; cursor: pointer; font-size: min(13px, 3vw);
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
+        .modal-content { 
+            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
+            width: min(500px, 90%); text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px;">NEXO® MASTER ENGINE</p>
+    </div>
+
+    <div id="loginScreen">
+        <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 85%);">
+            <h2>NEXO®</h2>
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
+        </div>
+    </div>
+
+    <div class="app-container" id="appMain">
+        <div style="text-align:center; padding: 20px;">
+            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
+            <div class="wheel-wrapper">
+                <div id="pointer"></div>
+                <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
+                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
+        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
+        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
+    </div></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
+            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+            projectId: "ruletapremiumbusiness-4db7e",
+            storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
+            messagingSenderId: "822563863112",
+            appId: "1:822563863112:web:d134d015736e2fafb5367d",
+            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.database();
+
+        let currentUser = null;
+        let config = { 
+            tituloSorteo: "SORTEO PREMIUM",
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
+            modoRegistro: false,
+            isValidated: false
+        };
+
+        function syncUI() {
+            document.querySelectorAll('.dynamic-title').forEach(el => {
+                el.innerText = config.tituloSorteo;
+            });
+            appWheel.draw();
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if(user) {
+                db.ref(`users/${user.uid}/config`).on('value', snap => {
+                    if(snap.exists()) {
+                        config = {...config, ...snap.val()};
+                        syncUI();
+                    }
+                });
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appMain').style.display = 'flex';
+                updatePresence(user.uid);
+            } else {
+                document.getElementById('appMain').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+
+        class Wheel {
+            constructor() {
+                this.canvas = document.getElementById('wheelCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.angle = 0; this.isSpinning = false;
+            }
+            draw() {
+                const w = 800, cx = 400, r = 385;
+                this.ctx.clearRect(0,0,w,w);
+                const n = config.prizes.length;
+                const slice = (Math.PI*2)/n;
+                
+                config.prizes.forEach((p, i) => {
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx,cx);
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
+                    this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
+                    this.ctx.fill();
+                    this.ctx.translate(cx,cx);
+                    this.ctx.rotate(this.angle+i*slice+slice/2);
+                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.textAlign="right";
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
+                    this.ctx.fillText(p.toUpperCase(), r-40, 10);
+                    this.ctx.restore();
+                });
+            }
+            handleSpinClick() {
+                if(this.isSpinning) return;
+                if(config.modoRegistro && !config.isValidated) {
+                    alert("REGISTRO REQUERIDO"); 
+                    return;
+                }
+                this.executeSpin();
+            }
+            executeSpin() {
+                this.isSpinning = true;
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
+                const duration = 5000; const start = performance.now();
+                const anim = (now) => {
+                    const t = Math.min((now-start)/duration, 1);
+                    const ease = 1 - Math.pow(1-t, 4);
+                    this.angle = total * ease;
+                    this.draw();
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
+                };
+                requestAnimationFrame(anim);
+            }
+            finish() {
+                this.isSpinning = false;
+                const n = config.prizes.length;
+                const deg = (this.angle * 180 / Math.PI) % 360;
+                const idx = n - 1 - Math.floor(deg/(360/n));
+                const prize = config.prizes[idx];
+                document.getElementById('winnerName').innerText = prize;
+                document.getElementById('modalWinner').style.display = 'flex';
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                    if(config.modoRegistro) config.isValidated = false;
+                };
+                db.ref(`users/${currentUser.uid}/history`).push({ 
+                    prize, 
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
+            }
+        }
+
+        const appWheel = new Wheel();
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
+
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`);
+            db.ref('.info/connected').on('value', s => {
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+            });
+        }
+
+        document.getElementById('btnAuth').onclick = () => {
+            const email = document.getElementById('authEmail').value;
+            const pin = document.getElementById('authPin').value;
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
+        };
+    </script>
+
     <style>
     #adminDashboard {
         display: none;
@@ -495,125 +759,262 @@
 </script>
 
     <style>
-    /* MODAL DE USUARIO TIPO TARJETA */
+    /* 1. ESTILOS DEL DASHBOARD */
+    #adminDashboard {
+        display: none; position: fixed; inset: 0; background: #000;
+        z-index: 9500; padding: 5vw; overflow-y: auto; color: #fff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .kpi-card { 
+        background: var(--card-bg); border: 1px solid var(--gold-dark); 
+        padding: 25px; text-align: center; border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .kpi-title { font-size: 10px; letter-spacing: 2px; color: var(--gold); font-weight: 900; display: block; margin-bottom: 10px; }
+    .kpi-value { font-size: 38px; color: #fff; font-weight: 900; }
+    
+    .admin-table-container { 
+        background: var(--card-bg); border-radius: 25px; border: 1px solid var(--gold-mix); 
+        padding: 20px; margin-bottom: 30px; overflow-x: auto;
+    }
+    .admin-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    .admin-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--gold-mix); color: var(--gold); font-size: 10px; text-transform: uppercase; }
+    .admin-table td { padding: 15px; border-bottom: 1px solid #111; font-size: 12px; }
+    .row-admin-master { background: rgba(212, 175, 55, 0.15); font-weight: bold; color: var(--gold); }
+
+    .msg-builder, .license-builder {
+        background: var(--card-bg); border: 1px solid var(--gold-dark);
+        border-radius: 25px; padding: 30px; margin-bottom: 30px;
+    }
+    .admin-input { 
+        width: 100%; background: #080808; border: 1px solid #333; 
+        padding: 12px; border-radius: 10px; color: #fff; margin-top: 5px; margin-bottom: 15px;
+        font-family: inherit;
+    }
+    .admin-input:focus { border-color: var(--gold); outline: none; }
+
+    /* MODAL DETALLE USUARIO */
     #userModalDetail {
-        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
         z-index: 10000; align-items: center; justify-content: center; padding: 20px;
     }
     .user-card {
-        background: var(--card-bg); border: 2px solid var(--gold); border-radius: 30px;
-        width: 100%; max-width: 500px; padding: 30px; position: relative;
+        background: #000; border: 2px solid var(--gold); border-radius: 30px;
+        width: 100%; max-width: 450px; padding: 30px;
     }
-    .stat-box { background: #080808; border: 1px solid #222; border-radius: 15px; padding: 15px; margin-top: 15px; }
-    .switch-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    
-    /* GENERADOR DE LICENCIAS */
-    .license-section { margin-top: 30px; border-top: 1px solid var(--gold-mix); pt: 20px; }
-    .license-code { font-family: monospace; font-size: 18px; color: var(--gold); background: #111; padding: 10px; display: block; text-align: center; border: 1px dashed var(--gold); margin: 10px 0; }
+    .switch-group { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1a1a1a; font-size: 11px; text-transform: uppercase; }
 </style>
+
+<div id="adminDashboard">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+        <h1 style="font-size:20px; letter-spacing:3px;">NEXO® CONTROL PANEL</h1>
+        <button class="btn" onclick="document.getElementById('adminDashboard').style.display='none'">✕ CERRAR</button>
+    </div>
+
+    <div class="admin-grid">
+        <div class="kpi-card"><span class="kpi-title">USUARIOS REGISTRADOS</span><span id="kpi-total" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">USUARIOS ONLINE</span><span id="kpi-online" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">POR CADUCAR (7D)</span><span id="kpi-exp" class="kpi-value">0</span></div>
+    </div>
+
+    <div class="admin-table-container">
+        <h3 style="font-size:12px; margin-bottom:15px; color:var(--gold);">GESTIÓN DE USUARIOS</h3>
+        <table class="admin-table">
+            <thead>
+                <tr><th>NOMBRE Y APELLIDO</th><th>UID</th><th>REGISTRO</th><th>SUSCRIPCIÓN</th><th>ACCIONES</th></tr>
+            </thead>
+            <tbody id="adminUserTable"></tbody>
+        </table>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+        <div class="msg-builder">
+            <h3 style="font-size:12px; color:var(--gold); margin-bottom:20px;">MENSAJERÍA GLOBAL</h3>
+            <textarea id="admMsgText" class="admin-input" rows="3" placeholder="Escriba el comunicado..."></textarea>
+            <input type="text" id="admMsgImg" class="admin-input" placeholder="URL Imagen (Opcional)">
+            <select id="admMsgTarget" class="admin-input">
+                <option value="all">TODOS LOS SUSCRIPTORES</option>
+                <option value="basic">SOLO BASIC</option>
+                <option value="gold">SOLO GOLD</option>
+                <option value="platinum">SOLO PLATINUM</option>
+            </select>
+            <button class="btn btn-primary" style="width:100%;" onclick="broadcastNexoMessage()">ENVIAR COMUNICADO</button>
+        </div>
+
+        <div class="license-builder">
+            <h3 style="font-size:12px; color:var(--gold); margin-bottom:20px;">GENERADOR DE LICENCIAS</h3>
+            <label style="font-size:9px;">NIVEL DE LICENCIA</label>
+            <select id="licLevel" class="admin-input">
+                <option value="basic">BASIC</option>
+                <option value="gold">GOLD</option>
+                <option value="platinum">PLATINUM</option>
+            </select>
+            <label style="font-size:9px;">DURACIÓN (DÍAS)</label>
+            <input type="number" id="licDays" class="admin-input" placeholder="Ej: 30">
+            <button class="btn btn-primary" style="width:100%;" onclick="uiGenerateLicense()">GENERAR CÓDIGO ÚNICO</button>
+        </div>
+    </div>
+</div>
 
 <div id="userModalDetail">
     <div class="user-card">
-        <div class="close-admin" onclick="document.getElementById('userModalDetail').style.display='none'">✕</div>
-        <div id="userHeaderDetail">
-            <h2 id="detailName" style="color:var(--gold); margin-bottom:5px;">NOMBRE USUARIO</h2>
-            <p id="detailUID" style="font-size:9px; opacity:0.5; margin-bottom:20px;">UID: ---</p>
-        </div>
-
-        <div class="stat-box">
-            <label style="font-size:10px; color:var(--gold)">NIVEL DE SUSCRIPCIÓN (MANUAL)</label>
-            <select id="editSubLevel" class="admin-control" style="margin-bottom:15px;" onchange="updateUserPermissions()">
+        <h2 id="detName" style="color:var(--gold); margin-top:0;">USUARIO</h2>
+        <p id="detUID" style="font-size:9px; opacity:0.5; margin-bottom:20px; font-family:monospace;"></p>
+        
+        <div style="background:#080808; padding:20px; border-radius:15px; border:1px solid #222;">
+            <label style="font-size:9px; color:var(--gold); font-weight:bold;">NIVEL DE ACCESO MANUAL</label>
+            <select id="detLevel" class="admin-input" onchange="autoCheckPerms()">
                 <option value="basic">BASIC</option>
                 <option value="gold">GOLD</option>
                 <option value="platinum">PLATINUM</option>
             </select>
             
-            <div class="switch-group"><span>EDITAR PREMIOS</span><input type="checkbox" id="p_editPrizes"></div>
-            <div class="switch-group"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="p_editColors"></div>
-            <div class="switch-group"><span>MODO REGISTRO</span><input type="checkbox" id="p_modeRegistry"></div>
-            <div class="switch-group"><span>VER HISTORIAL</span><input type="checkbox" id="p_viewHistory"></div>
-        </div>
-
-        <div class="stat-box">
-            <h4 style="margin:0 0 10px 0; font-size:12px;">ESTADÍSTICAS DE USO</h4>
-            <p style="font-size:11px;">GIROS TOTALES: <span id="statSpins" style="color:var(--gold)">0</span></p>
-            <p style="font-size:11px;">ÚLTIMA VICTORIA: <span id="statLastWin" style="color:var(--gold)">---</span></p>
+            <div class="switch-group"><span>EDITAR PREMIOS</span><input type="checkbox" id="perm_prizes"></div>
+            <div class="switch-group"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="perm_colors"></div>
+            <div class="switch-group"><span>MODO REGISTRO</span><input type="checkbox" id="perm_reg"></div>
+            <div class="switch-group"><span>VER HISTORIAL</span><input type="checkbox" id="perm_hist"></div>
         </div>
         
-        <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="saveUserConfig()">GUARDAR CAMBIOS</button>
+        <button class="btn btn-primary" style="width:100%; margin-top:25px;" onclick="saveUserAdmin()">GUARDAR CAMBIOS</button>
+        <button class="btn" style="width:100%; margin-top:10px; background:transparent; border:none;" onclick="document.getElementById('userModalDetail').style.display='none'">CANCELAR</button>
     </div>
 </div>
 
 <script>
-    let currentUserInModal = "";
+    const MASTER_ID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+    let selectedUser = "";
 
-    // FUNCIÓN PARA ABRIR MODAL DETALLADA
-    async function showUserCard(uid) {
-        currentUserInModal = uid;
-        const snap = await db.ref(`users/${uid}`).once('value');
-        const u = snap.val();
+    // Verificar si el usuario logueado es el Admin Maestro
+    auth.onAuthStateChanged(u => {
+        if(u && u.uid === MASTER_ID) {
+            const b = document.createElement('button');
+            b.className = "btn"; b.innerHTML = "ADMIN PANEL";
+            b.style = "position:fixed; bottom:20px; left:20px; z-index:9000; font-size:10px; border: 1px solid var(--gold);";
+            b.onclick = () => { 
+                document.getElementById('adminDashboard').style.display='block'; 
+                syncAdminData(); 
+            };
+            document.body.appendChild(b);
+        }
+    });
+
+    function syncAdminData() {
+        db.ref('users').on('value', s => {
+            const data = s.val();
+            let total = 0, online = 0, expiring = 0;
+            const tbody = document.getElementById('adminUserTable');
+            const now = Date.now();
+            const weekInMs = 7 * 24 * 60 * 60 * 1000;
+            
+            tbody.innerHTML = '';
+
+            // 1. Insertar Admin Maestro siempre primero
+            renderRow(MASTER_ID, {perfil:{nombre:"NEXO MASTER ADMIN"}, config:{tipoSub:"UNLIMITED"}}, true);
+
+            // 2. Insertar resto de usuarios y calcular métricas
+            for(let id in data) {
+                if(id === MASTER_ID) continue;
+                total++;
+                if(data[id].status?.state === 'online') online++;
+                if(data[id].expiryDate && (data[id].expiryDate - now) < weekInMs) expiring++;
+                
+                renderRow(id, data[id]);
+            }
+            
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-online').innerText = online;
+            document.getElementById('kpi-exp').innerText = expiring;
+        });
+    }
+
+    function renderRow(id, u, isMaster = false) {
+        const tr = document.createElement('tr');
+        if(isMaster) tr.className = 'row-admin-master';
+        tr.innerHTML = `
+            <td>${(u.perfil?.nombre || 'SIN NOMBRE').toUpperCase()}</td>
+            <td style="font-family:monospace; font-size:9px; opacity:0.6;">${id}</td>
+            <td>${u.registroFecha || '---'}</td>
+            <td style="letter-spacing:1px; font-weight:bold;">${(u.config?.tipoSub || 'BASIC').toUpperCase()}</td>
+            <td><button class="btn" style="padding:5px 12px; font-size:9px;" onclick="openUserModal('${id}')">GESTIONAR</button></td>
+        `;
+        document.getElementById('adminUserTable').appendChild(tr);
+    }
+
+    async function openUserModal(id) {
+        selectedUser = id;
+        const s = await db.ref(`users/${id}`).once('value');
+        const u = s.val();
         
-        document.getElementById('detailName').innerText = (u.perfil?.nombre || "USUARIO").toUpperCase();
-        document.getElementById('detailUID').innerText = "UID: " + uid;
-        document.getElementById('editSubLevel').value = u.config?.tipoSub || "basic";
+        document.getElementById('detName').innerText = (u.perfil?.nombre || 'USUARIO').toUpperCase();
+        document.getElementById('detUID').innerText = "ID: " + id;
+        document.getElementById('detLevel').value = u.config?.tipoSub || 'basic';
         
-        // Cargar permisos actuales
-        document.getElementById('p_editPrizes').checked = u.config?.permisos?.editPrizes || false;
-        document.getElementById('p_editColors').checked = u.config?.permisos?.editColors || false;
-        document.getElementById('p_modeRegistry').checked = u.config?.permisos?.modeRegistry || false;
-        document.getElementById('p_viewHistory').checked = u.config?.permisos?.viewHistory || false;
-
-        // Cargar Estadísticas
-        const history = u.history ? Object.values(u.history) : [];
-        document.getElementById('statSpins').innerText = history.length;
-        document.getElementById('statLastWin').innerText = history.length > 0 ? history[history.length-1].prize : "NINGUNA";
-
+        // Cargar permisos manuales
+        document.getElementById('perm_prizes').checked = u.config?.permisos?.editPrizes || false;
+        document.getElementById('perm_colors').checked = u.config?.permisos?.editColors || false;
+        document.getElementById('perm_reg').checked = u.config?.permisos?.modeRegistry || false;
+        document.getElementById('perm_hist').checked = u.config?.permisos?.viewHistory || false;
+        
         document.getElementById('userModalDetail').style.display = 'flex';
     }
 
-    // AUTO-CONFIGURAR PERMISOS POR NIVEL
-    function updateUserPermissions() {
-        const level = document.getElementById('editSubLevel').value;
-        document.getElementById('p_editPrizes').checked = (level === 'gold' || level === 'platinum');
-        document.getElementById('p_editColors').checked = (level === 'gold' || level === 'platinum');
-        document.getElementById('p_modeRegistry').checked = (level === 'platinum');
-        document.getElementById('p_viewHistory').checked = (level === 'platinum');
+    // Lógica de escalabilidad de beneficios al cambiar nivel en modal
+    function autoCheckPerms() {
+        const level = document.getElementById('detLevel').value;
+        document.getElementById('perm_prizes').checked = (level === 'gold' || level === 'platinum');
+        document.getElementById('perm_colors').checked = (level === 'gold' || level === 'platinum');
+        document.getElementById('perm_reg').checked = (level === 'platinum');
+        document.getElementById('perm_hist').checked = (level === 'platinum');
     }
 
-    function saveUserConfig() {
+    function saveUserAdmin() {
         const updates = {
-            "config/tipoSub": document.getElementById('editSubLevel').value,
-            "config/permisos/editPrizes": document.getElementById('p_editPrizes').checked,
-            "config/permisos/editColors": document.getElementById('p_editColors').checked,
-            "config/permisos/modeRegistry": document.getElementById('p_modeRegistry').checked,
-            "config/permisos/viewHistory": document.getElementById('p_viewHistory').checked
+            "config/tipoSub": document.getElementById('detLevel').value,
+            "config/permisos/editPrizes": document.getElementById('perm_prizes').checked,
+            "config/permisos/editColors": document.getElementById('perm_colors').checked,
+            "config/permisos/modeRegistry": document.getElementById('perm_reg').checked,
+            "config/permisos/viewHistory": document.getElementById('perm_hist').checked
         };
         
-        db.ref(`users/${currentUserInModal}`).update(updates)
-          .then(() => {
-              alert("USUARIO ACTUALIZADO EXITOSAMENTE");
-              document.getElementById('userModalDetail').style.display = 'none';
-          });
+        db.ref(`users/${selectedUser}`).update(updates).then(() => {
+            alert("CAMBIOS APLICADOS CORRECTAMENTE");
+            document.getElementById('userModalDetail').style.display = 'none';
+        });
     }
 
-    // GENERADOR DE LICENCIAS HÍBRIDO
-    function generateLicense(level, days) {
-        const code = `NEXO-${level.toUpperCase()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-        const licenseData = {
-            code: code,
+    function uiGenerateLicense() {
+        const level = document.getElementById('licLevel').value;
+        const days = document.getElementById('licDays').value;
+        if(!days) return alert("Indique los días");
+        
+        const code = `NEXO-${level.toUpperCase()}-${Math.random().toString(36).substr(2,7).toUpperCase()}`;
+        
+        db.ref('licenses/'+code).set({
             level: level,
-            durationDays: days,
+            days: parseInt(days),
             used: false,
             createdAt: firebase.database.ServerValue.TIMESTAMP
-        };
+        }).then(() => alert("LICENCIA GENERADA CON ÉXITO:\n\n" + code));
+    }
+
+    function broadcastNexoMessage() {
+        const text = document.getElementById('admMsgText').value;
+        const img = document.getElementById('admMsgImg').value;
+        const target = document.getElementById('admMsgTarget').value;
         
-        db.ref('licenses').child(code).set(licenseData).then(() => {
-            alert("LICENCIA GENERADA: " + code);
-            console.log("Nueva Licencia:", licenseData);
+        if(!text && !img) return alert("El mensaje está vacío");
+
+        db.ref('global_announcements').push({
+            text, img, target, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP 
+        }).then(() => {
+            alert("COMUNICADO DISTRIBUIDO");
+            document.getElementById('admMsgText').value = "";
         });
     }
 </script>
 </body>
 </html>
-
-
+</body>
+</html>
