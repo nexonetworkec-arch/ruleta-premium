@@ -702,6 +702,112 @@
         }
     }
 </script>
+
+    <style>
+    /* Botón Hamburguesa Cuadrado */
+    #nexoMenuBtn {
+        position: fixed; bottom: 25px; right: 25px; width: 50px; height: 50px;
+        background: var(--gold); border: none; border-radius: 12px;
+        cursor: pointer; z-index: 9999; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 4px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: 0.3s;
+    }
+    #nexoMenuBtn:hover { transform: scale(1.1); }
+    .bar { width: 25px; height: 3px; background: #000; border-radius: 2px; }
+
+    /* Contenedor del Menú */
+    #nexoMenuContent {
+        position: fixed; bottom: 85px; right: 25px; width: 220px;
+        background: #0a0a0a; border: 1px solid var(--gold-dark);
+        border-radius: 20px; display: none; flex-direction: column;
+        overflow: hidden; z-index: 9998; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .menu-item {
+        padding: 15px 20px; color: #fff; font-family: 'Segoe UI', sans-serif;
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        border-bottom: 1px solid #1a1a1a; transition: 0.3s;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .menu-item:hover { background: rgba(212,175,55,0.1); color: var(--gold); }
+    .menu-item i { font-size: 14px; }
+    
+    /* Clase para opciones ocultas (Admin) */
+    .admin-only { display: none; color: var(--gold) !important; border-left: 3px solid var(--gold); }
+</style>
+
+<button id="nexoMenuBtn" onclick="toggleNexoMenu()">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</button>
+
+<div id="nexoMenuContent">
+    <div class="menu-item" onclick="alert('Próximamente: Perfil')">👤 MI PERFIL</div>
+    
+    <div id="optMaster" class="menu-item admin-only" onclick="openMasterPanel()">⚙️ PANEL MASTER</div>
+    
+    <div class="menu-item" onclick="alert('Próximamente: Historial')">📜 HISTORIAL</div>
+    
+    <div class="menu-item" style="color: #ff4444;" onclick="handleLogout()">🚪 CERRAR SESIÓN</div>
+</div>
+
+<script>
+    // 1. CONSTANTE MAESTRA
+    const MASTER_UID_REF = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+    // 2. CONTROL DE VISIBILIDAD DEL MENÚ
+    function toggleNexoMenu() {
+        const menu = document.getElementById('nexoMenuContent');
+        menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // 3. LÓGICA DE SESIÓN Y FILTRADO
+    auth.onAuthStateChanged(user => {
+        const optMaster = document.getElementById('optMaster');
+        const menuBtn = document.getElementById('nexoMenuBtn');
+        
+        if (user) {
+            menuBtn.style.display = 'flex'; // Mostrar hamburguesa
+            
+            // Si el UID es del Admin, mostrar la opción oculta
+            if (user.uid === MASTER_UID_REF) {
+                optMaster.style.display = 'flex';
+                console.log("Acceso Master habilitado en menú.");
+            } else {
+                optMaster.style.display = 'none';
+            }
+        } else {
+            menuBtn.style.display = 'none'; // Ocultar si no hay login
+            document.getElementById('nexoMenuContent').style.display = 'none';
+        }
+    });
+
+    // 4. ACCIONES DEL MENÚ
+    function openMasterPanel() {
+        document.getElementById('adminDashboard').style.display = 'block';
+        toggleNexoMenu(); // Cerrar menú al abrir panel
+        if(typeof startAdminSync === 'function') startAdminSync(); 
+    }
+
+    async function handleLogout() {
+        if(confirm("¿Deseas cerrar la sesión en NEXO®?")) {
+            try {
+                await auth.signOut();
+                location.reload(); // Recargar para limpiar todos los estados
+            } catch (e) {
+                console.error("Error al salir:", e);
+            }
+        }
+    }
+
+    // Cerrar menú si se hace clic fuera
+    window.onclick = function(event) {
+        if (!event.target.closest('#nexoMenuBtn') && !event.target.closest('#nexoMenuContent')) {
+            document.getElementById('nexoMenuContent').style.display = 'none';
+        }
+    }
+</script>
 </body>
 </html>
+
 
