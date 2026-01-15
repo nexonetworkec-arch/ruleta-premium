@@ -2794,6 +2794,90 @@
 
     })();
     </script>
-    
+ <script>
+    (function() {
+        console.log("NEXO: Iniciando Overrider de Interfaz...");
+
+        // 1. Definición Maestra de los Módulos
+        const NEXO_FULL_MODULES = [
+            { id: 'modalStock', icon: '🎁', label: 'MIS PREMIOS' },
+            { id: 'modalHistory', icon: '🏆', label: 'GANADORES' },
+            { id: 'modalLeads', icon: '👥', label: 'MIS LEADS' },
+            { id: 'modalBranding', icon: '🎨', label: 'MI MARCA' }
+        ];
+
+        // 2. Función de Limpieza y Construcción Agresiva
+        window.renderFullNexoInterface = function() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if (!hubMenu) return;
+
+            const isMaster = (user.email.toLowerCase() === "nexonetwork.ec@gmail.com");
+
+            // Vaciamos el menú por completo para evitar duplicidad o bloqueos del código viejo
+            hubMenu.innerHTML = '';
+
+            // Encabezado
+            const header = document.createElement('div');
+            header.style = "padding: 20px 15px; text-align: center; border-bottom: 1px solid #222; color: var(--gold); font-weight: bold; letter-spacing: 2px;";
+            header.innerHTML = "NEXO® LUX";
+            hubMenu.appendChild(header);
+
+            // Inyectamos los 4 módulos de gestión para TODOS
+            NEXO_FULL_MODULES.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'nexo-menu-item';
+                item.style.display = 'flex !important'; // Forzamos visibilidad
+                item.innerHTML = `<span>${m.icon}</span> ${m.label}`;
+                item.onclick = () => { if(window.closeNexoHub) closeNexoHub(); openNexoModal(m.id); };
+                hubMenu.appendChild(item);
+            });
+
+            // Panel Master SOLO para el dueño
+            if (isMaster) {
+                const adminItem = document.createElement('div');
+                adminItem.className = 'nexo-menu-item';
+                adminItem.style.color = "var(--gold)";
+                adminItem.style.borderTop = "1px solid rgba(212,175,55,0.3)";
+                adminItem.innerHTML = `<span>👑</span> PANEL MASTER`;
+                adminItem.onclick = () => { if(window.closeNexoHub) closeNexoHub(); openNexoModal('modalSuperAdmin'); };
+                hubMenu.appendChild(adminItem);
+            }
+
+            // Opciones finales: Reiniciar y Salir
+            const footer = `
+                <div class="nexo-menu-item" onclick="location.reload()"><span>🔄</span> REINICIAR</div>
+                <div class="nexo-menu-item" style="opacity:0.5" onclick="auth.signOut()"><span>🚪</span> SALIR</div>
+            `;
+            hubMenu.insertAdjacentHTML('beforeend', footer);
+        };
+
+        // 3. EL "OBSERVADOR": Si algo borra el menú o lo cambia, lo restauramos al instante
+        const observer = new MutationObserver((mutations) => {
+            // Si el menú se abre o cambia, forzamos nuestra versión full
+            const hub = document.getElementById('nexoHub');
+            if (hub && hub.classList.contains('active')) {
+                window.renderFullNexoInterface();
+            }
+        });
+
+        // Iniciamos la observación en el body para detectar cambios en el Hub
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // 4. Vinculación con el evento de apertura
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.nexo-hub-trigger') || e.target.innerText.includes('☰')) {
+                setTimeout(window.renderFullNexoInterface, 100);
+            }
+        });
+
+        // Ejecutar al detectar usuario
+        auth.onAuthStateChanged(user => { if(user) setTimeout(window.renderFullNexoInterface, 1000); });
+
+    })();
+</script>
+   
 </body>
 </html>
