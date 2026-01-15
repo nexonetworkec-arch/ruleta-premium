@@ -1346,8 +1346,66 @@
     };
 })();
 </script>
+
+    <script>
+(function() {
+    // 1. Forzar visibilidad del botón de cierre y pestañas
+    const repairUI = () => {
+        const btnSave = document.getElementById('btnSaveConfig');
+        if (btnSave) {
+            btnSave.onclick = async () => {
+                btnSave.innerText = "💾 GUARDANDO...";
+                btnSave.style.opacity = "0.5";
+
+                const newConfig = {
+                    prizes: Array.from(document.querySelectorAll('.prize-input')).map(i => i.value),
+                    adUrl: document.getElementById('editAdUrl')?.value || "",
+                    logoUrl: document.getElementById('editLogoUrl')?.value || "",
+                    weights: Array.from(document.querySelectorAll('.weight-input')).map(i => Number(i.value))
+                };
+
+                try {
+                    await db.ref(`users/${currentUser.uid}/config`).update(newConfig);
+                    btnSave.innerText = "✅ CAMBIOS GUARDADOS";
+                    btnSave.style.backgroundColor = "#28a745";
+                } catch (e) {
+                    btnSave.innerText = "❌ ERROR AL GUARDAR";
+                    console.error(e);
+                } finally {
+                    setTimeout(() => {
+                        btnSave.innerText = "SINCRONIZAR CAMBIOS CLOUD";
+                        btnSave.style.backgroundColor = "var(--gold)";
+                        btnSave.style.opacity = "1";
+                    }, 2000);
+                }
+            };
+        }
+    };
+
+    // 2. Ejecutar reparación después de que el DOM se asiente
+    setTimeout(repairUI, 1000);
+
+    // 3. Fix de cierre global (tecla ESC y botón)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") document.getElementById('adminPanel').style.display = 'none';
+    });
+
+    // 4. Asegurar que las pestañas funcionen incluso si se inyectan dinámicamente
+    window.switchTab = function(evt, tabId) {
+        const contents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < contents.length; i++) contents[i].style.display = "none";
+        
+        const tabs = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < tabs.length; i++) tabs[i].className = tabs[i].className.replace(" active", "");
+        
+        document.getElementById(tabId).style.display = "block";
+        evt.currentTarget.className += " active";
+    };
+})();
+</script>
    </body>
 </html>
+
 
 
 
