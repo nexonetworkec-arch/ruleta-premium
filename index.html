@@ -1783,6 +1783,160 @@
         }
     })();
     </script>
+
+    <style>
+    /* Ocultar Login Original de forma agresiva */
+    .auth-container, #loginContainer, .login-box { display: none !important; }
+
+    /* Estilo NEXO LUX Premium */
+    #nexoAuthMaster {
+        position: fixed; inset: 0; 
+        background: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+        background-size: cover;
+        display: flex; align-items: center; justify-content: center; z-index: 20000;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+    .lux-card {
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
+        border: 1px solid var(--gold); border-radius: 35px;
+        padding: 40px; width: 90%; max-width: 420px;
+        box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 20px rgba(212,175,55,0.2);
+        color: white; text-align: center; max-height: 90vh; overflow-y: auto;
+    }
+    .lux-input {
+        width: 100%; background: rgba(255,255,255,0.05); border: 1px solid #333;
+        padding: 12px 15px; border-radius: 12px; color: white; margin-bottom: 12px;
+        font-size: 14px; outline: none; transition: 0.3s;
+    }
+    .lux-input:focus { border-color: var(--gold); background: rgba(212,175,55,0.05); }
+    
+    .lux-btn {
+        width: 100%; padding: 15px; border-radius: 12px; border: none;
+        background: var(--gold); color: black; font-weight: bold;
+        text-transform: uppercase; letter-spacing: 2px; cursor: pointer;
+        margin-top: 10px; transition: 0.3s;
+    }
+    .lux-btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+    
+    .lux-link { color: var(--gold); cursor: pointer; font-size: 12px; margin-top: 15px; display: block; text-decoration: none; }
+    .pass-container { position: relative; }
+    .lux-eye { position: absolute; right: 15px; top: 12px; cursor: pointer; opacity: 0.5; }
+</style>
+
+<div id="nexoAuthMaster">
+    <div class="lux-card">
+        <h2 id="luxTitle" style="letter-spacing: 5px; color: var(--gold); margin-bottom: 25px;">NEXO® LUX</h2>
+        <div id="luxFields">
+            </div>
+        <button class="lux-btn" id="luxPrimaryBtn">Entrar</button>
+        <div id="luxFooter">
+            <span class="lux-link" onclick="setLuxMode('register')">¿No tienes cuenta? Regístrate</span>
+            <span class="lux-link" onclick="setLuxMode('reset')" style="font-size: 10px; opacity: 0.7;">Olvidé mi contraseña</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        let mode = 'login'; 
+
+        window.setLuxMode = function(newMode) {
+            mode = newMode;
+            const container = document.getElementById('luxFields');
+            const btn = document.getElementById('luxPrimaryBtn');
+            const title = document.getElementById('luxTitle');
+            const footer = document.getElementById('luxFooter');
+            container.innerHTML = '';
+
+            if(mode === 'login') {
+                title.innerText = "BIENVENIDO";
+                btn.innerText = "ENTRAR";
+                container.innerHTML = `
+                    <input type="email" id="lEmail" class="lux-input" placeholder="EMAIL">
+                    <div class="pass-container">
+                        <input type="password" id="lPass" class="lux-input" placeholder="CONTRASEÑA">
+                        <span class="lux-eye" onclick="toggleLuxPass('lPass')">👁️</span>
+                    </div>
+                `;
+                footer.innerHTML = `
+                    <span class="lux-link" onclick="setLuxMode('register')">¿No tienes cuenta? Regístrate</span>
+                    <span class="lux-link" onclick="setLuxMode('reset')" style="font-size: 10px; opacity: 0.7;">Olvidé mi contraseña</span>
+                `;
+            } else if(mode === 'register') {
+                title.innerText = "REGISTRO";
+                btn.innerText = "CREAR CUENTA";
+                container.innerHTML = `
+                    <input type="text" id="rNom" class="lux-input" placeholder="NOMBRES">
+                    <input type="text" id="rApe" class="lux-input" placeholder="APELLIDOS">
+                    <input type="tel" id="rTel" class="lux-input" placeholder="TELÉFONO">
+                    <input type="email" id="rEmail" class="lux-input" placeholder="EMAIL">
+                    <div class="pass-container">
+                        <input type="password" id="rPass1" class="lux-input" placeholder="CONTRASEÑA">
+                        <span class="lux-eye" onclick="toggleLuxPass('rPass1')">👁️</span>
+                    </div>
+                    <div class="pass-container">
+                        <input type="password" id="rPass2" class="lux-input" placeholder="CONFIRMAR CONTRASEÑA">
+                        <span class="lux-eye" onclick="toggleLuxPass('rPass2')">👁️</span>
+                    </div>
+                `;
+                footer.innerHTML = `<span class="lux-link" onclick="setLuxMode('login')">Ya tengo cuenta. Volver.</span>`;
+            } else if(mode === 'reset') {
+                title.innerText = "RECUPERAR";
+                btn.innerText = "ENVIAR";
+                container.innerHTML = `<input type="email" id="resEmail" class="lux-input" placeholder="TU EMAIL">`;
+                footer.innerHTML = `<span class="lux-link" onclick="setLuxMode('login')">Volver</span>`;
+            }
+        };
+
+        window.toggleLuxPass = function(id) {
+            const el = document.getElementById(id);
+            el.type = el.type === 'password' ? 'text' : 'password';
+        };
+
+        document.getElementById('luxPrimaryBtn').onclick = async function() {
+            try {
+                if(mode === 'login') {
+                    const email = document.getElementById('lEmail').value;
+                    const pass = document.getElementById('lPass').value;
+                    const res = await auth.signInWithEmailAndPassword(email, pass);
+                    if(!res.user.emailVerified) {
+                        alert("DEBES VERIFICAR TU EMAIL ANTES DE ENTRAR.");
+                        auth.signOut();
+                    } else {
+                        document.getElementById('nexoAuthMaster').style.display = 'none';
+                    }
+                } else if(mode === 'register') {
+                    const email = document.getElementById('rEmail').value;
+                    const p1 = document.getElementById('rPass1').value;
+                    const p2 = document.getElementById('rPass2').value;
+                    if(p1 !== p2) throw new Error("Contraseñas no coinciden");
+                    
+                    const res = await auth.createUserWithEmailAndPassword(email, p1);
+                    await res.user.sendEmailVerification();
+                    await db.ref('users/' + res.user.uid + '/profile').set({
+                        nombres: document.getElementById('rNom').value,
+                        apellidos: document.getElementById('rApe').value,
+                        telefono: document.getElementById('rTel').value
+                    });
+                    alert("REGISTRO EXITOSO. VERIFICA TU EMAIL PARA PODER ENTRAR.");
+                    setLuxMode('login');
+                }
+            } catch(e) { alert("ERROR: " + e.message); }
+        };
+
+        // Escucha de estado de sesión para ocultar/mostrar este panel
+        auth.onAuthStateChanged(user => {
+            if(user && user.emailVerified) {
+                document.getElementById('nexoAuthMaster').style.display = 'none';
+            } else {
+                document.getElementById('nexoAuthMaster').style.display = 'flex';
+                setLuxMode('login');
+            }
+        });
+
+        setLuxMode('login');
+    })();
+</script>
     
 </body>
 </html>
