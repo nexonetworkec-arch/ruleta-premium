@@ -442,7 +442,95 @@
 
 })();
 </script>
+
+    <script>
+(function() {
+    // 1. Añadir el campo de Logo al Admin Panel dinámicamente
+    const adminPanel = document.getElementById('adminPanel');
+    const brandingSection = document.createElement('div');
+    brandingSection.className = 'admin-section';
+    brandingSection.innerHTML = `
+        <label style="display:block; font-size: 10px; margin-bottom: 10px;">URL LOGOTIPO CIRCULAR (PRO)</label>
+        <input type="text" id="editLogo" placeholder="https://link-a-tu-logo.png" 
+               style="width:100%; font-size: 12px; margin-bottom: 10px;">
+        <p id="logoNote" style="font-size: 9px; color: #888;"></p>
+    `;
+    // Insertar antes del botón de guardar
+    adminPanel.insertBefore(brandingSection, document.getElementById('btnSaveConfig'));
+
+    const inputLogo = document.getElementById('editLogo');
+
+    // 2. Modificar el comportamiento de dibujado del botón central
+    const originalDraw = appWheel.draw;
+    appWheel.draw = function() {
+        // Llamamos al dibujo original de la ruleta (Integridad referencial)
+        originalDraw.call(this);
+
+        if(config.logoUrl && (config.licenseLevel !== "FREE")) {
+            const img = new Image();
+            img.src = config.logoUrl;
+            img.onload = () => {
+                const size = 100; // Tamaño del logo central
+                this.ctx.save();
+                this.ctx.beginPath();
+                this.ctx.arc(400, 400, 50, 0, Math.PI * 2);
+                this.ctx.closePath();
+                this.ctx.clip();
+                this.ctx.drawImage(img, 400 - 50, 400 - 50, 100, 100);
+                this.ctx.restore();
+                
+                // Ocultar texto del botón original si hay logo
+                document.getElementById('btnSpinCenter').style.opacity = "0";
+            };
+        } else {
+            document.getElementById('btnSpinCenter').style.opacity = "1";
+        }
+    };
+
+    // 3. Extender la función de guardado
+    const btnSave = document.getElementById('btnSaveConfig');
+    const originalSaveClick = btnSave.onclick;
+
+    btnSave.onclick = async () => {
+        const nivel = config.licenseLevel || "FREE";
+        
+        if(nivel === "FREE" && inputLogo.value.trim() !== "") {
+            alert("LA PERSONALIZACIÓN DE LOGO ES UNA FUNCIÓN PRO.");
+            inputLogo.value = "";
+            return;
+        }
+
+        // Si pasa la validación, procedemos (este update se sincroniza con el listener anterior)
+        await db.ref(`users/${currentUser.uid}/config`).update({
+            logoUrl: inputLogo.value
+        });
+        
+        // Ejecutar el guardado original para los otros campos
+        originalSaveClick();
+    };
+
+    // 4. Sincronizar campo al cargar
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                const val = snap.val();
+                if(val && val.logoUrl) inputLogo.value = val.logoUrl;
+                
+                // Visualmente bloquear si es FREE
+                if((config.licenseLevel || "FREE") === "FREE") {
+                    inputLogo.classList.add('locked-feature');
+                    document.getElementById('logoNote').innerText = "BLOQUEADO - MEJORA A PRO";
+                } else {
+                    inputLogo.classList.remove('locked-feature');
+                    document.getElementById('logoNote').innerText = "EL LOGO SE MOSTRARÁ EN EL CENTRO";
+                }
+            });
+        }
+    });
+})();
+</script>
 </body>
 </html>
+
 
 
