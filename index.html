@@ -1218,8 +1218,137 @@
     }
 })();
 </script>
+
+    <style>
+    /* Estética Glassmorphism Premium */
+    #adminPanel {
+        background: rgba(10, 10, 10, 0.95) !important;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 20px;
+        padding: 0 !important;
+        overflow: hidden;
+        width: 90% !important;
+        max-width: 500px;
+    }
+
+    /* Cabecera del Panel */
+    .admin-header-premium {
+        background: linear-gradient(to right, #000, #1a1a1a);
+        padding: 20px;
+        border-bottom: 1px solid var(--gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Sistema de Navegación por Pestañas */
+    .premium-tabs {
+        display: flex;
+        background: #000;
+        padding: 5px;
+        gap: 5px;
+    }
+    .tab-btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 9px;
+        background: transparent;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        transition: 0.3s;
+        border-radius: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .tab-btn.active {
+        background: rgba(212, 175, 55, 0.1);
+        color: var(--gold);
+        font-weight: bold;
+    }
+
+    /* Contenedores de Contenido */
+    .tab-content {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+        display: none;
+    }
+    .tab-content.active { display: block; }
+
+    /* Scrollbar Estilo Oro */
+    .tab-content::-webkit-scrollbar { width: 4px; }
+    .tab-content::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+</style>
+
+<script>
+(function() {
+    const adminPanel = document.getElementById('adminPanel');
+    
+    // 1. Re-estructuración del HTML existente
+    const originalContent = adminPanel.innerHTML;
+    adminPanel.innerHTML = `
+        <div class="admin-header-premium">
+            <div style="color:var(--gold); font-weight:bold; font-size:12px;">NEXO® ENTERPRISE</div>
+            <button onclick="closeAdmin()" style="background:transparent; border:none; color:white; cursor:pointer;">✕</button>
+        </div>
+        <div class="premium-tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'tab-stats')">📊 Datos</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-config')">⚙️ Config</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-probs')">⚖️ Pesos</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-staff')">👥 Equipo</button>
+        </div>
+        <div id="tab-stats" class="tab-content active"></div>
+        <div id="tab-config" class="tab-content"></div>
+        <div id="tab-probs" class="tab-content"></div>
+        <div id="tab-staff" class="tab-content"></div>
+        <div style="padding:15px; background:rgba(0,0,0,0.5); border-top:1px solid #222;">
+            <button id="btnSaveConfig" class="btn-save" style="width:100%; margin:0;">SINCRONIZAR CAMBIOS CLOUD</button>
+        </div>
+    `;
+
+    // 2. Mover los módulos inyectados a sus nuevas pestañas
+    setTimeout(() => {
+        const stats = document.getElementById('analyticsDashboard');
+        const history = document.getElementById('listWinners')?.parentElement;
+        const configInputs = document.querySelectorAll('.admin-section:not(#analyticsDashboard)');
+        
+        // Pestaña Stats
+        if(stats) document.getElementById('tab-stats').appendChild(stats);
+        if(history) document.getElementById('tab-stats').appendChild(history);
+        
+        // Pestaña Config (Premios, Logos, Banners, Audio)
+        configInputs.forEach(el => {
+            if(el.innerHTML.includes('PREMIOS') || el.innerHTML.includes('LOGO') || el.innerHTML.includes('BANNER') || el.innerHTML.includes('AUDIO')) {
+                document.getElementById('tab-config').appendChild(el);
+            }
+            if(el.innerHTML.includes('PROBABILIDADES')) {
+                document.getElementById('tab-probs').appendChild(el);
+            }
+            if(el.innerHTML.includes('EQUIPO') || el.innerHTML.includes('STAFF')) {
+                document.getElementById('tab-staff').appendChild(el);
+            }
+        });
+    }, 500);
+
+    // 3. Función de Navegación
+    window.switchTab = function(evt, tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    };
+
+    // 4. Corrección de Cierre
+    window.closeAdmin = function() {
+        adminPanel.style.display = 'none';
+    };
+})();
+</script>
    </body>
 </html>
+
 
 
 
