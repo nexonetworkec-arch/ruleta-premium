@@ -262,7 +262,7 @@
         };
     </script>
 
-    <style>
+   <style>
     #adminDashboard {
         display: none; position: fixed; inset: 0; background: #000;
         z-index: 9500; padding: 40px; overflow-y: auto; font-family: 'Segoe UI', sans-serif;
@@ -681,63 +681,34 @@
 </script>
 
     <style>
-    /* 1. BOTÓN HAMBURGUESA CUADRADO */
+    /* Ocultar definitivamente el botón de la inyección anterior para evitar duplicidad */
+    #mBtn, .master-entry-btn { display: none !important; }
+
+    /* Estilos del Menú Corregidos */
     #nexoMenuTrigger {
-        position: fixed;
-        bottom: 25px;
-        right: 25px;
-        width: 50px;
-        height: 50px;
-        background: #000;
-        border: 2px solid var(--gold);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        z-index: 10500;
-        border-radius: 8px; /* Cuadrado con leve redondeo premium */
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        position: fixed; bottom: 25px; right: 25px;
+        width: 55px; height: 55px; background: #000;
+        border: 2px solid var(--gold); border-radius: 8px;
+        display: none; flex-direction: column; justify-content: center;
+        align-items: center; gap: 5px; cursor: pointer; z-index: 10500;
+        box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
-    .bar { width: 25px; height: 2px; background: var(--gold); transition: 0.3s; }
+    .bar { width: 28px; height: 3px; background: var(--gold); border-radius: 2px; }
 
-    /* 2. PANEL DEL MENÚ (OVERLAY) */
     #nexoMenuPanel {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(10px);
-        z-index: 10600;
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px;
+        position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 20000; display: none; flex-direction: column;
+        align-items: center; justify-content: center; backdrop-filter: blur(15px);
     }
 
-    .menu-list { list-style: none; width: 100%; max-width: 300px; text-align: center; }
     .menu-item {
-        padding: 20px;
-        border-bottom: 1px solid #222;
-        color: #fff;
-        letter-spacing: 3px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: 0.3s;
-        text-transform: uppercase;
+        width: 250px; padding: 20px; margin: 10px 0;
+        border: 1px solid #222; color: #fff; text-align: center;
+        letter-spacing: 3px; cursor: pointer; transition: 0.3s;
+        text-transform: uppercase; font-size: 12px;
     }
-    .menu-item:hover { color: var(--gold); background: rgba(212, 175, 55, 0.05); }
-    .menu-item.master { color: var(--gold); border: 1px solid var(--gold); margin-bottom: 15px; display: none; }
-
-    .menu-close {
-        position: absolute;
-        top: 30px;
-        right: 30px;
-        color: var(--gold);
-        font-size: 24px;
-        cursor: pointer;
-    }
+    .menu-item:hover { border-color: var(--gold); color: var(--gold); }
+    #itemMaster { border: 1px solid var(--gold); color: var(--gold); display: none; }
 </style>
 
 <div id="nexoMenuTrigger" onclick="openNexoMenu()">
@@ -747,75 +718,73 @@
 </div>
 
 <div id="nexoMenuPanel">
-    <span class="menu-close" onclick="closeNexoMenu()">✕</span>
-    <h2 style="color:var(--gold); letter-spacing:8px; margin-bottom:40px;">NEXO® MENU</h2>
+    <div style="position:absolute; top:30px; right:30px; color:var(--gold); font-size:30px; cursor:pointer;" onclick="closeNexoMenu()">✕</div>
+    <h2 style="color:var(--gold); letter-spacing:10px; margin-bottom:50px;">NEXO®</h2>
     
-    <div class="menu-list">
-        <div id="itemMaster" class="menu-item master" onclick="accessMasterPanel()">MI PANEL MASTER</div>
-        
-        <div class="menu-item" onclick="alert('Próximamente: Perfil de Usuario')">MI CUENTA</div>
-        <div class="menu-item" style="color:#ff4444;" onclick="handleLogout()">CERRAR SESIÓN</div>
-    </div>
+    <div id="itemMaster" class="menu-item" onclick="accessMasterPanel()">MI PANEL MASTER</div>
+    <div class="menu-item" onclick="alert('Próximamente: Mi Perfil')">MI CUENTA</div>
+    <div class="menu-item" style="color:#ff4444; border-color:#441111;" onclick="handleLogout()">CERRAR SESIÓN</div>
 </div>
 
 <script>
+    // Referencia al UID Maestro guardado en tus instrucciones
     const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
 
     function openNexoMenu() {
-        const pass = prompt("POR SEGURIDAD, INGRESE SU CONTRASEÑA DE ACCESO:");
-        
-        // Validamos la contraseña re-autenticando silenciosamente o verificando sesión
-        if (pass) {
-            const user = auth.currentUser;
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, pass);
-            
-            user.reauthenticateWithCredential(credential).then(() => {
-                document.getElementById('nexoMenuPanel').style.display = 'flex';
-                checkMasterPrivileges(user.uid);
-            }).catch(error => {
-                alert("CONTRASEÑA INCORRECTA. ACCESO AL MENÚ DENEGADO.");
-            });
-        }
+        const pass = prompt("CONFIRME SU CONTRASEÑA DE ACCESO:");
+        if (!pass) return;
+
+        const user = auth.currentUser;
+        // Usamos la credencial de la versión compat que usa tu Cerebro
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+
+        user.reauthenticateWithCredential(credential).then(() => {
+            document.getElementById('nexoMenuPanel').style.display = 'flex';
+            // Solo mostramos la opción master si el UID coincide
+            if(user.uid === MASTER_UID) {
+                document.getElementById('itemMaster').style.display = 'block';
+            }
+        }).catch(err => {
+            alert("CONTRASEÑA INCORRECTA");
+            console.error(err);
+        });
     }
 
     function closeNexoMenu() {
         document.getElementById('nexoMenuPanel').style.display = 'none';
     }
 
-    function checkMasterPrivileges(uid) {
-        if(uid === MASTER_UID) {
-            document.getElementById('itemMaster').style.display = 'block';
-        }
-    }
-
     function accessMasterPanel() {
         closeNexoMenu();
-        // Dispara la apertura del Panel de Administrador (Inyección 1)
-        if(typeof showAdminDashboard === "function") {
-            showAdminDashboard();
+        // Buscamos el dashboard de la Inyección 1
+        const dash = document.getElementById('adminDashboard');
+        if(dash) {
+            dash.style.display = 'block';
         } else {
-            alert("ACCEDIENDO AL PANEL MASTER...");
-            // Aquí se conecta con el ID del contenedor de tu primer archivo
-            document.getElementById('adminDashboard').style.display = 'block';
+            alert("INICIANDO PANEL MASTER...");
+            // Si el ID es diferente, lo activamos por su clase o función
+            if(typeof showAdminDashboard === 'function') showAdminDashboard();
         }
     }
 
     function handleLogout() {
-        if(confirm("¿ESTÁ SEGURO QUE DESEA SALIR DE NEXO®?")) {
-            db.ref(`users/${auth.currentUser.uid}/status`).set({ state: 'offline' })
-            .then(() => {
-                auth.signOut().then(() => {
-                    window.location.reload();
-                });
-            });
+        if(confirm("¿SALIR DE NEXO®?")) {
+            auth.signOut().then(() => window.location.reload());
         }
     }
 
-    // Asegurar que el botón del menú solo se vea si hay alguien logueado
+    // Monitor de estado para mostrar/ocultar el trigger
     auth.onAuthStateChanged(user => {
-        document.getElementById('nexoMenuTrigger').style.display = user ? 'flex' : 'none';
+        const trigger = document.getElementById('nexoMenuTrigger');
+        if(user) {
+            trigger.style.display = 'flex';
+            // Limpieza extra de posibles bloqueos de la inyección 1
+            const oldBtn = document.getElementById('mBtn');
+            if(oldBtn) oldBtn.style.display = 'none';
+        } else {
+            trigger.style.display = 'none';
+        }
     });
 </script>
 </body>
 </html>
-
