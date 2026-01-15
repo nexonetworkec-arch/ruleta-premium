@@ -679,5 +679,143 @@
         if(e) auth.sendPasswordResetEmail(e).then(() => alert("EMAIL ENVIADO"));
     }
 </script>
+
+    <style>
+    /* 1. BOTÓN HAMBURGUESA CUADRADO */
+    #nexoMenuTrigger {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 50px;
+        height: 50px;
+        background: #000;
+        border: 2px solid var(--gold);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        z-index: 10500;
+        border-radius: 8px; /* Cuadrado con leve redondeo premium */
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+    }
+    .bar { width: 25px; height: 2px; background: var(--gold); transition: 0.3s; }
+
+    /* 2. PANEL DEL MENÚ (OVERLAY) */
+    #nexoMenuPanel {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 10600;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .menu-list { list-style: none; width: 100%; max-width: 300px; text-align: center; }
+    .menu-item {
+        padding: 20px;
+        border-bottom: 1px solid #222;
+        color: #fff;
+        letter-spacing: 3px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.3s;
+        text-transform: uppercase;
+    }
+    .menu-item:hover { color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+    .menu-item.master { color: var(--gold); border: 1px solid var(--gold); margin-bottom: 15px; display: none; }
+
+    .menu-close {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        color: var(--gold);
+        font-size: 24px;
+        cursor: pointer;
+    }
+</style>
+
+<div id="nexoMenuTrigger" onclick="openNexoMenu()">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</div>
+
+<div id="nexoMenuPanel">
+    <span class="menu-close" onclick="closeNexoMenu()">✕</span>
+    <h2 style="color:var(--gold); letter-spacing:8px; margin-bottom:40px;">NEXO® MENU</h2>
+    
+    <div class="menu-list">
+        <div id="itemMaster" class="menu-item master" onclick="accessMasterPanel()">MI PANEL MASTER</div>
+        
+        <div class="menu-item" onclick="alert('Próximamente: Perfil de Usuario')">MI CUENTA</div>
+        <div class="menu-item" style="color:#ff4444;" onclick="handleLogout()">CERRAR SESIÓN</div>
+    </div>
+</div>
+
+<script>
+    const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+    function openNexoMenu() {
+        const pass = prompt("POR SEGURIDAD, INGRESE SU CONTRASEÑA DE ACCESO:");
+        
+        // Validamos la contraseña re-autenticando silenciosamente o verificando sesión
+        if (pass) {
+            const user = auth.currentUser;
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+            
+            user.reauthenticateWithCredential(credential).then(() => {
+                document.getElementById('nexoMenuPanel').style.display = 'flex';
+                checkMasterPrivileges(user.uid);
+            }).catch(error => {
+                alert("CONTRASEÑA INCORRECTA. ACCESO AL MENÚ DENEGADO.");
+            });
+        }
+    }
+
+    function closeNexoMenu() {
+        document.getElementById('nexoMenuPanel').style.display = 'none';
+    }
+
+    function checkMasterPrivileges(uid) {
+        if(uid === MASTER_UID) {
+            document.getElementById('itemMaster').style.display = 'block';
+        }
+    }
+
+    function accessMasterPanel() {
+        closeNexoMenu();
+        // Dispara la apertura del Panel de Administrador (Inyección 1)
+        if(typeof showAdminDashboard === "function") {
+            showAdminDashboard();
+        } else {
+            alert("ACCEDIENDO AL PANEL MASTER...");
+            // Aquí se conecta con el ID del contenedor de tu primer archivo
+            document.getElementById('adminDashboard').style.display = 'block';
+        }
+    }
+
+    function handleLogout() {
+        if(confirm("¿ESTÁ SEGURO QUE DESEA SALIR DE NEXO®?")) {
+            db.ref(`users/${auth.currentUser.uid}/status`).set({ state: 'offline' })
+            .then(() => {
+                auth.signOut().then(() => {
+                    window.location.reload();
+                });
+            });
+        }
+    }
+
+    // Asegurar que el botón del menú solo se vea si hay alguien logueado
+    auth.onAuthStateChanged(user => {
+        document.getElementById('nexoMenuTrigger').style.display = user ? 'flex' : 'none';
+    });
+</script>
 </body>
 </html>
+
