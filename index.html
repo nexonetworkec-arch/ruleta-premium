@@ -2005,7 +2005,103 @@
 
     })();
     </script>
+
+    <script>
+    (function() {
+        // Función Maestra para Cargar Usuarios con Perfil Detallado
+        window.loadGlobalUsers = function() {
+            const container = document.getElementById('globalUsersList');
+            if(!container) return;
+
+            console.log("NEXO: Iniciando sincronización de base de datos global...");
+
+            // Escuchamos el nodo principal de usuarios
+            db.ref('users').on('value', snap => {
+                container.innerHTML = '';
+                
+                if(!snap.exists()) {
+                    container.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px;">No hay usuarios registrados aún.</p>';
+                    return;
+                }
+
+                snap.forEach(userSnap => {
+                    const userId = userSnap.key;
+                    const data = userSnap.val();
+                    const profile = data.profile || {};
+                    const config = data.config || {};
+                    const leads = data.leads || {};
+                    const numLeads = Object.keys(leads).length;
+
+                    // Construcción de la Tarjeta Detallada
+                    const card = document.createElement('div');
+                    card.className = 'super-admin-card';
+                    card.style.display = 'block'; // Cambio a bloque para mejor stack
+                    card.style.marginBottom = '15px';
+                    
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                            <div>
+                                <div style="font-size:14px; font-weight:bold; color:var(--gold);">
+                                    ${profile.nombres || 'Usuario'} ${profile.apellidos || 'Sin Apellido'}
+                                </div>
+                                <div style="font-size:10px; color:#aaa;">${profile.email || 'Sin email'}</div>
+                                <div style="font-size:10px; color:#aaa;">ID: ${userId}</div>
+                            </div>
+                            <span class="user-badge" style="background:${data.license?.status === 'active' ? '#1b4332' : '#431b1b'}">
+                                ${data.license?.status?.toUpperCase() || 'INACTIVO'}
+                            </span>
+                        </div>
+                        
+                        <div style="background:rgba(255,255,255,0.03); border-radius:10px; padding:10px; display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                            <div>
+                                <div style="font-size:8px; opacity:0.5;">TELÉFONO</div>
+                                <div style="font-size:11px;">${profile.telefono || 'N/A'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:8px; opacity:0.5;">LEADS CAPTURADOS</div>
+                                <div style="font-size:11px; color:var(--gold); font-weight:bold;">${numLeads}</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="inspectUser('${userId}')" style="flex:1; font-size:9px; background:var(--gold); border:none; color:black; padding:8px; border-radius:5px; cursor:pointer; font-weight:bold;">GESTIONAR</button>
+                            <button onclick="window.open('https://wa.me/${profile.telefono}')" style="width:35px; background:#25D366; border:none; border-radius:5px; cursor:pointer;">
+                                <span style="filter:brightness(0)">📞</span>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }, error => {
+                console.error("Error Firebase:", error);
+                container.innerHTML = `
+                    <div style="padding:20px; text-align:center;">
+                        <p style="color:#ff4444; font-size:12px;">⚠️ ERROR DE PERMISOS</p>
+                        <p style="font-size:9px; opacity:0.6;">Asegúrate de estar logueado como Admin Maestro.</p>
+                    </div>
+                `;
+            });
+        };
+
+        // Re-vinculamos la apertura del modal para que refresque la carga
+        const originalOpenModal = window.openNexoModal;
+        window.openNexoModal = function(id) {
+            if(id === 'modalSuperAdmin') {
+                const pass = prompt("CONTROL MAESTRO - INGRESE PIN:");
+                if(pass === "1234") {
+                    document.getElementById(id).style.display = 'flex';
+                    loadGlobalUsers(); // Forzamos carga al abrir
+                } else {
+                    alert("PIN INCORRECTO");
+                }
+            } else {
+                // Para el resto de modales usamos la lógica anterior
+                originalOpenModal(id);
+            }
+        };
+
+    })();
+    </script>
     
 </body>
 </html>
-
