@@ -284,14 +284,10 @@
     .admin-field label { display: block; font-size: 9px; margin-bottom: 8px; color: var(--gold); font-weight: 900; text-transform: uppercase; }
     .admin-control { width: 100%; background: #080808; border: 1px solid #222; padding: 12px; border-radius: 10px; color: #fff; font-family: inherit; }
     
-    .upload-area { display: flex; gap: 10px; align-items: center; }
-    .upload-status { font-size: 9px; color: var(--gold); margin-top: 5px; display: none; }
-
     .btn-admin-view { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 10px; text-transform: uppercase; }
     .btn-admin-view:hover { background: var(--gold); color: #000; }
     .close-admin { position: fixed; top: 30px; right: 30px; cursor: pointer; font-size: 24px; color: var(--gold); z-index: 9600; }
 
-    /* MODAL */
     #userModalDetail { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; align-items: center; justify-content: center; padding: 20px; }
     .user-card { background: #000; border: 2px solid var(--gold); border-radius: 30px; width: 100%; max-width: 450px; padding: 35px; }
     .switch-group { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; font-size: 11px; }
@@ -302,16 +298,16 @@
     <h1 style="font-size: 22px; margin-bottom: 40px; letter-spacing: 2px;">NEXO® MASTER CONTROL</h1>
 
     <div class="admin-grid">
-        <div class="kpi-card"><span class="kpi-title">USUARIOS</span><span id="kpi-total" class="kpi-value">0</span></div>
-        <div class="kpi-card"><span class="kpi-title">ONLINE</span><span id="kpi-online" class="kpi-value">0</span></div>
-        <div class="kpi-card"><span class="kpi-title">EXPIRACIONES</span><span id="kpi-exp" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">USUARIOS REGISTRADOS</span><span id="kpi-total" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">USUARIOS ONLINE</span><span id="kpi-online" class="kpi-value">0</span></div>
+        <div class="kpi-card"><span class="kpi-title">PRÓXIMOS A VENCER</span><span id="kpi-exp" class="kpi-value">0</span></div>
     </div>
 
     <div class="admin-table-container">
-        <h3 style="margin-top:0; font-size:12px; color:var(--gold)">LISTA MAESTRA DE CLIENTES</h3>
+        <h3 style="margin-top:0; font-size:12px; color:var(--gold)">LISTA DE CLIENTES EN TIEMPO REAL</h3>
         <table class="admin-table">
             <thead>
-                <tr><th>NOMBRE</th><th>UID</th><th>FECHA REG.</th><th>NIVEL</th><th>ACCIONES</th></tr>
+                <tr><th>NOMBRE</th><th>UID</th><th>REGISTRO</th><th>NIVEL</th><th>ACCIONES</th></tr>
             </thead>
             <tbody id="adminUserTable"></tbody>
         </table>
@@ -321,44 +317,34 @@
         <div class="admin-panel-box">
             <h3 style="margin-top:0; font-size:13px; color:var(--gold)">COMUNICACIÓN ESTATAL</h3>
             <div class="admin-field">
-                <label>MODO DE MENSAJE</label>
-                <select id="admMsgType" class="admin-control" onchange="updateAdminMsgUI()">
+                <label>TIPO DE MENSAJE</label>
+                <select id="admMsgType" class="admin-control" onchange="updateMsgUI()">
                     <option value="text">SOLO TEXTO</option>
                     <option value="image">SOLO IMAGEN</option>
                     <option value="hybrid">TEXTO + IMAGEN</option>
                 </select>
             </div>
             <div class="admin-field" id="admMsgTextGroup">
-                <label>CUERPO DEL MENSAJE</label>
-                <textarea id="admMsgText" class="admin-control" rows="3" placeholder="Escriba aquí..."></textarea>
+                <label>TEXTO</label>
+                <textarea id="admMsgText" class="admin-control" rows="3"></textarea>
             </div>
             <div class="admin-field" id="admMsgImgGroup" style="display:none;">
-                <label>IMAGEN (LOCAL O URL)</label>
-                <div class="upload-area">
-                    <input type="text" id="admMsgImg" class="admin-control" placeholder="URL o suba archivo ->">
-                    <button class="btn" onclick="document.getElementById('localFile').click()" style="padding:10px; font-size:12px;">📁</button>
+                <label>IMAGEN (SUBIR O URL)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="admMsgImg" class="admin-control" placeholder="https://...">
+                    <button class="btn" onclick="document.getElementById('localFile').click()">📁</button>
                     <input type="file" id="localFile" style="display:none" onchange="uploadLocalFile(this)" accept="image/*">
                 </div>
-                <div id="upStatus" class="upload-status">CARGANDO AL 0%...</div>
+                <div id="upStatus" style="font-size:9px; color:var(--gold); display:none; margin-top:5px;"></div>
             </div>
-            <button class="btn btn-primary" style="width:100%" onclick="broadcastNexoMessage()">DISTRIBUIR AHORA</button>
+            <button class="btn btn-primary" style="width:100%" onclick="broadcastNexoMessage()">ENVIAR MENSAJE</button>
         </div>
 
         <div class="admin-panel-box">
             <h3 style="margin-top:0; font-size:13px; color:var(--gold)">GENERADOR DE LICENCIAS</h3>
-            <div class="admin-field">
-                <label>NIVEL</label>
-                <select id="licLevel" class="admin-control">
-                    <option value="basic">BASIC</option>
-                    <option value="gold">GOLD</option>
-                    <option value="platinum">PLATINUM</option>
-                </select>
-            </div>
-            <div class="admin-field">
-                <label>DÍAS</label>
-                <input type="number" id="licDays" class="admin-control" placeholder="Ej: 30">
-            </div>
-            <button class="btn btn-primary" style="width:100%" onclick="uiGenerateLicense()">GENERAR CÓDIGO</button>
+            <div class="admin-field"><label>NIVEL</label><select id="licLevel" class="admin-control"><option value="basic">BASIC</option><option value="gold">GOLD</option><option value="platinum">PLATINUM</option></select></div>
+            <div class="admin-field"><label>DÍAS</label><input type="number" id="licDays" class="admin-control" placeholder="30"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="uiGenerateLicense()">GENERAR</button>
         </div>
     </div>
 </div>
@@ -368,11 +354,9 @@
         <h2 id="detName" style="color:var(--gold); margin:0;">USUARIO</h2>
         <p id="detUID" style="font-size:9px; opacity:0.5; margin-bottom:20px;"></p>
         <div style="background:#080808; padding:20px; border-radius:15px; border:1px solid #222;">
-            <label style="font-size:9px; color:var(--gold)">NIVEL MANUAL</label>
+            <label style="font-size:9px; color:var(--gold)">SUSCRIPCIÓN MANUAL</label>
             <select id="detLevel" class="admin-control" style="margin-bottom:15px" onchange="autoCheckPerms()">
-                <option value="basic">BASIC</option>
-                <option value="gold">GOLD</option>
-                <option value="platinum">PLATINUM</option>
+                <option value="basic">BASIC</option><option value="gold">GOLD</option><option value="platinum">PLATINUM</option>
             </select>
             <div class="switch-group"><span>EDITAR PREMIOS</span><input type="checkbox" id="perm_prizes"></div>
             <div class="switch-group"><span>PERSONALIZAR COLORES</span><input type="checkbox" id="perm_colors"></div>
@@ -385,54 +369,64 @@
 </div>
 
 <script>
-    const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
-    let editingUID = "";
+    const MASTER_ADMIN = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+    let activeUID = "";
 
-    // INICIO ÚNICO
     auth.onAuthStateChanged(u => {
-        if(u && u.uid === MASTER_UID) {
-            if(!document.getElementById('masterEntry')){
-                const b = document.createElement('button');
-                b.id = 'masterEntry'; b.className="btn"; b.innerText = "PANEL MASTER";
-                b.style = "position:fixed; bottom:20px; left:20px; z-index:9000; font-size:9px; border:1px solid var(--gold);";
-                b.onclick = () => { document.getElementById('adminDashboard').style.display='block'; syncAdmin(); };
-                document.body.appendChild(b);
-            }
+        if(u && u.uid === MASTER_ADMIN) {
+            const b = document.createElement('button');
+            b.className="btn"; b.innerText = "PANEL MASTER";
+            b.style = "position:fixed; bottom:20px; left:20px; z-index:9000; font-size:9px; border:1px solid var(--gold);";
+            b.onclick = () => { document.getElementById('adminDashboard').style.display='block'; syncAdminData(); };
+            document.body.appendChild(b);
         }
     });
 
-    function syncAdmin() {
-        db.ref('users').on('value', s => {
-            const data = s.val(); let t=0, o=0, e=0;
-            const table = document.getElementById('adminUserTable'); table.innerHTML = '';
+    function syncAdminData() {
+        db.ref('users').on('value', snap => {
+            const data = snap.val();
+            let total = 0, online = 0;
+            const table = document.getElementById('adminUserTable');
+            table.innerHTML = '';
             
-            // Fila Admin Maestro
+            // Fila de Admin
             const mRow = document.createElement('tr'); mRow.className = 'row-admin-master';
-            mRow.innerHTML = `<td>MASTER ADMIN</td><td>${MASTER_UID}</td><td>SISTEMA</td><td>UNLIMITED</td><td>---</td>`;
+            mRow.innerHTML = `<td>MASTER ADMIN (TÚ)</td><td>${MASTER_ADMIN}</td><td>SISTEMA</td><td>UNLIMITED</td><td>---</td>`;
             table.appendChild(mRow);
 
             for(let id in data) {
-                if(id === MASTER_UID) continue;
-                t++; if(data[id].status?.state === 'online') o++;
+                if(id === MASTER_ADMIN) continue;
+                total++;
+                if(data[id].status?.state === 'online') online++;
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${(data[id].perfil?.nombre || 'S/N').toUpperCase()}</td><td>${id}</td><td>${data[id].registroFecha || '---'}</td><td>${(data[id].config?.tipoSub || 'BASIC').toUpperCase()}</td><td><button class="btn-admin-view" onclick="openUserAdmin('${id}')">GESTIONAR</button></td>`;
+                row.innerHTML = `<td>${(data[id].perfil?.nombre || 'S/N').toUpperCase()}</td><td>${id}</td><td>${data[id].registroFecha || '---'}</td><td>${(data[id].config?.tipoSub || 'BASIC').toUpperCase()}</td><td><button class="btn-admin-view" onclick="showUserCard('${id}')">GESTIONAR</button></td>`;
                 table.appendChild(row);
             }
-            document.getElementById('kpi-total').innerText = t;
-            document.getElementById('kpi-online').innerText = o;
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-online').innerText = online;
         });
     }
 
-    async function openUserAdmin(uid) {
-        editingUID = uid; const s = await db.ref(`users/${uid}`).once('value'); const u = s.val();
+    async function showUserCard(uid) {
+        activeUID = uid;
+        const s = await db.ref(`users/${uid}`).once('value');
+        const u = s.val();
         document.getElementById('detName').innerText = (u.perfil?.nombre || 'USUARIO').toUpperCase();
-        document.getElementById('detUID').innerText = uid;
+        document.getElementById('detUID').innerText = "UID: " + uid;
         document.getElementById('detLevel').value = u.config?.tipoSub || 'basic';
         document.getElementById('perm_prizes').checked = u.config?.permisos?.editPrizes || false;
         document.getElementById('perm_colors').checked = u.config?.permisos?.editColors || false;
         document.getElementById('perm_reg').checked = u.config?.permisos?.modeRegistry || false;
         document.getElementById('perm_hist').checked = u.config?.permisos?.viewHistory || false;
         document.getElementById('userModalDetail').style.display = 'flex';
+    }
+
+    function autoCheckPerms() {
+        const l = document.getElementById('detLevel').value;
+        document.getElementById('perm_prizes').checked = (l !== 'basic');
+        document.getElementById('perm_colors').checked = (l !== 'basic');
+        document.getElementById('perm_reg').checked = (l === 'platinum');
+        document.getElementById('perm_hist').checked = (l === 'platinum');
     }
 
     function saveUserAdmin() {
@@ -443,10 +437,10 @@
             "config/permisos/modeRegistry": document.getElementById('perm_reg').checked,
             "config/permisos/viewHistory": document.getElementById('perm_hist').checked
         };
-        db.ref(`users/${editingUID}`).update(up).then(() => { alert("CAMBIOS GUARDADOS"); document.getElementById('userModalDetail').style.display='none'; });
+        db.ref(`users/${activeUID}`).update(up).then(() => { alert("USUARIO ACTUALIZADO"); document.getElementById('userModalDetail').style.display='none'; });
     }
 
-    function updateAdminMsgUI() {
+    function updateMsgUI() {
         const t = document.getElementById('admMsgType').value;
         document.getElementById('admMsgTextGroup').style.display = t === 'image' ? 'none' : 'block';
         document.getElementById('admMsgImgGroup').style.display = t === 'text' ? 'none' : 'block';
@@ -455,14 +449,12 @@
     function uploadLocalFile(input) {
         if(!input.files[0]) return;
         const file = input.files[0];
+        const status = document.getElementById('upStatus'); status.style.display = 'block';
         const ref = firebase.storage().ref('admin_broadcasts/' + file.name);
         const task = ref.put(file);
-        const status = document.getElementById('upStatus');
-        status.style.display = 'block';
-
         task.on('state_changed', 
             s => status.innerText = `CARGANDO: ${Math.round((s.bytesTransferred/s.totalBytes)*100)}%`,
-            e => alert("ERROR DE CARGA"),
+            e => alert("Error al subir"),
             () => task.snapshot.ref.getDownloadURL().then(url => {
                 document.getElementById('admMsgImg').value = url;
                 status.innerText = "¡IMAGEN LISTA!";
@@ -472,13 +464,15 @@
 
     function uiGenerateLicense() {
         const l = document.getElementById('licLevel').value; const d = document.getElementById('licDays').value;
+        if(!d) return alert("Indique días");
         const code = `NEXO-${l.toUpperCase()}-${Math.random().toString(36).substr(2,7).toUpperCase()}`;
-        db.ref('licenses/'+code).set({level:l, days:parseInt(d), used:false}).then(()=>alert("CÓDIGO: "+code));
+        db.ref('licenses/'+code).set({level:l, days:parseInt(d), used:false, createdAt: firebase.database.ServerValue.TIMESTAMP})
+          .then(()=>alert("LICENCIA GENERADA: " + code));
     }
 
     function broadcastNexoMessage() {
-        const m = { text: document.getElementById('admMsgText').value, image: document.getElementById('admMsgImg').value, target: document.getElementById('admMsgTarget').value, time: firebase.database.ServerValue.TIMESTAMP };
-        db.ref('global_announcements').push(m).then(()=>alert("COMUNICADO DISTRIBUIDO"));
+        const msg = { text: document.getElementById('admMsgText').value, image: document.getElementById('admMsgImg').value, target: document.getElementById('admMsgTarget').value, time: firebase.database.ServerValue.TIMESTAMP };
+        db.ref('global_announcements').push(msg).then(()=>alert("COMUNICADO ENVIADO"));
     }
 </script>
 </body>
