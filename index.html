@@ -2705,6 +2705,95 @@
 
     })();
     </script>
+
+    <script>
+    (function() {
+        console.log("NEXO: Ejecutando Reparación de Menú Completo...");
+
+        window.forceRebuildFullMenu = function() {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const isMaster = (user.email.toLowerCase() === "nexonetwork.ec@gmail.com");
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if (!hubMenu) return;
+
+            // 1. Limpieza total y reconstrucción del encabezado
+            hubMenu.innerHTML = `
+                <div style="padding: 20px 15px; text-align: center; border-bottom: 1px solid #222;">
+                    <div style="color: var(--gold); font-weight: bold; letter-spacing: 2px; font-size: 14px;">NEXO® LUX</div>
+                    <div id="statusBadge" style="font-size: 8px; margin-top: 5px; opacity: 0.5;">CARGANDO ESTADO...</div>
+                </div>
+            `;
+
+            // 2. Definición de módulos que TODOS deben ver
+            const modules = [
+                { id: 'modalStock', icon: '🎁', label: 'GESTIONAR PREMIOS' },
+                { id: 'modalHistory', icon: '🏆', label: 'HISTORIAL DE GANADORES' },
+                { id: 'modalLeads', icon: '👥', label: 'BASE DE DATOS LEADS' },
+                { id: 'modalBranding', icon: '🎨', label: 'DISEÑO Y LOGO' }
+            ];
+
+            // 3. Inyectar módulos en el menú
+            modules.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'nexo-menu-item';
+                item.innerHTML = `<span>${m.icon}</span> ${m.label}`;
+                item.onclick = () => {
+                    closeNexoHub(); // Cierra el menú lateral
+                    openNexoModal(m.id); // Abre el modal correspondiente
+                };
+                hubMenu.appendChild(item);
+            });
+
+            // 4. Inyectar Panel Master SOLO para ti
+            if (isMaster) {
+                const adminItem = document.createElement('div');
+                adminItem.className = 'nexo-menu-item';
+                adminItem.style.color = "var(--gold)";
+                adminItem.style.background = "rgba(212,175,55,0.05)";
+                adminItem.style.marginTop = "10px";
+                adminItem.innerHTML = `<span>👑</span> PANEL MASTER`;
+                adminItem.onclick = () => { closeNexoHub(); openNexoModal('modalSuperAdmin'); };
+                hubMenu.appendChild(adminItem);
+            }
+
+            // 5. Opciones Operativas (Reiniciar y Salir)
+            const actions = [
+                { label: '🔄 REINICIAR APP', action: () => location.reload() },
+                { label: '🚪 CERRAR SESIÓN', action: () => auth.signOut(), opacity: 0.5 }
+            ];
+
+            actions.forEach(a => {
+                const btn = document.createElement('div');
+                btn.className = 'nexo-menu-item';
+                if(a.opacity) btn.style.opacity = a.opacity;
+                btn.innerHTML = a.label;
+                btn.onclick = a.action;
+                hubMenu.appendChild(btn);
+            });
+
+            // 6. Actualizar el estado de la licencia en el badge
+            db.ref(`users/${user.uid}/license`).once('value', snap => {
+                const lic = snap.val() || {};
+                const days = window.getDaysRemaining ? window.getDaysRemaining(lic.expiry) : 0;
+                const badge = document.getElementById('statusBadge');
+                if(badge) badge.innerHTML = `LICENCIA: ${days} DÍAS RESTANTES | <span onclick="promptVoucher()" style="text-decoration:underline; cursor:pointer;">CANJEAR</span>`;
+            });
+        };
+
+        // Forzar la ejecución cada vez que el menú se abre físicamente
+        const originalToggle = window.toggleNexoHub;
+        window.toggleNexoHub = function() {
+            if (typeof originalToggle === 'function') originalToggle();
+            window.forceRebuildFullMenu();
+        };
+
+        // También ejecutar al inicio
+        auth.onAuthStateChanged(user => { if(user) window.forceRebuildFullMenu(); });
+
+    })();
+    </script>
     
 </body>
 </html>
