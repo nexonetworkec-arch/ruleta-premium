@@ -632,9 +632,103 @@
     };
 })();
 </script>
+
+    <style>
+    .weight-row {
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; margin-bottom: 5px;
+    }
+    .weight-input {
+        width: 50px; background: #000; border: 1px solid var(--gold);
+        color: var(--gold); text-align: center; border-radius: 5px; font-size: 11px;
+    }
+</style>
+
+<script>
+(function() {
+    // 1. Inyectar Interfaz de Probabilidades en el Admin Panel
+    const adminPanel = document.getElementById('adminPanel');
+    const probSection = document.createElement('div');
+    probSection.className = 'admin-section';
+    probSection.innerHTML = `
+        <h4 style="font-size: 10px; margin-bottom:10px;">PROBABILIDADES (PESO 1-100)</h4>
+        <div id="weightsContainer"></div>
+        <p style="font-size: 8px; color: #555; margin-top:5px;">A mayor peso, más probabilidad de ganar.</p>
+    `;
+    adminPanel.insertBefore(probSection, document.getElementById('btnSaveConfig'));
+
+    function updateWeightsUI() {
+        const container = document.getElementById('weightsContainer');
+        container.innerHTML = "";
+        const nivel = config.licenseLevel || "FREE";
+        
+        config.prizes.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'weight-row';
+            if(nivel === "FREE") div.classList.add('locked-feature');
+            
+            const currentWeight = (config.weights && config.weights[i]) ? config.weights[i] : 10;
+            div.innerHTML = `
+                <span style="font-size:9px;">${p}</span>
+                <input type="number" class="weight-input" data-index="${i}" value="${currentWeight}" min="1" max="100">
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 2. Sobrescribir Lógica de Selección (Inyección en el finish de appWheel)
+    const originalFinish = appWheel.finish;
+    appWheel.finish = function() {
+        const nivel = config.licenseLevel || "FREE";
+        
+        if (nivel !== "FREE" && config.weights && config.weights.length === config.prizes.length) {
+            // Lógica de Selección Ponderada
+            const totalWeight = config.weights.reduce((a, b) => Number(a) + Number(b), 0);
+            let random = Math.random() * totalWeight;
+            let selectedIdx = 0;
+
+            for (let i = 0; i < config.prizes.length; i++) {
+                if (random < config.weights[i]) {
+                    selectedIdx = i;
+                    break;
+                }
+                random -= config.weights[i];
+            }
+
+            // Ajustar el ángulo de la ruleta visualmente para que coincida con el premio elegido
+            const n = config.prizes.length;
+            const targetDeg = (n - 1 - selectedIdx) * (360/n) + (180/n); 
+            this.angle = (targetDeg * Math.PI / 180);
+            this.draw();
+        }
+        
+        // Llamar al finish original para mostrar modal, confetti y guardar en DB [cite: 58-60]
+        originalFinish.call(this);
+    };
+
+    // 3. Guardar Pesos en Firebase
+    const btnSave = document.getElementById('btnSaveConfig');
+    const prevSave = btnSave.onclick;
+    btnSave.onclick = async () => {
+        const weightInputs = document.querySelectorAll('.weight-input');
+        const newWeights = Array.from(weightInputs).map(inp => Number(inp.value));
+        
+        await db.ref(`users/${currentUser.uid}/config`).update({
+            weights: newWeights
+        });
+        
+        if(prevSave) prevSave();
+    };
+
+    // 4. Sincronización
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                setTimeout(updateWeightsUI, 600);
+            });
+        }
+    });
+})();
+</script>
 </body>
 </html>
-
-
-
-
