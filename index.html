@@ -645,5 +645,106 @@
     })();
 </script>
 
+   <style>
+    #modalUserRegistration {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        z-index: 10000; display: none; align-items: center; justify-content: center;
+        backdrop-filter: blur(10px);
+    }
+    .reg-card {
+        background: var(--card-bg); border: 2px solid var(--gold);
+        padding: 30px; border-radius: 35px; width: 85%; max-width: 400px;
+        text-align: center; box-shadow: 0 0 30px rgba(212,175,55,0.2);
+    }
+    .reg-input {
+        width: 100%; background: #111; border: 1px solid #333;
+        color: white; padding: 15px; border-radius: 15px;
+        margin-bottom: 15px; font-family: inherit; outline: none;
+    }
+    .reg-input:focus { border-color: var(--gold); }
+</style>
+
+<div id="modalUserRegistration">
+    <div class="reg-card">
+        <h2 style="color:var(--gold); margin-bottom: 10px;">REGISTRO DE PARTICIPANTE</h2>
+        <p style="font-size: 11px; opacity: 0.7; margin-bottom: 20px;">COMPLETE SUS DATOS PARA RECLAMAR SU PREMIO</p>
+        
+        <input type="text" id="regName" class="reg-input" placeholder="NOMBRE COMPLETO" required>
+        <input type="tel" id="regPhone" class="reg-input" placeholder="TELÉFONO / WHATSAPP" required>
+        <input type="email" id="regEmail" class="reg-input" placeholder="CORREO ELECTRÓNICO">
+        
+        <button id="btnSubmitReg" class="btn btn-primary" style="margin-top: 10px;">GUARDAR Y GIRAR</button>
+        <button id="btnCancelReg" style="background:transparent; border:none; color:gray; margin-top:15px; cursor:pointer; font-size:10px;">VOLVER</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const modalReg = document.getElementById('modalUserRegistration');
+        const btnSpinOriginal = document.getElementById('btnSpinCenter');
+        const btnSubmit = document.getElementById('btnSubmitReg');
+        
+        // INTERCEPTOR DE GIRO (Referenciación)
+        // Sobrescribimos el comportamiento del botón de giro sin tocar el original
+        const originalSpinClick = appWheel.handleSpinClick;
+
+        appWheel.handleSpinClick = function() {
+            // Si el modo registro está activo y el usuario aún no se ha validado
+            if (config.modoRegistro && !config.isValidated) {
+                modalReg.style.display = 'flex';
+            } else {
+                // Si el modo registro está apagado o ya se registró, procedemos con el giro original
+                originalSpinClick.apply(appWheel);
+            }
+        };
+
+        // Lógica de Registro
+        btnSubmit.onclick = () => {
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const email = document.getElementById('regEmail').value;
+
+            if (name.length < 3 || phone.length < 7) {
+                alert("POR FAVOR, COMPLETE LOS DATOS CORRECTAMENTE");
+                return;
+            }
+
+            // Guardamos los datos del prospecto temporalmente
+            config.userData = { name, phone, email };
+            config.isValidated = true; // Liberamos el giro
+
+            // Cerramos modal y ejecutamos el giro automáticamente
+            modalReg.style.display = 'none';
+            originalSpinClick.apply(appWheel);
+
+            // Inyectamos el registro del usuario en Firebase vinculado a este sorteo
+            // Esto se guardará cuando el giro termine (el cerebro ya hace el push al history)
+            // Agregamos una referencia extra para tu Panel de Auditoría
+            db.ref(`users/${currentUser.uid}/leads`).push({
+                ...config.userData,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        };
+
+        document.getElementById('btnCancelReg').onclick = () => {
+            modalReg.style.display = 'none';
+        };
+
+        // Limpieza de campos al ganar
+        // Usamos un observador simple para resetear la validación tras el premio
+        const modalWin = document.getElementById('modalWinner');
+        const observer = new MutationObserver(() => {
+            if (modalWin.style.display === 'none' && config.modoRegistro) {
+                config.isValidated = false;
+                document.getElementById('regName').value = "";
+                document.getElementById('regPhone').value = "";
+                document.getElementById('regEmail').value = "";
+            }
+        });
+        observer.observe(modalWin, { attributes: true, attributeFilter: ['style'] });
+    })();
+</script>
+ 
 </body>
 </html>
+
