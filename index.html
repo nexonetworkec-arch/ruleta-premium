@@ -1434,6 +1434,128 @@
 
     })();
 </script>
+
+    <style>
+    /* 1. REDISEÑO LOGIN PREMIUM */
+    .auth-container {
+        background: rgba(10, 10, 10, 0.8) !important;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 40px !important;
+        padding: 40px !important;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 30px rgba(212, 175, 55, 0.1);
+        width: 100%; max-width: 380px;
+    }
+    .auth-container h2 {
+        color: var(--gold) !important;
+        letter-spacing: 4px; font-weight: 300; margin-bottom: 30px;
+    }
+    .auth-container input {
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid #333 !important;
+        border-radius: 15px !important;
+        padding: 15px !important;
+        color: #fff !important;
+        margin-bottom: 15px !important;
+        transition: 0.3s;
+    }
+    .auth-container input:focus {
+        border-color: var(--gold) !important;
+        background: rgba(255,255,255,0.1) !important;
+    }
+
+    /* 2. DASHBOARD DE SUPER-ADMIN (VISTA GLOBAL) */
+    .super-admin-card {
+        background: #111; border: 1px solid var(--gold-mix);
+        border-radius: 20px; padding: 15px; margin-bottom: 10px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .user-badge { font-size: 10px; padding: 2px 8px; border-radius: 5px; background: #222; color: var(--gold); }
+</style>
+
+<div id="modalSuperAdmin" class="nexo-modal">
+    <div class="nexo-modal-content" style="max-width: 700px;">
+        <span class="close-modal" onclick="closeNexoModals()">&times;</span>
+        <h2 style="color:var(--gold)">CENTRAL DE CLIENTES NEXO®</h2>
+        <p style="font-size: 10px; opacity: 0.6; margin-bottom: 20px;">SUPERVISIÓN DE TODAS LAS INSTALACIONES ACTIVAS</p>
+        <div id="globalUsersList">
+            <p style="text-align:center; opacity:0.5;">Cargando base de datos global...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ID del Administrador Maestro (Tú)
+        // REEMPLAZA ESTO CON TU UID REAL DE FIREBASE TRAS TU PRIMER LOGIN
+        const MASTER_ADMIN_ID = "TU_UID_AQUI"; 
+
+        // 1. Lógica de Menú Diferenciado
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const hubMenu = document.getElementById('nexoHubMenu');
+                
+                // Si eres el Master Admin, añadimos la opción global
+                if (user.uid === MASTER_ADMIN_ID || user.email === "admin@nexo.com") {
+                    const masterOpt = document.createElement('div');
+                    masterOpt.className = 'hub-option';
+                    masterOpt.style.border = "1px solid var(--gold)";
+                    masterOpt.innerHTML = `<i>👑</i> GESTIÓN GLOBAL`;
+                    masterOpt.onclick = () => openNexoModal('modalSuperAdmin');
+                    hubMenu.prepend(masterOpt);
+                    
+                    loadGlobalUsers();
+                }
+            }
+        });
+
+        // 2. Función para cargar a todos los usuarios (Solo permitida para el Admin)
+        function loadGlobalUsers() {
+            db.ref('users').on('value', snap => {
+                const container = document.getElementById('globalUsersList');
+                container.innerHTML = '';
+                
+                snap.forEach(userSnap => {
+                    const userData = userSnap.val();
+                    const userId = userSnap.key;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'super-admin-card';
+                    card.innerHTML = `
+                        <div>
+                            <div style="font-size:12px; font-weight:bold; color:white;">${userData.config?.tituloSorteo || 'Usuario Sin Título'}</div>
+                            <div style="font-size:9px; opacity:0.5;">ID: ${userId}</div>
+                            <span class="user-badge">${userData.license?.status || 'SIN LICENCIA'}</span>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="font-size:14px; color:var(--gold);">${Object.keys(userData.leads || {}).length} Leads</div>
+                            <button onclick="inspectUser('${userId}')" style="font-size:9px; background:none; border:1px solid var(--gold); color:var(--gold); cursor:pointer; padding:2px 5px; border-radius:5px; margin-top:5px;">INSPECCIONAR</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+        }
+
+        // 3. Función para que el Admin "entre" a ver la data de un cliente
+        window.inspectUser = function(targetUid) {
+            if(confirm("¿Desea cargar la configuración y métricas de este cliente?")) {
+                // Redirigimos la referencia de 'currentUser' temporalmente o cargamos sus datos
+                alert("Cargando entorno de: " + targetUid);
+                // Aquí podrías implementar una función que cambie el puntero de la DB
+                // para que tus otros modales (Stock/Leads) lean de esa carpeta.
+            }
+        };
+
+        // 4. Estética de Login (Aplicar al cargar)
+        const loginBtn = document.querySelector('.auth-container .btn');
+        if(loginBtn) {
+            loginBtn.style.borderRadius = "15px";
+            loginBtn.style.textTransform = "uppercase";
+            loginBtn.style.letterSpacing = "2px";
+        }
+    })();
+        </script>
     
 </body>
 </html>
