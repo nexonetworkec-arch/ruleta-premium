@@ -1937,6 +1937,75 @@
         setLuxMode('login');
     })();
 </script>
+
+    <script>
+    (function() {
+        // CONFIGURACIÓN DE IDENTIDAD MAESTRA
+        const MASTER_EMAIL = "nexonetwork.ec@gmail.com"; // Cambia esto por tu correo real de admin
+
+        function rebuildMenu(isAdmin) {
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if(!hubMenu) return;
+
+            // Limpiamos el menú para reconstruirlo según el rol
+            hubMenu.innerHTML = '';
+
+            // 1. OPCIONES PARA TODOS LOS USUARIOS
+            const commonOptions = [
+                { text: '🔄 Reiniciar Juego', icon: '🔄', action: 'confirmReset()' },
+                { text: '🚪 Salir', icon: '🚪', action: 'ejecutarSalidaMaestra()', class: 'danger' }
+            ];
+
+            // 2. OPCIONES EXCLUSIVAS PARA EL ADMINISTRADOR
+            const adminOptions = [
+                { text: '👑 PANEL MASTER', icon: '💎', action: "openNexoModal('modalSuperAdmin')" },
+                { text: '🎯 Premios / Stock', icon: '📊', action: "openNexoModal('modalStock')" },
+                { text: '🎨 Ajustes de Marca', icon: '🖌️', action: "openNexoModal('modalConfigMarca')" },
+                { text: '🏆 Historial Global', icon: '📜', action: "openNexoModal('modalHistory')" },
+                { text: '👥 Base de Datos Leads', icon: '📂', action: "openNexoModal('modalLeads')" }
+            ];
+
+            // Inyectamos opciones de Admin si corresponde
+            if (isAdmin) {
+                adminOptions.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'hub-option';
+                    div.innerHTML = `<i>${opt.icon}</i> ${opt.text}`;
+                    div.onclick = () => eval(opt.action);
+                    hubMenu.appendChild(div);
+                });
+                
+                // Separador visual
+                const sep = document.createElement('div');
+                sep.style = "height:1px; background:#333; margin:10px 0;";
+                hubMenu.appendChild(sep);
+            }
+
+            // Inyectamos opciones comunes
+            commonOptions.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = `hub-option ${opt.class || ''}`;
+                div.innerHTML = `<i>${opt.icon}</i> ${opt.text}`;
+                div.onclick = () => eval(opt.action);
+                hubMenu.appendChild(div);
+            });
+        }
+
+        // Observador de Seguridad en Tiempo Real
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Verificamos si es el administrador
+                const isAdmin = (user.email === MASTER_EMAIL);
+                console.log("NEXO: Rol detectado ->", isAdmin ? "ADMIN" : "USUARIO");
+                
+                // Reconstruimos el menú basándonos en el privilegio
+                setTimeout(() => rebuildMenu(isAdmin), 500);
+            }
+        });
+
+    })();
+    </script>
     
 </body>
 </html>
+
