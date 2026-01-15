@@ -795,5 +795,175 @@
         });
     })();
 </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+    /* Estilos del Modal de Gestión */
+    #nexoListManager {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 35000; display: none; flex-direction: column;
+        align-items: center; padding: 30px 15px; color: #fff; backdrop-filter: blur(15px);
+    }
+    .manager-card {
+        width: 100%; max-width: 600px; height: 90vh; display: flex; flex-direction: column;
+        background: #0a0a0a; border: 1px solid var(--gold); border-radius: 20px; padding: 25px;
+    }
+    .controls-top { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
+    
+    .list-container {
+        flex-grow: 1; overflow-y: auto; margin: 15px 0; padding-right: 5px;
+        border-top: 1px solid #222; border-bottom: 1px solid #222;
+    }
+    .row-item {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+        background: #111; padding: 8px 12px; border-radius: 8px;
+    }
+    .row-num { color: var(--gold); font-weight: bold; width: 30px; }
+    .row-input { flex-grow: 1; background: transparent !important; border: none !important; color: #fff; }
+    
+    .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btn-nexo-small { 
+        padding: 10px; font-size: 10px; border: 1px solid var(--gold); 
+        color: var(--gold); cursor: pointer; text-align: center; border-radius: 5px;
+    }
+    .btn-nexo-small:hover { background: var(--gold); color: #000; }
+</style>
+
+<div id="nexoListManager">
+    <div class="manager-card">
+        <h2 style="color:var(--gold); text-align:center; letter-spacing:3px; margin-bottom:20px;">PREMIOS / PARTICIPANTES</h2>
+        
+        <div class="controls-top">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:10px;">FILAS:</span>
+                <input type="number" id="nexoRowInput" min="1" value="8" style="width:70px; text-align:center;" onchange="renderListRows()">
+            </div>
+            <button class="btn-nexo-small" onclick="exportToExcel()">DESCARGAR EXCEL</button>
+            <button class="btn-nexo-small" onclick="document.getElementById('excelFile').click()">SUBIR EXCEL</button>
+            <input type="file" id="excelFile" hidden accept=".xlsx, .xls" onchange="importFromExcel(event)">
+        </div>
+
+        <div id="nexoListBody" class="list-container">
+            </div>
+
+        <div class="action-btns">
+            <button class="btn-nexo-small" onclick="saveListToCloud()" style="background:var(--gold); color:#000;">GUARDAR LISTA</button>
+            <button class="btn-nexo-small" onclick="openSavedListsModal()">MIS LISTAS GUARDADAS</button>
+            <button class="btn-nexo-small" onclick="closeListManager()" style="grid-column: span 2; border-color:#444; color:#888;">CERRAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inicializar el botón en el menú (con check de seguridad para el Admin)
+    (function injectMenuOption() {
+        const interval = setInterval(() => {
+            const menuPanel = document.getElementById('nexoMenuPanel');
+            if (menuPanel) {
+                const btn = document.createElement('div');
+                btn.className = 'menu-item-nexo';
+                btn.innerHTML = 'PREMIOS / PARTICIPANTES';
+                btn.onclick = openListManager;
+                menuPanel.querySelector('.menu-list').insertBefore(btn, menuPanel.querySelector('.menu-list').lastElementChild);
+                clearInterval(interval);
+            }
+        }, 1000);
+    })();
+
+    function openListManager() {
+        closeNexoMenu();
+        document.getElementById('nexoListManager').style.display = 'flex';
+        renderListRows();
+    }
+
+    function closeListManager() { document.getElementById('nexoListManager').style.display = 'none'; }
+
+    // RENDERIZADO DE FILAS ENUMERADAS
+    function renderListRows(data = null) {
+        const count = document.getElementById('nexoRowInput').value;
+        const body = document.getElementById('nexoListBody');
+        const currentValues = data || Array.from(document.querySelectorAll('.row-input')).map(i => i.value);
+        
+        body.innerHTML = '';
+        for(let i = 1; i <= count; i++) {
+            const val = currentValues[i-1] || '';
+            body.innerHTML += `
+                <div class="row-item">
+                    <span class="row-num">${i}</span>
+                    <input type="text" class="row-input" placeholder="..." value="${val}">
+                </div>
+            `;
+        }
+    }
+
+    // GESTIÓN DE EXCEL
+    function exportToExcel() {
+        const rows = Array.from(document.querySelectorAll('.row-input')).map((i, idx) => ({ ID: idx + 1, CONTENIDO: i.value }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Lista_Nexo");
+        XLSX.writeFile(wb, "Nexo_Lista.xlsx");
+    }
+
+    function importFromExcel(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const data = new Uint8Array(ev.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+            const flatList = json.flat().filter(cell => cell && cell !== "ID" && cell !== "CONTENIDO");
+            
+            document.getElementById('nexoRowInput').value = flatList.length;
+            renderListRows(flatList);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // PERSISTENCIA EN FIREBASE
+    async function saveListToCloud() {
+        const name = prompt("NOMBRE DE LA LISTA (Ej: Sorteo Enero):");
+        if(!name) return;
+
+        const items = Array.from(document.querySelectorAll('.row-input'))
+                     .map(i => i.value.trim())
+                     .filter(v => v !== "");
+
+        if(items.length === 0) return alert("LA LISTA ESTÁ VACÍA");
+
+        try {
+            // Guardar en biblioteca personal y activar en ruleta (orden aleatorio para ruleta)
+            await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${name}`).set(items);
+            await db.ref('config/ruleta_actual').set({
+                nombre: name,
+                items: items.sort(() => Math.random() - 0.5) // Aleatorio para la ruleta
+            });
+            alert("LISTA GUARDADA Y ACTIVADA EN LA RULETA");
+        } catch(err) { alert("ERROR: " + err.message); }
+    }
+
+    async function openSavedListsModal() {
+        const snap = await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas`).once('value');
+        const listas = snap.val();
+        if(!listas) return alert("NO TIENES LISTAS GUARDADAS");
+
+        let msg = "TUS LISTAS:\n" + Object.keys(listas).join("\n");
+        const elegir = prompt(msg + "\n\nESCRIBE EL NOMBRE DE LA LISTA PARA CARGAR (o escribe BORRAR:Nombre para eliminar):");
+        
+        if(!elegir) return;
+
+        if(elegir.startsWith("BORRAR:")) {
+            const target = elegir.split(":")[1];
+            await db.ref(`users/${auth.currentUser.uid}/biblioteca_listas/${target}`).remove();
+            alert("LISTA ELIMINADA");
+        } else if(listas[elegir]) {
+            document.getElementById('nexoRowInput').value = listas[elegir].length;
+            renderListRows(listas[elegir]);
+        }
+    }
+</script>
 </body>
 </html>
+
