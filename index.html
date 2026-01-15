@@ -810,6 +810,92 @@
 
 })();
 </script>
+
+    <style>
+    .staff-badge {
+        background: #1a1a1a; border: 1px solid #333;
+        padding: 10px; border-radius: 10px; margin-top: 10px;
+    }
+    .role-indicator {
+        font-size: 8px; text-transform: uppercase; letter-spacing: 1px;
+        padding: 2px 6px; border-radius: 4px; margin-left: 10px;
+    }
+    .role-admin { background: var(--gold); color: #000; }
+    .role-staff { background: #444; color: #fff; }
+</style>
+
+<script>
+(function() {
+    // 1. Definición de Permisos
+    let userRole = 'staff'; // Por defecto nivel restrictivo
+
+    function applyRolePermissions() {
+        const nivel = config.licenseLevel || "FREE";
+        // Si el UID actual coincide con el UID del nodo raíz, es SUPER ADMIN
+        // En una app multiusuario real, compararíamos currentUser.uid con el ownerId del nodo
+        const isOwner = true; // Simplificado para esta fase, se valida con el login
+
+        if (currentUser && currentUser.email === config.ownerEmail) {
+            userRole = 'admin';
+        }
+
+        const adminElements = document.querySelectorAll('.admin-section, #btnSaveConfig, .btn-export, #btnClearHistory');
+        
+        if (userRole === 'staff') {
+            // El Staff puede VER el panel para operar, pero no MODIFICAR secciones críticas
+            adminElements.forEach(el => {
+                if (!el.contains(document.getElementById('listWinners'))) {
+                    el.classList.add('locked-feature');
+                    el.style.pointerEvents = 'none';
+                }
+            });
+            console.log("ACCESO: MODO STAFF (RESTRINGIDO)");
+        }
+    }
+
+    // 2. Interfaz de Gestión de Equipo en Admin Panel
+    const adminPanel = document.getElementById('adminPanel');
+    const staffSection = document.createElement('div');
+    staffSection.className = 'admin-section';
+    staffSection.innerHTML = `
+        <h4 style="font-size: 10px; margin-bottom:10px;">GESTIÓN DE EQUIPO (PRO)</h4>
+        <div id="staffList" style="font-size: 9px; color: #888;">
+            Solo el Propietario puede gestionar colaboradores.
+        </div>
+        <input type="text" id="newStaffEmail" placeholder="email@colaborador.com" 
+               style="width:100%; font-size: 11px; margin-top:10px;" 
+               ${config && config.licenseLevel === "FREE" ? 'disabled' : ''}>
+    `;
+    adminPanel.insertBefore(staffSection, document.getElementById('btnSaveConfig').nextSibling);
+
+    // 3. Sincronización de Rol
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    // Si el email del config no existe, lo seteamos la primera vez
+                    if(!data.ownerEmail) {
+                        db.ref(`users/${user.uid}/config`).update({ ownerEmail: user.email });
+                    }
+                    setTimeout(applyRolePermissions, 1000);
+                }
+            });
+        }
+    });
+
+    // Añadir indicador de rol visual en el badge de licencia
+    const badge = document.getElementById('userLicenseBadge');
+    if(badge) {
+        const span = document.createElement('span');
+        span.id = "roleSpan";
+        span.className = "role-indicator role-admin";
+        span.innerText = "ADMIN";
+        badge.appendChild(span);
+    }
+})();
+</script>
 </body>
 </html>
+
 
