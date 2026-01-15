@@ -744,7 +744,103 @@
         observer.observe(modalWin, { attributes: true, attributeFilter: ['style'] });
     })();
 </script>
- 
+
+    <style>
+    .stock-control-item {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #111; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px;
+        border: 1px solid #222;
+    }
+    .input-mini {
+        width: 60px; background: #000; border: 1px solid var(--gold-dark);
+        color: var(--gold); text-align: center; border-radius: 5px; padding: 5px;
+    }
+</style>
+
+<script>
+    (function() {
+        // 1. Inyectar Interfaz de Stock en el Panel Admin (DOM Injection)
+        const adminSection = document.createElement('div');
+        adminSection.className = 'admin-section';
+        adminSection.innerHTML = `
+            <h3 style="color:var(--gold)">CONFIGURACIÓN DE PREMIOS (STOCK Y PESOS)</h3>
+            <div id="stockListContainer"></div>
+            <button id="btnSaveStock" class="btn btn-primary" style="margin-top:15px">GUARDAR CONFIGURACIÓN</button>
+        `;
+        document.getElementById('adminPanel').appendChild(adminSection);
+
+        // 2. Lógica de Pesos y Probabilidades
+        // Sobrescribimos el método de cálculo de premio del cerebro original
+        const originalCalculateResult = appWheel.calculateResult;
+
+        appWheel.calculateResult = function(rotation) {
+            // Obtenemos los premios activos (con stock > 0)
+            const activePrizes = config.prizes.filter(p => (p.stock === undefined || p.stock > 0));
+            
+            // Si hay configuración de pesos, usamos algoritmo de "Weighted Random"
+            let totalWeight = 0;
+            activePrizes.forEach(p => totalWeight += (p.weight || 1));
+            
+            let random = Math.random() * totalWeight;
+            for (let i = 0; i < activePrizes.length; i++) {
+                if (random < activePrizes[i].weight || 1) {
+                    const selectedPrize = activePrizes[i].text;
+                    
+                    // Descontar stock en Firebase
+                    if(activePrizes[i].stock !== undefined) {
+                        const indexInOriginal = config.prizes.findIndex(pr => pr.text === selectedPrize);
+                        db.ref(`users/${currentUser.uid}/config/prizes/${indexInOriginal}/stock`).set(activePrizes[i].stock - 1);
+                    }
+                    
+                    return selectedPrize;
+                }
+                random -= (activePrizes[i].weight || 1);
+            }
+            return activePrizes[0].text; // Fallback
+        };
+
+        // 3. Sincronización de la Interfaz de Stock
+        function renderStockSettings() {
+            const container = document.getElementById('stockListContainer');
+            container.innerHTML = '';
+            
+            config.prizes.forEach((prize, index) => {
+                const item = document.createElement('div');
+                item.className = 'stock-control-item';
+                item.innerHTML = `
+                    <span style="font-size:12px">${prize.text}</span>
+                    <div style="display:flex; gap:10px; align-items:center">
+                        <label style="font-size:9px">STOCK:</label>
+                        <input type="number" class="input-mini stock-input" data-index="${index}" value="${prize.stock || 0}">
+                        <label style="font-size:9px">PESO %:</label>
+                        <input type="number" class="input-mini weight-input" data-index="${index}" value="${prize.weight || 1}">
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Cargar stock cuando se abre el panel admin
+        document.getElementById('btnOpenAdmin').addEventListener('click', () => {
+            setTimeout(renderStockSettings, 500);
+        });
+
+        // Guardar cambios en Firebase
+        document.getElementById('btnSaveStock').onclick = () => {
+            const updates = {};
+            document.querySelectorAll('.stock-input').forEach(el => {
+                const idx = el.dataset.index;
+                updates[`users/${currentUser.uid}/config/prizes/${idx}/stock`] = parseInt(el.value);
+            });
+            document.querySelectorAll('.weight-input').forEach(el => {
+                const idx = el.dataset.index;
+                updates[`users/${currentUser.uid}/config/prizes/${idx}/weight`] = parseInt(el.value);
+            });
+
+            db.ref().update(updates).then(() => alert("STOCK Y PROBABILIDADES ACTUALIZADAS"));
+        };
+    })();
+</script>
+    
 </body>
 </html>
-
