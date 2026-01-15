@@ -1000,5 +1000,98 @@
     });
 })();
 </script>
+
+    <style>
+    #adBannerContainer {
+        width: 100%; max-width: 350px; height: 60px;
+        margin: 20px auto; overflow: hidden; border-radius: 12px;
+        border: 1px solid rgba(212,175,55,0.2); background: #000;
+        display: none; align-items: center; justify-content: center;
+        position: relative; transition: all 0.5s ease;
+    }
+    #adBannerContainer img { width: 100%; height: 100%; object-fit: cover; }
+    .ad-label {
+        position: absolute; top: 0; right: 0; background: var(--gold);
+        color: #000; font-size: 7px; padding: 2px 5px; font-weight: bold;
+    }
+</style>
+
+<script>
+(function() {
+    // 1. Crear el contenedor de publicidad en la UI principal
+    const mainSection = document.querySelector('.main-content');
+    const adContainer = document.createElement('div');
+    adContainer.id = 'adBannerContainer';
+    adContainer.innerHTML = `<span class="ad-label">SPONSOR</span><div id="adContent"></div>`;
+    // Insertar después de la ruleta
+    mainSection.appendChild(adContainer);
+
+    // 2. Interfaz de Configuración en el Admin Panel
+    const adminPanel = document.getElementById('adminPanel');
+    const adSection = document.createElement('div');
+    adSection.className = 'admin-section';
+    adSection.innerHTML = `
+        <h4 style="font-size: 10px; margin-bottom:10px;">PUBLICIDAD / BANNER (PRO)</h4>
+        <input type="text" id="editAdUrl" placeholder="URL de la imagen del banner" 
+               style="width:100%; font-size: 11px; margin-bottom:10px;">
+        <p style="font-size: 8px; color: #555;">Recomendado: 350x60px</p>
+    `;
+    adminPanel.insertBefore(adSection, document.getElementById('btnSaveConfig'));
+
+    // 3. Lógica de visualización durante el giro (Referenciación Aditiva)
+    const originalDraw = appWheel.draw;
+    appWheel.draw = function() {
+        originalDraw.call(this);
+        
+        const banner = document.getElementById('adBannerContainer');
+        const content = document.getElementById('adContent');
+        const nivel = config.licenseLevel || "FREE";
+        const adUrl = config.adUrl || "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=350&h=60&auto=format&fit=crop"; // Banner Nexo por defecto
+
+        if(this.isSpinning) {
+            banner.style.display = 'flex';
+            content.innerHTML = `<img src="${adUrl}" onerror="this.src='https://via.placeholder.com/350x60?text=TU+PUBLICIDAD+AQUI'">`;
+        } else {
+            // Ocultar suavemente después de 3 segundos de terminar
+            setTimeout(() => { if(!this.isSpinning) banner.style.display = 'none'; }, 3000);
+        }
+    };
+
+    // 4. Extender guardado para la URL del Ad
+    const btnSave = document.getElementById('btnSaveConfig');
+    const prevSave = btnSave.onclick;
+    btnSave.onclick = async () => {
+        const nivel = config.licenseLevel || "FREE";
+        const inputAd = document.getElementById('editAdUrl');
+        
+        if(nivel === "FREE" && inputAd.value.trim() !== "") {
+            alert("LOS BANNERS PERSONALIZADOS SON UNA FUNCIÓN PRO.");
+            inputAd.value = "";
+            return;
+        }
+
+        await db.ref(`users/${currentUser.uid}/config`).update({
+            adUrl: inputAd.value
+        });
+        
+        if(prevSave) prevSave();
+    };
+
+    // 5. Sincronización inicial
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                const val = snap.val();
+                if(val && val.adUrl) document.getElementById('editAdUrl').value = val.adUrl;
+                
+                if((config.licenseLevel || "FREE") === "FREE") {
+                    document.getElementById('editAdUrl').classList.add('locked-feature');
+                }
+            });
+        }
+    });
+})();
+</script>
 </body>
 </html>
+
