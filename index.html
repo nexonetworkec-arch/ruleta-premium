@@ -261,5 +261,105 @@
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
     </script>
+
+    <style>
+    #adminPanel {
+        position: fixed; top: 0; right: -400px; width: min(400px, 80vw); height: 100%;
+        background: var(--card-bg); border-left: 1px solid var(--gold);
+        z-index: 9500; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 30px; overflow-y: auto; backdrop-filter: blur(20px);
+    }
+    #adminPanel.active { right: 0; }
+    .admin-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(212,175,55,0.1); }
+    .license-badge { 
+        display: inline-block; padding: 5px 15px; border-radius: 10px; 
+        font-size: 10px; background: var(--gold-mix); color: #fff; margin-bottom: 15px;
+    }
+    .admin-toggle {
+        position: fixed; top: 20px; right: 20px; z-index: 9600;
+        width: 50px; height: 50px; border-radius: 15px; background: #000;
+        border: 1px solid var(--gold); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+</style>
+
+<div class="admin-toggle" id="btnToggleAdmin">⚙️</div>
+
+<div id="adminPanel">
+    <h2 style="margin-top: 0;">ADMINISTRACIÓN</h2>
+    
+    <div class="admin-section">
+        <div id="userLicenseBadge" class="license-badge">NIVEL: CARGANDO...</div>
+        <div id="licenseInfo" style="font-size: 11px; color: #888;">Cuentas FREE limitadas a 3 premios.</div>
+    </div>
+
+    <div class="admin-section">
+        <label style="display:block; font-size: 10px; margin-bottom: 10px;">TÍTULO DEL SORTEO</label>
+        <input type="text" id="editTitle" style="width:100%; font-size: 12px; margin-bottom: 15px;">
+        
+        <label style="display:block; font-size: 10px; margin-bottom: 10px;">PREMIOS (SEPARADOS POR COMA)</label>
+        <textarea id="editPrizes" style="width:100%; background:#000; border:1px solid #222; border-radius:15px; color:var(--gold); padding:15px; font-family:inherit; min-height: 80px;"></textarea>
+    </div>
+
+    <button id="btnSaveConfig" class="btn btn-primary" style="width:100%;">GUARDAR CAMBIOS</button>
+</div>
+
+<script>
+(function() {
+    const adminPanel = document.getElementById('adminPanel');
+    const btnToggle = document.getElementById('btnToggleAdmin');
+    const inputTitle = document.getElementById('editTitle');
+    const inputPrizes = document.getElementById('editPrizes');
+    const licenseBadge = document.getElementById('userLicenseBadge');
+
+    // Referenciación aditiva al sistema actual
+    btnToggle.onclick = () => adminPanel.classList.toggle('active');
+
+    // Cargar datos actuales en el panel
+    function loadAdminData() {
+        if(!config) return;
+        inputTitle.value = config.tituloSorteo || "";
+        inputPrizes.value = (config.prizes || []).join(", ");
+        
+        const nivel = config.licenseLevel || "FREE";
+        licenseBadge.innerText = `NIVEL: ${nivel}`;
+        licenseBadge.style.background = nivel === 'FREE' ? '#333' : 'var(--gold-dark)';
+    }
+
+    // Guardar con validación de nivel
+    document.getElementById('btnSaveConfig').onclick = async () => {
+        const prizesArray = inputPrizes.value.split(',').map(p => p.trim()).filter(p => p !== "");
+        const nivel = config.licenseLevel || "FREE";
+
+        // Validación de negocio (Regla multiusuario FREE)
+        if(nivel === "FREE" && prizesArray.length > 3) {
+            alert("EL NIVEL FREE SÓLO PERMITE 3 PREMIOS. ¡MEJORA TU LICENCIA!");
+            return;
+        }
+
+        const updates = {
+            tituloSorteo: inputTitle.value,
+            prizes: prizesArray
+        };
+
+        try {
+            await db.ref(`users/${currentUser.uid}/config`).update(updates);
+            alert("CONFIGURACIÓN ACTUALIZADA");
+            adminPanel.classList.remove('active');
+        } catch(e) {
+            alert("ERROR AL GUARDAR: " + e.message);
+        }
+    };
+
+    // Escuchar cambios para actualizar el panel cuando cambie la db
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/config`).on('value', snap => {
+                loadAdminData();
+            });
+        }
+    });
+})();
+</script>
 </body>
 </html>
+
