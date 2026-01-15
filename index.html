@@ -529,8 +529,112 @@
     });
 })();
 </script>
+
+    <style>
+    .history-list {
+        max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3);
+        border-radius: 10px; padding: 10px; margin: 15px 0; font-size: 10px;
+    }
+    .history-item {
+        display: flex; justify-content: space-between;
+        padding: 8px 0; border-bottom: 1px solid rgba(212,175,55,0.1);
+    }
+    .btn-export {
+        background: transparent; border: 1px solid var(--gold);
+        color: var(--gold); padding: 10px; width: 100%; border-radius: 10px;
+        cursor: pointer; font-size: 9px; margin-top: 10px;
+    }
+</style>
+
+<script>
+(function() {
+    // 1. Crear sección de Historial en el Admin Panel
+    const adminPanel = document.getElementById('adminPanel');
+    const historySection = document.createElement('div');
+    historySection.className = 'admin-section';
+    historySection.innerHTML = `
+        <h4 style="font-size: 10px; margin-bottom:10px;">HISTORIAL DE GANADORES</h4>
+        <div id="listWinners" class="history-list">Cargando...</div>
+        <button id="btnExportData" class="btn-export">DESCARGAR CSV (PRO)</button>
+        <button id="btnClearHistory" style="background:transparent; border:none; color:#444; font-size:8px; cursor:pointer; width:100%; margin-top:10px;">BORRAR HISTORIAL</button>
+    `;
+    adminPanel.insertBefore(historySection, document.getElementById('btnSaveConfig').nextSibling);
+
+    let fullHistory = [];
+
+    // 2. Escuchar el historial en tiempo real
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/history`).on('value', snap => {
+                const listContainer = document.getElementById('listWinners');
+                const nivel = (config && config.licenseLevel) || "FREE";
+                listContainer.innerHTML = "";
+                fullHistory = [];
+
+                if(!snap.exists()) {
+                    listContainer.innerHTML = "SIN REGISTROS";
+                    return;
+                }
+
+                const data = snap.val();
+                Object.keys(data).forEach(key => fullHistory.push(data[key]));
+                
+                // Ordenar por fecha (más reciente primero)
+                fullHistory.reverse();
+
+                // Lógica Multi-usuario: FREE solo ve los últimos 5
+                const displayData = nivel === "FREE" ? fullHistory.slice(0, 5) : fullHistory;
+
+                displayData.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `<span>${item.prize}</span><span style="color:#666">${item.date.split(',')[0]}</span>`;
+                    listContainer.appendChild(div);
+                });
+
+                if(nivel === "FREE" && fullHistory.length > 5) {
+                    const note = document.createElement('div');
+                    note.style.textAlign = 'center'; note.style.padding = '5px'; note.style.color = 'var(--gold)';
+                    note.innerText = `+${fullHistory.length - 5} REGISTROS OCULTOS (MODO PRO)`;
+                    listContainer.appendChild(note);
+                }
+            });
+        }
+    });
+
+    // 3. Lógica de Exportación CSV
+    document.getElementById('btnExportData').onclick = () => {
+        const nivel = (config && config.licenseLevel) || "FREE";
+        if(nivel === "FREE") {
+            alert("LA EXPORTACIÓN DE DATOS ES UNA FUNCIÓN PRO.");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,PREMIO,FECHA,HORA\n";
+        fullHistory.forEach(row => {
+            csvContent += `${row.prize},${row.date.replace(',', '')}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Ganadores_NEXO_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // 4. Borrado de historial
+    document.getElementById('btnClearHistory').onclick = () => {
+        if(confirm("¿BORRAR TODO EL HISTORIAL? ESTA ACCIÓN NO SE PUEDE DESHACER.")) {
+            db.ref(`users/${currentUser.uid}/history`).remove();
+        }
+    };
+})();
+</script>
 </body>
 </html>
+
 
 
 
