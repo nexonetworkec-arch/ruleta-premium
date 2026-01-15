@@ -895,7 +895,110 @@
     }
 })();
 </script>
+
+    <style>
+    .coupon-box {
+        background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+        color: #000; padding: 15px; border-radius: 10px; margin: 15px 0;
+        text-align: center; font-family: monospace; font-weight: bold;
+        letter-spacing: 2px; border: 2px dashed #000;
+    }
+    .status-claimed { color: #ff4444 !important; text-decoration: line-through; }
+    .btn-validate {
+        background: var(--gold); color: #000; border: none; padding: 5px 10px;
+        border-radius: 5px; cursor: pointer; font-size: 9px; font-weight: bold;
+    }
+</style>
+
+<script>
+(function() {
+    // 1. Generador de Código Único
+    function generateCouponCode() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = 'NX-';
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    // 2. Extender la función de finalización para incluir el cupón
+    const originalFinish = appWheel.finish;
+    appWheel.finish = function() {
+        const coupon = generateCouponCode();
+        
+        // Inyectar el código visualmente en el modal de victoria existente
+        const modalBody = document.querySelector('#modalWinner .modal-content');
+        let couponDisplay = document.getElementById('couponDisplay');
+        
+        if (!couponDisplay) {
+            couponDisplay = document.createElement('div');
+            couponDisplay.id = 'couponDisplay';
+            modalBody.insertBefore(couponDisplay, document.getElementById('btnFinishWin'));
+        }
+        
+        couponDisplay.innerHTML = `
+            <div style="font-size: 10px; color: var(--gold); margin-top:10px;">CÓDIGO DE VALIDACIÓN:</div>
+            <div class="coupon-box">${coupon}</div>
+        `;
+
+        // Modificamos la referencia de guardado en DB de forma aditiva
+        const originalPush = db.ref(`users/${currentUser.uid}/history`).push;
+        // Interceptamos los datos del historial
+        const historyRef = db.ref(`users/${currentUser.uid}/history`);
+        historyRef.push({
+            prize: this.prizes[this.selectedIdx],
+            date: new Date().toLocaleString(),
+            couponCode: coupon,
+            status: 'pending',
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        // Ejecutar efectos visuales originales
+        originalFinish.call(this);
+    };
+
+    // 3. Interfaz de Validación en el Admin Panel
+    const listWinners = document.getElementById('listWinners');
+    
+    // Función aditiva para marcar como canjeado
+    window.claimPrize = async (key) => {
+        if(confirm("¿MARCAR PREMIO COMO ENTREGADO?")) {
+            await db.ref(`users/${currentUser.uid}/history/${key}`).update({ status: 'claimed' });
+        }
+    };
+
+    // 4. Modificar el renderizado del historial para mostrar validación
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            db.ref(`users/${user.uid}/history`).on('value', snap => {
+                setTimeout(() => {
+                    const items = document.querySelectorAll('.history-item');
+                    const data = snap.val();
+                    if(!data) return;
+
+                    const keys = Object.keys(data).reverse();
+                    items.forEach((item, index) => {
+                        const key = keys[index];
+                        const info = data[key];
+                        if(info && info.couponCode) {
+                            const isClaimed = info.status === 'claimed';
+                            item.innerHTML = `
+                                <div style="display:flex; flex-direction:column;">
+                                    <span class="${isClaimed ? 'status-claimed' : ''}">${info.prize}</span>
+                                    <small style="color:var(--gold); font-size:8px;">${info.couponCode}</small>
+                                </div>
+                                <div>
+                                    ${!isClaimed ? `<button class="btn-validate" onclick="claimPrize('${key}')">CANJEAR</button>` : '<span style="font-size:8px; color:#444;">CANJEADO</span>'}
+                                </div>
+                            `;
+                        }
+                    });
+                }, 800);
+            });
+        }
+    });
+})();
+</script>
 </body>
 </html>
-
-
