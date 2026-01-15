@@ -1337,6 +1337,103 @@
         };
     })();
             </script>
+
+    <style>
+    /* Ocultamos el botón de configuración original para limpiar la UI */
+    #btnOpenAdmin { display: none !important; }
+
+    /* Añadimos el nuevo Modal de Configuración de Marca */
+    #modalConfigMarca .config-group {
+        margin-bottom: 20px;
+        border-bottom: 1px solid #222;
+        padding-bottom: 15px;
+    }
+</style>
+
+<div id="modalConfigMarca" class="nexo-modal">
+    <div class="nexo-modal-content">
+        <span class="close-modal" onclick="closeNexoModals()">&times;</span>
+        <h2 style="color:var(--gold)">AJUSTES DE MARCA</h2>
+        <div id="brandingInjectedContent">
+            </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const hubMenu = document.getElementById('nexoHubMenu');
+
+        // 1. Inyectamos la nueva opción de "Ajustes de Marca" al inicio del Menú Hub
+        const configOption = document.createElement('div');
+        configOption.className = 'hub-option';
+        configOption.innerHTML = `<i>🎨</i> Ajustes de Marca`;
+        configOption.onclick = () => openNexoModal('modalConfigMarca');
+        hubMenu.prepend(configOption);
+
+        // 2. Función para mover y organizar el contenido de configuración
+        function reorderAdminContent() {
+            const brandingContent = document.getElementById('brandingInjectedContent');
+            
+            // Buscamos el contenedor de branding de la inyección anterior
+            const sourceBranding = document.getElementById('inputBgUrl')?.closest('.admin-section');
+            
+            if(sourceBranding && brandingContent) {
+                brandingContent.innerHTML = ''; // Limpiamos
+                
+                // Movemos los inputs y el botón al nuevo modal
+                const titleLabel = document.createElement('label');
+                titleLabel.style = "font-size:10px; color:var(--gold-dark); display:block; margin-bottom:5px;";
+                titleLabel.innerText = "TÍTULO DEL SORTEO:";
+                
+                const titleInput = document.createElement('input');
+                titleInput.type = "text";
+                titleInput.className = "reg-input";
+                titleInput.value = config.tituloSorteo || "NEXO WHEEL";
+                titleInput.oninput = (e) => {
+                    db.ref(`users/${currentUser.uid}/config/tituloSorteo`).set(e.target.value);
+                };
+
+                brandingContent.appendChild(titleLabel);
+                brandingContent.appendChild(titleInput);
+                brandingContent.appendChild(sourceBranding); // Insertamos el resto de los controles (BG/Logo)
+                
+                // Estilizamos para que encaje en el modal
+                sourceBranding.style.background = "transparent";
+                sourceBranding.style.border = "none";
+                sourceBranding.style.padding = "0";
+                sourceBranding.querySelector('h3').style.display = "none";
+            }
+        }
+
+        // 3. Sobrescribimos la apertura de modales para asegurar la carga de datos
+        const originalOpenModal = window.openNexoModal;
+        window.openNexoModal = function(id) {
+            // Llamamos a la lógica original de validación de PIN
+            const pass = prompt("ACCESO ADMINISTRATIVO - INGRESE PIN:");
+            if(pass === "1234") {
+                if(id === 'modalConfigMarca') reorderAdminContent();
+                
+                hubMenu.style.display = 'none';
+                document.getElementById(id).style.display = 'flex';
+                
+                // Si es stock, actualizamos la lista
+                if(id === 'modalStock') {
+                   // Llamamos a la función de renderizado de la inyección 3 si existe
+                   if(typeof renderStockSettings === 'function') renderStockSettings();
+                }
+            } else {
+                alert("PIN INCORRECTO");
+            }
+        };
+
+        // 4. Mejorar la estética de las opciones del Hub
+        const options = hubMenu.querySelectorAll('.hub-option');
+        options.forEach(opt => {
+            opt.style.borderBottom = "1px solid #111";
+        });
+
+    })();
+</script>
     
 </body>
 </html>
