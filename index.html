@@ -841,6 +841,103 @@
         };
     })();
 </script>
+
+    <style>
+    /* Capa de personalización sobre el fondo original */
+    body::before {
+        content: ""; position: fixed; inset: 0;
+        background-size: cover; background-position: center;
+        background-repeat: no-repeat; opacity: 0; transition: opacity 1s ease;
+        z-index: -1;
+    }
+    body.custom-bg::before { opacity: 1; }
+    
+    /* Logo dinámico */
+    #customLogo {
+        max-width: 180px; max-height: 80px; margin-bottom: 10px;
+        display: none; object-fit: contain;
+    }
+</style>
+
+<script>
+    (function() {
+        // 1. Inyectar campos de Branding en el Panel Admin
+        const brandingSection = document.createElement('div');
+        brandingSection.className = 'admin-section';
+        brandingSection.innerHTML = `
+            <h3 style="color:var(--gold)">BRANDING Y ESTÉTICA</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:10px; color:var(--gold-dark)">URL IMAGEN DE FONDO (WALLPAPER):</label>
+                <input type="text" id="inputBgUrl" class="reg-input" style="margin:0" placeholder="https://ejemplo.com/fondo.jpg">
+                
+                <label style="font-size:10px; color:var(--gold-dark)">URL LOGOTIPO (PNG TRANSPARENTE):</label>
+                <input type="text" id="inputLogoUrl" class="reg-input" style="margin:0" placeholder="https://ejemplo.com/logo.png">
+                
+                <button id="btnSaveBranding" class="btn btn-primary" style="margin-top:10px">APLICAR CAMBIOS VISUALES</button>
+            </div>
+        `;
+        document.getElementById('adminPanel').appendChild(brandingSection);
+
+        // 2. Preparar el contenedor del Logo en el Login/App
+        const authContainer = document.querySelector('.auth-container');
+        if(authContainer) {
+            const img = document.createElement('img');
+            img.id = 'customLogo';
+            authContainer.prepend(img);
+        }
+
+        // 3. Lógica de Sincronización de Estética
+        function syncBranding(brandingData) {
+            if(!brandingData) return;
+
+            // Aplicar Fondo
+            if(brandingData.bgUrl) {
+                document.body.style.setProperty('--custom-bg', `url('${brandingData.bgUrl}')`);
+                // Inyectamos el estilo dinámicamente para que el pseudo-elemento lo use
+                let styleTag = document.getElementById('dynamicBgStyle');
+                if(!styleTag) {
+                    styleTag = document.createElement('style');
+                    styleTag.id = 'dynamicBgStyle';
+                    document.head.appendChild(styleTag);
+                }
+                styleTag.innerHTML = `body::before { background-image: url('${brandingData.bgUrl}'); }`;
+                document.body.classList.add('custom-bg');
+            }
+
+            // Aplicar Logo
+            const logoImg = document.getElementById('customLogo');
+            if(brandingData.logoUrl && logoImg) {
+                logoImg.src = brandingData.logoUrl;
+                logoImg.style.display = 'block';
+            }
+        }
+
+        // Escuchar cambios en la rama de branding
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                db.ref(`users/${user.uid}/config/branding`).on('value', snap => {
+                    syncBranding(snap.val());
+                    // Pre-cargar valores en el panel
+                    const data = snap.val();
+                    if(data) {
+                        document.getElementById('inputBgUrl').value = data.bgUrl || '';
+                        document.getElementById('inputLogoUrl').value = data.logoUrl || '';
+                    }
+                });
+            }
+        });
+
+        // 4. Guardar Branding
+        document.getElementById('btnSaveBranding').onclick = () => {
+            const bgUrl = document.getElementById('inputBgUrl').value;
+            const logoUrl = document.getElementById('inputLogoUrl').value;
+
+            db.ref(`users/${currentUser.uid}/config/branding`).set({
+                bgUrl, logoUrl
+            }).then(() => alert("ESTÉTICA ACTUALIZADA CON ÉXITO"));
+        };
+    })();
+</script>
     
 </body>
 </html>
