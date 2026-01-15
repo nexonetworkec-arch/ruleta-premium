@@ -2610,6 +2610,101 @@
         }
     })();
     </script>
+
+    <script>
+    (function() {
+        // Redefinimos la construcción del menú para dar poder total al usuario
+        window.rebuildMenu = function(isAdmin) {
+            const hubMenu = document.getElementById('nexoHubMenu');
+            if(!hubMenu) return;
+
+            // 1. Encabezado y Estado de Licencia (Visible para todos)
+            hubMenu.innerHTML = `
+                <div style="font-size: 12px; font-weight: bold; color: var(--gold); padding: 15px; border-bottom: 1px solid #222; text-align: center; letter-spacing: 2px;">
+                    NEXO® LUX
+                </div>
+                <div id="licenseInfoSlot"></div>
+            `;
+            
+            // Inyectar el contador de días inmediatamente
+            injectDaysCounter(document.getElementById('licenseInfoSlot'));
+
+            // 2. OPCIONES DE GESTIÓN (Ahora visibles para TODOS)
+            const menuOptions = [
+                { id: 'modalStock', icon: '🎁', label: 'MIS PREMIOS' },
+                { id: 'modalHistory', icon: '🏆', label: 'HISTORIAL' },
+                { id: 'modalLeads', icon: '👥', label: 'MIS LEADS' },
+                { id: 'modalBranding', icon: '🎨', label: 'MI MARCA' }
+            ];
+
+            menuOptions.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'nexo-menu-item';
+                btn.innerHTML = `<span>${opt.icon}</span> ${opt.label}`;
+                btn.onclick = () => openNexoModal(opt.id);
+                hubMenu.appendChild(btn);
+            });
+
+            // 3. SECCIÓN EXCLUSIVA (Solo para nexonetwork.ec@gmail.com)
+            if (isAdmin) {
+                const adminBtn = document.createElement('div');
+                adminBtn.className = 'nexo-menu-item';
+                adminBtn.style.borderTop = "1px solid rgba(212,175,55,0.3)";
+                adminBtn.style.marginTop = "10px";
+                adminBtn.style.color = "var(--gold)";
+                adminBtn.style.fontWeight = "bold";
+                adminBtn.innerHTML = `<span>👑</span> PANEL MASTER`;
+                adminBtn.onclick = () => openNexoModal('modalSuperAdmin');
+                hubMenu.appendChild(adminBtn);
+            }
+
+            // 4. OPCIONES OPERATIVAS (Al final para todos)
+            const utilityOptions = [
+                { label: '🔄 REINICIAR', action: () => location.reload() },
+                { label: '🚪 CERRAR SESIÓN', action: () => auth.signOut(), opacity: 0.6 }
+            ];
+
+            utilityOptions.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'nexo-menu-item';
+                if(opt.opacity) btn.style.opacity = opt.opacity;
+                btn.innerHTML = opt.label;
+                btn.onclick = opt.action;
+                hubMenu.appendChild(btn);
+            });
+        };
+
+        // Función auxiliar para mostrar los días restantes
+        function injectDaysCounter(slot) {
+            const user = auth.currentUser;
+            if(!user) return;
+            
+            db.ref(`users/${user.uid}/license`).on('value', snap => {
+                const lic = snap.val() || {};
+                const days = window.getDaysRemaining ? window.getDaysRemaining(lic.expiry) : 0;
+                slot.innerHTML = `
+                    <div style="padding: 10px; background: rgba(212,175,55,0.05); text-align: center; border-bottom: 1px solid #222;">
+                        <div style="font-size: 12px; font-weight: bold; color: ${days < 5 ? '#ff4444' : 'var(--gold)'};">
+                            ⏱️ ${days} DÍAS RESTANTES
+                        </div>
+                        <button onclick="promptVoucher()" style="background:none; border:none; color:#777; font-size:9px; cursor:pointer; text-decoration:underline;">
+                            Canjear Código
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // Ejecutar reconstrucción inicial
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                const isMaster = (user.email.toLowerCase() === "nexonetwork.ec@gmail.com");
+                window.rebuildMenu(isMaster);
+            }
+        });
+
+    })();
+    </script>
     
 </body>
 </html>
