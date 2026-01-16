@@ -88,6 +88,36 @@
             background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
             width: min(500px, 90%); text-align: center;
         }
+
+        /* --- INYECCIÓN ADITIVA: PANEL ADMIN & TARJETAS --- */
+#adminPanel { 
+    position: fixed; inset: 0; background: var(--bg-color); z-index: 9500; 
+    display: none; flex-direction: column; padding: 20px; overflow-y: auto;
+}
+
+.user-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gold-dark);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+
+.user-card:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(212,175,55,0.2); }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+
+.status-badge {
+    font-size: 9px; padding: 4px 8px; border-radius: 5px;
+    background: var(--gold-mix); color: #fff;
+}
+
+.user-details { display: none; margin-top: 20px; border-top: 1px solid #222; padding-top: 15px; }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+
+.stat-box { background: #000; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #111; }
     </style>
 </head>
 <body>
@@ -260,6 +290,63 @@
             const pin = document.getElementById('authPin').value;
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
+
+        // --- INYECCIÓN ADITIVA: MOTOR DE GESTIÓN DE LICENCIAS ---
+const ADMIN_UID = "TU_UID_AQUÍ"; // Define tu UID de administrador
+
+function initAdminCore() {
+    if (currentUser.uid !== ADMIN_UID) return;
+    
+    // Crear contenedor del Panel Admin si no existe
+    const adminHTML = `
+        <div id="adminPanel">
+            <h2 style="text-align:center;">NEXO® CONTROL CENTER</h2>
+            <div id="userCardsContainer"></div>
+            <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary">CERRAR PANEL</button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', adminHTML);
+}
+
+function renderUserCard(uid, userData) {
+    const container = document.getElementById('userCardsContainer');
+    const card = `
+        <div class="user-card" id="card-${uid}">
+            <div class="card-header" onclick="toggleCard('${uid}')">
+                <div>
+                    <div style="font-size: 14px; font-weight: 900;">${userData.email || 'USUARIO SIN EMAIL'}</div>
+                    <div style="font-size: 10px; color: var(--gold-dark);">ID: ${uid.substring(0,8)}...</div>
+                </div>
+                <div class="status-badge">${(userData.config && userData.config.licencia) || 'GRATIS'}</div>
+            </div>
+            <div class="user-details" id="details-${uid}">
+                <div class="stat-grid">
+                    <div class="stat-box"><small>GIROS</small><br>${Object.keys(userData.history || {}).length}</div>
+                    <div class="stat-box"><small>LEADS</small><br>${Object.keys(userData.leads || {}).length}</div>
+                </div>
+                <button class="btn btn-primary" style="width:100%; font-size:9px;" onclick="manageLicense('${uid}')">GESTIONAR LICENCIA</button>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', card);
+}
+
+function toggleCard(uid) {
+    const el = document.getElementById(`details-${uid}`);
+    el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+// Escuchar cambios en la base de datos de usuarios para el Admin
+if (currentUser && currentUser.uid === ADMIN_UID) {
+    db.ref('users').on('value', (snapshot) => {
+        const users = snapshot.val();
+        document.getElementById('userCardsContainer').innerHTML = '';
+        for (let uid in users) {
+            renderUserCard(uid, users[uid]);
+        }
+    });
+}
     </script>
 </body>
 </html>
+
