@@ -427,6 +427,52 @@ auth.onAuthStateChanged(user => {
     }
 });
 /* --- FIN DE INYECCIÓN ADITIVA --- */
+
+        /* --- INICIO DE INYECCIÓN ADITIVA: EXPORTACIÓN DE DATOS --- */
+
+// 1. Agregar el botón a la interfaz existente del Panel de Stats
+const exportBtnHTML = `
+    <button onclick="exportStatsCSV()" class="btn" style="width:100%; margin-top:10px; background: #222; border: 1px solid var(--gold); font-size: 9px;">
+        DESCARGAR REPORTE CSV
+    </button>
+`;
+
+// Insertar el botón dentro de la pestaña de estadísticas (tabStats)
+document.getElementById('tabStats').insertAdjacentHTML('beforeend', exportBtnHTML);
+
+// 2. Lógica de generación de archivo
+function exportStatsCSV() {
+    db.ref('users').once('value', snap => {
+        const users = snap.val();
+        let csvContent = "DATA:text/csv;charset=utf-8,";
+        
+        // Cabeceras del reporte
+        csvContent += "ID USUARIO,NOMBRE/TITULO,SUSCRIPCION,ESTADO,FECHA REGISTRO\n";
+        
+        for (let id in users) {
+            const u = users[id];
+            const row = [
+                id,
+                u.config?.tituloSorteo || "N/A",
+                u.subscription || "FREE",
+                u.status?.state || "OFFLINE",
+                u.registrationDate || "SIN FECHA"
+            ].join(",");
+            csvContent += row + "\n";
+        }
+        
+        // Proceso de descarga automática
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "NEXO_REPORTE_ESTADISTICAS.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
+/* --- FIN DE INYECCIÓN ADITIVA --- */
     </script>
 </body>
 </html>
+
