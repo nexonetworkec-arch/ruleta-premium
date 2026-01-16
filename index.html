@@ -12,20 +12,21 @@
 
     <style>
         :root { 
-            --bg-color: #000000;
-            --card-bg: rgba(15, 15, 15, 0.95); 
+            --bg-color: #000000; [cite: 1]
+            --card-bg: rgba(15, 15, 15, 0.95); [cite: 2]
             --gold: #d4af37; 
             --gold-dark: #8a6d1d;
-            --gold-mix: #6A571B;
+            --gold-mix: #6A571B; [cite: 2]
         }
 
         /* CONSTANTES DE MARCA */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; [cite: 3]
+            -webkit-tap-highlight-color: transparent; outline: none; } [cite: 4]
 
         /* REGLA GENERAL: ORO Y MAYÚSCULAS */
         input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
-            color: var(--gold) !important;
-            text-transform: uppercase;
+            color: var(--gold) !important; [cite: 4]
+            text-transform: uppercase; [cite: 5]
             letter-spacing: 2px;
             font-weight: 900;
         }
@@ -34,149 +35,98 @@
         input[type="email"], 
         input[type="password"], 
         .no-caps {
-            text-transform: none !important;
+            text-transform: none !important; [cite: 5]
             letter-spacing: 1px;
             font-weight: 400;
         }
         
-        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
+        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; [cite: 6]
+            text-transform: uppercase; } [cite: 7]
 
         body { 
-            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
-            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
-            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
+            background-color: var(--bg-color); [cite: 7]
+            color: var(--gold); font-family: 'Segoe UI', sans-serif; [cite: 8]
+            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; [cite: 8]
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px; [cite: 9]
         }
 
         #loading-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+            position: fixed; [cite: 9]
+            inset: 0; background: #000; z-index: 10000; [cite: 10]
+            display: flex; flex-direction: column; align-items: center; justify-content: center; [cite: 10]
+        } [cite: 11]
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; [cite: 11]
+            border-top-color: var(--gold); animation: spin 0.8s linear infinite; } [cite: 12]
+        @keyframes spin { to { transform: rotate(360deg); [cite: 12]
+        } } [cite: 13]
 
-        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
+        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; [cite: 13]
+            justify-content: center; flex-direction: column; } [cite: 14]
 
         input {
-            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
-        }
+            background: #000; [cite: 14]
+            border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px; [cite: 15]
+        } [cite: 16]
 
-        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
-        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
+        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; [cite: 16]
+            transition: 0.3s; font-size: 11px; } [cite: 17]
+        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); [cite: 17]
+            color: #000 !important; } [cite: 18]
 
         .wheel-wrapper { 
-            position: relative; 
-            width: min(82vh, 88vw); height: min(82vh, 88vw); 
-            max-width: 550px; max-height: 550px; 
-        }
-        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+            position: relative; [cite: 18]
+            width: min(82vh, 88vw); height: min(82vh, 88vw); [cite: 19]
+            max-width: 550px; max-height: 550px; [cite: 19]
+        } [cite: 20]
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; [cite: 20]
+            box-shadow: 0 0 50px rgba(0,0,0,1); } [cite: 21]
         
         #pointer { 
-            position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
-            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent;
-            border-top: min(50px, 10vw) solid var(--gold);
-        }
+            position: absolute; [cite: 21]
+            top: -15px; left: 50%; transform: translateX(-50%); z-index: 100; [cite: 22]
+            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; [cite: 22]
+            border-right: min(20px, 4vw) solid transparent; [cite: 23]
+            border-top: min(50px, 10vw) solid var(--gold); [cite: 23]
+        } [cite: 24]
 
-        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); [cite: 24]
+            z-index: 150; } [cite: 25]
         #btnSpinCenter { 
-            width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
-            background: #000; cursor: pointer; font-size: min(13px, 3vw);
-            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+            width: min(90px, 18vw); [cite: 25]
+            height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold); [cite: 26]
+            background: #000; cursor: pointer; font-size: min(13px, 3vw); [cite: 26]
+            box-shadow: 0 0 20px rgba(212,175,55,0.2); [cite: 27]
         }
 
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
+        .modal { position: fixed; inset: 0; [cite: 27]
+            background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); [cite: 28]
+        } [cite: 29]
         .modal-content { 
-            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
-            width: min(500px, 90%); text-align: center;
-        }
+            background: var(--card-bg); [cite: 29]
+            padding: 40px; border-radius: 40px; border: 1px solid var(--gold); [cite: 30] 
+            width: min(500px, 90%); text-align: center; [cite: 30]
+        } [cite: 31]
 
-        /* --- INYECCIÓN ADITIVA: ESTRUCTURA DE GESTIÓN Y TARJETAS --- */
-#adminPanel { 
-    position: fixed; inset: 0; background: var(--bg-color); z-index: 9500; 
-    display: none; flex-direction: column; padding: 20px; overflow-y: auto;
-}
-
-.user-card {
-    background: var(--card-bg); border: 1px solid var(--gold-dark);
-    border-radius: 20px; padding: 20px; margin-bottom: 15px; transition: 0.3s;
-}
-
-.user-card:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15); }
-
-.card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-
-.status-badge { 
-    font-size: 10px; padding: 5px 10px; border-radius: 8px; 
-    background: var(--gold-mix); color: #fff; font-weight: 900;
-}
-
-.user-details { display: none; margin-top: 20px; border-top: 1px solid #222; padding-top: 15px; }
-
-.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-
-.stat-box { 
-    background: #000; padding: 12px; border-radius: 12px; 
-    text-align: center; border: 1px solid #111; 
-}
-
-.msg-control { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
-
-/* MODAL DE MENSAJERÍA GLOBAL (TEXTO E IMAGEN) */
-#globalMessenger {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999;
-    display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);
-}
-
-.msg-img-container img { width: 100%; border-radius: 15px; border: 1px solid var(--gold-dark); margin-bottom: 15px; }
-
-        /* --- INYECCIÓN ADITIVA: RECOLECTOR DE LEADS & CONFIGURACIÓN --- */
-#leadFormModal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9100;
-    display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px);
-}
-
-.switch-container {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #111; padding: 15px; border-radius: 15px; border: 1px solid var(--gold-dark);
-    margin: 10px 0;
-}
-
-/* Estilo del Switch */
-.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background-color: #333; transition: .4s; border-radius: 24px;
-}
-.switch input:checked + .slider { background-color: var(--gold); }
-.slider:before {
-    position: absolute; content: ""; height: 18px; width: 18px;
-    left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
-}
-.switch input:checked + .slider:before { transform: translateX(20px); }
-
-.lead-input-group { margin-bottom: 15px; width: 100%; }
-.lead-input-group label { font-size: 10px; display: block; margin-bottom: 5px; color: var(--gold); }
+        /* --- INYECCIÓN ADITIVA: PANEL ADMIN & LEADS --- */
+        #adminPanel { position: fixed; inset: 0; background: var(--bg-color); z-index: 9500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .user-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 20px; padding: 20px; margin-bottom: 15px; transition: 0.3s; }
+        .user-card:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .status-badge { font-size: 10px; padding: 5px 10px; border-radius: 8px; background: var(--gold-mix); color: #fff; font-weight: 900; }
+        .user-details { display: none; margin-top: 20px; border-top: 1px solid #222; padding-top: 15px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat-box { background: #000; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #111; }
+        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 15px; border-radius: 15px; border: 1px solid var(--gold-dark); margin: 10px 0; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 24px; }
+        .switch input:checked + .slider { background-color: var(--gold); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+        #globalMessenger { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        #leadFormModal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
     </style>
 </head>
-
-    <div id="adminPanel">
-    <div style="max-width: 600px; margin: 0 auto; width: 100%;">
-        <h1 style="text-align:center; margin-bottom: 30px;">NEXO® CONTROL CENTER</h1>
-        
-        <div id="userCardsContainer"></div>
-        
-        <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">CERRAR PANEL MAESTRO</button>
-    </div>
-</div>
-
-<div id="globalMessenger">
-    <div class="modal-content" style="border-width: 2px; max-width: 400px;">
-        <div id="msgImageContainer" class="msg-img-container"></div>
-        <h3 id="msgTitle" style="margin-top:0;">NEXO® COMUNICACIÓN</h3>
-        <p id="msgBody" style="text-transform: none; letter-spacing: 1px; font-weight: 400; color: #fff;"></p>
-        <button onclick="document.getElementById('globalMessenger').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">ENTENDIDO</button>
-    </div>
-</div>
 <body>
 
     <div id="loading-overlay">
@@ -187,8 +137,8 @@
     <div id="loginScreen">
         <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 85%);">
             <h2>NEXO®</h2>
-            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
-            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;">
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;"> [cite: 31]
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;"> [cite: 32]
             <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
         </div>
     </div>
@@ -196,8 +146,8 @@
     <div class="app-container" id="appMain">
         <div style="text-align:center; padding: 20px;">
             <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
-            <div class="wheel-wrapper">
-                <div id="pointer"></div>
+            <div class="wheel-wrapper"> [cite: 32]
+                <div id="pointer"></div> [cite: 33]
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
                 <canvas id="wheelCanvas" width="800" height="800"></canvas>
             </div>
@@ -205,116 +155,39 @@
     </div>
 
     <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
-        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
-        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
+        <p class="dynamic-title" style="font-size: 12px; [cite: 33]
+        color: var(--gold-dark) !important;"></p> [cite: 34]
+        <div id="winnerName" style="font-size: min(42px, 9vw); [cite: 34]
+        margin: 25px 0;">---</div> [cite: 35]
         <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
     </div></div>
 
-    // --- INYECCIÓN ADITIVA: CEREBRO DE GESTIÓN, LICENCIAS Y MENSAJERÍA ---
-const MASTER_ADMIN_UID = "TU_UID_AQUÍ"; // Reemplaza esto con tu UID real
-
-function initMasterAdmin() {
-    if (!currentUser || currentUser.uid !== MASTER_ADMIN_UID) return;
-    
-    // 1. Escuchar a todos los usuarios para crear sus tarjetas
-    db.ref('users').on('value', (snapshot) => {
-        const users = snapshot.val();
-        const container = document.getElementById('userCardsContainer');
-        if(!container) return;
-        container.innerHTML = '';
-        
-        for (let uid in users) {
-            if (uid !== MASTER_ADMIN_UID) {
-                renderUserCard(uid, users[uid]);
-            }
-        }
-    });
-
-    // 2. Crear botón flotante de acceso rápido para el Admin
-    if (!document.getElementById('btnOpenAdmin')) {
-        const btn = document.createElement('button');
-        btn.id = 'btnOpenAdmin';
-        btn.innerHTML = "MASTER CONTROL";
-        btn.className = "btn";
-        btn.style = "position:fixed; bottom:20px; right:20px; z-index:9000; border:1px solid var(--gold); background:#000; font-size:9px;";
-        btn.onclick = () => document.getElementById('adminPanel').style.display = 'flex';
-        document.body.appendChild(btn);
-    }
-}
-
-function renderUserCard(uid, data) {
-    const container = document.getElementById('userCardsContainer');
-    const giros = data.history ? Object.keys(data.history).length : 0;
-    const leads = data.leads ? Object.keys(data.leads).length : 0;
-    const nivel = (data.config && data.config.licencia) ? data.config.licencia : 'BÁSICO';
-
-    const cardHTML = `
-        <div class="user-card">
-            <div class="card-header" onclick="toggleDetails('${uid}')">
-                <div>
-                    <div style="font-weight:900;">${data.email || 'USUARIO ANÓNIMO'}</div>
-                    <div style="font-size:9px; color:var(--gold-dark);">${uid.substring(0,12)}...</div>
-                </div>
-                <div class="status-badge">${nivel}</div>
-            </div>
-            <div class="user-details" id="details-${uid}">
-                <div class="stat-grid">
-                    <div class="stat-box"><small>GIROS</small><br><strong>${giros}</strong></div>
-                    <div class="stat-box"><small>LEADS</small><br><strong>${leads}</strong></div>
-                </div>
-                <div class="msg-control">
-                    <input type="text" id="msg-t-${uid}" placeholder="TEXTO DEL MENSAJE" class="no-caps" style="width:100%; margin-bottom:5px;">
-                    <input type="text" id="msg-i-${uid}" placeholder="URL DE IMAGEN (OPCIONAL)" class="no-caps" style="width:100%; margin-bottom:10px;">
-                    <button class="btn btn-primary" style="width:100%; font-size:9px;" onclick="sendNexoMsg('${uid}')">ENVIAR A ESTE USUARIO</button>
-                    <button class="btn" style="width:100%; font-size:9px; margin-top:5px; background:#111; border:1px solid var(--gold-dark);" onclick="upgradeUser('${uid}')">ACTIVAR LICENCIA PRO</button>
-                </div>
-            </div>
+    <div id="adminPanel">
+        <div style="max-width: 600px; margin: 0 auto; width: 100%;">
+            <h1 style="text-align:center; margin-bottom: 30px;">NEXO® MASTER CONTROL</h1>
+            <div id="userCardsContainer"></div>
+            <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">CERRAR PANEL MAESTRO</button>
         </div>
-    `;
-    container.insertAdjacentHTML('beforeend', cardHTML);
-}
+    </div>
 
-function toggleDetails(uid) {
-    const d = document.getElementById(`details-${uid}`);
-    d.style.display = d.style.display === 'block' ? 'none' : 'block';
-}
+    <div id="globalMessenger">
+        <div class="modal-content" style="border-width: 2px; max-width: 400px;">
+            <div id="msgImageContainer"></div>
+            <h3 id="msgTitle" style="margin-top:0;">NEXO® COMUNICACIÓN</h3>
+            <p id="msgBody" style="text-transform: none; font-weight: 400; color: #fff;"></p>
+            <button onclick="document.getElementById('globalMessenger').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">ENTENDIDO</button>
+        </div>
+    </div>
 
-function sendNexoMsg(uid) {
-    const text = document.getElementById(`msg-t-${uid}`).value;
-    const img = document.getElementById(`msg-i-${uid}`).value;
-    if(!text) return alert("EL TEXTO ES OBLIGATORIO");
-    
-    db.ref(`users/${uid}/inbox`).set({ text, img, timestamp: Date.now() })
-      .then(() => { alert("MENSAJE ENVIADO"); document.getElementById(`msg-t-${uid}`).value = ''; });
-}
-
-function upgradeUser(uid) {
-    db.ref(`users/${uid}/config/licencia`).set('PREMIUM PRO')
-      .then(() => alert("LICENCIA ACTUALIZADA CON ÉXITO"));
-}
-
-// Receptor de mensajes para los usuarios finales
-function initMessageListener() {
-    if (!currentUser) return;
-    db.ref(`users/${currentUser.uid}/inbox`).on('value', snap => {
-        if (snap.exists()) {
-            const data = snap.val();
-            document.getElementById('msgBody').innerText = data.text;
-            document.getElementById('msgImageContainer').innerHTML = data.img ? `<img src="${data.img}">` : '';
-            document.getElementById('globalMessenger').style.display = 'flex';
-            // Borrar mensaje tras mostrarlo para que no se repita
-            db.ref(`users/${currentUser.uid}/inbox`).remove();
-        }
-    });
-}
-
-// Integración con el sistema de autenticación existente
-auth.onAuthStateChanged(user => {
-    if (user) {
-        initMessageListener();
-        if (user.uid === MASTER_ADMIN_UID) initMasterAdmin();
-    }
-});
+    <div id="leadFormModal">
+        <div class="modal-content" style="max-width: 400px; border-width: 2px;">
+            <h2 style="margin-top: 0;">REGISTRO</h2>
+            <input type="text" id="leadName" placeholder="NOMBRE COMPLETO" style="width: 100%; margin-bottom:10px;">
+            <input type="tel" id="leadPhone" placeholder="WHATSAPP" style="width: 100%; margin-bottom:10px;">
+            <input type="email" id="leadEmail" placeholder="CORREO" style="width: 100%; margin-bottom:20px;" class="no-caps">
+            <button id="btnSaveLead" class="btn btn-primary" style="width: 100%;">REGISTRAR Y GIRAR</button>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -322,8 +195,8 @@ auth.onAuthStateChanged(user => {
             authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
             projectId: "ruletapremiumbusiness-4db7e",
             storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
-            messagingSenderId: "822563863112",
-            appId: "1:822563863112:web:d134d015736e2fafb5367d",
+            messagingSenderId: "822563863112", [cite: 35]
+            appId: "1:822563863112:web:d134d015736e2fafb5367d", [cite: 36]
             databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
@@ -331,48 +204,47 @@ auth.onAuthStateChanged(user => {
 
         let currentUser = null;
         let config = { 
-            tituloSorteo: "SORTEO PREMIUM",
-            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            tituloSorteo: "SORTEO PREMIUM", [cite: 36]
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], [cite: 37]
             colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
             modoRegistro: false,
             isValidated: false
-        };
-
-        function syncUI() {
+        }; [cite: 37]
+        function syncUI() { [cite: 38]
             document.querySelectorAll('.dynamic-title').forEach(el => {
                 el.innerText = config.tituloSorteo;
-            });
-            appWheel.draw();
+            }); [cite: 38]
+            appWheel.draw(); [cite: 39]
         }
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if(user) {
                 db.ref(`users/${user.uid}/config`).on('value', snap => {
-                    if(snap.exists()) {
-                        config = {...config, ...snap.val()};
+                    if(snap.exists()) { [cite: 39]
+                        config = {...config, ...snap.val()}; [cite: 40]
                         syncUI();
                     }
                 });
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appMain').style.display = 'flex';
+                document.getElementById('loginScreen').style.display = 'none'; [cite: 40]
+                document.getElementById('appMain').style.display = 'flex'; [cite: 41]
                 updatePresence(user.uid);
             } else {
                 document.getElementById('appMain').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'flex';
             }
-            document.getElementById('loading-overlay').style.display = 'none';
-        });
+            document.getElementById('loading-overlay').style.display = 'none'; [cite: 41]
+        }); [cite: 42]
 
         class Wheel {
             constructor() {
-                this.canvas = document.getElementById('wheelCanvas');
-                this.ctx = this.canvas.getContext('2d');
+                this.canvas = document.getElementById('wheelCanvas'); [cite: 42]
+                this.ctx = this.canvas.getContext('2d'); [cite: 43]
                 this.angle = 0; this.isSpinning = false;
             }
             draw() {
-                const w = 800, cx = 400, r = 385;
-                this.ctx.clearRect(0,0,w,w);
+                const w = 800, cx = 400, r = 385; [cite: 43]
+                this.ctx.clearRect(0,0,w,w); [cite: 44]
                 const n = config.prizes.length;
                 const slice = (Math.PI*2)/n;
                 
@@ -380,174 +252,150 @@ auth.onAuthStateChanged(user => {
                     this.ctx.save();
                     this.ctx.beginPath();
                     this.ctx.moveTo(cx,cx);
-                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    if (n % 2 !== 0 && i [cite: 44]
+                    === n - 1) { this.ctx.fillStyle = config.colorMix; } [cite: 45]
                     else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
                     this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
-                    this.ctx.fill();
-                    this.ctx.translate(cx,cx);
+                    this.ctx.fill(); [cite: 45]
+                    this.ctx.translate(cx,cx); [cite: 46]
                     this.ctx.rotate(this.angle+i*slice+slice/2);
                     this.ctx.font = "900 32px Segoe UI";
                     this.ctx.textAlign="right";
-                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle [cite: 46]
+                    = "#FFFFFF"; } [cite: 47]
                     else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
                     this.ctx.fillText(p.toUpperCase(), r-40, 10);
                     this.ctx.restore();
-                });
-            }
+                }); [cite: 47]
+            } [cite: 48]
             handleSpinClick() {
-                if(this.isSpinning) return;
-                if(config.modoRegistro && !config.isValidated) {
-                    alert("REGISTRO REQUERIDO"); 
-                    return;
+                if(this.isSpinning) return; [cite: 48]
+                if(config.modoRegistro && !config.isValidated) { [cite: 49]
+                    alert("REGISTRO REQUERIDO"); [cite: 49]
+                    return; [cite: 50]
                 }
-                this.executeSpin();
-            }
+                this.executeSpin(); [cite: 50]
+            } [cite: 51]
             executeSpin() {
-                this.isSpinning = true;
-                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
-                const duration = 5000; const start = performance.now();
-                const anim = (now) => {
-                    const t = Math.min((now-start)/duration, 1);
-                    const ease = 1 - Math.pow(1-t, 4);
+                this.isSpinning = true; [cite: 51]
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2); [cite: 52]
+                const duration = 5000; const start = performance.now(); [cite: 52]
+                const anim = (now) => { [cite: 53]
+                    const t = Math.min((now-start)/duration, 1); [cite: 53]
+                    const ease = 1 - Math.pow(1-t, 4); [cite: 54]
                     this.angle = total * ease;
                     this.draw();
                     if(t < 1) requestAnimationFrame(anim);
                     else this.finish();
-                };
-                requestAnimationFrame(anim);
+                }; [cite: 54]
+                requestAnimationFrame(anim); [cite: 55]
             }
             finish() {
-                this.isSpinning = false;
-                const n = config.prizes.length;
-                const deg = (this.angle * 180 / Math.PI) % 360;
-                const idx = n - 1 - Math.floor(deg/(360/n));
+                this.isSpinning = false; [cite: 55]
+                const n = config.prizes.length; [cite: 56]
+                const deg = (this.angle * 180 / Math.PI) % 360; [cite: 56]
+                const idx = n - 1 - Math.floor(deg/(360/n)); [cite: 57]
                 const prize = config.prizes[idx];
                 document.getElementById('winnerName').innerText = prize;
-                document.getElementById('modalWinner').style.display = 'flex';
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
-                document.getElementById('btnFinishWin').onclick = () => {
-                    document.getElementById('modalWinner').style.display = 'none';
-                    if(config.modoRegistro) config.isValidated = false;
+                document.getElementById('modalWinner').style.display = 'flex'; [cite: 57]
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] }); [cite: 58]
+                document.getElementById('btnFinishWin').onclick = () => { [cite: 59]
+                    document.getElementById('modalWinner').style.display = 'none'; [cite: 59]
+                    if(config.modoRegistro) config.isValidated = false; [cite: 60]
                 };
                 db.ref(`users/${currentUser.uid}/history`).push({ 
                     prize, 
                     date: new Date().toLocaleString(),
                     timestamp: firebase.database.ServerValue.TIMESTAMP 
-                });
+                }); [cite: 60]
+            } [cite: 61]
+        }
+
+        const appWheel = new Wheel(); [cite: 61]
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick(); [cite: 62]
+
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`); [cite: 62]
+            db.ref('.info/connected').on('value', s => { [cite: 63]
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+            }); [cite: 63]
+        } [cite: 64]
+
+        document.getElementById('btnAuth').onclick = () => {
+            const email = document.getElementById('authEmail').value; [cite: 64]
+            const pin = document.getElementById('authPin').value; [cite: 65]
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
+        };
+
+        // --- INYECCIÓN ADITIVA: CEREBRO DE GESTIÓN Y LEADS ---
+        const MASTER_ADMIN_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+        function initMasterAdmin() {
+            if (!currentUser || currentUser.uid !== MASTER_ADMIN_UID) return;
+            db.ref('users').on('value', (snap) => {
+                const users = snap.val();
+                const container = document.getElementById('userCardsContainer');
+                if(!container) return; container.innerHTML = '';
+                for (let uid in users) { if (uid !== MASTER_ADMIN_UID) renderUserCard(uid, users[uid]); }
+            });
+            if (!document.getElementById('btnOpenAdmin')) {
+                const btn = document.createElement('button');
+                btn.id = 'btnOpenAdmin'; btn.innerHTML = "MASTER CONTROL"; btn.className = "btn";
+                btn.style = "position:fixed; bottom:20px; right:20px; z-index:9000; border:1px solid var(--gold); background:#000; font-size:9px;";
+                btn.onclick = () => document.getElementById('adminPanel').style.display = 'flex';
+                document.body.appendChild(btn);
             }
         }
 
-        const appWheel = new Wheel();
-        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
+        function renderUserCard(uid, data) {
+            const container = document.getElementById('userCardsContainer');
+            const giros = data.history ? Object.keys(data.history).length : 0;
+            const leads = data.leads ? Object.keys(data.leads).length : 0;
+            const nivel = (data.config && data.config.licencia) ? data.config.licencia : 'BÁSICO';
+            const cardHTML = `<div class="user-card"><div class="card-header" onclick="toggleDetails('${uid}')"><div><div style="font-weight:900;">${data.email || 'USUARIO'}</div><div style="font-size:9px; color:var(--gold-dark);">${uid.substring(0,12)}...</div></div><div class="status-badge">${nivel}</div></div><div class="user-details" id="details-${uid}"><div class="stat-grid"><div class="stat-box"><small>GIROS</small><br><strong>${giros}</strong></div><div class="stat-box"><small>LEADS</small><br><strong>${leads}</strong></div></div><div class="msg-control"><input type="text" id="msg-t-${uid}" placeholder="MENSAJE" class="no-caps" style="width:100%; margin-bottom:5px;"><input type="text" id="msg-i-${uid}" placeholder="URL IMAGEN" class="no-caps" style="width:100%; margin-bottom:10px;"><button class="btn btn-primary" style="width:100%; font-size:9px;" onclick="sendNexoMsg('${uid}')">ENVIAR</button><button class="btn" style="width:100%; font-size:9px; margin-top:5px; background:#111; border:1px solid var(--gold-dark);" onclick="upgradeUser('${uid}')">ACTIVAR PRO</button></div></div></div>`;
+            container.insertAdjacentHTML('beforeend', cardHTML);
+        }
 
-        function updatePresence(uid) {
-            const statusRef = db.ref(`users/${uid}/status`);
-            db.ref('.info/connected').on('value', s => {
-                if(!s.val()) return;
-                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+        function toggleDetails(uid) { const d = document.getElementById(`details-${uid}`); d.style.display = d.style.display === 'block' ? 'none' : 'block'; }
+        function sendNexoMsg(uid) { const text = document.getElementById(`msg-t-${uid}`).value; const img = document.getElementById(`msg-i-${uid}`).value; if(!text) return; db.ref(`users/${uid}/inbox`).set({ text, img, timestamp: Date.now() }).then(() => alert("ENVIADO")); }
+        function upgradeUser(uid) { db.ref(`users/${uid}/config/licencia`).set('PREMIUM PRO').then(() => alert("ACTUALIZADO")); }
+
+        function injectLeadToggle() {
+            const container = document.getElementById('appMain');
+            if (container && !document.getElementById('leadControlUI')) {
+                container.querySelector('div').insertAdjacentHTML('afterbegin', `<div id="leadControlUI" class="switch-container" style="width: min(300px, 80%); margin: 20px auto;"><span style="font-size: 10px; font-weight: 900;">MODO RECOLECCIÓN LEADS</span><label class="switch"><input type="checkbox" id="leadSwitch" ${config.modoRegistro ? 'checked' : ''}><span class="slider"></span></label></div>`);
+                document.getElementById('leadSwitch').onchange = (e) => { config.modoRegistro = e.target.checked; db.ref(`users/${currentUser.uid}/config/modoRegistro`).set(config.modoRegistro); };
+            }
+        }
+
+        const originalHandleSpin = appWheel.handleSpinClick;
+        appWheel.handleSpinClick = function() { if (config.modoRegistro && !config.isValidated) { document.getElementById('leadFormModal').style.display = 'flex'; return; } originalHandleSpin.apply(appWheel); };
+
+        document.getElementById('btnSaveLead').onclick = () => {
+            const name = document.getElementById('leadName').value; const phone = document.getElementById('leadPhone').value; const email = document.getElementById('leadEmail').value;
+            if (!name || !phone || !email) return alert("COMPLETA TODO");
+            db.ref(`users/${currentUser.uid}/leads`).push({ name, phone, email, date: new Date().toLocaleString() }).then(() => { config.isValidated = true; document.getElementById('leadFormModal').style.display = 'none'; alert("LISTO PARA GIRAR"); });
+        };
+
+        function initMessageListener() {
+            if (!currentUser) return;
+            db.ref(`users/${currentUser.uid}/inbox`).on('value', snap => {
+                if (snap.exists()) {
+                    const data = snap.val(); document.getElementById('msgBody').innerText = data.text;
+                    document.getElementById('msgImageContainer').innerHTML = data.img ? `<img src="${data.img}" style="width:100%; border-radius:10px;">` : '';
+                    document.getElementById('globalMessenger').style.display = 'flex'; db.ref(`users/${currentUser.uid}/inbox`).remove();
+                }
             });
         }
 
-        document.getElementById('btnAuth').onclick = () => {
-            const email = document.getElementById('authEmail').value;
-            const pin = document.getElementById('authPin').value;
-            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
-        };
+        const originalAuthObserver = auth.onAuthStateChanged;
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                initMessageListener(); setTimeout(injectLeadToggle, 1500);
+                if (user.uid === MASTER_ADMIN_UID) initMasterAdmin();
+            }
+        });
     </script>
-
-    <div id="leadFormModal">
-    <div class="modal-content" style="max-width: 400px; border-width: 2px;">
-        <h2 style="margin-top: 0;">REGISTRO DE PARTICIPANTE</h2>
-        <p style="font-size: 10px; margin-bottom: 20px;">INGRESA TUS DATOS PARA PODER GIRAR LA RULETA</p>
-        
-        <div class="lead-input-group">
-            <label>NOMBRE COMPLETO</label>
-            <input type="text" id="leadName" placeholder="EJ. JUAN PÉREZ" style="width: 100%;">
-        </div>
-        
-        <div class="lead-input-group">
-            <label>WHATSAPP</label>
-            <input type="tel" id="leadPhone" placeholder="EJ. +593 999..." style="width: 100%;">
-        </div>
-        
-        <div class="lead-input-group" style="margin-bottom: 25px;">
-            <label>CORREO ELECTRÓNICO</label>
-            <input type="email" id="leadEmail" placeholder="EMAIL@EJEMPLO.COM" style="width: 100%;" class="no-caps">
-        </div>
-        
-        <button id="btnSaveLead" class="btn btn-primary" style="width: 100%;">REGISTRAR Y CONTINUAR</button>
-    </div>
-</div>
-
-    // --- INYECCIÓN ADITIVA: LÓGICA DE CONTROL DE LEADS CONFIGURABLE ---
-
-// 1. Inyectar interruptor en la UI del Usuario (AppMain)
-function injectLeadToggle() {
-    const container = document.getElementById('appMain');
-    if (container && !document.getElementById('leadControlUI')) {
-        const toggleHTML = `
-            <div id="leadControlUI" class="switch-container" style="width: min(300px, 80%); margin: 20px auto;">
-                <span style="font-size: 10px; font-weight: 900;">MODO RECOLECCIÓN LEADS</span>
-                <label class="switch">
-                    <input type="checkbox" id="leadSwitch" ${config.modoRegistro ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        `;
-        container.querySelector('div').insertAdjacentHTML('afterbegin', toggleHTML);
-        
-        document.getElementById('leadSwitch').onchange = (e) => {
-            config.modoRegistro = e.target.checked;
-            db.ref(`users/${currentUser.uid}/config/modoRegistro`).set(config.modoRegistro);
-        };
-    }
-}
-
-// 2. Modificar el comportamiento del botón GIRAR (Sin tocar el original)
-const originalHandleSpin = appWheel.handleSpinClick;
-appWheel.handleSpinClick = function() {
-    if (config.modoRegistro && !config.isValidated) {
-        document.getElementById('leadFormModal').style.display = 'flex';
-        return;
-    }
-    originalHandleSpin.apply(appWheel);
-};
-
-// 3. Lógica para guardar el Lead y liberar el giro
-document.getElementById('btnSaveLead').onclick = () => {
-    const name = document.getElementById('leadName').value;
-    const phone = document.getElementById('leadPhone').value;
-    const email = document.getElementById('leadEmail').value;
-
-    if (!name || !phone || !email) return alert("TODOS LOS CAMPOS SON OBLIGATORIOS");
-
-    const leadData = {
-        name,
-        phone,
-        email,
-        date: new Date().toLocaleString(),
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    };
-
-    // Guardar en el nodo del usuario actual
-    db.ref(`users/${currentUser.uid}/leads`).push(leadData).then(() => {
-        config.isValidated = true; // Marcar como validado para esta sesión
-        document.getElementById('leadFormModal').style.display = 'none';
-        alert("REGISTRO EXITOSO. ¡YA PUEDES GIRAR!");
-        
-        // Limpiar campos
-        document.getElementById('leadName').value = '';
-        document.getElementById('leadPhone').value = '';
-        document.getElementById('leadEmail').value = '';
-    });
-};
-
-// 4. Inicializar toggle cuando el usuario entra
-auth.onAuthStateChanged(user => {
-    if (user) {
-        // Esperar un momento a que la UI cargue
-        setTimeout(injectLeadToggle, 1000);
-    }
-});
 </body>
 </html>
