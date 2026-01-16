@@ -89,37 +89,94 @@
             width: min(500px, 90%); text-align: center;
         }
 
-        /* --- INYECCIÓN ADITIVA: PANEL ADMIN & TARJETAS --- */
+        /* --- INYECCIÓN ADITIVA: ESTRUCTURA DE GESTIÓN Y TARJETAS --- */
 #adminPanel { 
     position: fixed; inset: 0; background: var(--bg-color); z-index: 9500; 
     display: none; flex-direction: column; padding: 20px; overflow-y: auto;
 }
 
 .user-card {
-    background: var(--card-bg);
-    border: 1px solid var(--gold-dark);
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 15px;
-    transition: 0.3s;
+    background: var(--card-bg); border: 1px solid var(--gold-dark);
+    border-radius: 20px; padding: 20px; margin-bottom: 15px; transition: 0.3s;
 }
 
-.user-card:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(212,175,55,0.2); }
+.user-card:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212,175,55,0.15); }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 
-.status-badge {
-    font-size: 9px; padding: 4px 8px; border-radius: 5px;
-    background: var(--gold-mix); color: #fff;
+.status-badge { 
+    font-size: 10px; padding: 5px 10px; border-radius: 8px; 
+    background: var(--gold-mix); color: #fff; font-weight: 900;
 }
 
 .user-details { display: none; margin-top: 20px; border-top: 1px solid #222; padding-top: 15px; }
 
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
 
-.stat-box { background: #000; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #111; }
+.stat-box { 
+    background: #000; padding: 12px; border-radius: 12px; 
+    text-align: center; border: 1px solid #111; 
+}
+
+.msg-control { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+
+/* MODAL DE MENSAJERÍA GLOBAL (TEXTO E IMAGEN) */
+#globalMessenger {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999;
+    display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+}
+
+.msg-img-container img { width: 100%; border-radius: 15px; border: 1px solid var(--gold-dark); margin-bottom: 15px; }
+
+        /* --- INYECCIÓN ADITIVA: RECOLECTOR DE LEADS & CONFIGURACIÓN --- */
+#leadFormModal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9100;
+    display: none; align-items: center; justify-content: center; backdrop-filter: blur(15px);
+}
+
+.switch-container {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #111; padding: 15px; border-radius: 15px; border: 1px solid var(--gold-dark);
+    margin: 10px 0;
+}
+
+/* Estilo del Switch */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background-color: #333; transition: .4s; border-radius: 24px;
+}
+.switch input:checked + .slider { background-color: var(--gold); }
+.slider:before {
+    position: absolute; content: ""; height: 18px; width: 18px;
+    left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+}
+.switch input:checked + .slider:before { transform: translateX(20px); }
+
+.lead-input-group { margin-bottom: 15px; width: 100%; }
+.lead-input-group label { font-size: 10px; display: block; margin-bottom: 5px; color: var(--gold); }
     </style>
 </head>
+
+    <div id="adminPanel">
+    <div style="max-width: 600px; margin: 0 auto; width: 100%;">
+        <h1 style="text-align:center; margin-bottom: 30px;">NEXO® CONTROL CENTER</h1>
+        
+        <div id="userCardsContainer"></div>
+        
+        <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">CERRAR PANEL MAESTRO</button>
+    </div>
+</div>
+
+<div id="globalMessenger">
+    <div class="modal-content" style="border-width: 2px; max-width: 400px;">
+        <div id="msgImageContainer" class="msg-img-container"></div>
+        <h3 id="msgTitle" style="margin-top:0;">NEXO® COMUNICACIÓN</h3>
+        <p id="msgBody" style="text-transform: none; letter-spacing: 1px; font-weight: 400; color: #fff;"></p>
+        <button onclick="document.getElementById('globalMessenger').style.display='none'" class="btn btn-primary" style="width:100%; margin-top: 20px;">ENTENDIDO</button>
+    </div>
+</div>
 <body>
 
     <div id="loading-overlay">
@@ -152,6 +209,112 @@
         <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
         <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
     </div></div>
+
+    // --- INYECCIÓN ADITIVA: CEREBRO DE GESTIÓN, LICENCIAS Y MENSAJERÍA ---
+const MASTER_ADMIN_UID = "TU_UID_AQUÍ"; // Reemplaza esto con tu UID real
+
+function initMasterAdmin() {
+    if (!currentUser || currentUser.uid !== MASTER_ADMIN_UID) return;
+    
+    // 1. Escuchar a todos los usuarios para crear sus tarjetas
+    db.ref('users').on('value', (snapshot) => {
+        const users = snapshot.val();
+        const container = document.getElementById('userCardsContainer');
+        if(!container) return;
+        container.innerHTML = '';
+        
+        for (let uid in users) {
+            if (uid !== MASTER_ADMIN_UID) {
+                renderUserCard(uid, users[uid]);
+            }
+        }
+    });
+
+    // 2. Crear botón flotante de acceso rápido para el Admin
+    if (!document.getElementById('btnOpenAdmin')) {
+        const btn = document.createElement('button');
+        btn.id = 'btnOpenAdmin';
+        btn.innerHTML = "MASTER CONTROL";
+        btn.className = "btn";
+        btn.style = "position:fixed; bottom:20px; right:20px; z-index:9000; border:1px solid var(--gold); background:#000; font-size:9px;";
+        btn.onclick = () => document.getElementById('adminPanel').style.display = 'flex';
+        document.body.appendChild(btn);
+    }
+}
+
+function renderUserCard(uid, data) {
+    const container = document.getElementById('userCardsContainer');
+    const giros = data.history ? Object.keys(data.history).length : 0;
+    const leads = data.leads ? Object.keys(data.leads).length : 0;
+    const nivel = (data.config && data.config.licencia) ? data.config.licencia : 'BÁSICO';
+
+    const cardHTML = `
+        <div class="user-card">
+            <div class="card-header" onclick="toggleDetails('${uid}')">
+                <div>
+                    <div style="font-weight:900;">${data.email || 'USUARIO ANÓNIMO'}</div>
+                    <div style="font-size:9px; color:var(--gold-dark);">${uid.substring(0,12)}...</div>
+                </div>
+                <div class="status-badge">${nivel}</div>
+            </div>
+            <div class="user-details" id="details-${uid}">
+                <div class="stat-grid">
+                    <div class="stat-box"><small>GIROS</small><br><strong>${giros}</strong></div>
+                    <div class="stat-box"><small>LEADS</small><br><strong>${leads}</strong></div>
+                </div>
+                <div class="msg-control">
+                    <input type="text" id="msg-t-${uid}" placeholder="TEXTO DEL MENSAJE" class="no-caps" style="width:100%; margin-bottom:5px;">
+                    <input type="text" id="msg-i-${uid}" placeholder="URL DE IMAGEN (OPCIONAL)" class="no-caps" style="width:100%; margin-bottom:10px;">
+                    <button class="btn btn-primary" style="width:100%; font-size:9px;" onclick="sendNexoMsg('${uid}')">ENVIAR A ESTE USUARIO</button>
+                    <button class="btn" style="width:100%; font-size:9px; margin-top:5px; background:#111; border:1px solid var(--gold-dark);" onclick="upgradeUser('${uid}')">ACTIVAR LICENCIA PRO</button>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', cardHTML);
+}
+
+function toggleDetails(uid) {
+    const d = document.getElementById(`details-${uid}`);
+    d.style.display = d.style.display === 'block' ? 'none' : 'block';
+}
+
+function sendNexoMsg(uid) {
+    const text = document.getElementById(`msg-t-${uid}`).value;
+    const img = document.getElementById(`msg-i-${uid}`).value;
+    if(!text) return alert("EL TEXTO ES OBLIGATORIO");
+    
+    db.ref(`users/${uid}/inbox`).set({ text, img, timestamp: Date.now() })
+      .then(() => { alert("MENSAJE ENVIADO"); document.getElementById(`msg-t-${uid}`).value = ''; });
+}
+
+function upgradeUser(uid) {
+    db.ref(`users/${uid}/config/licencia`).set('PREMIUM PRO')
+      .then(() => alert("LICENCIA ACTUALIZADA CON ÉXITO"));
+}
+
+// Receptor de mensajes para los usuarios finales
+function initMessageListener() {
+    if (!currentUser) return;
+    db.ref(`users/${currentUser.uid}/inbox`).on('value', snap => {
+        if (snap.exists()) {
+            const data = snap.val();
+            document.getElementById('msgBody').innerText = data.text;
+            document.getElementById('msgImageContainer').innerHTML = data.img ? `<img src="${data.img}">` : '';
+            document.getElementById('globalMessenger').style.display = 'flex';
+            // Borrar mensaje tras mostrarlo para que no se repita
+            db.ref(`users/${currentUser.uid}/inbox`).remove();
+        }
+    });
+}
+
+// Integración con el sistema de autenticación existente
+auth.onAuthStateChanged(user => {
+    if (user) {
+        initMessageListener();
+        if (user.uid === MASTER_ADMIN_UID) initMasterAdmin();
+    }
+});
 
     <script>
         const firebaseConfig = {
@@ -290,63 +453,101 @@
             const pin = document.getElementById('authPin').value;
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
-
-        // --- INYECCIÓN ADITIVA: MOTOR DE GESTIÓN DE LICENCIAS ---
-const ADMIN_UID = "TU_UID_AQUÍ"; // Define tu UID de administrador
-
-function initAdminCore() {
-    if (currentUser.uid !== ADMIN_UID) return;
-    
-    // Crear contenedor del Panel Admin si no existe
-    const adminHTML = `
-        <div id="adminPanel">
-            <h2 style="text-align:center;">NEXO® CONTROL CENTER</h2>
-            <div id="userCardsContainer"></div>
-            <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary">CERRAR PANEL</button>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', adminHTML);
-}
-
-function renderUserCard(uid, userData) {
-    const container = document.getElementById('userCardsContainer');
-    const card = `
-        <div class="user-card" id="card-${uid}">
-            <div class="card-header" onclick="toggleCard('${uid}')">
-                <div>
-                    <div style="font-size: 14px; font-weight: 900;">${userData.email || 'USUARIO SIN EMAIL'}</div>
-                    <div style="font-size: 10px; color: var(--gold-dark);">ID: ${uid.substring(0,8)}...</div>
-                </div>
-                <div class="status-badge">${(userData.config && userData.config.licencia) || 'GRATIS'}</div>
-            </div>
-            <div class="user-details" id="details-${uid}">
-                <div class="stat-grid">
-                    <div class="stat-box"><small>GIROS</small><br>${Object.keys(userData.history || {}).length}</div>
-                    <div class="stat-box"><small>LEADS</small><br>${Object.keys(userData.leads || {}).length}</div>
-                </div>
-                <button class="btn btn-primary" style="width:100%; font-size:9px;" onclick="manageLicense('${uid}')">GESTIONAR LICENCIA</button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', card);
-}
-
-function toggleCard(uid) {
-    const el = document.getElementById(`details-${uid}`);
-    el.style.display = el.style.display === 'block' ? 'none' : 'block';
-}
-
-// Escuchar cambios en la base de datos de usuarios para el Admin
-if (currentUser && currentUser.uid === ADMIN_UID) {
-    db.ref('users').on('value', (snapshot) => {
-        const users = snapshot.val();
-        document.getElementById('userCardsContainer').innerHTML = '';
-        for (let uid in users) {
-            renderUserCard(uid, users[uid]);
-        }
-    });
-}
     </script>
+
+    <div id="leadFormModal">
+    <div class="modal-content" style="max-width: 400px; border-width: 2px;">
+        <h2 style="margin-top: 0;">REGISTRO DE PARTICIPANTE</h2>
+        <p style="font-size: 10px; margin-bottom: 20px;">INGRESA TUS DATOS PARA PODER GIRAR LA RULETA</p>
+        
+        <div class="lead-input-group">
+            <label>NOMBRE COMPLETO</label>
+            <input type="text" id="leadName" placeholder="EJ. JUAN PÉREZ" style="width: 100%;">
+        </div>
+        
+        <div class="lead-input-group">
+            <label>WHATSAPP</label>
+            <input type="tel" id="leadPhone" placeholder="EJ. +593 999..." style="width: 100%;">
+        </div>
+        
+        <div class="lead-input-group" style="margin-bottom: 25px;">
+            <label>CORREO ELECTRÓNICO</label>
+            <input type="email" id="leadEmail" placeholder="EMAIL@EJEMPLO.COM" style="width: 100%;" class="no-caps">
+        </div>
+        
+        <button id="btnSaveLead" class="btn btn-primary" style="width: 100%;">REGISTRAR Y CONTINUAR</button>
+    </div>
+</div>
+
+    // --- INYECCIÓN ADITIVA: LÓGICA DE CONTROL DE LEADS CONFIGURABLE ---
+
+// 1. Inyectar interruptor en la UI del Usuario (AppMain)
+function injectLeadToggle() {
+    const container = document.getElementById('appMain');
+    if (container && !document.getElementById('leadControlUI')) {
+        const toggleHTML = `
+            <div id="leadControlUI" class="switch-container" style="width: min(300px, 80%); margin: 20px auto;">
+                <span style="font-size: 10px; font-weight: 900;">MODO RECOLECCIÓN LEADS</span>
+                <label class="switch">
+                    <input type="checkbox" id="leadSwitch" ${config.modoRegistro ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        `;
+        container.querySelector('div').insertAdjacentHTML('afterbegin', toggleHTML);
+        
+        document.getElementById('leadSwitch').onchange = (e) => {
+            config.modoRegistro = e.target.checked;
+            db.ref(`users/${currentUser.uid}/config/modoRegistro`).set(config.modoRegistro);
+        };
+    }
+}
+
+// 2. Modificar el comportamiento del botón GIRAR (Sin tocar el original)
+const originalHandleSpin = appWheel.handleSpinClick;
+appWheel.handleSpinClick = function() {
+    if (config.modoRegistro && !config.isValidated) {
+        document.getElementById('leadFormModal').style.display = 'flex';
+        return;
+    }
+    originalHandleSpin.apply(appWheel);
+};
+
+// 3. Lógica para guardar el Lead y liberar el giro
+document.getElementById('btnSaveLead').onclick = () => {
+    const name = document.getElementById('leadName').value;
+    const phone = document.getElementById('leadPhone').value;
+    const email = document.getElementById('leadEmail').value;
+
+    if (!name || !phone || !email) return alert("TODOS LOS CAMPOS SON OBLIGATORIOS");
+
+    const leadData = {
+        name,
+        phone,
+        email,
+        date: new Date().toLocaleString(),
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // Guardar en el nodo del usuario actual
+    db.ref(`users/${currentUser.uid}/leads`).push(leadData).then(() => {
+        config.isValidated = true; // Marcar como validado para esta sesión
+        document.getElementById('leadFormModal').style.display = 'none';
+        alert("REGISTRO EXITOSO. ¡YA PUEDES GIRAR!");
+        
+        // Limpiar campos
+        document.getElementById('leadName').value = '';
+        document.getElementById('leadPhone').value = '';
+        document.getElementById('leadEmail').value = '';
+    });
+};
+
+// 4. Inicializar toggle cuando el usuario entra
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // Esperar un momento a que la UI cargue
+        setTimeout(injectLeadToggle, 1000);
+    }
+});
 </body>
 </html>
-
