@@ -260,9 +260,8 @@
             const pin = document.getElementById('authPin').value;
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
-    </script>
 
-    /* --- INICIO DE INYECCIÓN ADITIVA: NEXO® ADMIN MASTER PANEL --- */
+        /* --- INICIO DE INYECCIÓN ADITIVA: NEXO® ADMIN MASTER PANEL --- */
 /* Insertar este bloque después de la línea 265 del código original */
 
 // Estilos Aditivos para el Panel de Administración
@@ -428,5 +427,6 @@ auth.onAuthStateChanged(user => {
     }
 });
 /* --- FIN DE INYECCIÓN ADITIVA --- */
+    </script>
 </body>
 </html>
