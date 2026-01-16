@@ -13,7 +13,7 @@
     <style>
         :root { 
             --bg-color: #000000;
-            --card-bg: rgba(15, 15, 15, 0.95);
+            --card-bg: rgba(15, 15, 15, 0.95); 
             --gold: #d4af37; 
             --gold-dark: #8a6d1d;
             --gold-mix: #6A571B;
@@ -22,6 +22,7 @@
         /* CONSTANTES DE MARCA */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
+        /* REGLA GENERAL: ORO Y MAYÚSCULAS */
         input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
             color: var(--gold) !important;
             text-transform: uppercase;
@@ -29,7 +30,10 @@
             font-weight: 900;
         }
 
-        input[type="email"], input[type="password"], .no-caps {
+        /* EXCEPCIÓN DE SEGURIDAD: CREDENCIALES EN MINÚSCULAS */
+        input[type="email"], 
+        input[type="password"], 
+        .no-caps {
             text-transform: none !important;
             letter-spacing: 1px;
             font-weight: 400;
@@ -38,70 +42,74 @@
         ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
 
         body { 
-            background-color: var(--bg-color);
-            color: var(--gold); font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
             margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
             background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
         }
 
-        #loading-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #loading-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
 
-        input { background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px; }
+        input {
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
+        }
 
         .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
         .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
 
-        .wheel-wrapper { position: relative; width: min(82vh, 88vw); height: min(82vh, 88vw); max-width: 550px; max-height: 550px; }
+        .wheel-wrapper { 
+            position: relative; 
+            width: min(82vh, 88vw); height: min(82vh, 88vw); 
+            max-width: 550px; max-height: 550px; 
+        }
         #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
         
-        #pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100; width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent; border-top: min(50px, 10vw) solid var(--gold); }
+        #pointer { 
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
+            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent;
+            border-top: min(50px, 10vw) solid var(--gold);
+        }
 
         #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
-        #btnSpinCenter { width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold); background: #000; cursor: pointer; font-size: min(13px, 3vw); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+        #btnSpinCenter { 
+            width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; cursor: pointer; font-size: min(13px, 3vw);
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); width: min(500px, 90%); text-align: center; }
-
-        /* INYECCIONES CSS */
-        #adminPanel { position: fixed; inset: 0; background: var(--bg-color); z-index: 9500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .user-card { background: var(--card-bg); border: 1px solid var(--gold-dark); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .status-badge { font-size: 10px; padding: 5px 10px; border-radius: 8px; background: var(--gold-mix); color: #fff; }
-        .user-details { display: none; margin-top: 20px; border-top: 1px solid #222; padding-top: 15px; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-box { background: #000; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #111; }
-        .switch-container { display: flex; align-items: center; justify-content: space-between; background: #111; padding: 15px; border-radius: 15px; border: 1px solid var(--gold-dark); margin: 10px 0; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 24px; }
-        .switch input:checked + .slider { background-color: var(--gold); }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        .switch input:checked + .slider:before { transform: translateX(20px); }
-        #globalMessenger, #leadFormModal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-content { 
+            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
+            width: min(500px, 90%); text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay"><div class="spinner"></div></div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px;">NEXO® MASTER ENGINE</p>
+    </div>
 
     <div id="loginScreen">
         <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 85%);">
             <h2>NEXO®</h2>
             <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
             <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;">
-            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR</button>
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
         </div>
     </div>
 
     <div class="app-container" id="appMain">
-        <div style="text-align:center; padding: 20px; width:100%;">
-            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px;">SORTEO PREMIUM</h1>
-            <div id="leadControlUI_Container"></div>
-            <div class="wheel-wrapper" style="margin: 0 auto;">
+        <div style="text-align:center; padding: 20px;">
+            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
+            <div class="wheel-wrapper">
                 <div id="pointer"></div>
                 <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
                 <canvas id="wheelCanvas" width="800" height="800"></canvas>
@@ -109,30 +117,10 @@
         </div>
     </div>
 
-    <div id="modalWinner" class="modal"><div class="modal-content">
-        <p class="dynamic-title"></p>
-        <div id="winnerName" style="font-size: 40px; margin: 20px 0;">---</div>
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
+        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
         <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
-    </div></div>
-
-    <div id="adminPanel">
-        <h2 style="text-align:center;">NEXO® MASTER CONTROL</h2>
-        <div id="userCardsContainer"></div>
-        <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn btn-primary" style="width:100%; margin-top:20px;">CERRAR</button>
-    </div>
-
-    <div id="globalMessenger"><div class="modal-content">
-        <div id="msgImageContainer"></div>
-        <p id="msgBody"></p>
-        <button onclick="document.getElementById('globalMessenger').style.display='none'" class="btn btn-primary" style="width:100%;">CERRAR</button>
-    </div></div>
-
-    <div id="leadFormModal"><div class="modal-content">
-        <h2>REGISTRO</h2>
-        <input type="text" id="leadName" placeholder="NOMBRE" style="width:100%; margin-bottom:10px;">
-        <input type="tel" id="leadPhone" placeholder="WHATSAPP" style="width:100%; margin-bottom:10px;">
-        <input type="email" id="leadEmail" placeholder="EMAIL" style="width:100%; margin-bottom:20px;" class="no-caps">
-        <button id="btnSaveLead" class="btn btn-primary" style="width:100%;">CONTINUAR</button>
     </div></div>
 
     <script>
@@ -149,9 +137,39 @@
         const auth = firebase.auth(); const db = firebase.database();
 
         let currentUser = null;
-        let config = { tituloSorteo: "SORTEO PREMIUM", prizes: ["P1", "P2", "P3"], colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B", modoRegistro: false, isValidated: false };
+        let config = { 
+            tituloSorteo: "SORTEO PREMIUM",
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
+            modoRegistro: false,
+            isValidated: false
+        };
 
-        const MASTER_ADMIN_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+        function syncUI() {
+            document.querySelectorAll('.dynamic-title').forEach(el => {
+                el.innerText = config.tituloSorteo;
+            });
+            appWheel.draw();
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if(user) {
+                db.ref(`users/${user.uid}/config`).on('value', snap => {
+                    if(snap.exists()) {
+                        config = {...config, ...snap.val()};
+                        syncUI();
+                    }
+                });
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appMain').style.display = 'flex';
+                updatePresence(user.uid);
+            } else {
+                document.getElementById('appMain').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
 
         class Wheel {
             constructor() {
@@ -162,21 +180,31 @@
             draw() {
                 const w = 800, cx = 400, r = 385;
                 this.ctx.clearRect(0,0,w,w);
-                const n = config.prizes.length; const slice = (Math.PI*2)/n;
+                const n = config.prizes.length;
+                const slice = (Math.PI*2)/n;
+                
                 config.prizes.forEach((p, i) => {
-                    this.ctx.save(); this.ctx.beginPath(); this.ctx.moveTo(cx,cx);
-                    this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA;
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx,cx);
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
                     this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
-                    this.ctx.fill(); this.ctx.translate(cx,cx); this.ctx.rotate(this.angle+i*slice+slice/2);
-                    this.ctx.font = "900 32px Segoe UI"; this.ctx.textAlign="right";
-                    this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB;
-                    this.ctx.fillText(p.toUpperCase(), r-40, 10); this.ctx.restore();
+                    this.ctx.fill();
+                    this.ctx.translate(cx,cx);
+                    this.ctx.rotate(this.angle+i*slice+slice/2);
+                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.textAlign="right";
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
+                    this.ctx.fillText(p.toUpperCase(), r-40, 10);
+                    this.ctx.restore();
                 });
             }
             handleSpinClick() {
                 if(this.isSpinning) return;
                 if(config.modoRegistro && !config.isValidated) {
-                    document.getElementById('leadFormModal').style.display = 'flex';
+                    alert("REGISTRO REQUERIDO"); 
                     return;
                 }
                 this.executeSpin();
@@ -188,8 +216,10 @@
                 const anim = (now) => {
                     const t = Math.min((now-start)/duration, 1);
                     const ease = 1 - Math.pow(1-t, 4);
-                    this.angle = total * ease; this.draw();
-                    if(t < 1) requestAnimationFrame(anim); else this.finish();
+                    this.angle = total * ease;
+                    this.draw();
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
                 };
                 requestAnimationFrame(anim);
             }
@@ -201,98 +231,202 @@
                 const prize = config.prizes[idx];
                 document.getElementById('winnerName').innerText = prize;
                 document.getElementById('modalWinner').style.display = 'flex';
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                db.ref(`users/${currentUser.uid}/history`).push({ prize, date: new Date().toLocaleString() });
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                    if(config.modoRegistro) config.isValidated = false;
+                };
+                db.ref(`users/${currentUser.uid}/history`).push({ 
+                    prize, 
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
             }
         }
 
         const appWheel = new Wheel();
         document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
-        document.getElementById('btnFinishWin').onclick = () => { document.getElementById('modalWinner').style.display = 'none'; if(config.modoRegistro) config.isValidated = false; };
 
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            if(user) {
-                db.ref(`users/${user.uid}/config`).on('value', snap => {
-                    if(snap.exists()) { config = {...config, ...snap.val()}; syncUI(); }
-                });
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appMain').style.display = 'flex';
-                initUserFeatures();
-                if(user.uid === MASTER_ADMIN_UID) initAdminFeatures();
-            } else {
-                document.getElementById('appMain').style.display = 'none';
-                document.getElementById('loginScreen').style.display = 'flex';
-            }
-            document.getElementById('loading-overlay').style.display = 'none';
-        });
-
-        function syncUI() {
-            document.querySelectorAll('.dynamic-title').forEach(el => el.innerText = config.tituloSorteo);
-            appWheel.draw();
-            const sw = document.getElementById('leadSwitch');
-            if(sw) sw.checked = config.modoRegistro;
-        }
-
-        function initUserFeatures() {
-            // Toggle de Leads
-            const container = document.getElementById('leadControlUI_Container');
-            if(!document.getElementById('leadSwitch')) {
-                container.innerHTML = `<div class="switch-container" style="width:250px; margin:0 auto 20px;"><span style="font-size:10px;">MODO REGISTRO</span><label class="switch"><input type="checkbox" id="leadSwitch"><span class="slider"></span></label></div>`;
-                document.getElementById('leadSwitch').onchange = (e) => db.ref(`users/${currentUser.uid}/config/modoRegistro`).set(e.target.checked);
-            }
-            // Listener de Mensajes
-            db.ref(`users/${currentUser.uid}/inbox`).on('value', snap => {
-                if(snap.exists()){
-                    const d = snap.val(); document.getElementById('msgBody').innerText = d.text;
-                    document.getElementById('msgImageContainer').innerHTML = d.img ? `<img src="${d.img}" style="width:100%;">` : '';
-                    document.getElementById('globalMessenger').style.display='flex';
-                    db.ref(`users/${currentUser.uid}/inbox`).remove();
-                }
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`);
+            db.ref('.info/connected').on('value', s => {
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
             });
         }
-
-        document.getElementById('btnSaveLead').onclick = () => {
-            const name = document.getElementById('leadName').value;
-            const phone = document.getElementById('leadPhone').value;
-            const email = document.getElementById('leadEmail').value;
-            if(!name || !phone || !email) return alert("COMPLETA DATOS");
-            db.ref(`users/${currentUser.uid}/leads`).push({ name, phone, email, date: new Date().toLocaleString() }).then(() => {
-                config.isValidated = true; document.getElementById('leadFormModal').style.display = 'none';
-            });
-        };
-
-        // FUNCIONES ADMIN
-        function initAdminFeatures() {
-            if(!document.getElementById('btnOpenAdmin')) {
-                const b = document.createElement('button'); b.id='btnOpenAdmin'; b.innerText="ADMIN"; b.className="btn"; b.style="position:fixed; bottom:10px; right:10px; z-index:9999; border:1px solid var(--gold); background:#000;";
-                b.onclick = () => document.getElementById('adminPanel').style.display='flex'; document.body.appendChild(b);
-            }
-            db.ref('users').on('value', snap => {
-                const users = snap.val(); const container = document.getElementById('userCardsContainer');
-                container.innerHTML = '';
-                for(let uid in users) if(uid !== MASTER_ADMIN_UID) renderCard(uid, users[uid]);
-            });
-        }
-
-        function renderCard(uid, data) {
-            const container = document.getElementById('userCardsContainer');
-            const giros = data.history ? Object.keys(data.history).length : 0;
-            const leads = data.leads ? Object.keys(data.leads).length : 0;
-            const html = `<div class="user-card"><div class="card-header" onclick="document.getElementById('det-${uid}').style.display=document.getElementById('det-${uid}').style.display==='block'?'none':'block'"><span>${data.email || 'USER'}</span><span class="status-badge">${data.config?.licencia || 'GRATIS'}</span></div><div class="user-details" id="det-${uid}"><div class="stat-grid"><div class="stat-box">GIROS: ${giros}</div><div class="stat-box">LEADS: ${leads}</div></div><input type="text" id="mt-${uid}" placeholder="MSG" style="width:100%;"><button class="btn btn-primary" style="width:100%; margin-top:5px;" onclick="sendMsg('${uid}')">ENVIAR</button></div></div>`;
-            container.insertAdjacentHTML('beforeend', html);
-        }
-
-        window.sendMsg = (uid) => {
-            const t = document.getElementById(`mt-${uid}`).value;
-            if(t) db.ref(`users/${uid}/inbox`).set({ text: t, timestamp: Date.now() }).then(() => alert("ENVIADO"));
-        };
 
         document.getElementById('btnAuth').onclick = () => {
             const email = document.getElementById('authEmail').value;
             const pin = document.getElementById('authPin').value;
-            auth.signInWithEmailAndPassword(email, pin).catch(e => alert(e.message));
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
     </script>
+
+    /* --- INICIO DE INYECCIÓN ADITIVA: NEXO® ADMIN MASTER PANEL --- */
+/* Insertar este bloque después de la línea 265 del código original */
+
+// Estilos Aditivos para el Panel de Administración
+const adminStyles = `
+<style>
+    #adminPanel { 
+        position: fixed; bottom: 20px; right: 20px; z-index: 9999; 
+        background: var(--card-bg); border: 2px solid var(--gold); 
+        padding: 20px; border-radius: 20px; display: none;
+        max-width: 400px; max-height: 80vh; overflow-y: auto;
+        box-shadow: 0 0 30px rgba(212,175,55,0.3);
+    }
+    .admin-tab { display: none; margin-top: 15px; }
+    .admin-tab.active { display: block; }
+    .stat-card { background: #111; padding: 10px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--gold); }
+    .user-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #222; font-size: 10px; }
+    .status-online { color: #00ff00; }
+    .status-offline { color: #ff0000; }
+    .admin-nav { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+    .nav-btn { font-size: 9px; padding: 5px 10px; cursor: pointer; border: 1px solid var(--gold-mix); background: transparent; color: var(--gold); }
+    .nav-btn.active { background: var(--gold); color: #000; }
+    .broadcast-modal { 
+        position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+        z-index: 10001; display: none; align-items: center; justify-content: center; 
+    }
+</style>`;
+document.head.insertAdjacentHTML('beforeend', adminStyles);
+
+// Interfaz del Panel de Administración
+const adminHTML = `
+<div id="adminPanel">
+    <h3 style="margin-top:0; font-size: 14px;">NEXO® CONTROL HUB</h3>
+    <div class="admin-nav">
+        <button class="nav-btn active" onclick="switchTab('tabStats')">STATS</button>
+        <button class="nav-btn" onclick="switchTab('tabUsers')">USERS</button>
+        <button class="nav-btn" onclick="switchTab('tabAd')">ADS</button>
+        <button class="nav-btn" onclick="switchTab('tabConfig')">WHEEL</button>
+    </div>
+
+    <div id="tabStats" class="admin-tab active">
+        <div class="stat-card">TOTAL GIROS: <span id="statTotalSpins">0</span></div>
+        <div class="stat-card">USUARIOS ONLINE: <span id="statOnline">0</span></div>
+    </div>
+
+    <div id="tabUsers" class="admin-tab">
+        <div id="userListContainer" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <div id="tabAd" class="admin-tab">
+        <input type="text" id="adTitle" placeholder="TITULO PUBLICIDAD" style="width:100%; margin-bottom:10px;">
+        <textarea id="adMsg" placeholder="MENSAJE GLOBAL" style="width:100%; height:60px; background:#000; color:var(--gold); border:1px solid #222; border-radius:10px; padding:10px;"></textarea>
+        <select id="targetSub" style="width:100%; margin-top:10px; background:#000;">
+            <option value="all">TODAS LAS SUSCRIPCIONES</option>
+            <option value="FREE">SOLO FREE</option>
+            <option value="GOLD">SOLO GOLD</option>
+            <option value="VIP">SOLO VIP</option>
+        </select>
+        <select id="targetStatus" style="width:100%; margin-top:10px; background:#000;">
+            <option value="all">TODOS (ON/OFF)</option>
+            <option value="online">SOLO ONLINE</option>
+        </select>
+        <button onclick="sendBroadcast()" class="btn btn-primary" style="width:100%; margin-top:15px;">EMITIR MENSAJE</button>
+    </div>
+
+    <div id="tabConfig" class="admin-tab">
+        <input type="text" id="editTitle" placeholder="TÍTULO SORTEO" style="width:100%; margin-bottom:10px;">
+        <textarea id="editPrizes" placeholder="PREMIOS (SEPARADOS POR COMA)" style="width:100%; height:60px; background:#000; color:var(--gold); border:1px solid #222; border-radius:10px; padding:10px;"></textarea>
+        <button onclick="updateWheelConfig()" class="btn btn-primary" style="width:100%; margin-top:15px;">ACTUALIZAR RULETA</button>
+    </div>
+</div>
+
+<div id="broadcastOverlay" class="broadcast-modal">
+    <div class="modal-content" style="border-width: 3px;">
+        <h2 id="msgDisplayTitle">ANUNCIO OFICIAL</h2>
+        <p id="msgDisplayBody" style="margin: 20px 0; font-size: 14px; letter-spacing: 1px;"></p>
+        <button onclick="closeBroadcast()" class="btn btn-primary" style="width:100%;">ENTENDIDO</button>
+    </div>
+</div>`;
+document.body.insertAdjacentHTML('beforeend', adminHTML);
+
+// Lógica de Administración Aditiva
+function switchTab(tabId) {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// Escucha de Mensajes Globales (Lado Cliente)
+function initBroadcastListener() {
+    db.ref('broadcasts').limitToLast(1).on('child_added', snap => {
+        const data = snap.val();
+        if (!data) return;
+        
+        // Validar Segmentación
+        db.ref(`users/${currentUser.uid}`).once('value', uSnap => {
+            const userData = uSnap.val();
+            const subMatch = data.targetSub === 'all' || data.targetSub === userData.subscription;
+            const statusMatch = data.targetStatus === 'all' || (data.targetStatus === 'online');
+
+            if (subMatch && statusMatch) {
+                document.getElementById('msgDisplayTitle').innerText = data.title;
+                document.getElementById('msgDisplayBody').innerText = data.message;
+                document.getElementById('broadcastOverlay').style.display = 'flex';
+            }
+        });
+    });
+}
+
+function closeBroadcast() { document.getElementById('broadcastOverlay').style.display = 'none'; }
+
+function sendBroadcast() {
+    const title = document.getElementById('adTitle').value;
+    const message = document.getElementById('adMsg').value;
+    const targetSub = document.getElementById('targetSub').value;
+    const targetStatus = document.getElementById('targetStatus').value;
+
+    db.ref('broadcasts').push({
+        title, message, targetSub, targetStatus,
+        sender: currentUser.uid,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+    alert("MENSAJE EMITIDO");
+}
+
+function updateWheelConfig() {
+    const newTitle = document.getElementById('editTitle').value;
+    const newPrizes = document.getElementById('editPrizes').value.split(',').map(p => p.trim());
+    
+    db.ref(`users/${currentUser.uid}/config`).update({
+        tituloSorteo: newTitle,
+        prizes: newPrizes
+    });
+}
+
+// Inicialización de Privilegios de Admin
+auth.onAuthStateChanged(user => {
+    if(user) {
+        // En un escenario real, aquí validarías si el UID pertenece a un Admin
+        document.getElementById('adminPanel').style.display = 'block';
+        initBroadcastListener();
+        
+        // Carga inicial de usuarios para el panel
+        db.ref('users').on('value', snap => {
+            const users = snap.val();
+            const container = document.getElementById('userListContainer');
+            container.innerHTML = '';
+            let onlineCount = 0;
+            
+            for(let id in users) {
+                const isOnline = users[id].status?.state === 'online';
+                if(isOnline) onlineCount++;
+                
+                container.innerHTML += `
+                    <div class="user-row">
+                        <span>${users[id].config?.tituloSorteo || 'USER'}</span>
+                        <span class="${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? '● ONLINE' : '○ OFFLINE'}</span>
+                        <span>${users[id].subscription || 'FREE'}</span>
+                    </div>`;
+            }
+            document.getElementById('statOnline').innerText = onlineCount;
+        });
+    }
+});
+/* --- FIN DE INYECCIÓN ADITIVA --- */
 </body>
 </html>
