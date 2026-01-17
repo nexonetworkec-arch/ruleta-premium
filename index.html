@@ -1236,68 +1236,55 @@ appWheel.handleSpinClick = function() {
 
    <script>
 (function() {
-    console.log("NEXO: Iniciando estabilización total del sistema...");
+    console.log("NEXO: Iniciando Observador Quirúrgico de Integridad...");
 
-    const executeNexoBridge = () => {
-        // 1. VÍNCULO DEL MODAL DE EDICIÓN (Cura el error "No inyectado")
+    const nexoFinalSync = () => {
         const btnEdit = document.getElementById('btnParticipantData');
         const modalEdit = document.getElementById('modalEditorCampos');
-        
+        const exportArea = document.getElementById('nexo-export-area');
+
+        // 1. VÍNCULO DEL BOTÓN DE EDICIÓN (Elimina el error :1169)
         if (btnEdit && modalEdit) {
             btnEdit.onclick = (e) => {
                 e.preventDefault();
                 modalEdit.style.display = 'flex';
+                // Si existe la función de carga de campos, la ejecutamos
                 if (typeof loadCurrentFields === 'function') loadCurrentFields();
-                console.log("NEXO: Vínculo de Modal establecido.");
+                console.log("NEXO: Vínculo Botón-Modal activado correctamente.");
             };
         }
 
-        // 2. SINCRONIZACIÓN MAESTRA DE PIN (Cura el "PIN Incorrecto")
-        const allPins = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
-            i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
-        );
-        
-        allPins.forEach(input => {
-            // Sincroniza la escritura en tiempo real entre los 4 bloques
-            input.oninput = (e) => {
-                allPins.forEach(other => { if(other !== e.target) other.value = e.target.value; });
-            };
-        });
-
-        // 3. PROTECCIÓN Y PERSISTENCIA DEL DEPURADOR (Zona de Peligro)
-        const exportArea = document.getElementById('nexo-export-area');
+        // 2. RESTAURACIÓN DEL DEPURADOR (Zona de Peligro)
         if (exportArea) {
-            // Si el botón rojo de purga no está, lo re-inyectamos sin borrar el de exportación
+            // Si el botón de purga no está presente, lo re-inyectamos sin borrar nada
             if (!document.getElementById('btnPurgeLeads') && typeof renderCleanupModule === 'function') {
                 renderCleanupModule(exportArea);
-                console.log("NEXO: Depurador restaurado.");
+                console.log("NEXO: Módulo de Depuración restaurado.");
             }
         }
 
-        // 4. CORRECCIÓN DE RUTA DE FIREBASE (Cura el Permission Denied)
-        if (window.loadAdminData) {
-            window.loadAdminData = function() {
-                if (!auth.currentUser) return;
-                const safePath = `users/${auth.currentUser.uid}/leads`;
-                db.ref(safePath).once('value', (snap) => {
-                    if (typeof renderLeadsTable === 'function') renderLeadsTable(snap.val());
-                }).catch(err => console.error("NEXO Permission Error:", err));
+        // 3. SINCRONIZACIÓN DE PIN (Evita fallos de validación)
+        const pins = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
+            i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
+        );
+        pins.forEach(input => {
+            input.oninput = (e) => {
+                pins.forEach(other => { if(other !== e.target) other.value = e.target.value; });
             };
-        }
+        });
     };
 
-    // Usamos un intervalo para ganar la "carrera" de carga del DOM
-    // Intentará vincular todo cada segundo durante los primeros 5 segundos
-    let attempt = 0;
-    const bridgeWatcher = setInterval(() => {
-        executeNexoBridge();
-        attempt++;
-        if (attempt > 5) clearInterval(bridgeWatcher);
-    }, 1000);
+    // Ejecución Multinivel para ganar la carrera de carga
+    // Intento 1: A los 2 segundos
+    setTimeout(nexoFinalSync, 2000);
+    
+    // Intento 2: A los 4 segundos (por si el servidor está lento)
+    setTimeout(nexoFinalSync, 4000);
 
-    // Una ejecución final de seguridad al cargar todo
-    window.addEventListener('load', executeNexoBridge);
+    // Intento 3: Al terminar de cargar toda la ventana
+    window.addEventListener('load', nexoFinalSync);
 })();
 </script>
 </body>
 </html>
+
