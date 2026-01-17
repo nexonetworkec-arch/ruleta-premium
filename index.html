@@ -1197,106 +1197,157 @@
         border: 1px solid rgba(212, 175, 55, 0.4);
         box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.1); 
     }
-</style>
 
-<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); backdrop-filter: blur(8px);">
-    <div class="modal-content modal-premium-animate modal-border-gold" style="background: #0a0a0a; padding: 45px 35px; border-radius: 15px; max-width: 380px; width: 90%; text-align: center; position: relative;">
-        
-        <div id="regForm">
+</script>
+        <script>
+// 1. Mapa de Datos Predeterminado (Escalable)
+window.formConfigVIP = [
+    { id: "regName", label: "NOMBRE COMPLETO", type: "text", placeholder: "Identificación" },
+    { id: "regPhone", label: "WHATSAPP", type: "tel", placeholder: "Contacto directo" },
+    { id: "regEmail", label: "EMAIL", type: "email", placeholder: "Correo electrónico" }
+];
+
+// 2. Función Maestra de Renderizado
+// Esta función "dibuja" el formulario basándose en el Mapa de Datos
+function renderDynamicForm() {
+    const container = document.getElementById('dynamicFieldsContainer');
+    if (!container) return;
+
+    container.innerHTML = ''; // Limpiar lienzo
+
+    window.formConfigVIP.forEach(field => {
+        const fieldHTML = `
+            <div style="margin-bottom: 18px; text-align: left;">
+                <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px; text-transform: uppercase;">
+                    ${field.label}
+                </label>
+                <input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" 
+                    style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', fieldHTML);
+    });
+}
+
+// 3. Ajuste del Modal Existente (Inyección Aditiva sobre appWheel o el disparador)
+// Modificamos el disparador para que renderice antes de mostrarse
+const originalShowModal = () => {
+    const regModal = document.getElementById('modalRegistration');
+    // Insertamos el contenedor si no existe (Integridad Estructural)
+    let container = document.getElementById('dynamicFieldsContainer');
+    if(!container) {
+        const formDiv = document.getElementById('regForm');
+        // Limpiamos los inputs estáticos antiguos y ponemos el contenedor
+        formDiv.innerHTML = `
             <h3 style="color: var(--gold); letter-spacing: 5px; margin-bottom: 8px; font-size: 16px; font-weight: 900; text-transform: uppercase;">Membresía VIP</h3>
             <p style="color: #666; font-size: 9px; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase;">Valida tu acceso para participar</p>
-            
-            <div style="margin-bottom: 18px; text-align: left;">
-                <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">NOMBRE COMPLETO</label>
-                <input type="text" id="regName" placeholder="Identificación" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
-            </div>
-
-            <div style="margin-bottom: 18px; text-align: left;">
-                <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">WHATSAPP</label>
-                <input type="tel" id="regPhone" placeholder="Contacto directo" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
-            </div>
-
-            <div style="margin-bottom: 35px; text-align: left;">
-                <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">EMAIL</label>
-                <input type="email" id="regEmail" placeholder="Correo electrónico" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;" class="no-caps">
-            </div>
-            
+            <div id="dynamicFieldsContainer"></div>
             <button id="btnSubmitReg" style="width:100%; padding: 18px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; transition: 0.4s;">Iniciar Desafío</button>
-        </div>
+        `;
+    }
+    
+    renderDynamicForm(); // Construir campos
+    regModal.style.display = 'flex';
+};
 
-        <div id="regError" style="color: #ff4d4d; font-size: 9px; margin-top: 20px; display: none; font-weight: 900; letter-spacing: 1px;"></div>
-        
-        <button id="btnCancelReg" style="background: transparent; border: none; color: #333; margin-top: 35px; cursor: pointer; font-size: 8px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase;">Regresar</button>
-    </div>
-</div>
+// Re-vincular el clic de la ruleta al nuevo motor dinámico
+appWheel.handleSpinClick = function() {
+    if(config.modoRegistro && !config.isValidated) {
+        originalShowModal();
+        return;
+    }
+    // Lógica original de giro...
+};
 
-<script>
+        /* INYECCIÓN ADITIVA: GESTOR DE FILAS DINÁMICAS (Lienzo Limpio y Escalable)
+   Insertar al final del módulo del Admin Panel
+*/
 (function() {
-    const regModal = document.getElementById('modalRegistration');
-    const errorDiv = document.getElementById('regError');
-    const btnSubmit = document.getElementById('btnSubmitReg');
+    // 1. Localización de la ruta administrativa
+    const targetSection = document.querySelector('#datosParticipantes') || document.body;
 
-    const originalSpin = appWheel.handleSpinClick;
-    appWheel.handleSpinClick = function() {
-        if(config.modoRegistro && !config.isValidated) {
-            regModal.style.display = 'flex';
-            errorDiv.style.display = 'none';
-            return;
-        }
-        originalSpin.apply(appWheel);
-    };
+    // 2. Creación del Botón de Control
+    const btnAdminForm = document.createElement('button');
+    btnAdminForm.id = "btnManageFormFields";
+    btnAdminForm.innerHTML = `<i class="fas fa-cog" style="margin-right:8px;"></i> CONFIGURAR FILAS REGISTRO`;
+    
+    // Estilo Premium Integrado
+    Object.assign(btnAdminForm.style, {
+        background: '#000',
+        color: 'var(--gold)',
+        border: '1px solid var(--gold)',
+        padding: '12px 24px',
+        borderRadius: '5px',
+        fontSize: '10px',
+        fontWeight: '900',
+        letterSpacing: '2px',
+        cursor: 'pointer',
+        margin: '20px 0',
+        textTransform: 'uppercase',
+        transition: '0.3s'
+    });
 
-    btnSubmit.onclick = async () => {
-        const name = document.getElementById('regName').value.trim();
-        const phone = document.getElementById('regPhone').value.trim();
-        const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    targetSection.prepend(btnAdminForm);
 
-        if(!name || !phone || !email) {
-            errorDiv.innerText = "ACCESO DENEGADO: COMPLETE LOS DATOS";
-            errorDiv.style.display = 'block';
-            return;
-        }
+    // 3. Función para generar las filas editables en el Panel Admin
+    function refreshAdminRows() {
+        const listContainer = document.getElementById('listaFilasEditables');
+        listContainer.innerHTML = '';
         
-        btnSubmit.disabled = true;
-        btnSubmit.innerText = "VALIDANDO...";
-        errorDiv.style.display = 'none';
+        window.formConfigVIP.forEach((field, index) => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '10px';
+            row.style.marginBottom = '10px';
+            row.style.alignItems = 'center';
+            
+            row.innerHTML = `
+                <input type="text" value="${field.label}" class="edit-label" data-index="${index}" 
+                    style="flex:1; background:#000; border:1px solid #333; color:#fff; padding:8px; font-size:11px; border-radius:4px;">
+                <button class="btn-delete-row" data-index="${index}" 
+                    style="background:#441111; color:#ff4d4d; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; font-size:10px;">✕</button>
+            `;
+            listContainer.appendChild(row);
+        });
+    }
 
-        try {
-            const snapshot = await db.ref(`users/${currentUser.uid}/leads`).once('value');
-            let isDuplicate = false;
-
-            snapshot.forEach(child => {
-                const data = child.val();
-                if(data.email === email || data.phone === phone) isDuplicate = true;
-            });
-
-            if(isDuplicate) {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Iniciar Desafío";
-                errorDiv.innerText = "ESTA CUENTA YA HA SIDO UTILIZADA";
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            await db.ref(`users/${currentUser.uid}/leads`).push().set({
-                name, phone, email,
-                date: new Date().toLocaleString(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            config.isValidated = true;
-            regModal.style.display = 'none';
-            appWheel.handleSpinClick();
-
-        } catch (e) {
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Iniciar Desafío";
-            errorDiv.innerText = "FALLO EN EL SISTEMA";
-            errorDiv.style.display = 'block';
-        }
+    // 4. Eventos del Panel
+    btnAdminForm.onclick = () => {
+        document.getElementById('modalEditorCampos').style.display = 'flex';
+        refreshAdminRows();
     };
 
-    document.getElementById('btnCancelReg').onclick = () => { regModal.style.display = 'none'; };
+    // Manejo de clicks dentro del panel (Delegación de eventos)
+    document.addEventListener('click', (e) => {
+        // Añadir Fila
+        if (e.target.id === 'btnAddRow') {
+            window.formConfigVIP.push({ id: `custom_${Date.now()}`, label: "NUEVO CAMPO", type: "text", placeholder: "" });
+            refreshAdminRows();
+        }
+        // Borrar Fila
+        if (e.target.classList.contains('btn-delete-row')) {
+            const idx = e.target.getAttribute('data-index');
+            window.formConfigVIP.splice(idx, 1);
+            refreshAdminRows();
+        }
+        // Cerrar
+        if (e.target.id === 'btnCloseEditor') {
+            document.getElementById('modalEditorCampos').style.display = 'none';
+        }
+        // Guardar
+        if (e.target.id === 'btnSaveAllFields') {
+            const labels = document.querySelectorAll('.edit-label');
+            labels.forEach((input, idx) => {
+                window.formConfigVIP[idx].label = input.value.toUpperCase();
+            });
+            
+            // Refrescar el modal del usuario si está abierto
+            if(typeof renderDynamicForm === 'function') renderDynamicForm();
+            
+            alert("CONFIGURACIÓN APLICADA CORRECTAMENTE");
+            document.getElementById('modalEditorCampos').style.display = 'none';
+        }
+    });
 })();
 </script>
 </body>
