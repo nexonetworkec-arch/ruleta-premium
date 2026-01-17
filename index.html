@@ -843,5 +843,79 @@
         };
     })();
 </script>
+
+    <script>
+    (function() {
+        // Localizamos el slot que creamos en el módulo de Gestión de Leads
+        const leadSlot = document.getElementById('leadIntegrationsSlot');
+        
+        if (leadSlot) {
+            // Limpiamos el mensaje provisional para poner el botón real
+            leadSlot.innerHTML = ''; 
+
+            // 1. Creación del Botón de Configuración (Estilo Ultra Premium)
+            const btnLeadTools = document.createElement('button');
+            btnLeadTools.className = 'btn';
+            btnLeadTools.style.cssText = `
+                width: 100%;
+                padding: 18px;
+                background: rgba(212, 175, 55, 0.03);
+                border: 1px dashed rgba(212, 175, 55, 0.4);
+                color: var(--gold) !important;
+                font-size: 10px;
+                letter-spacing: 2px;
+                cursor: pointer;
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                transition: all 0.4s ease;
+            `;
+            
+            btnLeadTools.innerHTML = `<span>🛠️</span> CONFIGURACIÓN DE LEADS`;
+            
+            // Efectos visuales de interacción
+            btnLeadTools.onmouseenter = () => {
+                btnLeadTools.style.background = 'rgba(212, 175, 55, 0.1)';
+                btnLeadTools.style.borderStyle = 'solid';
+                btnLeadTools.style.borderColor = 'var(--gold)';
+            };
+            btnLeadTools.onmouseleave = () => {
+                btnLeadTools.style.background = 'rgba(212, 175, 55, 0.03)';
+                btnLeadTools.style.borderStyle = 'dashed';
+                btnLeadTools.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+            };
+
+            // 2. Acción al hacer clic
+            btnLeadTools.onclick = () => {
+                document.getElementById('leadToolsPanel').style.display = 'flex';
+            };
+
+            leadSlot.appendChild(btnLeadTools);
+        }
+    })();
+</script>
+
+<div id="leadToolsPanel" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 16000; align-items: center; justify-content: center; backdrop-filter: blur(25px);">
+    <div class="reg-content" style="max-width: 450px; border-style: double; border-width: 3px; background: #000;">
+        <h3 style="margin-bottom: 5px; font-size: 14px; color: var(--gold); letter-spacing: 2px;">LEAD TOOLS CONFIG</h3>
+        <p style="font-size: 8px; color: #444; letter-spacing: 1px; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 15px;">MÓDULO DE GESTIÓN AVANZADA</p>
+        
+        <div id="toolsFunctionsSlot" style="margin-bottom: 30px; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+            <p style="font-size: 9px; color: #222; font-style: italic;">SISTEMA LISTO PARA RECIBIR NUEVAS FUNCIONES</p>
+        </div>
+
+        <button onclick="document.getElementById('leadToolsPanel').style.display='none'" class="btn" style="width: 100%; background: transparent; border: 1px solid #333; color: #555 !important; font-size: 9px;">
+            CERRAR PANEL DE HERRAMIENTAS
+        </button>
+    </div>
+</div>
+
+<script>
+    // Este script queda abierto para recibir las funciones aditivas de herramientas
+    console.log("NEXO® Lead Tools Module: Ready for integration.");
+</script>
 </body>
 </html>
+
