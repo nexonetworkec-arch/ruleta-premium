@@ -1236,77 +1236,75 @@ appWheel.handleSpinClick = function() {
 
     <script>
 (function() {
-    console.log("NEXO: Iniciando reparación total y sincronización de PIN...");
+    console.log("NEXO: Iniciando reparación con blindaje de módulos...");
 
-    const fixNexoSystem = () => {
-        // 1. SINCRONIZACIÓN MAESTRA DE INPUTS
-        // Buscamos todos los campos que actúen como PIN
-        const allInputs = document.querySelectorAll('input[type="password"]');
-        const gatekeeperInputs = Array.from(allInputs).filter(i => 
-            i.id.includes('gatekeeperPin') || 
-            i.placeholder.includes('••••') ||
-            i.closest('.gatekeeper-content')
+    const nexoMasterRepair = () => {
+        // 1. SINCRONIZACIÓN DE PINS (Los 4 bloques se vuelven uno)
+        const gateInputs = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
+            i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
         );
 
-        gatekeeperInputs.forEach((input) => {
-            // Sincronización en tiempo real: lo que escribes en uno se copia en los demás
+        gateInputs.forEach(input => {
             input.addEventListener('input', (e) => {
-                const val = e.target.value;
-                gatekeeperInputs.forEach(other => {
-                    if (other !== e.target) other.value = val;
-                });
+                gateInputs.forEach(other => { if(other !== e.target) other.value = e.target.value; });
             });
         });
 
-        // 2. UNIFICACIÓN DE LÓGICA DE BOTONES
-        // Reprogramamos todos los botones "ENTRAR" para que lean el PIN sincronizado
+        // 2. UNIFICACIÓN DE BOTONES DE ACCESO
         document.querySelectorAll('button').forEach(btn => {
-            const txt = btn.innerText.toUpperCase();
-            if (txt.includes('ENTRAR') || txt.includes('VALIDAR')) {
-                btn.onclick = async (e) => {
+            const text = btn.innerText.toUpperCase();
+            if (text.includes('ENTRAR') || text.includes('VALIDAR')) {
+                btn.onclick = (e) => {
                     e.preventDefault();
-                    // Tomamos el valor de cualquiera de los inputs (ya están sincronizados)
-                    const pinValue = gatekeeperInputs[0]?.value;
-
-                    if (pinValue === "1234") { 
-                        console.log("NEXO: Acceso Autorizado.");
-                        // Cerramos TODOS los modales de seguridad abiertos
-                        document.querySelectorAll('[id^="gatekeeperModal"], .gatekeeper-nexo').forEach(m => {
-                            m.style.display = 'none';
-                        });
-                        // Abrimos el panel si existe la función
+                    const currentPin = gateInputs[0]?.value;
+                    if (currentPin === "1234") { 
+                        document.querySelectorAll('[id^="gatekeeperModal"], .gatekeeper-nexo').forEach(m => m.style.display = 'none');
                         if (typeof openAdmin === 'function') openAdmin();
                     } else {
-                        alert("PIN INCORRECTO - VERIFIQUE SUS CREDENCIALES");
+                        alert("PIN INCORRECTO");
                     }
                 };
             }
         });
 
-        // 3. FIX DE PERMISOS FIREBASE (Evita el Permission Denied)
+        // 3. PROTECCIÓN DE DEPURADOR Y EXPORTACIÓN (Integridad del 2.10)
+        const exportArea = document.getElementById('nexo-export-area');
+        if (exportArea) {
+            console.log("NEXO: Verificando Zona de Peligro...");
+            // Si el botón de purga no existe, forzamos su renderizado sin limpiar lo que ya hay
+            if (!document.getElementById('btnPurgeLeads') && typeof renderCleanupModule === 'function') {
+                renderCleanupModule(exportArea);
+            }
+        }
+
+        // 4. FIX DE PERMISOS (Firebase)
         if (window.loadAdminData) {
+            const originalLoad = window.loadAdminData;
             window.loadAdminData = function() {
                 if (!auth.currentUser) return;
-                // Forzamos la ruta al nodo privado del usuario
                 db.ref(`users/${auth.currentUser.uid}/leads`).once('value', (snap) => {
                     if (typeof renderLeadsTable === 'function') renderLeadsTable(snap.val());
-                }).catch(err => console.error("Error de acceso a Leads: ", err));
+                }).catch(err => console.error("Error Firebase:", err));
             };
         }
 
-        // 4. VÍNCULO DEL BOTÓN DE EDICIÓN
-        const btnEdit = document.getElementById('btnParticipantData');
-        const modalEdit = document.getElementById('modalEditorCampos');
-        if (btnEdit && modalEdit) {
-            btnEdit.onclick = (e) => {
+        // 5. VÍNCULO DEL MODAL DE EDICIÓN
+        const btnPart = document.getElementById('btnParticipantData');
+        const modalField = document.getElementById('modalEditorCampos');
+        if (btnPart && modalField) {
+            btnPart.onclick = (e) => {
                 e.preventDefault();
-                modalEdit.style.display = 'flex';
+                modalField.style.display = 'flex';
             };
         }
     };
 
-    // Ejecutar con un delay para asegurar que el DOM cargó todas las inyecciones
-    setTimeout(fixNexoSystem, 1500);
+    // Delay extendido para asegurar que el archivo 2.10 ya inyectó el depurador
+    if (document.readyState === 'complete') {
+        setTimeout(nexoMasterRepair, 2500);
+    } else {
+        window.addEventListener('load', () => setTimeout(nexoMasterRepair, 2500));
+    }
 })();
 </script>
 </body>
