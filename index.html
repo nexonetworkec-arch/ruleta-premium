@@ -1106,5 +1106,64 @@
 <script>
     console.log("NEXO® Cleanup Module: Armed and ready.");
 </script>
+
+    <script>
+    (function() {
+        const checkToolsArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkToolsArea);
+                renderParticipantModule(exportArea);
+            }
+        }, 900);
+
+        function renderParticipantModule(container) {
+            // Contenedor para el nuevo botón
+            const participantDiv = document.createElement('div');
+            participantDiv.style.cssText = `
+                margin-top: 15px; 
+                padding-top: 15px; 
+                border-top: 1px solid #1a1a1a;
+            `;
+
+            participantDiv.innerHTML = `
+                <button id="btnParticipantData" style="
+                    width: 100%; padding: 12px; background: rgba(212, 175, 55, 0.05); 
+                    color: var(--gold); border: 1px solid var(--gold-mix); border-radius: 10px;
+                    font-size: 8px; letter-spacing: 2px; cursor: pointer;
+                    transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span>👥</span> DATOS DE PARTICIPANTES
+                </button>
+                <div id="participantDataSlot" style="display:none; margin-top: 10px; color: #444; font-size: 8px; text-align: center; letter-spacing: 1px;">
+                    SISTEMA DE PARTICIPANTES INICIALIZADO - LISTO PARA INTEGRACIONES
+                </div>
+            `;
+            container.appendChild(participantDiv);
+
+            const btn = document.getElementById('btnParticipantData');
+            const slot = document.getElementById('participantDataSlot');
+
+            btn.onmouseenter = () => { 
+                btn.style.background = 'var(--gold-mix)'; 
+                btn.style.color = '#000';
+            };
+            btn.onmouseleave = () => { 
+                btn.style.background = 'rgba(212, 175, 55, 0.05)'; 
+                btn.style.color = 'var(--gold)';
+            };
+
+            btn.onclick = () => {
+                const isVisible = slot.style.display === 'block';
+                slot.style.display = isVisible ? 'none' : 'block';
+                console.log("NEXO® Participant Data: Slot " + (isVisible ? "oculto" : "activo"));
+            };
+        }
+    })();
+</script>
+
+<script>
+    console.log("NEXO® Participant Data Module: Ready for expansion.");
+</script>
 </body>
 </html>
+
