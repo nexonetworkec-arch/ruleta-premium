@@ -1462,6 +1462,91 @@
     }
 })();
 </script>
+
+    /* ==========================================================
+   INYECCIÓN ADITIVA: INTERFAZ DEL EDITOR (LIENZO ADMIN)
+   Regla: Integridad Estructural - Se conecta al botón existente
+   ========================================================== */
+
+(function() {
+    const dbPathConfig = `users/${currentUser.uid}/config/estructuraRegistro`;
+
+    // Escuchamos el evento de apertura que dispara el botón "Configurar Registro"
+    window.addEventListener('nexo_open_editor', () => {
+        const slot = document.getElementById('nexo_slot_logica');
+        if (!slot) return;
+
+        // 1. Limpiamos el mensaje de "esperando" e inyectamos la estructura del editor
+        slot.innerHTML = `
+            <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto; animation: fadeIn 0.5s ease;">
+                <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
+                    </div>
+                
+                <button id="nexo_btn_add_field" style="
+                    width:100%; padding:18px; background:rgba(212,175,55,0.05); 
+                    color:var(--gold); border:1px dashed var(--gold); border-radius:20px;
+                    font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:3px;
+                    transition: 0.3s; text-transform: uppercase;">
+                    + AGREGAR NUEVO CAMPO AL REGISTRO
+                </button>
+            </div>
+        `;
+
+        const listaFilas = document.getElementById('nexo_lista_filas');
+        const btnAdd = document.getElementById('nexo_btn_add_field');
+
+        // 2. Renderizado en tiempo real desde Firebase para el Admin
+        db.ref(dbPathConfig).on('value', snap => {
+            listaFilas.innerHTML = '';
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    renderizarFilaAdmin(child.key, child.val(), listaFilas, dbPathConfig);
+                });
+            }
+        });
+
+        // 3. Lógica para añadir nueva fila
+        btnAdd.onclick = () => {
+            const idNuevo = 'f' + Date.now();
+            db.ref(`${dbPathConfig}/${idNuevo}`).set("Nuevo Campo");
+        };
+    });
+
+    // Función interna para construir cada fila editable
+    function renderizarFilaAdmin(id, valor, contenedor, path) {
+        const fila = document.createElement('div');
+        fila.style.cssText = `
+            display:flex; align-items:center; gap:15px; background:#0a0a0a; 
+            padding:15px 25px; border-radius:18px; border:1px solid #1a1a1a;
+            transition: 0.3s;
+        `;
+
+        fila.innerHTML = `
+            <input type="text" value="${valor}" style="
+                flex-grow:1; background:transparent; border:none; color:#fff; 
+                font-size:13px; outline:none; border-bottom:1px solid #222; padding:5px 0;">
+            <button class="nexo-btn-del" style="
+                background:transparent; border:none; color:#444; 
+                cursor:pointer; font-size:18px; padding:5px;">&times;</button>
+        `;
+
+        const input = fila.querySelector('input');
+        const btnDel = fila.querySelector('.nexo-btn-del');
+
+        // Guardado automático al editar el nombre del campo
+        input.onchange = () => db.ref(`${path}/${id}`).set(input.value);
+
+        // Eliminar fila
+        btnDel.onclick = () => {
+            if(confirm("¿Eliminar este campo del formulario de registro?")) {
+                db.ref(`${path}/${id}`).remove();
+            }
+        };
+
+        contenedor.appendChild(fila);
+    }
+})();
 </body>
 </html>
+
 
