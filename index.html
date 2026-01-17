@@ -1462,98 +1462,1472 @@
     }
 })();
 
-        /* ==========================================================
-   INYECCIÓN ADITIVA: FIX DE SESIÓN Y CARGA DEL EDITOR
-   Regla: Integridad Estructural - Inyección Add-on
-   ========================================================== */
+        <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEXO® Business Pro - Sistema de Sorteo Premium</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 
-(function() {
-    // 1. FUNCIÓN DE RECONOCIMIENTO SEGURO
-    function obtenerConfiguracionSegura(callback) {
-        // Intentamos detectar al usuario de todas las formas posibles
-        const intervalIdentidad = setInterval(() => {
-            const user = window.currentUser || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
-            
-            if (user && user.uid) {
-                clearInterval(intervalIdentidad);
-                const path = `users/${user.uid}/config/estructuraRegistro`;
-                callback(path);
+    <style>
+        :root { 
+            --bg-color: #000000;
+            --card-bg: rgba(15, 15, 15, 0.95); 
+            --gold: #d4af37; 
+            --gold-dark: #8a6d1d;
+            --gold-mix: #6A571B;
+        }
+
+        /* CONSTANTES DE MARCA */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        /* REGLA GENERAL: ORO Y MAYÚSCULAS */
+        input, select, textarea, .editable-text, h1, h2, h3, h4, .btn, #winnerName, .dynamic-title {
+            color: var(--gold) !important;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
+        }
+
+        /* EXCEPCIÓN DE SEGURIDAD: CREDENCIALES EN MINÚSCULAS */
+        input[type="email"], 
+        input[type="password"], 
+        .no-caps {
+            text-transform: none !important;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
+        
+        ::placeholder { color: rgba(212, 175, 55, 0.4) !important; text-transform: uppercase; }
+
+        body { 
+            background-color: var(--bg-color); color: var(--gold); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, #111 1px, transparent 1px); background-size: 40px 40px;
+        }
+
+        #loading-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(212,175,55,0.1); border-radius: 50%; border-top-color: var(--gold); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #loginScreen, .app-container { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; }
+
+        input {
+            background: #000; border: 1px solid #222; border-radius: 15px; padding: 18px; text-align: center; font-size: 16px;
+        }
+
+        .btn { padding: 16px 24px; border: none; border-radius: 20px; cursor: pointer; transition: 0.3s; font-size: 11px; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #000 !important; }
+
+        .wheel-wrapper { 
+            position: relative; 
+            width: min(82vh, 88vw); height: min(82vh, 88vw); 
+            max-width: 550px; max-height: 550px; 
+        }
+        #wheelCanvas { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #111; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        
+        #pointer { 
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%); z-index: 100;
+            width: 0; height: 0; border-left: min(20px, 4vw) solid transparent; border-right: min(20px, 4vw) solid transparent;
+            border-top: min(50px, 10vw) solid var(--gold);
+        }
+
+        #centerLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 150; }
+        #btnSpinCenter { 
+            width: min(90px, 18vw); height: min(90px, 18vw); border-radius: 50%; border: 3px solid var(--gold);
+            background: #000; cursor: pointer; font-size: min(13px, 3vw);
+            box-shadow: 0 0 20px rgba(212,175,55,0.2);
+        }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 9000; backdrop-filter: blur(15px); }
+        .modal-content { 
+            background: var(--card-bg); padding: 40px; border-radius: 40px; border: 1px solid var(--gold); 
+            width: min(500px, 90%); text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; font-weight: 900; font-size: 10px;">NEXO® MASTER ENGINE</p>
+    </div>
+
+    <div id="loginScreen">
+        <div style="background: #000; padding: 40px; border-radius: 40px; border: 1px solid var(--gold); text-align: center; width: min(360px, 85%);">
+            <h2>NEXO®</h2>
+            <input type="email" id="authEmail" placeholder="EMAIL" style="width:100%; margin-bottom:15px;">
+            <input type="password" id="authPin" placeholder="PIN" style="width:100%; margin-bottom:25px;">
+            <button id="btnAuth" class="btn btn-primary" style="width:100%;">ENTRAR AL SISTEMA</button>
+        </div>
+    </div>
+
+    <div class="app-container" id="appMain">
+        <div style="text-align:center; padding: 20px;">
+            <h1 class="dynamic-title" style="color: #fff !important; margin-bottom:20px; font-size: min(1.8rem, 6vw);">SORTEO PREMIUM</h1>
+            <div class="wheel-wrapper">
+                <div id="pointer"></div>
+                <div id="centerLogo"><button id="btnSpinCenter">GIRAR</button></div>
+                <canvas id="wheelCanvas" width="800" height="800"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalWinner" class="modal"><div class="modal-content" style="border-width: 2px;">
+        <p class="dynamic-title" style="font-size: 12px; color: var(--gold-dark) !important;"></p>
+        <div id="winnerName" style="font-size: min(42px, 9vw); margin: 25px 0;">---</div>
+        <button id="btnFinishWin" class="btn btn-primary" style="width:100%;">ACEPTAR</button>
+    </div></div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCG703rpW4_8U2onJFSw7VfWDNLFofCk8A",
+            authDomain: "ruletapremiumbusiness-4db7e.firebaseapp.com",
+            projectId: "ruletapremiumbusiness-4db7e",
+            storageBucket: "ruletapremiumbusiness-4db7e.firebasestorage.app",
+            messagingSenderId: "822563863112",
+            appId: "1:822563863112:web:d134d015736e2fafb5367d",
+            databaseURL: "https://ruletapremiumbusiness-4db7e-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); const db = firebase.database();
+
+        let currentUser = null;
+        let config = { 
+            tituloSorteo: "SORTEO PREMIUM",
+            prizes: ["PREMIO 1", "PREMIO 2", "PREMIO 3"], 
+            colorA: "#d4af37", colorB: "#000000", colorMix: "#6A571B",
+            modoRegistro: false,
+            isValidated: false
+        };
+
+        function syncUI() {
+            document.querySelectorAll('.dynamic-title').forEach(el => {
+                el.innerText = config.tituloSorteo;
+            });
+            appWheel.draw();
+        }
+
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if(user) {
+                db.ref(`users/${user.uid}/config`).on('value', snap => {
+                    if(snap.exists()) {
+                        config = {...config, ...snap.val()};
+                        syncUI();
+                    }
+                });
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appMain').style.display = 'flex';
+                updatePresence(user.uid);
+            } else {
+                document.getElementById('appMain').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
             }
-        }, 500); // Reintenta cada medio segundo hasta que te reconozca
+            document.getElementById('loading-overlay').style.display = 'none';
+        });
+
+        class Wheel {
+            constructor() {
+                this.canvas = document.getElementById('wheelCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.angle = 0; this.isSpinning = false;
+            }
+            draw() {
+                const w = 800, cx = 400, r = 385;
+                this.ctx.clearRect(0,0,w,w);
+                const n = config.prizes.length;
+                const slice = (Math.PI*2)/n;
+                
+                config.prizes.forEach((p, i) => {
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx,cx);
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = config.colorMix; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorB : config.colorA; }
+                    this.ctx.arc(cx,cx,r, this.angle+i*slice, this.angle+(i+1)*slice);
+                    this.ctx.fill();
+                    this.ctx.translate(cx,cx);
+                    this.ctx.rotate(this.angle+i*slice+slice/2);
+                    this.ctx.font = "900 32px Segoe UI";
+                    this.ctx.textAlign="right";
+                    if (n % 2 !== 0 && i === n - 1) { this.ctx.fillStyle = "#FFFFFF"; }
+                    else { this.ctx.fillStyle = i % 2 ? config.colorA : config.colorB; }
+                    this.ctx.fillText(p.toUpperCase(), r-40, 10);
+                    this.ctx.restore();
+                });
+            }
+            handleSpinClick() {
+                if(this.isSpinning) return;
+                if(config.modoRegistro && !config.isValidated) {
+                    alert("REGISTRO REQUERIDO"); 
+                    return;
+                }
+                this.executeSpin();
+            }
+            executeSpin() {
+                this.isSpinning = true;
+                const total = (Math.PI*2*10) + (Math.random()*Math.PI*2);
+                const duration = 5000; const start = performance.now();
+                const anim = (now) => {
+                    const t = Math.min((now-start)/duration, 1);
+                    const ease = 1 - Math.pow(1-t, 4);
+                    this.angle = total * ease;
+                    this.draw();
+                    if(t < 1) requestAnimationFrame(anim);
+                    else this.finish();
+                };
+                requestAnimationFrame(anim);
+            }
+            finish() {
+                this.isSpinning = false;
+                const n = config.prizes.length;
+                const deg = (this.angle * 180 / Math.PI) % 360;
+                const idx = n - 1 - Math.floor(deg/(360/n));
+                const prize = config.prizes[idx];
+                document.getElementById('winnerName').innerText = prize;
+                document.getElementById('modalWinner').style.display = 'flex';
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: [config.colorA, config.colorB] });
+                document.getElementById('btnFinishWin').onclick = () => {
+                    document.getElementById('modalWinner').style.display = 'none';
+                    if(config.modoRegistro) config.isValidated = false;
+                };
+                db.ref(`users/${currentUser.uid}/history`).push({ 
+                    prize, 
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
+            }
+        }
+
+        const appWheel = new Wheel();
+        document.getElementById('btnSpinCenter').onclick = () => appWheel.handleSpinClick();
+
+        function updatePresence(uid) {
+            const statusRef = db.ref(`users/${uid}/status`);
+            db.ref('.info/connected').on('value', s => {
+                if(!s.val()) return;
+                statusRef.onDisconnect().set({ state: 'offline' }).then(() => statusRef.set({ state: 'online' }));
+            });
+        }
+
+        document.getElementById('btnAuth').onclick = () => {
+            const email = document.getElementById('authEmail').value;
+            const pin = document.getElementById('authPin').value;
+            auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
+        };
+    </script>
+
+    <style>
+    /* Estética Ultra Premium para el Panel Admin */
+    #adminMasterPanel {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 15000; overflow-y: auto; padding: 40px 20px; font-family: 'Segoe UI', sans-serif;
+    }
+    .admin-container { max-width: 1000px; margin: 0 auto; }
+    .admin-module {
+        background: rgba(15, 15, 15, 0.95); border: 1px solid var(--gold-mix);
+        border-radius: 25px; padding: 25px; margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .admin-module h3 { color: var(--gold); font-size: 14px; margin-bottom: 20px; border-bottom: 1px solid var(--gold-mix); padding-bottom: 10px; }
+    
+    /* Grid de Estadísticas (Módulo 1) */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .stat-card { background: #000; border: 1px solid #222; padding: 15px; border-radius: 15px; text-align: center; }
+    .stat-val { font-size: 24px; display: block; margin-bottom: 5px; }
+    .stat-label { font-size: 9px; color: var(--gold-dark); }
+
+    /* Búsqueda y Lista (Módulo 2 y 3) */
+    .search-bar { width: 100%; background: #000; border: 1px solid var(--gold-mix); padding: 15px; border-radius: 15px; margin-bottom: 10px; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .admin-table th { position: sticky; top: 0; background: #000; padding: 12px; text-align: left; border-bottom: 2px solid var(--gold); }
+    .admin-table td { padding: 12px; border-bottom: 1px solid #222; }
+    .row-admin { background: rgba(212, 175, 55, 0.05); } /* Resalte para el admin */
+
+    /* Formularios y Selectores */
+    select, textarea { background: #000; border: 1px solid #333; color: var(--gold); border-radius: 10px; padding: 10px; width: 100%; margin-bottom: 10px; }
+</style>
+
+<div id="adminMasterPanel">
+    <div class="admin-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <h1 style="font-size: 20px; margin: 0;">NEXO® CONTROL CENTER</h1>
+            <button id="btnCloseAdmin" class="btn btn-primary" style="padding: 10px 20px;">CERRAR PANEL</button>
+        </div>
+
+        <div class="admin-module">
+            <h3>ANALYTICS & STATUS</h3>
+            <div style="margin-bottom: 20px;">
+                <label class="stat-label">FILTRAR SUSCRIPCIÓN:</label>
+                <select id="subFilter">
+                    <option value="ALL">TODOS LOS NIVELES</option>
+                    <option value="PREMIUM">PREMIUM</option>
+                    <option value="BASIC">BÁSICO</option>
+                </select>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><span class="stat-val" id="countActive">0</span><span class="stat-label">ACTIVOS AHORA</span></div>
+                <div class="stat-card"><span class="stat-val" id="countTotal">0</span><span class="stat-label">USUARIOS TOTALES</span></div>
+                <div class="stat-card"><span class="stat-val" id="countExpiring">0</span><span class="stat-label">POR CADUCAR</span></div>
+                <div class="stat-card"><span class="stat-val" id="countPrizes">0</span><span class="stat-label">PREMIOS ENTREGADOS</span></div>
+            </div>
+        </div>
+
+        <div class="admin-module">
+            <h3>SEARCH ENGINE</h3>
+            <input type="text" id="smartSearch" class="search-bar" placeholder="BUSCAR POR NOMBRE, UID, EMAIL O TELÉFONO...">
+        </div>
+
+        <div class="admin-module" style="max-height: 400px; overflow-y: auto;">
+            <h3>USER MANAGEMENT</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>USUARIO</th>
+                        <th>UID</th>
+                        <th>SUSCRIPCIÓN</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    </tbody>
+            </table>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn" style="border: 1px solid var(--gold); flex: 1;" onclick="downloadData('all')">DESCARGA MASIVA</button>
+            </div>
+        </div>
+
+        <div class="admin-module">
+            <h3>GLOBAL MESSAGING</h3>
+            <select id="msgTarget">
+                <option value="ALL">TODOS LOS USUARIOS</option>
+                <option value="ACTIVE">SOLO ACTIVOS</option>
+            </select>
+            <textarea id="msgText" placeholder="MENSAJE DE TEXTO..."></textarea>
+            <input type="text" id="msgImg" class="admin-input" style="width:100%; background:#000; border:1px solid #333; padding:10px; margin-bottom:10px;" placeholder="URL DE IMAGEN (OPCIONAL)">
+            <button class="btn btn-primary" style="width: 100%;">ENVIAR COMUNICADO</button>
+        </div>
+
+        <div class="admin-module">
+            <h3>LICENSE GENERATOR</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" placeholder="DÍAS DE ACCESO" style="flex: 2; margin: 0;" class="admin-input">
+                <button class="btn btn-primary" style="flex: 1;">GENERAR CÓDIGO</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* Lógica del Panel de Administración Master */
+    const adminUID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2"; // Tu UID [cite: 2026-01-14]
+
+    // Función para abrir el panel (puedes llamarla desde consola o vincularla a un gesto)
+    function openAdmin() {
+        if(currentUser && currentUser.uid === adminUID) {
+            document.getElementById('adminMasterPanel').style.display = 'block';
+            loadAdminData();
+        } else {
+            console.warn("ACCESO DENEGADO");
+        }
     }
 
-    // 2. ESCUCHADOR DE ACTIVACIÓN (Disparado por el botón)
-    window.addEventListener('nexo_open_editor', () => {
-        const slot = document.getElementById('nexo_slot_logica');
-        
-        obtenerConfiguracionSegura((dbPath) => {
-            if (!slot) return;
+    document.getElementById('btnCloseAdmin').onclick = () => {
+        document.getElementById('adminMasterPanel').style.display = 'none';
+    };
 
-            // Limpiamos el mensaje de "Inicializando" e inyectamos la UI real
-            slot.innerHTML = `
-                <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto; animation: fadeIn 0.4s ease;">
-                    <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:25px;">
-                        </div>
+    function loadAdminData() {
+        const tableBody = document.getElementById('userTableBody');
+        tableBody.innerHTML = ""; // Limpiar
+
+        db.ref('users').once('value', (snap) => {
+            let index = 1;
+            const users = snap.val();
+            
+            // Asegurar que el Admin sea el primero
+            if(users[adminUID]) {
+                appendUserRow(adminUID, users[adminUID], 0, true);
+            }
+
+            // Listar el resto
+            Object.keys(users).forEach(uid => {
+                if(uid !== adminUID) {
+                    appendUserRow(uid, users[uid], index++);
+                }
+            });
+        });
+    }
+
+    function appendUserRow(uid, data, idx, isAdmin = false) {
+        const tableBody = document.getElementById('userTableBody');
+        const row = document.createElement('tr');
+        if(isAdmin) row.className = 'row-admin';
+        
+        row.innerHTML = `
+            <td>${isAdmin ? '★' : idx}</td>
+            <td>${data.config?.tituloSorteo || 'NUEVO USUARIO'}</td>
+            <td style="font-family: monospace; font-size: 9px;">${uid}</td>
+            <td>${data.subscription?.type || 'FREE'}</td>
+            <td><button class="btn" style="padding: 5px 10px; font-size: 8px; border: 1px solid var(--gold);">GESTIONAR</button></td>
+        `;
+        tableBody.appendChild(row);
+    }
+
+    // Preparado para recibir más integraciones
+</script>
+
+    <style>
+    /* Trigger: Botón Hamburguesa Cuadrado */
+    #menuMasterTrigger {
+        position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px;
+        background: #000; border: 2px solid var(--gold); border-radius: 12px;
+        cursor: pointer; z-index: 11000; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 5px;
+        box-shadow: 0 0 20px rgba(212,175,55,0.3); transition: 0.3s;
+    }
+    #menuMasterTrigger:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(212,175,55,0.5); }
+    .bar { width: 25px; height: 3px; background: var(--gold); border-radius: 2px; }
+
+    /* Modal de Validación de Seguridad */
+    #gatekeeperModal {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+        z-index: 12000; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+    }
+    .gatekeeper-content {
+        background: var(--card-bg); border: 1px solid var(--gold);
+        padding: 35px; border-radius: 30px; width: min(320px, 85%); text-align: center;
+    }
+
+    /* Contenedor del Menú (Vacío y Escalable) */
+    #mainMenuContent {
+        display: none; position: fixed; bottom: 100px; right: 30px;
+        width: min(300px, 80vw); background: var(--card-bg);
+        border: 1px solid var(--gold); border-radius: 25px;
+        padding: 20px; z-index: 11500; backdrop-filter: blur(20px);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+    }
+    .menu-slot { display: flex; flex-direction: column; gap: 12px; }
+</style>
+
+<button id="menuMasterTrigger">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</button>
+
+<div id="gatekeeperModal">
+    <div class="gatekeeper-content">
+        <h3 style="margin-bottom: 20px; font-size: 14px;">VALIDACIÓN DE SEGURIDAD</h3>
+        <input type="password" id="gatekeeperPin" placeholder="INGRESE PIN DE ACCESO" 
+               style="width:100%; margin-bottom:20px; text-align:center;" class="no-caps">
+        <button id="btnValidateAccess" class="btn btn-primary" style="width:100%;">DESBLOQUEAR</button>
+        <button id="btnCancelAccess" class="btn" style="width:100%; margin-top:10px; color: #555 !important;">CANCELAR</button>
+    </div>
+</div>
+
+<div id="mainMenuContent">
+    <div id="dynamicMenuSlot" class="menu-slot">
+        </div>
+</div>
+
+<script>
+    (function() {
+        const trigger = document.getElementById('menuMasterTrigger');
+        const gateModal = document.getElementById('gatekeeperModal');
+        const menuContent = document.getElementById('mainMenuContent');
+        const pinInput = document.getElementById('gatekeeperPin');
+        
+        let isUnlocked = false;
+
+        // Abrir Modal de Validación
+        trigger.onclick = () => {
+            if (!isUnlocked) {
+                gateModal.style.display = 'flex';
+                pinInput.focus();
+            } else {
+                toggleMenu();
+            }
+        };
+
+        // Lógica de Validación (Re-autenticación)
+        document.getElementById('btnValidateAccess').onclick = async () => {
+            const pin = pinInput.value;
+            if(!pin) return;
+
+            const email = auth.currentUser.email; // Usa el email de la sesión activa 
+            
+            try {
+                // Intenta re-autenticar para validar que el PIN es correcto
+                await auth.signInWithEmailAndPassword(email, pin);
+                isUnlocked = true;
+                gateModal.style.display = 'none';
+                pinInput.value = "";
+                toggleMenu();
+            } catch (error) {
+                alert("PIN INCORRECTO - ACCESO DENEGADO");
+                pinInput.value = "";
+            }
+        };
+
+        document.getElementById('btnCancelAccess').onclick = () => {
+            gateModal.style.display = 'none';
+        };
+
+        function toggleMenu() {
+            const isVisible = menuContent.style.display === 'block';
+            menuContent.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Cerrar menú al hacer clic fuera
+        window.addEventListener('click', (e) => {
+            if (!menuContent.contains(e.target) && !trigger.contains(e.target) && !gateModal.contains(e.target)) {
+                menuContent.style.display = 'none';
+            }
+        });
+    })();
+</script>
+
+    <script>
+    (function() {
+        const menuSlot = document.getElementById('dynamicMenuSlot');
+        
+        // Crear el botón con estética Premium
+        const btnAdmin = document.createElement('button');
+        btnAdmin.className = 'btn';
+        btnAdmin.style.cssText = `
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #000, #111);
+            border: 1px solid var(--gold);
+            color: var(--gold) !important;
+            font-size: 10px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        `;
+        
+        btnAdmin.innerHTML = `<span>⚙️</span> PANEL DE ADMINISTRADOR`;
+        
+        // Efecto Hover
+        btnAdmin.onmouseenter = () => btnAdmin.style.background = 'var(--gold-mix)';
+        btnAdmin.onmouseleave = () => btnAdmin.style.background = 'linear-gradient(135deg, #000, #111)';
+
+        // Acción: Abrir el Panel de Admin (referencia a la función openAdmin creada anteriormente)
+        btnAdmin.onclick = () => {
+            if (typeof openAdmin === "function") {
+                openAdmin();
+                document.getElementById('mainMenuContent').style.display = 'none';
+            } else {
+                console.error("ERROR: Módulo de Panel de Administración no encontrado.");
+            }
+        };
+
+        // Inyectar en el slot
+        menuSlot.appendChild(btnAdmin);
+    })();
+</script>
+
+    <style>
+    #modalRegistration {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+        z-index: 13000; align-items: center; justify-content: center; backdrop-filter: blur(15px);
+    }
+    .reg-content {
+        background: var(--card-bg); border: 2px solid var(--gold);
+        padding: 40px; border-radius: 40px; width: min(400px, 90%); text-align: center;
+        box-shadow: 0 0 50px rgba(212,175,55,0.2);
+    }
+    .reg-input {
+        width: 100%; background: #000; border: 1px solid #333; 
+        padding: 15px; border-radius: 15px; margin-bottom: 15px;
+        color: var(--gold); text-align: center;
+    }
+</style>
+
+<div id="modalRegistration">
+    <div class="reg-content">
+        <h2 style="margin-bottom: 10px; font-size: 18px;">REGISTRO DE PARTICIPANTE</h2>
+        <p style="font-size: 9px; color: var(--gold-dark); margin-bottom: 25px; letter-spacing: 1px;">
+            COMPLETE SUS DATOS PARA INICIAR EL GIRO
+        </p>
+        
+        <input type="text" id="regName" class="reg-input" placeholder="NOMBRES COMPLETOS">
+        <input type="tel" id="regPhone" class="reg-input" placeholder="NÚMERO DE TELÉFONO">
+        <input type="email" id="regEmail" class="reg-input no-caps" placeholder="CORREO ELECTRÓNICO">
+        
+        <button id="btnConfirmReg" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            ACEPTAR Y GIRAR
+        </button>
+        <button id="btnCancelReg" class="btn" style="width: 100%; margin-top: 10px; color: #555 !important; font-size: 9px;">
+            CANCELAR
+        </button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const modalReg = document.getElementById('modalRegistration');
+        const btnConfirm = document.getElementById('btnConfirmReg');
+        const btnCancel = document.getElementById('btnCancelReg');
+
+        // SOBREESCRITURA ADITIVA DE LA FUNCIÓN DE GIRO
+        // Referenciamos la instancia original appWheel [cite: 61]
+        const originalSpinClick = appWheel.handleSpinClick.bind(appWheel);
+
+        appWheel.handleSpinClick = function() {
+            if (config.modoRegistro && !config.isValidated) {
+                modalReg.style.display = 'flex';
+            } else {
+                originalSpinClick();
+            }
+        };
+
+        btnConfirm.onclick = () => {
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const email = document.getElementById('regEmail').value;
+
+            if (name && phone && email.includes('@')) {
+                // Guardar Lead en Firebase
+                const leadData = {
+                    name, phone, email,
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                db.ref(`users/${currentUser.uid}/leads`).push(leadData).then(() => {
+                    config.isValidated = true; // Validamos la sesión actual 
+                    modalReg.style.display = 'none';
+                    originalSpinClick(); // Iniciamos el giro
                     
-                    <button id="nexo_btn_add_field" style="
-                        width:100%; padding:18px; background:rgba(212,175,55,0.05); 
-                        color:var(--gold); border:1px dashed var(--gold); border-radius:20px;
-                        font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:3px;
-                        text-transform: uppercase;">
-                        + AGREGAR FILA AL REGISTRO
-                    </button>
+                    // Limpiar campos para el próximo
+                    document.getElementById('regName').value = "";
+                    document.getElementById('regPhone').value = "";
+                    document.getElementById('regEmail').value = "";
+                });
+            } else {
+                alert("POR FAVOR, COMPLETE TODOS LOS CAMPOS CORRECTAMENTE.");
+            }
+        };
+
+        btnCancelReg.onclick = () => {
+            modalReg.style.display = 'none';
+        };
+    })();
+</script>
+
+    <style>
+    /* Dashboard de Usuario Ultra Premium */
+    #userDashboard {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 14500; overflow-y: auto; padding: 40px 20px;
+    }
+    .user-container { max-width: 600px; margin: 0 auto; }
+    
+    .profile-header {
+        background: linear-gradient(180deg, var(--gold-mix), #000);
+        padding: 40px; border-radius: 30px; text-align: center;
+        border: 1px solid var(--gold); margin-bottom: 30px;
+    }
+    .profile-avatar {
+        width: 80px; height: 80px; background: #000; border: 2px solid var(--gold);
+        border-radius: 50%; margin: 0 auto 15px; display: flex; 
+        align-items: center; justify-content: center; font-size: 30px;
+    }
+    
+    /* Slot para futuras integraciones dentro del perfil */
+    #userIntegrationsSlot {
+        display: flex; flex-direction: column; gap: 20px;
+    }
+</style>
+
+<div id="userDashboard">
+    <div class="user-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="font-size: 16px; margin: 0; color: var(--gold);">NEXO® USER ID</h2>
+            <button id="btnCloseUserDashboard" class="btn" style="color: #fff !important; font-size: 12px;">VOLVER</button>
+        </div>
+
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <h1 id="userDisplayName" style="font-size: 18px; margin: 0; color: #fff;">CARGANDO...</h1>
+            <p id="userDisplayEmail" style="font-size: 10px; color: var(--gold); margin-top: 5px; opacity: 0.8;"></p>
+        </div>
+
+        <div id="userIntegrationsSlot">
+            </div>
+        
+        <div style="margin-top: 50px; text-align: center; opacity: 0.3;">
+            <p style="font-size: 8px; letter-spacing: 2px;">NEXO® BUSINESS PRO - SECURE SESSION</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const menuSlot = document.getElementById('dynamicMenuSlot');
+        const userDashboard = document.getElementById('userDashboard');
+        
+        // 1. CREAR EL BOTÓN DE USUARIO EN EL MENÚ
+        const btnUser = document.createElement('button');
+        btnUser.className = 'btn';
+        btnUser.style.cssText = `
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #000, #111);
+            border: 1px solid var(--gold); color: var(--gold) !important;
+            font-size: 10px; letter-spacing: 2px; cursor: pointer; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;
+        `;
+        btnUser.innerHTML = `<span>👤</span> MI PERFIL`;
+
+        btnUser.onmouseenter = () => btnUser.style.background = 'var(--gold-mix)';
+        btnUser.onmouseleave = () => btnUser.style.background = 'linear-gradient(135deg, #000, #111)';
+
+        // 2. ACCIÓN: ABRIR DASHBOARD
+        btnUser.onclick = () => {
+            if(currentUser) {
+                document.getElementById('userDisplayName').innerText = currentUser.email.split('@')[0].toUpperCase();
+                document.getElementById('userDisplayEmail').innerText = currentUser.email;
+                userDashboard.style.display = 'block';
+                document.getElementById('mainMenuContent').style.display = 'none';
+            }
+        };
+
+        menuSlot.appendChild(btnUser);
+
+        // 3. CERRAR DASHBOARD
+        document.getElementById('btnCloseUserDashboard').onclick = () => {
+            userDashboard.style.display = 'none';
+            document.getElementById('mainMenuContent').style.display = 'block';
+        };
+    })();
+</script>
+
+    <style>
+    /* Dashboard de Leads Ultra Premium */
+    #leadManagerDashboard {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 14200; overflow-y: auto; padding: 40px 20px;
+    }
+    .lead-container { max-width: 800px; margin: 0 auto; }
+    
+    .lead-header-info {
+        background: #000; border: 1px solid var(--gold-mix);
+        padding: 20px; border-radius: 20px; margin-bottom: 25px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Slot para futuras integraciones de visualización y filtros */
+    #leadIntegrationsSlot {
+        display: flex; flex-direction: column; gap: 15px;
+        min-height: 200px; border: 1px dashed #333; border-radius: 20px;
+        align-items: center; justify-content: center;
+    }
+</style>
+
+<div id="leadManagerDashboard">
+    <div class="lead-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="font-size: 16px; margin: 0; color: var(--gold); letter-spacing: 2px;">NEXO® LEAD MANAGER</h2>
+            <button id="btnCloseLeadDashboard" class="btn" style="color: #fff !important; font-size: 12px;">CERRAR</button>
+        </div>
+
+        <div class="lead-header-info">
+            <div>
+                <p style="font-size: 9px; color: var(--gold-dark); margin: 0;">BASE DE DATOS ACTIVA</p>
+                <h3 style="font-size: 14px; margin: 5px 0 0 0; color: #fff;">GESTIÓN DE CLIENTES</h3>
+            </div>
+            <div id="leadCounterBadge" style="background: var(--gold); color: #000; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 12px;">
+                ...
+            </div>
+        </div>
+
+        <div id="leadIntegrationsSlot">
+            <p style="font-size: 10px; color: #444; letter-spacing: 1px;">LISTO PARA INYECCIÓN DE DATOS Y EXPORTACIÓN</p>
+        </div>
+        
+        <div style="margin-top: 40px; text-align: center;">
+            <p style="font-size: 8px; color: #333; letter-spacing: 3px;">DATABASE PROTECTION SYSTEM ACTIVE</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const menuSlot = document.getElementById('dynamicMenuSlot');
+        const leadDashboard = document.getElementById('leadManagerDashboard');
+        
+        // 1. CREAR EL BOTÓN EN EL MENÚ MAESTRO
+        const btnLeads = document.createElement('button');
+        btnLeads.className = 'btn';
+        btnLeads.style.cssText = `
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #000, #111);
+            border: 1px solid var(--gold); color: var(--gold) !important;
+            font-size: 10px; letter-spacing: 2px; cursor: pointer; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;
+        `;
+        btnLeads.innerHTML = `<span>📊</span> GESTIÓN DE LEADS`;
+
+        btnLeads.onmouseenter = () => btnLeads.style.background = 'var(--gold-mix)';
+        btnLeads.onmouseleave = () => btnLeads.style.background = 'linear-gradient(135deg, #000, #111)';
+
+        // 2. ACCIÓN: ABRIR LEAD MANAGER
+        btnLeads.onclick = () => {
+            if(currentUser) {
+                leadDashboard.style.display = 'block';
+                document.getElementById('mainMenuContent').style.display = 'none';
+                
+                // Actualizar contador rápido
+                db.ref(`users/${currentUser.uid}/leads`).once('value', snap => {
+                    document.getElementById('leadCounterBadge').innerText = snap.numChildren();
+                });
+            }
+        };
+
+        menuSlot.appendChild(btnLeads);
+
+        // 3. CERRAR DASHBOARD
+        document.getElementById('btnCloseLeadDashboard').onclick = () => {
+            leadDashboard.style.display = 'none';
+            document.getElementById('mainMenuContent').style.display = 'block';
+        };
+    })();
+</script>
+
+    <script>
+    (function() {
+        // Localizamos el slot que creamos en el módulo de Gestión de Leads
+        const leadSlot = document.getElementById('leadIntegrationsSlot');
+        
+        if (leadSlot) {
+            // Limpiamos el mensaje provisional para poner el botón real
+            leadSlot.innerHTML = ''; 
+
+            // 1. Creación del Botón de Configuración (Estilo Ultra Premium)
+            const btnLeadTools = document.createElement('button');
+            btnLeadTools.className = 'btn';
+            btnLeadTools.style.cssText = `
+                width: 100%;
+                padding: 18px;
+                background: rgba(212, 175, 55, 0.03);
+                border: 1px dashed rgba(212, 175, 55, 0.4);
+                color: var(--gold) !important;
+                font-size: 10px;
+                letter-spacing: 2px;
+                cursor: pointer;
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                transition: all 0.4s ease;
+            `;
+            
+            btnLeadTools.innerHTML = `<span>🛠️</span> CONFIGURACIÓN DE LEADS`;
+            
+            // Efectos visuales de interacción
+            btnLeadTools.onmouseenter = () => {
+                btnLeadTools.style.background = 'rgba(212, 175, 55, 0.1)';
+                btnLeadTools.style.borderStyle = 'solid';
+                btnLeadTools.style.borderColor = 'var(--gold)';
+            };
+            btnLeadTools.onmouseleave = () => {
+                btnLeadTools.style.background = 'rgba(212, 175, 55, 0.03)';
+                btnLeadTools.style.borderStyle = 'dashed';
+                btnLeadTools.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+            };
+
+            // 2. Acción al hacer clic
+            btnLeadTools.onclick = () => {
+                document.getElementById('leadToolsPanel').style.display = 'flex';
+            };
+
+            leadSlot.appendChild(btnLeadTools);
+        }
+    })();
+</script>
+
+<div id="leadToolsPanel" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 16000; align-items: center; justify-content: center; backdrop-filter: blur(25px);">
+    <div class="reg-content" style="max-width: 450px; border-style: double; border-width: 3px; background: #000;">
+        <h3 style="margin-bottom: 5px; font-size: 14px; color: var(--gold); letter-spacing: 2px;">LEAD TOOLS CONFIG</h3>
+        <p style="font-size: 8px; color: #444; letter-spacing: 1px; margin-bottom: 30px; border-bottom: 1px solid #222; padding-bottom: 15px;">MÓDULO DE GESTIÓN AVANZADA</p>
+        
+        <div id="toolsFunctionsSlot" style="margin-bottom: 30px; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+            <p style="font-size: 9px; color: #222; font-style: italic;">SISTEMA LISTO PARA RECIBIR NUEVAS FUNCIONES</p>
+        </div>
+
+        <button onclick="document.getElementById('leadToolsPanel').style.display='none'" class="btn" style="width: 100%; background: transparent; border: 1px solid #333; color: #555 !important; font-size: 9px;">
+            CERRAR PANEL DE HERRAMIENTAS
+        </button>
+    </div>
+</div>
+
+<script>
+    // Este script queda abierto para recibir las funciones aditivas de herramientas
+    console.log("NEXO® Lead Tools Module: Ready for integration.");
+</script>
+
+   <style id="nexo-core-styles">
+    /* Anulación total de restricciones previas */
+    #leadToolsPanel {
+        display: none;
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.98) !important;
+        z-index: 999999 !important;
+        backdrop-filter: blur(25px) !important;
+        -webkit-backdrop-filter: blur(25px) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #leadToolsPanel .reg-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 40px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Scrollbar Premium */
+    .nexo-scroll::-webkit-scrollbar { width: 4px; }
+    .nexo-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+    .nexo-scroll::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
+</style>
+
+<script>
+    (function() {
+        // Asegurar que el título sea visible y elegante
+        const checkStructure = setInterval(() => {
+            const slot = document.getElementById('toolsFunctionsSlot');
+            if (slot && typeof currentUser !== 'undefined' && currentUser !== null) {
+                clearInterval(checkStructure);
+                injectDashboardLayout(slot);
+            }
+        }, 500);
+
+        function injectDashboardLayout(container) {
+            // Estructura de Dashboard de Doble Panel
+            container.style.cssText = `
+                display: grid;
+                grid-template-columns: 350px 1fr;
+                gap: 40px;
+                height: calc(100vh - 150px);
+                margin-top: 20px;
+            `;
+
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="background: #0a0a0a; padding: 30px; border-radius: 25px; border: 1px solid rgba(212,175,55,0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                        <p style="font-size: 8px; color: #d4af37; letter-spacing: 4px; margin: 0 0 15px 0; font-weight: bold;">SISTEMA DE CAPTACIÓN</p>
+                        <h2 id="nexo-status-text" style="font-size: 16px; color: #fff; margin: 0 0 20px 0; font-family: 'Segoe UI', sans-serif;">CARGANDO...</h2>
+                        <button id="nexo-btn-toggle" style="width: 100%; padding: 15px; border-radius: 12px; font-size: 9px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border: 1px solid #d4af37; font-weight: bold;"></button>
+                    </div>
+
+                    <div id="nexo-export-area" style="background: #080808; padding: 30px; border-radius: 25px; border: 1px solid #111;">
+                        <p style="font-size: 8px; color: #333; letter-spacing: 3px; margin: 0 0 10px 0;">HERRAMIENTAS DE DATA</p>
+                        <div style="color: #222; font-size: 9px;">Preparando módulo de exportación CSV/Excel...</div>
+                    </div>
+                </div>
+
+                <div style="background: #050505; border-radius: 30px; border: 1px solid #111; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
+                    <div style="padding: 25px 35px; background: #0a0a0a; border-bottom: 1px solid #151515; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 10px; color: #fff; letter-spacing: 2px; font-weight: bold;">AUDITORÍA DE LEADS EN TIEMPO REAL</span>
+                        <span id="nexo-counter" style="background: #d4af37; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 9px; font-weight: bold;">0 LEADS</span>
+                    </div>
+                    <div id="nexo-table-body" class="nexo-scroll" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
+                        </div>
                 </div>
             `;
 
-            const listaFilas = document.getElementById('nexo_lista_filas');
-            const btnAdd = document.getElementById('nexo_btn_add_field');
+            initNexoLogic();
+        }
 
-            // Conexión en tiempo real con Firebase
-            db.ref(dbPath).on('value', snap => {
-                listaFilas.innerHTML = '';
-                if (snap.exists()) {
-                    snap.forEach(child => {
-                        renderizarFilaAdmin(child.key, child.val(), listaFilas, dbPath);
-                    });
-                }
+        function initNexoLogic() {
+            const btn = document.getElementById('nexo-btn-toggle');
+            const statusTxt = document.getElementById('nexo-status-text');
+            const table = document.getElementById('nexo-table-body');
+            const counter = document.getElementById('nexo-counter');
+
+            // Sincronización de Configuración
+            db.ref(`users/${currentUser.uid}/config`).on('value', snap => {
+                const conf = snap.val() || { modoRegistro: false };
+                config.modoRegistro = conf.modoRegistro;
+                
+                statusTxt.innerText = conf.modoRegistro ? 'REGISTRO ACTIVO' : 'MODO GIRO LIBRE';
+                btn.innerText = conf.modoRegistro ? 'DESACTIVAR CAPTURA' : 'ACTIVAR CAPTURA';
+                btn.style.background = conf.modoRegistro ? '#d4af37' : 'transparent';
+                btn.style.color = conf.modoRegistro ? '#000' : '#d4af37';
             });
 
-            // Lógica para añadir nueva fila
-            btnAdd.onclick = () => {
-                const idNuevo = 'f' + Date.now();
-                db.ref(`${dbPath}/${idNuevo}`).set("Nuevo Campo");
+            btn.onclick = () => {
+                const newState = !config.modoRegistro;
+                db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState });
             };
-        });
+
+            // Sincronización de Leads
+            db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
+                table.innerHTML = '';
+                if (snap.exists()) {
+                    let total = 0;
+                    snap.forEach(child => {
+                        total++;
+                        const d = child.val();
+                        const row = document.createElement('div');
+                        row.style.cssText = `padding: 20px 30px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.4s ease;`;
+                        row.innerHTML = `
+                            <div>
+                                <b style="font-size: 11px; color: #fff; display: block; letter-spacing: 0.5px;">${(d.name || 'S/N').toUpperCase()}</b>
+                                <span style="font-size: 8px; color: #555;">${d.email || 'Sin Email'}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 10px; color: #d4af37; font-weight: bold; display: block;">${d.phone || ''}</span>
+                                <span style="font-size: 7px; color: #222;">${d.date || ''}</span>
+                            </div>
+                        `;
+                        table.prepend(row);
+                    });
+                    counter.innerText = `${total} LEADS`;
+                } else {
+                    table.innerHTML = `<div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; letter-spacing: 2px;">ESPERANDO REGISTROS...</div>`;
+                }
+            });
+        }
+    })();
+</script>
+
+    <script>
+    (function() {
+        const checkExportArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkExportArea);
+                renderExportModule(exportArea);
+            }
+        }, 600);
+
+        function renderExportModule(container) {
+            container.innerHTML = `
+                <p style="font-size: 8px; color: #d4af37; letter-spacing: 3px; margin: 0 0 15px 0; font-weight: bold;">GESTIÓN DE DATA</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="btnExportCSV" style="
+                        width: 100%; padding: 12px; background: transparent; 
+                        color: #fff; border: 1px solid #222; border-radius: 10px;
+                        font-size: 8px; letter-spacing: 1px; cursor: pointer;
+                        transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span>📥</span> DESCARGAR BASE DE DATOS (.CSV)
+                    </button>
+                    <p style="font-size: 7px; color: #444; text-align: center; margin-top: 5px;">Formato universal para Excel o CRM</p>
+                </div>
+            `;
+
+            const btn = document.getElementById('btnExportCSV');
+            
+            // Efecto Hover Premium
+            btn.onmouseenter = () => { btn.style.borderColor = '#d4af37'; btn.style.background = '#0a0a0a'; };
+            btn.onmouseleave = () => { btn.style.borderColor = '#222'; btn.style.background = 'transparent'; };
+
+            // LÓGICA DE EXPORTACIÓN
+            btn.onclick = () => {
+                db.ref(`users/${currentUser.uid}/leads`).once('value', snap => {
+                    if (!snap.exists()) {
+                        alert("No hay datos para exportar.");
+                        return;
+                    }
+
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += "NOMBRE,EMAIL,TELEFONO,FECHA\n"; // Cabeceras
+
+                    snap.forEach(child => {
+                        const d = child.val();
+                        // Limpieza de comas para no romper el CSV
+                        const name = (d.name || "").replace(/,/g, "");
+                        const email = (d.email || "").replace(/,/g, "");
+                        const phone = (d.phone || "").replace(/,/g, "");
+                        const date = (d.date || "").replace(/,/g, "");
+                        
+                        csvContent += `${name.toUpperCase()},${email},${phone},${date}\n`;
+                    });
+
+                    // Proceso de Descarga Automática
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `LEADS_NEXO_${new Date().toLocaleDateString()}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            };
+        }
+    })();
+</script>
+
+<script>
+    console.log("NEXO® Export Module: Integrated successfully.");
+</script>
+
+    <script>
+    (function() {
+        const checkExportArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkExportArea);
+                renderCleanupModule(exportArea);
+            }
+        }, 800);
+
+        function renderCleanupModule(container) {
+            // Creamos el contenedor de limpieza sin borrar lo anterior (Exportación)
+            const cleanupDiv = document.createElement('div');
+            cleanupDiv.style.cssText = `
+                margin-top: 25px; padding-top: 20px; 
+                border-top: 1px solid #1a1a1a; 
+                display: flex; flex-direction: column; gap: 10px;
+            `;
+
+            cleanupDiv.innerHTML = `
+                <p style="font-size: 8px; color: #ff4d4d; letter-spacing: 3px; margin: 0 0 5px 0; font-weight: bold; opacity: 0.7;">ZONA DE PELIGRO</p>
+                <button id="btnPurgeLeads" style="
+                    width: 100%; padding: 12px; background: transparent; 
+                    color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.2); border-radius: 10px;
+                    font-size: 8px; letter-spacing: 1px; cursor: pointer;
+                    transition: 0.3s;">
+                    🗑️ BORRAR TODOS LOS LEADS
+                </button>
+            `;
+            container.appendChild(cleanupDiv);
+
+            const btnPurge = document.getElementById('btnPurgeLeads');
+            
+            // Efecto Hover de Advertencia
+            btnPurge.onmouseenter = () => { 
+                btnPurge.style.background = 'rgba(255, 77, 77, 0.1)'; 
+                btnPurge.style.borderColor = '#ff4d4d'; 
+            };
+            btnPurge.onmouseleave = () => { 
+                btnPurge.style.background = 'transparent'; 
+                btnPurge.style.borderColor = 'rgba(255, 77, 77, 0.2)'; 
+            };
+
+            // LÓGICA DE BORRADO SEGURO
+            btnPurge.onclick = () => {
+                const confirm1 = confirm("⚠️ ATENCIÓN: Estás a punto de borrar TODA la base de datos de leads. Esta acción no se puede deshacer.\n\n¿Deseas continuar?");
+                
+                if (confirm1) {
+                    const confirm2 = prompt("Para confirmar la eliminación masiva, escribe la palabra: BORRAR");
+                    
+                    if (confirm2 === "BORRAR") {
+                        db.ref(`users/${currentUser.uid}/leads`).remove()
+                        .then(() => {
+                            alert("Base de datos purgada con éxito.");
+                        })
+                        .catch((error) => {
+                            console.error("Error al limpiar:", error);
+                            alert("Hubo un error al intentar borrar los datos.");
+                        });
+                    } else {
+                        alert("Acción cancelada. La palabra de seguridad no coincide.");
+                    }
+                }
+            };
+        }
+    })();
+</script>
+
+<script>
+    (function() {
+        // Usamos el intervalo que sabemos que funciona para detectar el área
+        const checkCanvas = setInterval(() => {
+            // Buscamos el área de Leads o el contenedor principal del panel
+            const container = document.getElementById('nexo-export-area');
+            if (container) {
+                clearInterval(checkCanvas);
+                injectProfessionalButton(container);
+            }
+        }, 800);
+
+        function injectProfessionalButton(container) {
+            // Si ya existe, no duplicar
+            if (document.getElementById('btnConfigFormV5')) return;
+
+            // Crear el botón con la identidad visual escalable
+            const btn = document.createElement('button');
+            btn.id = 'btnConfigFormV5';
+            btn.innerHTML = `<span style="color:var(--gold); font-size:14px;">⚙️</span> CONFIGURAR REGISTRO`;
+            
+            // Estilo idéntico a tus otros botones de admin
+            btn.style.cssText = `
+                width: 100%; margin-bottom: 20px; padding: 15px; 
+                background: #000; color: #fff; border: 1px solid #1a1a1a; 
+                border-radius: 12px; font-size: 10px; font-weight: bold; 
+                letter-spacing: 2px; cursor: pointer; display: flex; 
+                align-items: center; justify-content: center; gap: 12px;
+                transition: 0.3s; text-transform: uppercase;
+            `;
+
+            // Efectos Hover
+            btn.onmouseenter = () => { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)'; };
+            btn.onmouseleave = () => { btn.style.borderColor = '#1a1a1a'; btn.style.color = '#fff'; };
+
+            // Insertar al inicio del área de leads
+            container.parentNode.insertBefore(btn, container);
+
+            // Acción de apertura con limpieza de "Esperando registros"
+            btn.onclick = () => {
+                const modal = document.getElementById('nexo_canvas_registro');
+                const slot = document.getElementById('nexo_slot_logica');
+                
+                if (modal && slot) {
+                    modal.style.display = 'flex';
+                    // LIMPIEZA TOTAL: Esto elimina el mensaje de la Fase 3
+                    slot.innerHTML = `
+                        <div style="text-align:center; padding: 40px; border: 1px dashed #111; border-radius: 20px;">
+                            <p style="color:var(--gold); font-size:9px; letter-spacing:3px;">ESTRUCTURA DE REGISTRO LISTA</p>
+                        </div>
+                    `;
+                }
+            };
+        }
+    })();
+</script>
+
+    <script>
+    (function() {
+        // 1. RE-ESTRUCTURACIÓN DEL MODAL (Aseguramos que exista)
+        function ensureModalExists() {
+            if (!document.getElementById('nexo_canvas_registro')) {
+                const modal = document.createElement('div');
+                modal.id = "nexo_canvas_registro";
+                modal.style.cssText = `
+                    display: none; position: fixed; inset: 0; 
+                    background: rgba(0,0,0,0.98); z-index: 2147483647; 
+                    backdrop-filter: blur(30px); align-items: center; justify-content: center;
+                `;
+                
+                modal.innerHTML = `
+                    <div id="nexo_modal_body" style="width: 90vw; max-width: 800px; height: 80vh; background: #000; border: 1px solid #1a1a1a; border-radius: 40px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 50px 100px rgba(0,0,0,1);">
+                        <div style="padding: 30px 40px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="color: var(--gold); font-size: 14px; letter-spacing: 5px; margin: 0; text-transform: uppercase;">Configuración de Registro</h3>
+                                <p style="color: #444; font-size: 8px; margin-top: 5px; letter-spacing: 2px;">GESTIÓN DINÁMICA DE CAMPOS</p>
+                            </div>
+                            <button id="closeNexoConfig" style="background: #111; border: 1px solid #222; color: #fff; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 20px;">&times;</button>
+                        </div>
+                        <div id="nexo_slot_logica" style="flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="margin: auto; text-align: center; opacity: 0.2; color: #fff; font-size: 10px; letter-spacing: 4px;">
+                                INICIALIZANDO EDITOR...
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Evento de cierre
+                document.getElementById('closeNexoConfig').onclick = () => {
+                    modal.style.display = 'none';
+                };
+            }
+        }
+
+        // 2. VINCULACIÓN CONSTANTE (Vigilante)
+        const activatorInterval = setInterval(() => {
+            ensureModalExists();
+            
+            const btn = document.getElementById('btnConfigFormV5');
+            const modal = document.getElementById('nexo_canvas_registro');
+
+            if (btn && modal) {
+                // Removemos cualquier listener previo para evitar duplicidad y asignamos el nuevo
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("NEXO: Abriendo Panel de Registro...");
+                    modal.style.display = 'flex';
+                    
+                    // Disparamos evento de carga de datos (para la siguiente fase)
+                    window.dispatchEvent(new CustomEvent('nexo_open_editor'));
+                };
+            }
+        }, 1000); // Se mantiene vigilante por si el DOM se refresca
+    })();
+
+        /* ==========================================================
+   INYECCIÓN ADITIVA: MOTOR DE ESCALABILIDAD (modalRegistration)
+   Regla: Integridad Estructural - No modifica el HTML base.
+   ========================================================== */
+
+(function() {
+    // Definimos la ruta de configuración en Firebase
+    const dbPathConfig = `users/${currentUser.uid}/config/estructuraRegistro`;
+
+    // 1. ESCUCHADOR DE ESTRUCTURA (Para agregar o eliminar filas)
+    db.ref(dbPathConfig).on('value', snap => {
+        // Localizamos el contenedor de tu modal original
+        const container = document.querySelector('#modalRegistration .reg-inputs-container');
+        if (!container) return;
+
+        // Limpiamos los inputs estáticos para renderizar la lista dinámica
+        container.innerHTML = ''; 
+        
+        if (snap.exists()) {
+            // Recorremos la configuración y creamos cada fila
+            snap.forEach(child => {
+                const nombreDelCampo = child.val(); // Ej: "DNI", "Ciudad", etc.
+                const fieldId = child.key;
+
+                const inputRow = document.createElement('div');
+                inputRow.className = 'reg-input-group'; // Usamos tu clase CSS original
+                inputRow.innerHTML = `
+                    <input type="text" id="reg_${fieldId}" placeholder="${nombreDelCampo}" required>
+                `;
+                container.appendChild(inputRow);
+            });
+        } else {
+            // Si la base de datos está limpia, creamos los 3 campos base por defecto
+            const defaults = { 
+                f1: "Nombres Completos", 
+                f2: "Número de Teléfono", 
+                f3: "Correo Electrónico" 
+            };
+            db.ref(dbPathConfig).set(defaults);
+        }
     });
 
-    // 3. RENDERIZADOR DE FILAS (UI del Administrador)
+    // 2. FUNCIÓN DE CAPTURA ESCALABLE
+    // Esta función reemplaza la necesidad de buscar IDs fijos
+    window.capturarRegistroDinamico = function() {
+        const inputs = document.querySelectorAll('#modalRegistration .reg-inputs-container input');
+        let dataResult = {};
+        let validacionOk = true;
+
+        inputs.forEach(inp => {
+            const val = inp.value.trim();
+            if (!val) {
+                validacionOk = false;
+                inp.style.borderColor = "red"; // Feedback visual simple
+            } else {
+                inp.style.borderColor = "var(--gold)";
+            }
+            // Guardamos el dato usando el placeholder como etiqueta
+            dataResult[inp.placeholder] = val;
+        });
+
+        return { valido: validacionOk, data: dataResult };
+    };
+})();
+
+        /* ==========================================================
+   INYECCIÓN ADITIVA: INTERFAZ DEL EDITOR (LIENZO ADMIN)
+   Objetivo: Gestionar filas del registro en tiempo real
+   ========================================================== */
+
+(function() {
+    const dbPathConfig = `users/${currentUser.uid}/config/estructuraRegistro`;
+
+    // Escuchamos el evento de apertura del lienzo que ya configuramos
+    window.addEventListener('nexo_open_editor', () => {
+        const slot = document.getElementById('nexo_slot_logica');
+        if (!slot) return;
+
+        // 1. Dibujamos la estructura del editor dentro del lienzo
+        slot.innerHTML = `
+            <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto; animation: fadeIn 0.5s ease;">
+                <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
+                    </div>
+                
+                <button id="nexo_btn_add_field" style="
+                    width:100%; padding:18px; background:rgba(212,175,55,0.05); 
+                    color:var(--gold); border:1px dashed var(--gold); border-radius:20px;
+                    font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:3px;
+                    transition: 0.3s; text-transform: uppercase;">
+                    + AGREGAR NUEVO CAMPO AL REGISTRO
+                </button>
+            </div>
+        `;
+
+        const listaFilas = document.getElementById('nexo_lista_filas');
+        const btnAdd = document.getElementById('nexo_btn_add_field');
+
+        // 2. Cargamos y vigilamos los datos de Firebase para el administrador
+        db.ref(dbPathConfig).on('value', snap => {
+            listaFilas.innerHTML = '';
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    renderizarFilaAdmin(child.key, child.val(), listaFilas, dbPathConfig);
+                });
+            }
+        });
+
+        // 3. Acción para añadir campo nuevo
+        btnAdd.onclick = () => {
+            const idNuevo = 'f' + Date.now();
+            db.ref(`${dbPathConfig}/${idNuevo}`).set("Nuevo Campo");
+        };
+    });
+
+    // Función auxiliar para crear la UI de cada fila en el editor
     function renderizarFilaAdmin(id, valor, contenedor, path) {
         const fila = document.createElement('div');
         fila.style.cssText = `
             display:flex; align-items:center; gap:15px; background:#0a0a0a; 
-            padding:12px 20px; border-radius:15px; border:1px solid #1a1a1a;
+            padding:15px 25px; border-radius:18px; border:1px solid #1a1a1a;
+            transition: 0.3s;
         `;
 
         fila.innerHTML = `
             <input type="text" value="${valor}" style="
                 flex-grow:1; background:transparent; border:none; color:#fff; 
-                font-size:13px; outline:none; border-bottom:1px solid #333;">
+                font-size:13px; outline:none; border-bottom:1px solid #222; padding:5px 0;">
             <button class="nexo-btn-del" style="
-                background:transparent; border:none; color:#555; 
-                cursor:pointer; font-size:20px; font-weight:bold;">&times;</button>
+                background:transparent; border:none; color:#444; 
+                cursor:pointer; font-size:18px; padding:5px; transition:0.3s;">&times;</button>
         `;
 
         const input = fila.querySelector('input');
         const btnDel = fila.querySelector('.nexo-btn-del');
 
+        // Guardado automático al cambiar el texto
         input.onchange = () => db.ref(`${path}/${id}`).set(input.value);
+        
+        // Hover effect para el botón borrar
+        btnDel.onmouseenter = () => btnDel.style.color = '#ff4d4d';
+        btnDel.onmouseleave = () => btnDel.style.color = '#444';
+
+        // Acción de eliminar
         btnDel.onclick = () => {
-            if(confirm("¿Eliminar este campo?")) db.ref(`${path}/${id}`).remove();
+            if(confirm("¿Estás seguro de eliminar este campo del formulario?")) {
+                db.ref(`${path}/${id}`).remove();
+            }
         };
 
         contenedor.appendChild(fila);
     }
 })();
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
