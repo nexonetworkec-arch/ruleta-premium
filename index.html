@@ -1158,6 +1158,67 @@
         toolsSlot.appendChild(btnDatosPart);
     }
 })();
+
+        /* ==========================================================
+   PASO 1.2: BOTÓN DATOS DE PARTICIPANTES (ESCALABLE)
+   Regla: Inyección Aditiva en el Slot de Herramientas
+   ========================================================== */
+
+(function() {
+    const toolsSlot = document.getElementById('toolsFunctionsSlot');
+    
+    if (toolsSlot) {
+        // Limpiamos el texto de espera del slot
+        toolsSlot.innerHTML = '';
+        toolsSlot.style.display = 'flex';
+        toolsSlot.style.flexDirection = 'column';
+        toolsSlot.style.gap = '15px';
+        toolsSlot.style.width = '100%';
+
+        // 1. CREACIÓN DEL BOTÓN CON ESTÉTICA NEXO
+        const btnDatosPart = document.createElement('button');
+        btnDatosPart.id = 'btnDatosParticipantesNexo';
+        btnDatosPart.style.cssText = `
+            width: 100%; padding: 20px;
+            background: rgba(212, 175, 55, 0.02);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold); border-radius: 15px;
+            cursor: pointer; font-size: 11px; letter-spacing: 2px;
+            font-weight: bold; transition: 0.4s ease;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            text-transform: uppercase;
+        `;
+        
+        btnDatosPart.innerHTML = `<span>👥</span> DATOS DE PARTICIPANTES`;
+
+        // 2. INTERACCIÓN DINÁMICA
+        btnDatosPart.onmouseenter = () => {
+            btnDatosPart.style.background = 'rgba(212, 175, 55, 0.08)';
+            btnDatosPart.style.borderColor = 'var(--gold)';
+            btnDatosPart.style.transform = 'translateY(-2px)';
+        };
+        btnDatosPart.onmouseleave = () => {
+            btnDatosPart.style.background = 'rgba(212, 175, 55, 0.02)';
+            btnDatosPart.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+            btnDatosPart.style.transform = 'translateY(0)';
+        };
+
+        // 3. CONEXIÓN AL LIENZO ADMIN
+        btnDatosPart.onclick = () => {
+            // Cerramos el panel pequeño de herramientas
+            document.getElementById('leadToolsPanel').style.display = 'none';
+            
+            // Abrimos el lienzo maestro y avisamos que el editor debe cargarse
+            const lienzo = document.getElementById('lienzoConfigRegistro');
+            if (lienzo) {
+                lienzo.style.display = 'block';
+                window.dispatchEvent(new CustomEvent('nexo_open_editor'));
+            }
+        };
+
+        toolsSlot.appendChild(btnDatosPart);
+    }
+})();
 </script>
 
 <script>
@@ -1165,4 +1226,5 @@
 </script>
 </body>
 </html>
+
 
