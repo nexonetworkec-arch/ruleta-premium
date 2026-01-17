@@ -1796,207 +1796,105 @@
 </script>
 
     <style>
-    /* 1. ESTILOS DEL MODAL (NAMESPACE: nexoEdit) */
     #nexoEdit_Modal {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.98);
-        z-index: 20000;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(30px);
-        padding: 20px;
-        animation: nexoEdit_Fade 0.4s ease;
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 30000; align-items: center; justify-content: center;
+        backdrop-filter: blur(30px); padding: 20px; animation: nexoEdit_Fade 0.4s ease;
     }
-
     .nexoEdit-container {
-        background: var(--card-bg);
-        border: 1px solid var(--gold-mix);
-        border-radius: 30px;
-        width: min(900px, 95%);
-        max-height: 85vh;
-        display: flex;
-        flex-direction: column;
-        padding: 35px;
-        box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+        background: var(--card-bg); border: 1px solid var(--gold-mix);
+        border-radius: 30px; width: min(900px, 95%); max-height: 85vh;
+        display: flex; flex-direction: column; padding: 35px;
     }
-
     .nexoEdit-header {
-        border: none;
-        background: transparent;
-        font-size: 22px;
-        font-weight: bold;
-        color: var(--gold);
-        width: 100%;
-        margin-bottom: 25px;
-        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-        padding-bottom: 10px;
-        text-transform: uppercase;
-        outline: none;
-        letter-spacing: 2px;
+        border: none; background: transparent; font-size: 22px; font-weight: bold;
+        color: var(--gold); width: 100%; margin-bottom: 25px; border-bottom: 1px solid rgba(212,175,55,0.2);
+        padding-bottom: 10px; text-transform: uppercase; outline: none;
     }
-
-    .nexoEdit-table-scroll {
-        overflow-y: auto;
-        flex-grow: 1;
-        margin-bottom: 25px;
-        border-radius: 15px;
-        background: rgba(255,255,255,0.01);
-    }
-
-    .nexoEdit-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .nexoEdit-table th {
-        background: #000;
-        position: sticky;
-        top: 0;
-        padding: 15px;
-        text-align: left;
-        font-size: 10px;
-        color: #555;
-        border-bottom: 1px solid var(--gold-mix);
-        z-index: 5;
-    }
-
-    .nexoEdit-table td {
-        padding: 8px 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-
-    .nexoEdit-table input {
-        width: 100%;
-        background: transparent;
-        border: 1px solid transparent;
-        padding: 10px;
-        color: #ccc;
-        font-size: 13px;
-        border-radius: 5px;
-    }
-
-    .nexoEdit-table input:focus {
-        border-color: var(--gold-mix);
-        background: rgba(212, 175, 55, 0.05);
-        color: #fff;
-        outline: none;
-    }
-
-    .nexoEdit-btn-row-del {
-        background: rgba(255, 77, 77, 0.1);
-        border: 1px solid rgba(255, 77, 77, 0.2);
-        color: #ff4d4d;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-
-    @keyframes nexoEdit_Fade {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
+    .nexoEdit-table-scroll { overflow-y: auto; flex-grow: 1; margin-bottom: 25px; border-radius: 15px; }
+    .nexoEdit-table { width: 100%; border-collapse: collapse; }
+    .nexoEdit-table th { background: #000; position: sticky; top: 0; padding: 15px; font-size: 10px; color: #555; border-bottom: 1px solid var(--gold-mix); }
+    .nexoEdit-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .nexoEdit-table input { width: 100%; background: transparent; border: 1px solid transparent; padding: 10px; color: #ccc; font-size: 13px; }
+    .nexoEdit-btn-row-del { background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.2); color: #ff4d4d; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+    @keyframes nexoEdit_Fade { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 </style>
 
 <div id="nexoEdit_Modal">
     <div class="nexoEdit-container">
         <input type="text" class="nexoEdit-header" value="DATOS DE PARTICIPANTES" id="nexoEdit_Title">
-        
         <div class="nexoEdit-table-scroll nexo-scroll">
             <table class="nexoEdit-table">
                 <thead>
-                    <tr>
-                        <th>NOMBRE Y APELLIDO</th>
-                        <th>TELÉFONO</th>
-                        <th>CORREO ELECTRÓNICO</th>
-                        <th style="width: 40px; text-align: center;">🗑️</th>
-                    </tr>
+                    <tr><th>NOMBRE Y APELLIDO</th><th>TELÉFONO</th><th>EMAIL</th><th style="width: 40px;">🗑️</th></tr>
                 </thead>
                 <tbody id="nexoEdit_Tbody"></tbody>
             </table>
         </div>
-
         <div style="display: flex; gap: 15px;">
             <button class="btn" style="border: 1px solid var(--gold-mix); flex: 1; font-size: 10px;" onclick="nexoEdit_AddRow()">+ FILA</button>
-            <button id="nexoEdit_BtnSave" class="btn btn-primary" style="flex: 2; font-size: 10px;" onclick="nexoEdit_SaveToFirebase()">GUARDAR CAMBIOS</button>
-            <button class="btn" style="background: transparent; color: #444 !important; flex: 0.8; font-size: 10px;" onclick="nexoEdit_Close()">CANCELAR</button>
+            <button class="btn btn-primary" style="flex: 2; font-size: 10px;" onclick="nexoEdit_Save()">GUARDAR CAMBIOS</button>
+            <button class="btn" style="background: transparent; color: #444 !important; flex: 0.8; font-size: 10px;" onclick="nexoEdit_Close()">CERRAR</button>
         </div>
     </div>
 </div>
 
 <script>
 (function() {
-    // REFERENCIAS DE ELEMENTOS
-    const getModal = () => document.getElementById('nexoEdit_Modal');
-    const getTbody = () => document.getElementById('nexoEdit_Tbody');
+    const modal = document.getElementById('nexoEdit_Modal');
+    const tbody = document.getElementById('nexoEdit_Tbody');
 
-    // FUNCIÓN: AGREGAR FILA
     window.nexoEdit_AddRow = function(n="", t="", e="") {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><input type="text" placeholder="NOMBRE COMPLETO" value="${n}"></td>
-            <td><input type="text" placeholder="TELÉFONO" value="${t}"></td>
-            <td style="text-transform:none"><input type="email" placeholder="email@ejemplo.com" value="${e}"></td>
+            <td><input type="text" placeholder="NOMBRE" value="${n}"></td>
+            <td><input type="text" placeholder="TEL" value="${t}"></td>
+            <td style="text-transform:none"><input type="email" placeholder="EMAIL" value="${e}"></td>
             <td style="text-align:center"><button class="nexoEdit-btn-row-del" onclick="this.closest('tr').remove()">✕</button></td>
         `;
-        getTbody().appendChild(tr);
+        tbody.appendChild(tr);
     };
 
-    window.nexoEdit_Close = () => { getModal().style.display = 'none'; };
+    window.nexoEdit_Close = () => { modal.style.display = 'none'; };
+    window.nexoEdit_Save = () => { alert("SISTEMA: Datos listos."); nexoEdit_Close(); };
 
-    window.nexoEdit_SaveToFirebase = async function() {
-        console.log("NEXO: Guardando datos...");
-        alert("SISTEMA: Cambios sincronizados correctamente.");
-        nexoEdit_Close();
-    };
-
-    // 3. LÓGICA DE CONEXIÓN AGRESIVA
-    const connectToPanel = () => {
+    // --- EL "VIGILANTE" (MUTATION OBSERVER) ---
+    const startObserving = () => {
         const slot = document.getElementById('participantDataSlot');
-        const mainBtn = document.getElementById('btnParticipantData');
+        if (!slot) return;
 
-        if (!slot || !mainBtn) return;
+        const observer = new MutationObserver(() => {
+            // Si el slot está visible y NO tiene nuestro botón, lo inyectamos
+            if (slot.style.display !== 'none' && !document.getElementById('btnNexoFinal')) {
+                const btnContainer = document.createElement('div');
+                btnContainer.id = "nexoBtnContainer";
+                btnContainer.innerHTML = `
+                    <button id="btnNexoFinal" style="
+                        width:100%; margin-top:15px; background:var(--gold); 
+                        color:#000; border:none; padding:12px; border-radius:8px;
+                        font-weight:bold; cursor:pointer; font-size:10px;
+                        box-shadow: 0 4px 15px rgba(212,175,55,0.3);">
+                        ✍️ EDITAR DATOS DE PARTICIPANTES
+                    </button>
+                `;
+                slot.appendChild(btnContainer);
 
-        // Detectamos cuando el usuario abre el slot de audiencia
-        mainBtn.addEventListener('click', () => {
-            // Un pequeño retraso para permitir que el código original dibuje el slot
-            setTimeout(() => {
-                if (slot.style.display !== 'none') {
-                    // Re-inyectamos nuestro botón funcional
-                    slot.innerHTML = `
-                        <div style="padding: 10px 0; border-top: 1px solid rgba(212,175,55,0.1); margin-top: 10px;">
-                            <button id="btnOpenNexoEditor" class="btn" style="
-                                width:100%; background:rgba(212,175,55,0.08); 
-                                border:1px solid var(--gold); color:var(--gold); 
-                                font-size:10px; padding:12px; display:flex; 
-                                align-items:center; justify-content:center; gap:10px;
-                                cursor: pointer;">
-                                ✍️ EDITAR DATOS DE PARTICIPANTES
-                            </button>
-                        </div>
-                    `;
-
-                    // Conectamos el evento al botón recién creado
-                    const editorBtn = document.getElementById('btnOpenNexoEditor');
-                    editorBtn.onclick = (e) => {
-                        e.stopPropagation(); // Evita conflictos con el menú
-                        const tbody = getTbody();
-                        if(tbody.children.length === 0) nexoEdit_AddRow();
-                        getModal().style.display = 'flex';
-                    };
-                }
-            }, 100); 
+                document.getElementById('btnNexoFinal').onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if(tbody.children.length === 0) nexoEdit_AddRow();
+                    modal.style.display = 'flex';
+                };
+            }
         });
+
+        // Configuramos el observador para mirar cambios en el slot
+        observer.observe(slot, { attributes: true, childList: true, subtree: true });
     };
 
-    // Ejecutar al cargar la página
-    if (document.readyState === 'complete') {
-        connectToPanel();
-    } else {
-        window.addEventListener('load', connectToPanel);
-    }
+    // Iniciar cuando el DOM esté listo
+    if (document.readyState === 'complete') startObserving();
+    else window.addEventListener('load', startObserving);
 })();
 </script>
 </body>
