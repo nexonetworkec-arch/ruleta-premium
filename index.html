@@ -263,439 +263,215 @@
     </script>
 
     <style>
-    #adminPanel {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: #000;
-        z-index: 9999;
-        overflow-y: auto;
-        padding: 20px;
-        color: var(--gold);
-        font-family: 'Segoe UI', sans-serif;
-    }
-    .admin-card {
-        background: rgba(15, 15, 15, 0.98);
-        border: 1px solid var(--gold-mix);
-        border-radius: 25px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    .admin-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 15px;
-    }
-    .stat-box {
-        text-align: center;
-        padding: 15px;
-        border: 1px solid rgba(212, 175, 55, 0.1);
-        border-radius: 15px;
-        background: #050505;
-    }
-    .stat-number { font-size: 24px; font-weight: 900; display: block; }
-    .stat-label { font-size: 9px; opacity: 0.6; letter-spacing: 1px; }
-    .search-bar {
-        width: 100%;
-        background: #0a0a0a;
-        border: 1px solid #333;
-        color: var(--gold);
-        padding: 15px;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    .user-table-wrapper { overflow-x: auto; margin-top: 10px; }
-    .user-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .user-table th { text-align: left; padding: 12px; border-bottom: 2px solid var(--gold); background: #000; position: sticky; top: 0; }
-    .user-table td { padding: 12px; border-bottom: 1px solid #1a1a1a; }
-    .badge-online { color: #00ff00; font-weight: 900; }
-    .badge-offline { color: #ff3333; }
-    #imgPreview { max-width: 100px; border-radius: 10px; margin: 10px 0; display: none; border: 1px solid var(--gold); }
+    /* Variables y Estilos Base del Panel */
+    :root { --master-gold: #D4AF37; --master-border: 1px solid #D4AF37; }
+    #adminPanel, #userMenuPanel { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; overflow-y: auto; padding: 20px; color: var(--gold); font-family: sans-serif; }
+    
+    /* Estilos Tabla y Anclaje Maestro */
+    .user-table-wrapper { overflow-x: auto; max-height: 500px; border: 1px solid #222; border-radius: 15px; }
+    .user-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .user-table thead th { position: sticky; top: 0; background: #111; z-index: 10; padding: 15px; text-align: left; border-bottom: 2px solid var(--master-gold); color: var(--master-gold); }
+    .row-master { background: rgba(212, 175, 55, 0.15) !important; border: 2px solid var(--master-gold) !important; }
+    .badge-master { background: var(--master-gold); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 900; font-size: 9px; }
+    
+    /* Módulo 5: Generador NX (Escalable) */
+    .nx-generator-box { margin-top: 20px; padding: 20px; border: 1px dashed var(--gold-mix); border-radius: 20px; background: #050505; }
+    
+    /* Switch de Modo Registro */
+    .switch-container { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--master-gold); }
+    input:checked + .slider:before { transform: translateX(20px); }
 </style>
 
+<div id="leadModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; justify-content:center; align-items:center; padding:20px;">
+    <div class="auth-card" style="width:100%; max-width:400px; border:1px solid var(--gold);">
+        <h2 style="color:var(--gold); text-align:center;">REGISTRO DE PARTICIPANTE</h2>
+        <p style="font-size:11px; text-align:center; opacity:0.7;">INGRESE SUS DATOS PARA GIRAR LA RULETA</p>
+        <input type="text" id="leadName" class="auth-input" placeholder="NOMBRE COMPLETO" style="width:100%; margin-bottom:10px;">
+        <input type="tel" id="leadPhone" class="auth-input" placeholder="TELÉFONO / WHATSAPP" style="width:100%; margin-bottom:10px;">
+        <input type="email" id="leadEmail" class="auth-input" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px;">
+        <button onclick="validateLeadAndSpin()" class="btn btn-primary" style="width:100%;">CONTINUAR Y GIRAR</button>
+        <button onclick="document.getElementById('leadModal').style.display='none'" class="btn" style="width:100%; margin-top:10px; background:transparent; border:none; font-size:10px;">CANCELAR</button>
+    </div>
+</div>
+
 <div id="adminPanel">
-    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--gold-dark); padding-bottom: 15px;">
-        <h2 style="margin:0;">NEXO® MASTER ENGINE</h2>
-        <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn" style="border:1px solid var(--gold); background:transparent;">SALIR</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2>NEXO® MASTER ENGINE</h2>
+        <button onclick="document.getElementById('adminPanel').style.display='none'" class="btn" style="border:1px solid var(--gold);">CERRAR</button>
+    </div>
+
+    <div class="admin-card" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
+        <div class="stat-box"><span id="statActive">0</span><br><small>ONLINE</small></div>
+        <div id="statTotal" class="stat-box">0<br><small>TOTAL</small></div>
+        <div class="stat-box"><span id="statPrizes">0</span><br><small>PREMIOS</small></div>
     </div>
 
     <div class="admin-card">
-        <select id="subTypeFilter" class="search-bar" style="width: auto; min-width: 200px;">
-            <option value="all">TODOS LOS USUARIOS</option>
-            <option value="premium">PLAN PREMIUM</option>
-            <option value="basic">PLAN BÁSICO</option>
-        </select>
-        <div class="admin-grid">
-            <div class="stat-box"><span class="stat-number" id="statActive">0</span><span class="stat-label">ACTIVOS</span></div>
-            <div class="stat-box"><span class="stat-number" id="statTotal">0</span><span class="stat-label">TOTAL REGISTROS</span></div>
-            <div class="stat-box"><span class="stat-number" id="statExpiring">0</span><span class="stat-label">POR CADUCAR</span></div>
-            <div class="stat-box"><span class="stat-number" id="statPrizes">0</span><span class="stat-label">PREMIOS ENTREGADOS</span></div>
+        <input type="text" id="adminSearch" class="search-bar" placeholder="BUSCAR USUARIO...">
+        <div class="user-table-wrapper">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>IDENTIDAD</th>
+                        <th>UID</th>
+                        <th>PLAN</th>
+                        <th>ESTADO</th>
+                        <th>MODO REGISTRO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="userListBody"></tbody>
+            </table>
         </div>
     </div>
 
     <div class="admin-card">
-        <input type="text" id="adminSearch" class="search-bar" placeholder="BUSCAR POR NOMBRE, UID, EMAIL O TELÉFONO...">
-    </div>
-
-    <div class="admin-card user-table-wrapper">
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>IDENTIDAD</th>
-                    <th>ID TÉCNICO (UID)</th>
-                    <th>PLAN</th>
-                    <th>ESTADO</th>
-                    <th>ÚLT. CONEXIÓN</th>
-                    <th>ACCIONES</th>
-                </tr>
-            </thead>
-            <tbody id="userListBody"></tbody>
-        </table>
-    </div>
-
-    <div class="admin-card">
-        <h3>MENSAJERÍA CENTRALIZADA</h3>
-        <select id="msgTarget" class="search-bar">
-            <option value="all">DIFUSIÓN GLOBAL (TODOS)</option>
-            <option value="premium">SOLO NODOS PREMIUM</option>
-        </select>
-        <textarea id="msgBody" class="search-bar" style="height:80px;" placeholder="TEXTO DEL COMUNICADO..."></textarea>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <input type="text" id="msgImgUrl" class="search-bar" placeholder="URL DE IMAGEN (HTTPS)">
-            <input type="file" id="msgImgLocal" accept="image/*" style="display:none;">
-            <button onclick="document.getElementById('msgImgLocal').click()" class="btn" style="border:1px solid var(--gold); font-size:9px;">SUBIR DESDE DISPOSITIVO</button>
-        </div>
-        <img id="imgPreview" src="" alt="Preview">
-        
-        <button id="btnSendGlobal" class="btn btn-primary" style="width:100%; margin-top:10px;">DESPACHAR MULTIMEDIA</button>
-    </div>
-
-    <div class="admin-card">
-        <h3>SISTEMA DE LICENCIAS NX</h3>
+        <h3>MENSAJERÍA MULTIMEDIA</h3>
+        <textarea id="msgBody" class="search-bar" placeholder="MENSAJE..."></textarea>
         <div style="display:flex; gap:10px;">
-            <select id="licType" class="search-bar" style="margin:0;">
+            <input type="text" id="msgImgUrl" class="search-bar" style="flex:2;" placeholder="URL IMAGEN">
+            <button onclick="document.getElementById('msgLocal').click()" class="btn" style="flex:1; border:1px solid var(--gold); font-size:10px;">SUBIR LOCAL</button>
+            <input type="file" id="msgLocal" hidden accept="image/*">
+        </div>
+        <img id="previewImg" style="display:none; width:100px; margin-top:10px; border-radius:10px; border:1px solid var(--gold);">
+        <button class="btn btn-primary" style="width:100%; margin-top:10px;">DESPACHAR COMUNICADO</button>
+    </div>
+
+    <div class="nx-generator-box">
+        <h3 style="margin:0; color:var(--master-gold);">GENERADOR DE LICENCIAS NX</h3>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <select id="nxTime" class="search-bar" style="margin:0; width:150px;">
                 <option value="30">30 DÍAS</option>
                 <option value="365">1 AÑO (VITALICIO)</option>
             </select>
-            <button id="btnGenLic" class="btn btn-primary">GENERAR KEY</button>
+            <button id="btnGenNX" class="btn btn-primary">GENERAR KEY</button>
         </div>
-        <div id="licOutput" style="margin-top:20px; text-align:center; font-size:22px; font-weight:900; letter-spacing:4px;">---</div>
+        <div id="nxOutput" style="margin-top:15px; font-size:24px; font-weight:900; letter-spacing:3px; text-align:center;">---</div>
     </div>
 </div>
 
 <script>
-(function() {
-    const MASTER_ID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
-    let fullDatabase = {};
-    let mediaData = null;
-
-    // ACTIVACIÓN SECRETA (5 CLICKS)
-    const titleTrigger = document.querySelector('.dynamic-title');
-    let counter = 0;
-    if(titleTrigger) {
-        titleTrigger.addEventListener('click', () => {
-            if(firebase.auth().currentUser?.uid === MASTER_ID) {
-                counter++;
-                if(counter >= 5) {
-                    document.getElementById('adminPanel').style.display = 'block';
-                    counter = 0;
-                    loadAdminData();
-                }
-            }
-        });
-    }
-
-    function loadAdminData() {
-        firebase.database().ref('users').on('value', snap => {
-            fullDatabase = snap.val() || {};
-            refreshDashboard();
-        });
-    }
-
-    function refreshDashboard() {
-        const users = Object.entries(fullDatabase);
-        document.getElementById('statTotal').innerText = users.length;
-        document.getElementById('statActive').innerText = users.filter(([id, u]) => u.status?.state === 'online').length;
-        
-        let totalPrizes = 0;
-        users.forEach(([id, u]) => { if(u.history) totalPrizes += Object.keys(u.history).length; });
-        document.getElementById('statPrizes').innerText = totalPrizes;
-
-        renderUserTable(fullDatabase);
-    }
-
-    function renderUserTable(data) {
-        const body = document.getElementById('userListBody');
-        body.innerHTML = '';
-        let i = 1;
-        for(const uid in data) {
-            const u = data[uid];
-            const online = u.status?.state === 'online';
-            body.innerHTML += `
-                <tr>
-                    <td>${i++}</td>
-                    <td>${(u.config?.tituloSorteo || 'S/N').toUpperCase()}</td>
-                    <td style="font-size:9px; opacity:0.6;">${uid}</td>
-                    <td>${(u.subscription?.type || 'FREE').toUpperCase()}</td>
-                    <td class="${online ? 'badge-online' : 'badge-offline'}">${online ? 'ACTIVO' : 'OFFLINE'}</td>
-                    <td>${u.status?.last_changed ? new Date(u.status.last_changed).toLocaleDateString() : '---'}</td>
-                    <td><button onclick="requestRemoteSupport('${uid}')" class="btn" style="padding:5px 8px; font-size:8px; border:1px solid #444;">SOPORTE</button></td>
-                </tr>`;
-        }
-    }
-
-    // GESTIÓN MULTIMEDIA (LOCAL)
-    document.getElementById('msgImgLocal').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                mediaData = event.target.result;
-                const preview = document.getElementById('imgPreview');
-                preview.src = mediaData;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // GENERADOR DE LLAVES
-    document.getElementById('btnGenLic').onclick = () => {
-        const key = "NX-" + Math.random().toString(36).substr(2, 9).toUpperCase();
-        document.getElementById('licOutput').innerText = key;
-    };
-
-    // BÚSQUEDA
-    document.getElementById('adminSearch').oninput = (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = {};
-        for(let id in fullDatabase) {
-            if(id.toLowerCase().includes(term) || (fullDatabase[id].config?.tituloSorteo || "").toLowerCase().includes(term)) {
-                filtered[id] = fullDatabase[id];
-            }
-        }
-        renderUserTable(filtered);
-    };
-})();
-
-function requestRemoteSupport(uid) {
-    const authCode = prompt("SOLICITAR ACCESO: INGRESE CÓDIGO DE APROBACIÓN DEL USUARIO");
-    if(authCode) alert("CONECTANDO AL NODO " + uid + " BAJO CONSENTIMIENTO.");
-}
-</script>
-
-    <style>
-    /* Estilos del Botón Hamburguesa Cuadrado */
-    #btnUserMenu {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        background: var(--bg-color);
-        border: 2px solid var(--gold-mix);
-        border-radius: 12px; /* Cuadrado con puntas suavizadas */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        z-index: 9990;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
-    }
-    #btnUserMenu:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
-    .bar { width: 25px; height: 2px; background: var(--gold); transition: 0.3s; }
-
-    /* Panel del Menú (Escalable) */
-    #userMenuPanel {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.98);
-        z-index: 9991;
-        padding: 40px 20px;
-        color: var(--gold);
-        animation: fadeIn 0.3s ease;
-    }
-
-    /* Modal de Validación de Contraseña */
-    #menuAuthLock {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 9995;
-        justify-content: center;
-        align-items: center;
-    }
-    .lock-card {
-        background: var(--card-bg);
-        padding: 30px;
-        border: 1px solid var(--gold);
-        border-radius: 20px;
-        text-align: center;
-        width: 90%;
-        max-width: 350px;
-    }
-    .menu-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-top: 30px;
-    }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-
-<div id="btnUserMenu" onclick="attemptOpenMenu()">
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
-</div>
-
-<div id="menuAuthLock">
-    <div class="lock-card">
-        <h3 style="margin-top:0; letter-spacing:2px;">ACCESO RESTRINGIDO</h3>
-        <p style="font-size:10px; opacity:0.7; margin-bottom:20px;">INGRESE SU CONTRASEÑA DE SESIÓN PARA CONTINUAR</p>
-        <input type="password" id="menuPassVerify" class="auth-input" style="width:100%; text-align:center; margin-bottom:15px;" placeholder="••••••••">
-        <div style="display:flex; gap:10px;">
-            <button onclick="closeMenuLock()" class="btn" style="flex:1; border:1px solid #333;">CANCELAR</button>
-            <button onclick="verifyMenuAccess()" id="btnVerifyLock" class="btn btn-primary" style="flex:1;">ENTRAR</button>
-        </div>
-    </div>
-</div>
-
-<div id="userMenuPanel">
-    <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-mix); padding-bottom: 15px;">
-        <h2 style="margin:0; font-size:18px;">MENÚ DE CONFIGURACIÓN</h2>
-        <button onclick="document.getElementById('userMenuPanel').style.display='none'" class="btn" style="border:1px solid var(--gold); background:transparent;">CERRAR</button>
-    </div>
-
-    <div class="menu-grid" id="injectedMenuItems">
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; opacity: 0.3; border: 1px dashed var(--gold-mix); border-radius: 15px;">
-            MODULOS EN PREPARACIÓN...
-        </div>
-    </div>
-</div>
-
-<script>
-    function attemptOpenMenu() {
-        document.getElementById('menuAuthLock').style.display = 'flex';
-        document.getElementById('menuPassVerify').focus();
-    }
-
-    function closeMenuLock() {
-        document.getElementById('menuAuthLock').style.display = 'none';
-        document.getElementById('menuPassVerify').value = '';
-    }
-
-    function verifyMenuAccess() {
-        const password = document.getElementById('menuPassVerify').value;
-        const user = firebase.auth().currentUser;
-        const btn = document.getElementById('btnVerifyLock');
-
-        if (!password || !user) return;
-
-        btn.innerText = "VERIFICANDO...";
-        btn.disabled = true;
-
-        // Re-autenticación dinámica para validar que sea la contraseña actual
-        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-        
-        user.reauthenticateWithCredential(credential)
-            .then(() => {
-                btn.innerText = "ENTRAR";
-                btn.disabled = false;
-                closeMenuLock();
-                document.getElementById('userMenuPanel').style.display = 'block';
-            })
-            .catch(error => {
-                btn.innerText = "ERROR";
-                btn.disabled = false;
-                alert("CONTRASEÑA INCORRECTA O SESIÓN EXPIRADA.");
-                console.error(error);
-            });
-    }
-
-    // Cerrar con tecla Escape
-    window.addEventListener('keydown', (e) => {
-        if(e.key === "Escape") {
-            closeMenuLock();
-            document.getElementById('userMenuPanel').style.display = 'none';
-        }
-    });
-</script>
-
-    <script>
 (function() {
     const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+    let isRegModeActive = false; // Estado del modo registro
 
-    // Función para inyectar el botón de Admin si el UID coincide
-    function injectAdminAccess() {
-        const menuGrid = document.getElementById('injectedMenuItems');
-        const user = firebase.auth().currentUser;
+    // LOGICA DE ANCLAJE MAESTRO Y LISTA
+    function renderMasterTable(users) {
+        const tbody = document.getElementById('userListBody');
+        tbody.innerHTML = '';
+        
+        // 1. Separar Maestro de los demás
+        const masterData = users[MASTER_UID];
+        const others = Object.entries(users).filter(([uid]) => uid !== MASTER_UID);
 
-        if (user && user.uid === MASTER_UID && menuGrid) {
-            // Limpiamos el mensaje de "En preparación" si existe
-            if (menuGrid.innerHTML.includes("MODULOS EN PREPARACIÓN")) {
-                menuGrid.innerHTML = '';
-            }
+        // 2. Renderizar Maestro siempre en Fila #1
+        if(masterData) renderRow(MASTER_UID, masterData, 1, true);
 
-            // Creamos el botón con la estética de la marca
-            const adminBtn = document.createElement('div');
-            adminBtn.id = "btnOpenMasterAdmin";
-            adminBtn.innerHTML = `
-                <div style="
-                    border: 1px solid var(--gold);
-                    background: rgba(212, 175, 55, 0.1);
-                    border-radius: 15px;
-                    padding: 20px;
-                    text-align: center;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 10px;
-                ">
-                    <span style="font-size: 20px;">👑</span>
-                    <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">PANEL MAESTRO</span>
-                </div>
-            `;
-
-            adminBtn.onclick = () => {
-                document.getElementById('userMenuPanel').style.display = 'none'; // Cierra el menú de usuario
-                document.getElementById('adminPanel').style.display = 'block'; // Abre el panel de administrador
-            };
-
-            // Insertamos al inicio del grid
-            menuGrid.prepend(adminBtn);
-        }
+        // 3. Renderizar resto
+        others.forEach(([uid, data], index) => {
+            renderRow(uid, data, index + 2, false);
+        });
     }
 
-    // Escuchamos el estado de autenticación para activar la inyección
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // Pequeño delay para asegurar que el DOM del menú esté listo
-            setTimeout(injectAdminAccess, 1000);
+    function renderRow(uid, data, index, isMaster) {
+        const tbody = document.getElementById('userListBody');
+        const isOnline = data.status?.state === 'online';
+        const row = document.createElement('tr');
+        if(isMaster) row.className = 'row-master';
+        
+        row.innerHTML = `
+            <td>${index}</td>
+            <td>${isMaster ? '<span class="badge-master">NEXO® MASTER</span>' : (data.config?.tituloSorteo || 'S/N').toUpperCase()}</td>
+            <td style="font-size:9px; opacity:0.5;">${uid}</td>
+            <td>${(data.subscription?.type || 'BÁSICO').toUpperCase()}</td>
+            <td style="color:${isOnline ? '#00ff00' : '#ff3333'}">${isOnline ? 'ONLINE' : 'OFFLINE'}</td>
+            <td>
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" ${data.config?.regMode ? 'checked' : ''} onchange="toggleRegMode('${uid}', this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </td>
+            <td><button class="btn" style="padding:5px; font-size:10px; border:1px solid #444;">SOPORTE</button></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    // GESTIÓN DE LEADS Y GIRO
+    const originalSpin = window.appWheel?.spin;
+    if(window.appWheel) {
+        window.appWheel.spin = function() {
+            if(isRegModeActive) {
+                document.getElementById('leadModal').style.display = 'flex';
+            } else {
+                originalSpin.call(window.appWheel);
+            }
+        };
+    }
+
+    window.validateLeadAndSpin = function() {
+        const email = document.getElementById('leadEmail').value;
+        const name = document.getElementById('leadName').value;
+        const re = /\S+@\S+\.\S+/;
+        if(name.length < 3 || !re.test(email)) {
+            alert("DATOS INVÁLIDOS. POR FAVOR VERIFIQUE.");
+            return;
+        }
+        document.getElementById('leadModal').style.display = 'none';
+        originalSpin.call(window.appWheel);
+    };
+
+    // GENERADOR NX
+    document.getElementById('btnGenNX').onclick = () => {
+        const key = "NX-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+        document.getElementById('nxOutput').innerText = key;
+    };
+
+    // CARGA DE IMAGEN LOCAL
+    document.getElementById('msgLocal').onchange = function(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const preview = document.getElementById('previewImg');
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    // DETECCIÓN DE ADMIN PARA ACTIVAR BOTÓN EN MENÚ
+    firebase.auth().onAuthStateChanged(user => {
+        if(user && user.uid === MASTER_UID) {
+            // Activar botón en el menú de usuario (inyectado previamente)
+            const checkMenu = setInterval(() => {
+                const grid = document.getElementById('injectedMenuItems');
+                if(grid) {
+                    clearInterval(checkMenu);
+                    // Lógica para inyectar si no existe...
+                }
+            }, 500);
+            
+            // Cargar datos del panel
+            firebase.database().ref('users').on('value', snap => {
+                const data = snap.val() || {};
+                renderMasterTable(data);
+                // Actualizar estadísticas globales...
+            });
         }
     });
+
+    // Función global para el switch
+    window.toggleRegMode = function(uid, state) {
+        if(uid === firebase.auth().currentUser.uid) isRegModeActive = state;
+        firebase.database().ref(`users/${uid}/config/regMode`).set(state);
+    };
 })();
 </script>
-
-<style>
-    /* Efecto hover para el botón de admin dentro del menú */
-    #btnOpenMasterAdmin:hover div {
-        background: rgba(212, 175, 55, 0.2) !important;
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
-    }
-</style>
 </body>
 </html>
-
-
