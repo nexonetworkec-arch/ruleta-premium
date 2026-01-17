@@ -1248,9 +1248,92 @@
         }
     })();
 </script>
+
+    <script>
+    (function() {
+        const btnAdmin = document.getElementById('btnConfigFormV5');
+        const slotLogica = document.getElementById('nexo_slot_logica');
+
+        if (btnAdmin && slotLogica) {
+            btnAdmin.onclick = () => {
+                // 1. Abrir Modal
+                document.getElementById('nexo_canvas_registro').style.display = 'flex';
+                
+                // 2. Cargar Interfaz de Gestión
+                renderEditorDeCampos(slotLogica);
+            };
+        }
+
+        function renderEditorDeCampos(container) {
+            container.innerHTML = `
+                <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto;">
+                    <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
+                        </div>
+                    
+                    <button id="nexo_add_row_btn" style="
+                        width:100%; padding:15px; background:rgba(212,175,55,0.1); 
+                        color:var(--gold); border:1px dashed var(--gold); border-radius:15px;
+                        font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:2px;">
+                        + AGREGAR NUEVO CAMPO AL REGISTRO
+                    </button>
+                </div>
+            `;
+
+            const listaFilas = document.getElementById('nexo_lista_filas');
+            const btnAdd = document.getElementById('nexo_add_row_btn');
+
+            // 3. Sincronización con Firebase (Campos del Participante)
+            const dbPath = `users/${currentUser.uid}/config/formFields`;
+            
+            db.ref(dbPath).on('value', snap => {
+                listaFilas.innerHTML = '';
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        crearFilaUI(child.key, child.val(), listaFilas, dbPath);
+                    });
+                } else {
+                    // Inicialización por defecto si está vacío
+                    db.ref(dbPath).set({ f1: "Nombre", f2: "Email", f3: "WhatsApp" });
+                }
+            });
+
+            // 4. Lógica para añadir nueva fila
+            btnAdd.onclick = () => {
+                const newId = 'field_' + Date.now();
+                db.ref(dbPath + '/' + newId).set("Nuevo Campo");
+            };
+        }
+
+        function crearFilaUI(id, valor, container, path) {
+            const fila = document.createElement('div');
+            fila.style.cssText = `
+                display:flex; align-items:center; gap:15px; background:#0a0a0a; 
+                padding:12px 20px; border-radius:12px; border:1px solid #151515;
+            `;
+
+            fila.innerHTML = `
+                <input type="text" value="${valor}" style="
+                    flex-grow:1; background:transparent; border:none; color:#fff; 
+                    font-size:12px; outline:none; border-bottom:1px solid #222; padding:5px 0;">
+                <button class="nexo-delete-row" style="
+                    background:transparent; border:none; color:#ff4d4d; 
+                    cursor:pointer; font-size:16px; padding:5px;">✕</button>
+            `;
+
+            // Guardar cambios al escribir
+            const input = fila.querySelector('input');
+            input.onchange = () => db.ref(path + '/' + id).set(input.value);
+
+            // Borrar fila
+            fila.querySelector('.nexo-delete-row').onclick = () => {
+                if(confirm("¿Eliminar este campo del formulario de registro?")) {
+                    db.ref(path + '/' + id).remove();
+                }
+            };
+
+            container.appendChild(fila);
+        }
+    })();
+</script>
 </body>
 </html>
-
-
-
-
