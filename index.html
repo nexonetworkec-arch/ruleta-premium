@@ -1251,88 +1251,62 @@
 
     <script>
     (function() {
-        const btnAdmin = document.getElementById('btnConfigFormV5');
-        const slotLogica = document.getElementById('nexo_slot_logica');
-
-        if (btnAdmin && slotLogica) {
-            btnAdmin.onclick = () => {
-                // 1. Abrir Modal
-                document.getElementById('nexo_canvas_registro').style.display = 'flex';
+        // 1. RE-ESTRUCTURACIÓN DEL MODAL (Aseguramos que exista)
+        function ensureModalExists() {
+            if (!document.getElementById('nexo_canvas_registro')) {
+                const modal = document.createElement('div');
+                modal.id = "nexo_canvas_registro";
+                modal.style.cssText = `
+                    display: none; position: fixed; inset: 0; 
+                    background: rgba(0,0,0,0.98); z-index: 2147483647; 
+                    backdrop-filter: blur(30px); align-items: center; justify-content: center;
+                `;
                 
-                // 2. Cargar Interfaz de Gestión
-                renderEditorDeCampos(slotLogica);
-            };
-        }
-
-        function renderEditorDeCampos(container) {
-            container.innerHTML = `
-                <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto;">
-                    <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;">
+                modal.innerHTML = `
+                    <div id="nexo_modal_body" style="width: 90vw; max-width: 800px; height: 80vh; background: #000; border: 1px solid #1a1a1a; border-radius: 40px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 50px 100px rgba(0,0,0,1);">
+                        <div style="padding: 30px 40px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="color: var(--gold); font-size: 14px; letter-spacing: 5px; margin: 0; text-transform: uppercase;">Configuración de Registro</h3>
+                                <p style="color: #444; font-size: 8px; margin-top: 5px; letter-spacing: 2px;">GESTIÓN DINÁMICA DE CAMPOS</p>
+                            </div>
+                            <button id="closeNexoConfig" style="background: #111; border: 1px solid #222; color: #fff; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 20px;">&times;</button>
                         </div>
-                    
-                    <button id="nexo_add_row_btn" style="
-                        width:100%; padding:15px; background:rgba(212,175,55,0.1); 
-                        color:var(--gold); border:1px dashed var(--gold); border-radius:15px;
-                        font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:2px;">
-                        + AGREGAR NUEVO CAMPO AL REGISTRO
-                    </button>
-                </div>
-            `;
+                        <div id="nexo_slot_logica" style="flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 15px;">
+                            <div style="margin: auto; text-align: center; opacity: 0.2; color: #fff; font-size: 10px; letter-spacing: 4px;">
+                                INICIALIZANDO EDITOR...
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
 
-            const listaFilas = document.getElementById('nexo_lista_filas');
-            const btnAdd = document.getElementById('nexo_add_row_btn');
+                // Evento de cierre
+                document.getElementById('closeNexoConfig').onclick = () => {
+                    modal.style.display = 'none';
+                };
+            }
+        }
 
-            // 3. Sincronización con Firebase (Campos del Participante)
-            const dbPath = `users/${currentUser.uid}/config/formFields`;
+        // 2. VINCULACIÓN CONSTANTE (Vigilante)
+        const activatorInterval = setInterval(() => {
+            ensureModalExists();
             
-            db.ref(dbPath).on('value', snap => {
-                listaFilas.innerHTML = '';
-                if (snap.exists()) {
-                    snap.forEach(child => {
-                        crearFilaUI(child.key, child.val(), listaFilas, dbPath);
-                    });
-                } else {
-                    // Inicialización por defecto si está vacío
-                    db.ref(dbPath).set({ f1: "Nombre", f2: "Email", f3: "WhatsApp" });
-                }
-            });
+            const btn = document.getElementById('btnConfigFormV5');
+            const modal = document.getElementById('nexo_canvas_registro');
 
-            // 4. Lógica para añadir nueva fila
-            btnAdd.onclick = () => {
-                const newId = 'field_' + Date.now();
-                db.ref(dbPath + '/' + newId).set("Nuevo Campo");
-            };
-        }
-
-        function crearFilaUI(id, valor, container, path) {
-            const fila = document.createElement('div');
-            fila.style.cssText = `
-                display:flex; align-items:center; gap:15px; background:#0a0a0a; 
-                padding:12px 20px; border-radius:12px; border:1px solid #151515;
-            `;
-
-            fila.innerHTML = `
-                <input type="text" value="${valor}" style="
-                    flex-grow:1; background:transparent; border:none; color:#fff; 
-                    font-size:12px; outline:none; border-bottom:1px solid #222; padding:5px 0;">
-                <button class="nexo-delete-row" style="
-                    background:transparent; border:none; color:#ff4d4d; 
-                    cursor:pointer; font-size:16px; padding:5px;">✕</button>
-            `;
-
-            // Guardar cambios al escribir
-            const input = fila.querySelector('input');
-            input.onchange = () => db.ref(path + '/' + id).set(input.value);
-
-            // Borrar fila
-            fila.querySelector('.nexo-delete-row').onclick = () => {
-                if(confirm("¿Eliminar este campo del formulario de registro?")) {
-                    db.ref(path + '/' + id).remove();
-                }
-            };
-
-            container.appendChild(fila);
-        }
+            if (btn && modal) {
+                // Removemos cualquier listener previo para evitar duplicidad y asignamos el nuevo
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("NEXO: Abriendo Panel de Registro...");
+                    modal.style.display = 'flex';
+                    
+                    // Disparamos evento de carga de datos (para la siguiente fase)
+                    window.dispatchEvent(new CustomEvent('nexo_open_editor'));
+                };
+            }
+        }, 1000); // Se mantiene vigilante por si el DOM se refresca
     })();
 </script>
 </body>
