@@ -1176,100 +1176,70 @@
     })();
 </script>
 
-    <div id="modalEditParticipants" style="
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-    z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.4s ease;">
-    
-    <div style="
-        width: 90%; max-width: 500px; background: #0a0a0a; border: 1px solid var(--gold-mix); 
-        border-radius: 20px; padding: 30px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-        
-        <h2 id="editModalTitle" contenteditable="true" style="
-            color: var(--gold); font-size: 11px; letter-spacing: 3px; text-align: center; 
-            margin-bottom: 25px; outline: none; border-bottom: 1px dashed rgba(212,175,55,0.3); padding-bottom: 10px; text-transform: uppercase;">
-            EDITAR DATOS DE PARTICIPANTES
-        </h2>
+    <script>
+    (function() {
+        const updateSlotContent = setInterval(() => {
+            const slot = document.getElementById('participantDataSlot');
+            if (slot) {
+                clearInterval(updateSlotContent);
+                renderEditorInsideSlot(slot);
+            }
+        }, 800);
 
-        <div id="dynamicRowsContainer" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-            </div>
+        function renderEditorInsideSlot(container) {
+            // Limpiamos el contenido previo e inyectamos la estructura del editor
+            container.innerHTML = `
+                <div id="nexo-inline-editor" style="text-align: left; animation: fadeInNexo 0.5s ease;">
+                    <h3 id="inlineEditorTitle" contenteditable="true" style="
+                        color: var(--gold); font-size: 9px; letter-spacing: 2px; text-align: center; 
+                        margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.2); 
+                        outline: none; text-transform: uppercase;">
+                        EDITAR DATOS DE PARTICIPANTES
+                    </h3>
+                    
+                    <div id="inlineRowsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        </div>
 
-        <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
-            <button onclick="addNewParticipantRow()" style="
-                background: rgba(212, 175, 55, 0.05); color: var(--gold); border: 1px dashed var(--gold);
-                padding: 12px; border-radius: 10px; font-size: 9px; cursor: pointer; letter-spacing: 1px; transition: 0.3s;">
-                + AGREGAR NUEVO CAMPO
-            </button>
+                    <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                        <button id="btnAddInlineRow" style="
+                            background: rgba(212, 175, 55, 0.05); color: var(--gold); border: 1px dashed var(--gold-mix);
+                            padding: 8px; border-radius: 6px; font-size: 8px; cursor: pointer; letter-spacing: 1px;">
+                            + AGREGAR FILA
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const rowsContainer = document.getElementById('inlineRowsContainer');
             
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button id="btnSaveParticipantConfig" style="
-                    flex: 2; background: var(--gold); color: #000; border: none; font-weight: bold;
-                    padding: 12px; border-radius: 10px; font-size: 10px; cursor: pointer; letter-spacing: 1px;">
-                    GUARDAR CAMBIOS
-                </button>
-                <button onclick="closeParticipantModal()" style="
-                    flex: 1; background: transparent; color: #666; border: 1px solid #333;
-                    padding: 12px; border-radius: 10px; font-size: 10px; cursor: pointer;">
-                    CANCELAR
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+            // Función para crear filas dentro del slot
+            window.addInlineRow = function(label = "NUEVO CAMPO", isRemovable = true) {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; flex-direction: column; gap: 4px; position: relative; padding: 5px 0;";
+                row.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label contenteditable="true" style="color: #666; font-size: 7px; letter-spacing: 1px; outline: none; text-transform: uppercase;">${label}</label>
+                        ${isRemovable ? `<span onclick="this.closest('div').parentElement.remove()" style="color: #ff4d4d; cursor: pointer; font-size: 10px;">✕</span>` : ''}
+                    </div>
+                    <input type="text" placeholder="..." disabled style="
+                        background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 4px; 
+                        padding: 6px; color: #fff; font-size: 9px; cursor: not-allowed; width: 100%; box-sizing: border-box;">
+                `;
+                rowsContainer.appendChild(row);
+            };
 
-<style>
-    @keyframes fadeInRow { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    #dynamicRowsContainer::-webkit-scrollbar { width: 4px; }
-    #dynamicRowsContainer::-webkit-scrollbar-thumb { background: var(--gold-mix); border-radius: 10px; }
-    .participant-row { animation: fadeInRow 0.3s ease forwards; }
-</style>
+            // Inicializar campos predeterminados
+            addInlineRow("Nombre y Apellido", false);
+            addInlineRow("Número de teléfono", false);
+            addInlineRow("Correo electrónico", false);
 
-<script>
-    // Configuración de Campos Predeterminados
-    const defaultParticipantFields = [
-        { label: "Nombre y Apellido", type: "text", placeholder: "Ej. Juan Pérez" },
-        { label: "Número de Teléfono", type: "tel", placeholder: "Ej. +593..." },
-        { label: "Correo Electrónico", type: "email", placeholder: "Ej. usuario@nexo.com" }
-    ];
-
-    // Función para inicializar el contenido del modal
-    function initParticipantFields() {
-        const container = document.getElementById('dynamicRowsContainer');
-        if(!container) return;
-        container.innerHTML = ''; 
-        defaultParticipantFields.forEach(field => {
-            addNewParticipantRow(field.label, field.placeholder, field.type, false);
-        });
-    }
-
-    // Función para agregar filas dinámicas
-    function addNewParticipantRow(label = "Nuevo Campo", placeholder = "Ingrese dato", type = "text", isRemovable = true) {
-        const container = document.getElementById('dynamicRowsContainer');
-        const row = document.createElement('div');
-        row.className = "participant-row";
-        row.style.cssText = "display: flex; flex-direction: column; margin-bottom: 15px; position: relative;";
-        
-        row.innerHTML = `
-            <label contenteditable="true" style="color: #888; font-size: 8px; margin-bottom: 5px; letter-spacing: 1px; outline: none; text-transform: uppercase;">${label}</label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="${type}" placeholder="${placeholder}" disabled style="
-                    flex: 1; background: rgba(255,255,255,0.03); border: 1px solid #222; border-radius: 8px; 
-                    padding: 10px; color: #fff; font-size: 10px; outline: none; cursor: not-allowed;">
-                ${isRemovable ? `<button onclick="this.closest('.participant-row').remove()" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 12px; padding: 5px;">✕</button>` : '<div style="width:22px"></div>'}
-            </div>
-        `;
-        container.appendChild(row);
-    }
-
-    // Función para cerrar el modal
-    function closeParticipantModal() {
-        const modal = document.getElementById('modalEditParticipants');
-        modal.style.opacity = '0';
-        setTimeout(() => { modal.style.display = 'none'; }, 400);
-    }
-
-    // Ejecución de inicio para cargar los campos predeterminados
-    initParticipantFields();
+            // Asignar evento al botón de agregar
+            document.getElementById('btnAddInlineRow').onclick = (e) => {
+                e.stopPropagation(); // Evita que se cierre el slot si el click llega al padre
+                addInlineRow();
+            };
+        }
+    })();
 </script>
 </body>
 </html>
