@@ -1109,61 +1109,76 @@
 
     <script>
     (function() {
-        const checkToolsArea = setInterval(() => {
-            const exportArea = document.getElementById('nexo-export-area');
-            if (exportArea) {
-                clearInterval(checkToolsArea);
-                renderParticipantModule(exportArea);
+        // Buscamos el contenedor del interruptor de estado para posicionarnos arriba
+        const checkStatusToggle = setInterval(() => {
+            const statusContainer = document.querySelector('[style*="background: rgba(212, 175, 55, 0.03)"]');
+            if (statusContainer && statusContainer.parentNode) {
+                clearInterval(checkStatusToggle);
+                injectParticipantButton(statusContainer);
             }
-        }, 900);
+        }, 800);
 
-        function renderParticipantModule(container) {
-            // Contenedor para el nuevo botón
-            const participantDiv = document.createElement('div');
-            participantDiv.style.cssText = `
-                margin-top: 15px; 
-                padding-top: 15px; 
-                border-top: 1px solid #1a1a1a;
+        function injectParticipantButton(anchor) {
+            const participantWrapper = document.createElement('div');
+            participantWrapper.id = "nexo-participants-module";
+            participantWrapper.style.cssText = `
+                margin-bottom: 15px;
+                width: 100%;
             `;
 
-            participantDiv.innerHTML = `
+            participantWrapper.innerHTML = `
                 <button id="btnParticipantData" style="
-                    width: 100%; padding: 12px; background: rgba(212, 175, 55, 0.05); 
-                    color: var(--gold); border: 1px solid var(--gold-mix); border-radius: 10px;
-                    font-size: 8px; letter-spacing: 2px; cursor: pointer;
-                    transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span>👥</span> DATOS DE PARTICIPANTES
+                    width: 100%; padding: 14px; background: rgba(212, 175, 55, 0.08); 
+                    color: var(--gold); border: 1px solid var(--gold-mix); border-radius: 12px;
+                    font-size: 9px; font-weight: bold; letter-spacing: 2px; cursor: pointer;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+                    display: flex; align-items: center; justify-content: center; gap: 12px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <span style="font-size: 14px;">👥</span> DATOS DE PARTICIPANTES
                 </button>
-                <div id="participantDataSlot" style="display:none; margin-top: 10px; color: #444; font-size: 8px; text-align: center; letter-spacing: 1px;">
-                    SISTEMA DE PARTICIPANTES INICIALIZADO - LISTO PARA INTEGRACIONES
+                <div id="participantDataSlot" style="
+                    display:none; margin-top: 12px; padding: 15px; 
+                    background: rgba(255,255,255,0.02); border: 1px dashed rgba(212,175,55,0.2);
+                    border-radius: 8px; color: #888; font-size: 8px; text-align: center; 
+                    letter-spacing: 1px; line-height: 1.5;">
+                    <span style="color: var(--gold);">SISTEMA DE AUDIENCIA</span><br>
+                    MÓDULO ESCALABLE LISTO PARA INTEGRACIÓN DE CONSULTAS
                 </div>
             `;
-            container.appendChild(participantDiv);
+
+            // Insertamos antes del contenedor de estado (Activar Captura)
+            anchor.parentNode.insertBefore(participantWrapper, anchor);
 
             const btn = document.getElementById('btnParticipantData');
             const slot = document.getElementById('participantDataSlot');
 
+            // Efectos visuales Premium
             btn.onmouseenter = () => { 
-                btn.style.background = 'var(--gold-mix)'; 
+                btn.style.background = 'var(--gold)'; 
                 btn.style.color = '#000';
+                btn.style.transform = 'translateY(-2px)';
+                btn.style.boxShadow = '0 6px 20px rgba(212, 175, 55, 0.2)';
             };
             btn.onmouseleave = () => { 
-                btn.style.background = 'rgba(212, 175, 55, 0.05)'; 
+                btn.style.background = 'rgba(212, 175, 55, 0.08)'; 
                 btn.style.color = 'var(--gold)';
+                btn.style.transform = 'translateY(0)';
+                btn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
             };
 
+            // Lógica de apertura del Slot
             btn.onclick = () => {
                 const isVisible = slot.style.display === 'block';
                 slot.style.display = isVisible ? 'none' : 'block';
-                console.log("NEXO® Participant Data: Slot " + (isVisible ? "oculto" : "activo"));
+                btn.style.borderColor = isVisible ? 'var(--gold-mix)' : 'var(--gold)';
+                console.log("NEXO® Interface: Participant Slot " + (isVisible ? "cerrado" : "desplegado"));
             };
         }
     })();
 </script>
 
 <script>
-    console.log("NEXO® Participant Data Module: Ready for expansion.");
+    console.log("NEXO® Participant Data: Inyectado exitosamente sobre el control de captura.");
 </script>
 </body>
 </html>
-
