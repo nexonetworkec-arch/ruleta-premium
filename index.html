@@ -577,7 +577,97 @@
         menuSlot.appendChild(btnAdmin);
     })();
 </script>
+
+    <style>
+    #modalRegistration {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+        z-index: 13000; align-items: center; justify-content: center; backdrop-filter: blur(15px);
+    }
+    .reg-content {
+        background: var(--card-bg); border: 2px solid var(--gold);
+        padding: 40px; border-radius: 40px; width: min(400px, 90%); text-align: center;
+        box-shadow: 0 0 50px rgba(212,175,55,0.2);
+    }
+    .reg-input {
+        width: 100%; background: #000; border: 1px solid #333; 
+        padding: 15px; border-radius: 15px; margin-bottom: 15px;
+        color: var(--gold); text-align: center;
+    }
+</style>
+
+<div id="modalRegistration">
+    <div class="reg-content">
+        <h2 style="margin-bottom: 10px; font-size: 18px;">REGISTRO DE PARTICIPANTE</h2>
+        <p style="font-size: 9px; color: var(--gold-dark); margin-bottom: 25px; letter-spacing: 1px;">
+            COMPLETE SUS DATOS PARA INICIAR EL GIRO
+        </p>
+        
+        <input type="text" id="regName" class="reg-input" placeholder="NOMBRES COMPLETOS">
+        <input type="tel" id="regPhone" class="reg-input" placeholder="NÚMERO DE TELÉFONO">
+        <input type="email" id="regEmail" class="reg-input no-caps" placeholder="CORREO ELECTRÓNICO">
+        
+        <button id="btnConfirmReg" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+            ACEPTAR Y GIRAR
+        </button>
+        <button id="btnCancelReg" class="btn" style="width: 100%; margin-top: 10px; color: #555 !important; font-size: 9px;">
+            CANCELAR
+        </button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const modalReg = document.getElementById('modalRegistration');
+        const btnConfirm = document.getElementById('btnConfirmReg');
+        const btnCancel = document.getElementById('btnCancelReg');
+
+        // SOBREESCRITURA ADITIVA DE LA FUNCIÓN DE GIRO
+        // Referenciamos la instancia original appWheel [cite: 61]
+        const originalSpinClick = appWheel.handleSpinClick.bind(appWheel);
+
+        appWheel.handleSpinClick = function() {
+            if (config.modoRegistro && !config.isValidated) {
+                modalReg.style.display = 'flex';
+            } else {
+                originalSpinClick();
+            }
+        };
+
+        btnConfirm.onclick = () => {
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            const email = document.getElementById('regEmail').value;
+
+            if (name && phone && email.includes('@')) {
+                // Guardar Lead en Firebase
+                const leadData = {
+                    name, phone, email,
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                db.ref(`users/${currentUser.uid}/leads`).push(leadData).then(() => {
+                    config.isValidated = true; // Validamos la sesión actual 
+                    modalReg.style.display = 'none';
+                    originalSpinClick(); // Iniciamos el giro
+                    
+                    // Limpiar campos para el próximo
+                    document.getElementById('regName').value = "";
+                    document.getElementById('regPhone').value = "";
+                    document.getElementById('regEmail').value = "";
+                });
+            } else {
+                alert("POR FAVOR, COMPLETE TODOS LOS CAMPOS CORRECTAMENTE.");
+            }
+        };
+
+        btnCancelReg.onclick = () => {
+            modalReg.style.display = 'none';
+        };
+    })();
+</script>
 </body>
 </html>
+
 
 
