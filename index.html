@@ -1109,21 +1109,27 @@
 
     <script>
     (function() {
-        // Buscamos el contenedor del interruptor de estado para posicionarnos arriba
-        const checkStatusToggle = setInterval(() => {
-            const statusContainer = document.querySelector('[style*="background: rgba(212, 175, 55, 0.03)"]');
-            if (statusContainer && statusContainer.parentNode) {
-                clearInterval(checkStatusToggle);
-                injectParticipantButton(statusContainer);
+        const checkConfigPanel = setInterval(() => {
+            // Buscamos específicamente el panel izquierdo del Dashboard de Leads
+            const leftPanel = document.querySelector('#leadToolsPanel div[style*="flex: 1"]');
+            
+            if (leftPanel) {
+                clearInterval(checkConfigPanel);
+                injectInsideConfig(leftPanel);
             }
         }, 800);
 
-        function injectParticipantButton(anchor) {
+        function injectInsideConfig(container) {
+            // Evitar duplicados si el script se recarga
+            if (document.getElementById('nexo-participants-module')) return;
+
             const participantWrapper = document.createElement('div');
             participantWrapper.id = "nexo-participants-module";
             participantWrapper.style.cssText = `
-                margin-bottom: 15px;
+                margin-bottom: 20px;
                 width: 100%;
+                border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+                padding-bottom: 20px;
             `;
 
             participantWrapper.innerHTML = `
@@ -1132,8 +1138,7 @@
                     color: var(--gold); border: 1px solid var(--gold-mix); border-radius: 12px;
                     font-size: 9px; font-weight: bold; letter-spacing: 2px; cursor: pointer;
                     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-                    display: flex; align-items: center; justify-content: center; gap: 12px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    display: flex; align-items: center; justify-content: center; gap: 12px;">
                     <span style="font-size: 14px;">👥</span> DATOS DE PARTICIPANTES
                 </button>
                 <div id="participantDataSlot" style="
@@ -1146,39 +1151,29 @@
                 </div>
             `;
 
-            // Insertamos antes del contenedor de estado (Activar Captura)
-            anchor.parentNode.insertBefore(participantWrapper, anchor);
+            // Insertamos al principio del panel izquierdo (arriba de "Activar Captura")
+            container.prepend(participantWrapper);
 
             const btn = document.getElementById('btnParticipantData');
             const slot = document.getElementById('participantDataSlot');
 
-            // Efectos visuales Premium
             btn.onmouseenter = () => { 
                 btn.style.background = 'var(--gold)'; 
                 btn.style.color = '#000';
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 6px 20px rgba(212, 175, 55, 0.2)';
             };
             btn.onmouseleave = () => { 
                 btn.style.background = 'rgba(212, 175, 55, 0.08)'; 
                 btn.style.color = 'var(--gold)';
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
             };
 
-            // Lógica de apertura del Slot
             btn.onclick = () => {
                 const isVisible = slot.style.display === 'block';
                 slot.style.display = isVisible ? 'none' : 'block';
                 btn.style.borderColor = isVisible ? 'var(--gold-mix)' : 'var(--gold)';
-                console.log("NEXO® Interface: Participant Slot " + (isVisible ? "cerrado" : "desplegado"));
+                console.log("NEXO® Interface: Participant Slot actualizado.");
             };
         }
     })();
-</script>
-
-<script>
-    console.log("NEXO® Participant Data: Inyectado exitosamente sobre el control de captura.");
 </script>
 </body>
 </html>
