@@ -1194,49 +1194,63 @@
 
 <script>
     (function() {
-        const forceInject = () => {
-            // Buscamos el área de exportación o el título de Leads
-            const target = document.getElementById('nexo-export-area') || document.querySelector('h3');
-            
-            if (target && !document.getElementById('nexo_btn_v5')) {
-                // Creamos un contenedor NUEVO fuera del alcance del script de Leads
-                const isolatedWrapper = document.createElement('div');
-                isolatedWrapper.id = "nexo_container_aislado";
-                isolatedWrapper.style.cssText = "margin: 20px 0; padding: 10px; border-bottom: 1px solid #111;";
-                
-                isolatedWrapper.innerHTML = `
-                    <button id="nexo_btn_v5" style="
-                        background: #000; color: var(--gold); border: 1px solid var(--gold); 
-                        padding: 12px 25px; border-radius: 12px; font-size: 10px; 
-                        font-weight: bold; letter-spacing: 2px; cursor: pointer;
-                        display: flex; align-items: center; gap: 10px; transition: 0.3s;">
-                        <span style="font-size:14px;">⚙️</span> CONFIGURAR REGISTRO (FASE 5)
-                    </button>
-                `;
-
-                // Insertamos ANTES del área que se está refrescando
-                target.parentNode.insertBefore(isolatedWrapper, target);
-
-                // Lógica de apertura del modal (con limpieza forzada)
-                document.getElementById('nexo_btn_v5').onclick = () => {
-                    const modal = document.getElementById('nexo_canvas_registro');
-                    if (modal) {
-                        modal.style.display = 'flex';
-                        // Limpieza agresiva del interior del modal
-                        const slot = document.getElementById('nexo_slot_logica');
-                        if (slot) slot.innerHTML = '<div style="color:var(--gold); letter-spacing:3px;">LIENZO LIMPIO Y AISLADO</div>';
-                    }
-                };
+        // Usamos el intervalo que sabemos que funciona para detectar el área
+        const checkCanvas = setInterval(() => {
+            // Buscamos el área de Leads o el contenedor principal del panel
+            const container = document.getElementById('nexo-export-area');
+            if (container) {
+                clearInterval(checkCanvas);
+                injectProfessionalButton(container);
             }
-        };
+        }, 800);
 
-        // Ejecutamos y re-aseguramos visibilidad
-        forceInject();
-        setInterval(forceInject, 2000); // Si el script de Leads lo borra, este lo vuelve a poner
+        function injectProfessionalButton(container) {
+            // Si ya existe, no duplicar
+            if (document.getElementById('btnConfigFormV5')) return;
+
+            // Crear el botón con la identidad visual escalable
+            const btn = document.createElement('button');
+            btn.id = 'btnConfigFormV5';
+            btn.innerHTML = `<span style="color:var(--gold); font-size:14px;">⚙️</span> CONFIGURAR REGISTRO`;
+            
+            // Estilo idéntico a tus otros botones de admin
+            btn.style.cssText = `
+                width: 100%; margin-bottom: 20px; padding: 15px; 
+                background: #000; color: #fff; border: 1px solid #1a1a1a; 
+                border-radius: 12px; font-size: 10px; font-weight: bold; 
+                letter-spacing: 2px; cursor: pointer; display: flex; 
+                align-items: center; justify-content: center; gap: 12px;
+                transition: 0.3s; text-transform: uppercase;
+            `;
+
+            // Efectos Hover
+            btn.onmouseenter = () => { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)'; };
+            btn.onmouseleave = () => { btn.style.borderColor = '#1a1a1a'; btn.style.color = '#fff'; };
+
+            // Insertar al inicio del área de leads
+            container.parentNode.insertBefore(btn, container);
+
+            // Acción de apertura con limpieza de "Esperando registros"
+            btn.onclick = () => {
+                const modal = document.getElementById('nexo_canvas_registro');
+                const slot = document.getElementById('nexo_slot_logica');
+                
+                if (modal && slot) {
+                    modal.style.display = 'flex';
+                    // LIMPIEZA TOTAL: Esto elimina el mensaje de la Fase 3
+                    slot.innerHTML = `
+                        <div style="text-align:center; padding: 40px; border: 1px dashed #111; border-radius: 20px;">
+                            <p style="color:var(--gold); font-size:9px; letter-spacing:3px;">ESTRUCTURA DE REGISTRO LISTA</p>
+                        </div>
+                    `;
+                }
+            };
+        }
     })();
 </script>
 </body>
 </html>
+
 
 
 
