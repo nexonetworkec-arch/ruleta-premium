@@ -916,5 +916,119 @@
     // Este script queda abierto para recibir las funciones aditivas de herramientas
     console.log("NEXO® Lead Tools Module: Ready for integration.");
 </script>
+
+    <script>
+    (function() {
+        // SEGURIDAD DE SESIÓN: Esperar validación de Firebase
+        const checkSession = setInterval(() => {
+            if (typeof currentUser !== 'undefined' && currentUser !== null) {
+                clearInterval(checkSession);
+                renderLeadTools();
+            }
+        }, 600);
+
+        function renderLeadTools() {
+            const toolsSlot = document.getElementById('toolsFunctionsSlot');
+            if (!toolsSlot) return;
+
+            toolsSlot.innerHTML = ''; 
+
+            // --- 1. INTERRUPTOR MAESTRO (DISEÑO PREMIUM) ---
+            const isRegOn = (typeof config !== 'undefined' && config.modoRegistro);
+            const switchBox = document.createElement('div');
+            switchBox.style.cssText = `
+                width: 100%; background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+                padding: 25px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.2);
+                margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            
+            switchBox.innerHTML = `
+                <div style="flex: 1;">
+                    <p style="font-size: 8px; color: var(--gold); letter-spacing: 3px; margin: 0 0 5px 0; font-weight: bold;">SISTEMA DE CAPTACIÓN</p>
+                    <h4 id="statusTitle" style="font-size: 11px; color: #fff; margin: 0; letter-spacing: 1px;">
+                        ${isRegOn ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE (OFF)'}
+                    </h4>
+                </div>
+                <button id="btnToggleReg" class="btn" style="
+                    background: ${isRegOn ? 'var(--gold)' : 'transparent'};
+                    color: ${isRegOn ? '#000' : 'var(--gold)'} !important;
+                    border: 1px solid var(--gold); padding: 10px 15px; font-size: 8px; 
+                    letter-spacing: 2px; border-radius: 8px; transition: 0.4s; min-width: 110px;">
+                    ${isRegOn ? 'DESACTIVAR' : 'ACTIVAR'}
+                </button>
+            `;
+            toolsSlot.appendChild(switchBox);
+
+            // --- 2. VISOR DE LEADS (MINIMALISTA PRO) ---
+            const listCard = document.createElement('div');
+            listCard.style.cssText = `
+                width: 100%; background: #000; border: 1px solid #1a1a1a; 
+                border-radius: 20px; overflow: hidden;
+            `;
+            
+            listCard.innerHTML = `
+                <div style="background: #0a0a0a; padding: 15px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 9px; color: #555; letter-spacing: 2px;">BASE DE DATOS EN VIVO</span>
+                    <span style="font-size: 7px; color: var(--gold-dark);">NEXO® SECURE</span>
+                </div>
+                <div id="leadsTableBody" style="max-height: 280px; overflow-y: auto; background: #050505;">
+                    <div style="padding: 40px; text-align: center; font-size: 9px; color: #333; letter-spacing: 1px;">SINCRONIZANDO CON LA NUBE...</div>
+                </div>
+            `;
+            toolsSlot.appendChild(listCard);
+
+            // --- LÓGICA DE ACTUALIZACIÓN ---
+            const btn = document.getElementById('btnToggleReg');
+            const title = document.getElementById('statusTitle');
+
+            btn.onclick = () => {
+                const newState = !config.modoRegistro;
+                db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState })
+                .then(() => {
+                    config.modoRegistro = newState;
+                    btn.innerText = newState ? 'DESACTIVAR' : 'ACTIVAR';
+                    btn.style.background = newState ? 'var(--gold)' : 'transparent';
+                    btn.style.color = newState ? '#000' : 'var(--gold)';
+                    title.innerText = newState ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE (OFF)';
+                });
+            };
+
+            // Escucha de Leads en tiempo real
+            db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
+                const body = document.getElementById('leadsTableBody');
+                body.innerHTML = '';
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const data = child.val();
+                        const row = document.createElement('div');
+                        row.style.cssText = `
+                            padding: 15px 20px; border-bottom: 1px solid #111;
+                            display: flex; justify-content: space-between; align-items: center;
+                            transition: 0.3s; cursor: default;
+                        `;
+                        row.onmouseenter = () => row.style.background = '#0a0a0a';
+                        row.onmouseleave = () => row.style.background = 'transparent';
+                        
+                        row.innerHTML = `
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-size: 10px; color: #eee; font-weight: bold; letter-spacing: 0.5px;">${data.name.toUpperCase()}</span>
+                                <span style="font-size: 8px; color: #555;">${data.email}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 8px; color: var(--gold-dark); display: block;">${data.phone}</span>
+                                <span style="font-size: 6px; color: #222;">${data.date || ''}</span>
+                            </div>
+                        `;
+                        body.prepend(row);
+                    });
+                } else {
+                    body.innerHTML = `<div style="padding: 50px; text-align: center; font-size: 9px; color: #333; letter-spacing: 2px;">ESPERANDO PRIMER CLIENTE...</div>`;
+                }
+            });
+        }
+    })();
+</script>
 </body>
 </html>
+
