@@ -1267,19 +1267,47 @@ appWheel.handleSpinClick = function() {
             }
         });
 
-        // 3. PROTECCIÓN DE DEPURADOR Y EXPORTACIÓN (Integridad del 2.10)
+   <script>
+(function() {
+    console.log("NEXO: Activando Puente de Integridad...");
+
+    const nexoUltimateFix = () => {
+        // 1. VÍNCULO DEL BOTÓN "EDITAR DATOS"
+        const btnEdit = document.getElementById('btnParticipantData');
+        const modalEdit = document.getElementById('modalEditorCampos');
+        
+        if (btnEdit && modalEdit) {
+            btnEdit.onclick = (e) => {
+                e.preventDefault();
+                modalEdit.style.display = 'flex';
+                // Si existe la función para cargar los campos actuales, la llamamos
+                if (typeof loadCurrentFields === 'function') loadCurrentFields();
+                console.log("NEXO: Conexión Botón-Modal establecida.");
+            };
+        }
+
+        // 2. BLINDAJE DEL DEPURADOR (Zona de Peligro)
         const exportArea = document.getElementById('nexo-export-area');
         if (exportArea) {
-            console.log("NEXO: Verificando Zona de Peligro...");
-            // Si el botón de purga no existe, forzamos su renderizado sin limpiar lo que ya hay
+            // Verificamos si el botón de purga fue borrado por otro script
             if (!document.getElementById('btnPurgeLeads') && typeof renderCleanupModule === 'function') {
+                console.log("NEXO: Restaurando Depurador en Zona de Peligro...");
                 renderCleanupModule(exportArea);
             }
         }
 
-        // 4. FIX DE PERMISOS (Firebase)
+        // 3. SINCRONIZADOR DE PIN (Soporte Multi-Bloque)
+        const pins = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
+            i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
+        );
+        pins.forEach(input => {
+            input.addEventListener('input', (e) => {
+                pins.forEach(other => { if(other !== e.target) other.value = e.target.value; });
+            });
+        });
+
+        // 4. FIX DE PERMISOS FIREBASE
         if (window.loadAdminData) {
-            const originalLoad = window.loadAdminData;
             window.loadAdminData = function() {
                 if (!auth.currentUser) return;
                 db.ref(`users/${auth.currentUser.uid}/leads`).once('value', (snap) => {
@@ -1287,24 +1315,15 @@ appWheel.handleSpinClick = function() {
                 }).catch(err => console.error("Error Firebase:", err));
             };
         }
-
-        // 5. VÍNCULO DEL MODAL DE EDICIÓN
-        const btnPart = document.getElementById('btnParticipantData');
-        const modalField = document.getElementById('modalEditorCampos');
-        if (btnPart && modalField) {
-            btnPart.onclick = (e) => {
-                e.preventDefault();
-                modalField.style.display = 'flex';
-            };
-        }
     };
 
-    // Delay extendido para asegurar que el archivo 2.10 ya inyectó el depurador
-    if (document.readyState === 'complete') {
-        setTimeout(nexoMasterRepair, 2500);
-    } else {
-        window.addEventListener('load', () => setTimeout(nexoMasterRepair, 2500));
-    }
+    // Ejecución con intervalo de seguridad para ganar la carrera al DOM
+    let attempts = 0;
+    const bridgeInterval = setInterval(() => {
+        nexoUltimateFix();
+        attempts++;
+        if (attempts > 5) clearInterval(bridgeInterval);
+    }, 1000);
 })();
 </script>
 </body>
