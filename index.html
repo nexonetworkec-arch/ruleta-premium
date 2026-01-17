@@ -1176,133 +1176,102 @@
     })();
 </script>
 
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-
-<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95);">
-    <div class="modal-content" style="border: 1px solid var(--gold); background: #0a0a0a; padding: 30px; border-radius: 15px; max-width: 380px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);">
+    <div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95);">
+    <div class="modal-content" style="border: 1px solid var(--gold); background: #0a0a0a; padding: 40px; border-radius: 15px; max-width: 380px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);">
         
-        <div id="step1_Register">
-            <h3 style="color: var(--gold); letter-spacing: 2px; margin-bottom: 25px; font-size: 16px; font-weight: 900;">REGISTRO DE PARTICIPANTE</h3>
-            <input type="text" id="regName" placeholder="NOMBRE Y APELLIDO" style="width:100%; margin-bottom:12px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px;">
-            <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%; margin-bottom:12px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px;">
-            <input type="email" id="regEmail" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px;" class="no-caps">
-            <button id="btnSendCode" style="width:100%; padding: 16px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 12px; letter-spacing: 1px;">ENVIAR CÓDIGO</button>
+        <div id="regForm">
+            <h3 style="color: var(--gold); letter-spacing: 3px; margin-bottom: 25px; font-size: 16px; font-weight: 900; text-transform: uppercase;">Registro de Acceso</h3>
+            <p style="color: #666; font-size: 10px; margin-bottom: 20px; letter-spacing: 1px;">INGRESA TUS DATOS PARA PARTICIPAR</p>
+            
+            <input type="text" id="regName" placeholder="NOMBRE Y APELLIDO" style="width:100%; margin-bottom:12px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px; outline: none;">
+            <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%; margin-bottom:12px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px; outline: none;">
+            <input type="email" id="regEmail" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px; padding: 14px; background: #111; border: 1px solid #222; color: #fff; font-size: 11px; border-radius: 5px; outline: none;" class="no-caps">
+            
+            <button id="btnSubmitReg" style="width:100%; padding: 16px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s;">Registrar y Girar</button>
         </div>
 
-        <div id="step2_Verify" style="display:none;">
-            <h3 style="color: var(--gold); letter-spacing: 2px; margin-bottom: 10px; font-size: 16px; font-weight: 900;">VERIFICACIÓN</h3>
-            <p style="font-size: 10px; color: #666; margin-bottom: 25px; text-transform: uppercase;">Ingresa el código enviado a tu email</p>
-            <input type="text" id="otpInput" placeholder="000000" maxlength="6" style="width:100%; margin-bottom:20px; padding: 15px; background: #111; border: 1px solid var(--gold); color: var(--gold); text-align: center; letter-spacing: 10px; font-size: 22px; font-weight: bold; border-radius: 5px;">
-            <button id="btnVerifyCode" style="width:100%; padding: 16px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 12px; letter-spacing: 1px;">VERIFICAR Y GIRAR</button>
-        </div>
-
-        <div id="regError" style="color: #ff4d4d; font-size: 9px; margin-top: 15px; display: none; font-weight: 900; letter-spacing: 1px;"></div>
+        <div id="regError" style="color: #ff4d4d; font-size: 10px; margin-top: 20px; display: none; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;"></div>
+        
         <button id="btnCancelReg" style="background: transparent; border: none; color: #444; margin-top: 25px; cursor: pointer; font-size: 9px; letter-spacing: 2px; font-weight: bold;">CANCELAR</button>
     </div>
 </div>
 
 <script>
 (function() {
-    // === CONFIGURACIÓN EMAILJS (RELLENAR AQUÍ) ===
-    const EJS_PUBLIC_KEY = "TU_PUBLIC_KEY"; 
-    const EJS_SERVICE_ID = "TU_SERVICE_ID";
-    const EJS_TEMPLATE_ID = "TU_TEMPLATE_ID";
-
-    if (EJS_PUBLIC_KEY !== "TU_PUBLIC_KEY") emailjs.init(EJS_PUBLIC_KEY);
-
     const regModal = document.getElementById('modalRegistration');
-    const step1 = document.getElementById('step1_Register');
-    const step2 = document.getElementById('step2_Verify');
     const errorDiv = document.getElementById('regError');
-    
-    let generatedOTP = null;
-    let pendingData = {};
+    const btnSubmit = document.getElementById('btnSubmitReg');
 
-    // Inyección en el flujo original del Motor NEXO®
+    // Inyección en el flujo original del motor
     const originalSpin = appWheel.handleSpinClick;
     appWheel.handleSpinClick = function() {
+        // Si el modo registro está activo y no ha sido validado
         if(config.modoRegistro && !config.isValidated) {
             regModal.style.display = 'flex';
-            resetModalState();
+            errorDiv.style.display = 'none';
             return;
         }
         originalSpin.apply(appWheel);
     };
-
-    function resetModalState() {
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-        errorDiv.style.display = 'none';
-        document.getElementById('otpInput').value = '';
-    }
 
     function showError(msg) {
         errorDiv.innerText = msg;
         errorDiv.style.display = 'block';
     }
 
-    // PASO 1: VALIDAR DUPLICADOS Y ENVIAR OTP
-    document.getElementById('btnSendCode').onclick = async () => {
+    btnSubmit.onclick = async () => {
         const name = document.getElementById('regName').value.trim();
         const phone = document.getElementById('regPhone').value.trim();
         const email = document.getElementById('regEmail').value.trim().toLowerCase();
+
+        // Validaciones básicas
+        if(!name || !phone || !email) return showError("TODOS LOS CAMPOS SON OBLIGATORIOS");
+        if(phone.length < 7) return showError("TELÉFONO NO VÁLIDO");
         
-        if(!name || !phone || !email) return showError("COMPLETA TODOS LOS CAMPOS");
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "VERIFICANDO...";
         errorDiv.style.display = 'none';
 
         try {
-            // Verificar duplicados en tu Firebase (UID: 9rlrqduPdIZn8G9vkdGIJHkiuOI2)
+            // VERIFICACIÓN DE DUPLICADOS EN TIEMPO REAL
+            // UID usado: 9rlrqduPdIZn8G9vkdGIJHkiuOI2
             const snapshot = await db.ref(`users/${currentUser.uid}/leads`).once('value');
-            let duplicate = false;
-            
+            let isDuplicate = false;
+
             snapshot.forEach(child => {
                 const data = child.val();
-                if(data.email === email || data.phone === phone) duplicate = true;
+                if(data.email === email || data.phone === phone) {
+                    isDuplicate = true;
+                }
             });
 
-            if(duplicate) return showError("LOS DATOS YA ESTÁN REGISTRADOS");
-
-            // Generación de Código
-            generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-            pendingData = { name, phone, email };
-
-            // Envío por EmailJS
-            await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
-                to_name: name,
-                to_email: email,
-                otp_code: generatedOTP
-            });
-
-            step1.style.display = 'none';
-            step2.style.display = 'block';
-
-        } catch (err) {
-            showError("ERROR AL ENVIAR CÓDIGO. REVISA TUS CREDENCIALES.");
-            console.error("Error EmailJS/Firebase:", err);
-        }
-    };
-
-    // PASO 2: VERIFICAR Y LIBERAR GIRO
-    document.getElementById('btnVerifyCode').onclick = async () => {
-        const userInput = document.getElementById('otpInput').value.trim();
-        
-        if(userInput === generatedOTP) {
-            try {
-                // Registro final en base de datos
-                await db.ref(`users/${currentUser.uid}/leads`).push().set({
-                    ...pendingData,
-                    date: new Date().toLocaleString(),
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                config.isValidated = true; // Permite el giro
-                regModal.style.display = 'none';
-                appWheel.handleSpinClick(); // Activa el motor de la ruleta
-            } catch (e) {
-                showError("ERROR AL GUARDAR REGISTRO");
+            if(isDuplicate) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "Registrar y Girar";
+                return showError("ESTE CORREO O TELÉFONO YA HA PARTICIPADO");
             }
-        } else {
-            showError("CÓDIGO INCORRECTO");
+
+            // GUARDAR REGISTRO SI ES ÚNICO
+            await db.ref(`users/${currentUser.uid}/leads`).push().set({
+                name: name,
+                phone: phone,
+                email: email,
+                date: new Date().toLocaleString(),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // LIBERAR MOTOR
+            config.isValidated = true;
+            regModal.style.display = 'none';
+            
+            // Disparar el giro automáticamente
+            appWheel.handleSpinClick();
+
+        } catch (error) {
+            console.error("Error Firebase:", error);
+            showError("ERROR DE CONEXIÓN CON LA BASE DE DATOS");
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Registrar y Girar";
         }
     };
 
