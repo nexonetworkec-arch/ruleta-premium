@@ -1178,50 +1178,53 @@
 
     <style>
     @keyframes premiumFadeIn {
-        from { opacity: 0; transform: scale(0.98); }
-        to { opacity: 1; transform: scale(1); }
+        from { 
+            opacity: 0; 
+            transform: scale(0.92); /* Inicia un poco más pequeño para dar profundidad */
+            filter: blur(5px);      /* Efecto de desenfoque inicial */
+        }
+        to { 
+            opacity: 1; 
+            transform: scale(1); 
+            filter: blur(0px);
+        }
     }
     .modal-premium-animate {
-        animation: premiumFadeIn 0.4s ease-out forwards;
+        /* Duración aumentada a 1.2s para una entrada suave y premium */
+        animation: premiumFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
-    /* Efecto de brillo suave en el borde del modal */
     .modal-border-gold {
-        border: 1px solid rgba(212, 175, 55, 0.4); /* Dorado sutil con transparencia */
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.1); 
-    }
-    #btnSubmitReg:hover {
-        filter: brightness(1.2);
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4) !important;
-        transform: translateY(-1px);
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.1); 
     }
 </style>
 
-<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); backdrop-filter: blur(10px);">
+<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); backdrop-filter: blur(12px); transition: background 1.2s ease;">
     <div class="modal-content modal-premium-animate modal-border-gold" style="background: #0a0a0a; padding: 45px 35px; border-radius: 15px; max-width: 380px; width: 90%; text-align: center; position: relative;">
         
         <div id="regForm">
             <h3 style="color: var(--gold); letter-spacing: 5px; margin-bottom: 8px; font-size: 16px; font-weight: 900; text-transform: uppercase;">Membresía VIP</h3>
-            <p style="color: #666; font-size: 9px; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase;">Valida tu acceso para girar</p>
+            <p style="color: #666; font-size: 9px; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase;">Valida tu acceso para participar</p>
             
             <div style="margin-bottom: 18px; text-align: left;">
                 <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">NOMBRE COMPLETO</label>
-                <input type="text" id="regName" placeholder="Identificación" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='#1a1a1a'">
+                <input type="text" id="regName" placeholder="Identificación" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
             </div>
 
             <div style="margin-bottom: 18px; text-align: left;">
                 <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">WHATSAPP</label>
-                <input type="tel" id="regPhone" placeholder="Contacto directo" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='#1a1a1a'">
+                <input type="tel" id="regPhone" placeholder="Contacto directo" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
             </div>
 
             <div style="margin-bottom: 35px; text-align: left;">
                 <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px;">EMAIL</label>
-                <input type="email" id="regEmail" placeholder="Correo electrónico" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;" class="no-caps" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='#1a1a1a'">
+                <input type="email" id="regEmail" placeholder="Correo electrónico" style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;" class="no-caps">
             </div>
             
             <button id="btnSubmitReg" style="width:100%; padding: 18px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; transition: 0.4s;">Iniciar Desafío</button>
         </div>
 
-        <div id="regError" style="color: #ff4d4d; font-size: 9px; margin-top: 20px; display: none; font-weight: 900; letter-spacing: 1px; border-top: 1px solid rgba(255,77,77,0.2); pt: 10px;"></div>
+        <div id="regError" style="color: #ff4d4d; font-size: 9px; margin-top: 20px; display: none; font-weight: 900; letter-spacing: 1px;"></div>
         
         <button id="btnCancelReg" style="background: transparent; border: none; color: #333; margin-top: 35px; cursor: pointer; font-size: 8px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase;">Regresar</button>
     </div>
@@ -1288,7 +1291,7 @@
         } catch (e) {
             btnSubmit.disabled = false;
             btnSubmit.innerText = "Iniciar Desafío";
-            errorDiv.innerText = "FALLO EN EL SISTEMA DE SEGURIDAD";
+            errorDiv.innerText = "FALLO EN EL SISTEMA";
             errorDiv.style.display = 'block';
         }
     };
