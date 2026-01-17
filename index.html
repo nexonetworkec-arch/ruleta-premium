@@ -917,102 +917,142 @@
     console.log("NEXO® Lead Tools Module: Ready for integration.");
 </script>
 
-   <script>
+   <style id="nexo-core-styles">
+    /* Anulación total de restricciones previas */
+    #leadToolsPanel {
+        display: none;
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.98) !important;
+        z-index: 999999 !important;
+        backdrop-filter: blur(25px) !important;
+        -webkit-backdrop-filter: blur(25px) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #leadToolsPanel .reg-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 40px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Scrollbar Premium */
+    .nexo-scroll::-webkit-scrollbar { width: 4px; }
+    .nexo-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+    .nexo-scroll::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
+</style>
+
+<script>
     (function() {
-        const toolsSlot = document.getElementById('toolsFunctionsSlot');
-        if (!toolsSlot) return;
+        // Asegurar que el título sea visible y elegante
+        const checkStructure = setInterval(() => {
+            const slot = document.getElementById('toolsFunctionsSlot');
+            if (slot && typeof currentUser !== 'undefined' && currentUser !== null) {
+                clearInterval(checkStructure);
+                injectDashboardLayout(slot);
+            }
+        }, 500);
 
-        // 1. CREACIÓN DE LA ESTRUCTURA DE DOS COLUMNAS (GRID)
-        toolsSlot.innerHTML = `
-            <div id="colSettings" style="display: flex; flex-direction: column; gap: 20px;">
-                <div id="statusCard" style="background: #080808; padding: 25px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.2);">
-                    <p style="font-size: 8px; color: var(--gold); letter-spacing: 3px; margin-bottom: 10px;">CONFIGURACIÓN GLOBAL</p>
-                    <div id="switchContainer"></div>
-                </div>
-                <div id="exportCard" style="background: #080808; padding: 25px; border-radius: 20px; border: 1px solid #111;">
-                    <p style="font-size: 8px; color: #444; letter-spacing: 3px; margin-bottom: 15px;">PRÓXIMAS INTEGRACIONES</p>
-                    <div id="nextFeaturesSlot" style="opacity: 0.3; font-size: 9px; color: #333;">Módulos de Exportación y API listos para inyectar...</div>
-                </div>
-            </div>
+        function injectDashboardLayout(container) {
+            // Estructura de Dashboard de Doble Panel
+            container.style.cssText = `
+                display: grid;
+                grid-template-columns: 350px 1fr;
+                gap: 40px;
+                height: calc(100vh - 150px);
+                margin-top: 20px;
+            `;
 
-            <div id="colDatabase" style="background: #050505; border-radius: 25px; border: 1px solid #111; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
-                <div style="background: #0a0a0a; padding: 20px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center;">
-                    <h5 style="margin: 0; font-size: 11px; color: #fff; letter-spacing: 2px;">AUDITORÍA DE PROSPECTOS</h5>
-                    <span id="leadCounter" style="font-size: 9px; color: var(--gold); font-weight: bold;">0 LEADS</span>
-                </div>
-                <div id="premiumTableBody" style="flex-grow: 1; overflow-y: auto; padding: 10px;">
-                    <p style="text-align: center; padding: 50px; color: #222; font-size: 10px;">SINCRONIZANDO NUBE...</p>
-                </div>
-            </div>
-        `;
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="background: #0a0a0a; padding: 30px; border-radius: 25px; border: 1px solid rgba(212,175,55,0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                        <p style="font-size: 8px; color: #d4af37; letter-spacing: 4px; margin: 0 0 15px 0; font-weight: bold;">SISTEMA DE CAPTACIÓN</p>
+                        <h2 id="nexo-status-text" style="font-size: 16px; color: #fff; margin: 0 0 20px 0; font-family: 'Segoe UI', sans-serif;">CARGANDO...</h2>
+                        <button id="nexo-btn-toggle" style="width: 100%; padding: 15px; border-radius: 12px; font-size: 9px; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border: 1px solid #d4af37; font-weight: bold;"></button>
+                    </div>
 
-        // 2. RE-POBLAR DATOS (FIREBASE SYNC)
-        function refreshDashboard() {
-            if (typeof currentUser === 'undefined' || !currentUser) return;
+                    <div id="nexo-export-area" style="background: #080808; padding: 30px; border-radius: 25px; border: 1px solid #111;">
+                        <p style="font-size: 8px; color: #333; letter-spacing: 3px; margin: 0 0 10px 0;">HERRAMIENTAS DE DATA</p>
+                        <div style="color: #222; font-size: 9px;">Preparando módulo de exportación CSV/Excel...</div>
+                    </div>
+                </div>
 
-            // Lógica del Switch
-            const switchCont = document.getElementById('switchContainer');
-            const isRegOn = (typeof config !== 'undefined' && config.modoRegistro);
-            
-            switchCont.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span id="txtModo" style="font-size: 12px; color: #fff;">${isRegOn ? 'Registro Activo' : 'Giro Libre'}</span>
-                    <button id="btnActionToggle" class="btn" style="padding: 10px 20px; font-size: 8px; border-radius: 8px; background: ${isRegOn ? 'var(--gold)' : 'transparent'}; color: ${isRegOn ? '#000' : 'var(--gold)'} !important; border: 1px solid var(--gold);">
-                        ${isRegOn ? 'OFF' : 'ON'}
-                    </button>
+                <div style="background: #050505; border-radius: 30px; border: 1px solid #111; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.5);">
+                    <div style="padding: 25px 35px; background: #0a0a0a; border-bottom: 1px solid #151515; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 10px; color: #fff; letter-spacing: 2px; font-weight: bold;">AUDITORÍA DE LEADS EN TIEMPO REAL</span>
+                        <span id="nexo-counter" style="background: #d4af37; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 9px; font-weight: bold;">0 LEADS</span>
+                    </div>
+                    <div id="nexo-table-body" class="nexo-scroll" style="flex-grow: 1; overflow-y: auto; padding: 20px;">
+                        </div>
                 </div>
             `;
 
-            document.getElementById('btnActionToggle').onclick = () => {
+            initNexoLogic();
+        }
+
+        function initNexoLogic() {
+            const btn = document.getElementById('nexo-btn-toggle');
+            const statusTxt = document.getElementById('nexo-status-text');
+            const table = document.getElementById('nexo-table-body');
+            const counter = document.getElementById('nexo-counter');
+
+            // Sincronización de Configuración
+            db.ref(`users/${currentUser.uid}/config`).on('value', snap => {
+                const conf = snap.val() || { modoRegistro: false };
+                config.modoRegistro = conf.modoRegistro;
+                
+                statusTxt.innerText = conf.modoRegistro ? 'REGISTRO ACTIVO' : 'MODO GIRO LIBRE';
+                btn.innerText = conf.modoRegistro ? 'DESACTIVAR CAPTURA' : 'ACTIVAR CAPTURA';
+                btn.style.background = conf.modoRegistro ? '#d4af37' : 'transparent';
+                btn.style.color = conf.modoRegistro ? '#000' : '#d4af37';
+            });
+
+            btn.onclick = () => {
                 const newState = !config.modoRegistro;
-                db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState }).then(() => {
-                    config.modoRegistro = newState;
-                    refreshDashboard();
-                });
+                db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState });
             };
 
-            // Lógica de la Tabla
+            // Sincronización de Leads
             db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
-                const table = document.getElementById('premiumTableBody');
-                const counter = document.getElementById('leadCounter');
                 table.innerHTML = '';
-                
                 if (snap.exists()) {
-                    let count = 0;
+                    let total = 0;
                     snap.forEach(child => {
-                        count++;
+                        total++;
                         const d = child.val();
                         const row = document.createElement('div');
-                        row.style.cssText = `padding: 15px 20px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;`;
-                        row.onmouseenter = () => row.style.background = '#080808';
-                        row.onmouseleave = () => row.style.background = 'transparent';
-                        
+                        row.style.cssText = `padding: 20px 30px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.4s ease;`;
                         row.innerHTML = `
-                            <div style="text-align: left;">
-                                <b style="font-size: 11px; color: #eee; display: block; letter-spacing: 0.5px;">${d.name.toUpperCase()}</b>
-                                <small style="color: #444; font-size: 8px;">${d.email}</small>
+                            <div>
+                                <b style="font-size: 11px; color: #fff; display: block; letter-spacing: 0.5px;">${(d.name || 'S/N').toUpperCase()}</b>
+                                <span style="font-size: 8px; color: #555;">${d.email || 'Sin Email'}</span>
                             </div>
                             <div style="text-align: right;">
-                                <span style="color: var(--gold-dark); font-size: 10px; font-weight: bold; display: block;">${d.phone}</span>
-                                <span style="color: #222; font-size: 7px;">${d.date || ''}</span>
+                                <span style="font-size: 10px; color: #d4af37; font-weight: bold; display: block;">${d.phone || ''}</span>
+                                <span style="font-size: 7px; color: #222;">${d.date || ''}</span>
                             </div>
                         `;
                         table.prepend(row);
                     });
-                    counter.innerText = `${count} LEADS REGISTRADOS`;
+                    counter.innerText = `${total} LEADS`;
                 } else {
-                    table.innerHTML = `<div style="padding: 100px; text-align: center; color: #1a1a1a; letter-spacing: 2px; font-size: 9px;">BASE DE DATOS VACÍA</div>`;
+                    table.innerHTML = `<div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 10px; letter-spacing: 2px;">ESPERANDO REGISTROS...</div>`;
                 }
             });
         }
-
-        refreshDashboard();
     })();
-</script>
-
-<script>
-    console.log("NEXO® Dashboard: Data relinked and expanded.");
 </script>
 </body>
 </html>
+
 
