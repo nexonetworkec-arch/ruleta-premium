@@ -522,7 +522,47 @@ const appMenu = {
 
 // Inicialización del Menú
 appMenu.init();
+
+        /* ==========================================================================
+   INYECCIÓN ADITIVA: BOTÓN DE ACCESO AL PANEL (SOLO ADMIN)
+   ========================================================================== */
+
+const adminAccess = {
+    // Tu UID guardado para validación
+    authorizedUID: "TU_UID_AQUÍ", 
+
+    init() {
+        // Verificamos si el usuario actual es el administrador
+        // Nota: 'userUID' debe ser la variable donde guardas el ID del usuario actual
+        if (typeof userUID !== 'undefined' && userUID === this.authorizedUID) {
+            this.injectAdminButton();
+        } else {
+            console.log("Acceso de administrador no detectado. Botón oculto.");
+        }
+    },
+
+    injectAdminButton() {
+        // Utilizamos el método escalable del menú que creamos antes
+        appMenu.addButton(
+            'btn-open-admin', 
+            '🛠️', 
+            'Panel de Administrador', 
+            () => {
+                // Acción: Abrir el panel que creamos en el primer paso
+                if (typeof adminPanel !== 'undefined') {
+                    adminPanel.open();
+                }
+            }
+        );
+        
+        console.log("Botón de Administrador inyectado exitosamente.");
+    }
+};
+
+// Ejecutar la validación e inyección
+adminAccess.init();
     </script>
 </body>
 </html>
+
 
