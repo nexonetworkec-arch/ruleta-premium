@@ -1175,5 +1175,230 @@
         }
     })();
 </script>
+
+    <style>
+    /* Estilos del Modal de Edición Nexo® */
+    #modalEditParticipants {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.98); /* Fondo casi opaco para enfoque total */
+        z-index: 17000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(30px);
+        padding: 20px;
+        animation: nexoFadeIn 0.4s ease;
+    }
+
+    .edit-participants-container {
+        background: var(--card-bg);
+        border: 1px solid var(--gold-mix);
+        border-radius: 30px;
+        width: min(900px, 95%);
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        padding: 35px;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.05);
+    }
+
+    /* Título Totalmente Editable */
+    .editable-header-input {
+        border: none;
+        background: transparent;
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--gold);
+        width: 100%;
+        margin-bottom: 25px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        padding-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        outline: none;
+    }
+
+    .editable-header-input:focus {
+        border-bottom-color: var(--gold);
+        background: rgba(255,255,255,0.02);
+    }
+
+    /* Tabla de Edición */
+    .edit-table-wrapper {
+        overflow-y: auto;
+        flex-grow: 1;
+        margin-bottom: 25px;
+        border-radius: 15px;
+        background: rgba(255,255,255,0.01);
+    }
+
+    .edit-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #fff;
+    }
+
+    .edit-table th {
+        background: #0a0a0a;
+        position: sticky;
+        top: 0;
+        padding: 15px;
+        text-align: left;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: #555;
+        border-bottom: 1px solid var(--gold-mix);
+        z-index: 2;
+    }
+
+    .edit-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .edit-table input {
+        width: 100%;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 8px;
+        color: #ccc;
+        font-size: 13px;
+        border-radius: 5px;
+        transition: all 0.3s;
+    }
+
+    .edit-table input:focus {
+        border-color: var(--gold-mix);
+        background: rgba(212, 175, 55, 0.05);
+        color: #fff;
+        outline: none;
+    }
+
+    .no-caps input { text-transform: none !important; }
+
+    /* Botonera */
+    .edit-actions-footer {
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn-delete-row {
+        background: rgba(255, 77, 77, 0.1);
+        border: 1px solid rgba(255, 77, 77, 0.2);
+        color: #ff4d4d;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+    }
+
+    .btn-delete-row:hover {
+        background: #ff4d4d;
+        color: #fff;
+    }
+
+    @keyframes nexoFadeIn {
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
+    }
+</style>
+
+<div id="modalEditParticipants">
+    <div class="edit-participants-container">
+        <input type="text" class="editable-header-input" value="DATOS DE PARTICIPANTES" id="participantModalTitle">
+        
+        <div class="edit-table-wrapper nexo-scroll">
+            <table class="edit-table" id="tableParticipantsMain">
+                <thead>
+                    <tr>
+                        <th>NOMBRE Y APELLIDO</th>
+                        <th>NÚMERO DE TELÉFONO</th>
+                        <th>CORREO ELECTRÓNICO</th>
+                        <th style="width: 40px; text-align: center;">🗑️</th>
+                    </tr>
+                </thead>
+                <tbody id="participantTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="edit-actions-footer">
+            <button class="btn" style="border: 1px solid var(--gold-mix); flex: 1; font-size: 10px;" onclick="addParticipantRow()">
+                + AGREGAR FILA
+            </button>
+            <button class="btn btn-primary" style="flex: 1.5; font-size: 10px;" onclick="saveParticipantData()">
+                GUARDAR CAMBIOS EN SISTEMA
+            </button>
+            <button class="btn" style="background: transparent; color: #444 !important; flex: 0.5; font-size: 10px;" onclick="closeEditModal()">
+                CANCELAR
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const tableBody = document.getElementById('participantTableBody');
+        const modal = document.getElementById('modalEditParticipants');
+
+        // Función para agregar fila de manera dinámica (Escalable)
+        window.addParticipantRow = function(name = "", phone = "", email = "") {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" placeholder="NOMBRE COMPLETO" value="${name}"></td>
+                <td><input type="text" placeholder="000-000-0000" value="${phone}"></td>
+                <td class="no-caps"><input type="email" placeholder="ejemplo@correo.com" value="${email}"></td>
+                <td style="text-align: center;">
+                    <button class="btn-delete-row" onclick="this.closest('tr').remove()">✕</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+            // Scroll automático al final al agregar
+            const wrapper = document.querySelector('.edit-table-wrapper');
+            wrapper.scrollTop = wrapper.scrollHeight;
+        };
+
+        // Inicialización predeterminada (Regla de campos requeridos)
+        addParticipantRow();
+
+        // Función para cerrar el modal
+        window.closeEditModal = function() {
+            modal.style.display = 'none';
+        };
+
+        // Función Guardar (Preparada para Firebase)
+        window.saveParticipantData = function() {
+            const title = document.getElementById('participantModalTitle').value;
+            const rows = tableBody.querySelectorAll('tr');
+            const data = [];
+
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                data.push({
+                    nombre: inputs[0].value,
+                    telefono: inputs[1].value,
+                    email: inputs[2].value
+                });
+            });
+
+            console.log("LOG: Guardando cambios en el sistema...", { titulo: title, registros: data });
+            
+            // Aquí se conectará la lógica de Firebase en la siguiente fase
+            alert("SISTEMA: Datos procesados correctamente.");
+            closeEditModal();
+        };
+
+        // Exponer función de apertura para el futuro disparador
+        window.openEditParticipantsModal = function() {
+            modal.style.display = 'flex';
+        };
+    })();
+</script>
 </body>
 </html>
+
