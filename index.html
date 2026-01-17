@@ -666,8 +666,91 @@
         };
     })();
 </script>
+
+    <style>
+    /* Dashboard de Usuario Ultra Premium */
+    #userDashboard {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+        z-index: 14500; overflow-y: auto; padding: 40px 20px;
+    }
+    .user-container { max-width: 600px; margin: 0 auto; }
+    
+    .profile-header {
+        background: linear-gradient(180deg, var(--gold-mix), #000);
+        padding: 40px; border-radius: 30px; text-align: center;
+        border: 1px solid var(--gold); margin-bottom: 30px;
+    }
+    .profile-avatar {
+        width: 80px; height: 80px; background: #000; border: 2px solid var(--gold);
+        border-radius: 50%; margin: 0 auto 15px; display: flex; 
+        align-items: center; justify-content: center; font-size: 30px;
+    }
+    
+    /* Slot para futuras integraciones dentro del perfil */
+    #userIntegrationsSlot {
+        display: flex; flex-direction: column; gap: 20px;
+    }
+</style>
+
+<div id="userDashboard">
+    <div class="user-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="font-size: 16px; margin: 0; color: var(--gold);">NEXO® USER ID</h2>
+            <button id="btnCloseUserDashboard" class="btn" style="color: #fff !important; font-size: 12px;">VOLVER</button>
+        </div>
+
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <h1 id="userDisplayName" style="font-size: 18px; margin: 0; color: #fff;">CARGANDO...</h1>
+            <p id="userDisplayEmail" style="font-size: 10px; color: var(--gold); margin-top: 5px; opacity: 0.8;"></p>
+        </div>
+
+        <div id="userIntegrationsSlot">
+            </div>
+        
+        <div style="margin-top: 50px; text-align: center; opacity: 0.3;">
+            <p style="font-size: 8px; letter-spacing: 2px;">NEXO® BUSINESS PRO - SECURE SESSION</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const menuSlot = document.getElementById('dynamicMenuSlot');
+        const userDashboard = document.getElementById('userDashboard');
+        
+        // 1. CREAR EL BOTÓN DE USUARIO EN EL MENÚ
+        const btnUser = document.createElement('button');
+        btnUser.className = 'btn';
+        btnUser.style.cssText = `
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #000, #111);
+            border: 1px solid var(--gold); color: var(--gold) !important;
+            font-size: 10px; letter-spacing: 2px; cursor: pointer; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;
+        `;
+        btnUser.innerHTML = `<span>👤</span> MI PERFIL`;
+
+        btnUser.onmouseenter = () => btnUser.style.background = 'var(--gold-mix)';
+        btnUser.onmouseleave = () => btnUser.style.background = 'linear-gradient(135deg, #000, #111)';
+
+        // 2. ACCIÓN: ABRIR DASHBOARD
+        btnUser.onclick = () => {
+            if(currentUser) {
+                document.getElementById('userDisplayName').innerText = currentUser.email.split('@')[0].toUpperCase();
+                document.getElementById('userDisplayEmail').innerText = currentUser.email;
+                userDashboard.style.display = 'block';
+                document.getElementById('mainMenuContent').style.display = 'none';
+            }
+        };
+
+        menuSlot.appendChild(btnUser);
+
+        // 3. CERRAR DASHBOARD
+        document.getElementById('btnCloseUserDashboard').onclick = () => {
+            userDashboard.style.display = 'none';
+            document.getElementById('mainMenuContent').style.display = 'block';
+        };
+    })();
+</script>
 </body>
 </html>
-
-
-
