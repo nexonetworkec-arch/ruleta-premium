@@ -1259,61 +1259,61 @@ appWheel.handleSpinClick = function() {
     // Lógica original de giro...
 };
 
- /* INYECCIÓN ADITIVA: OBSERVADOR DE INTERFAZ PARA BOTÓN CONFIG */
+ /* INYECCIÓN ADITIVA: ANCLAJE DE PRECISIÓN PARA BOTÓN CONFIG */
 (function() {
-    // Función que realiza la inyección física
-    const injectNow = (container) => {
-        if (document.getElementById('btnManageFormFields')) return; // Evitar duplicados
+    const findAndInject = () => {
+        if (document.getElementById('btnManageFormFields')) return;
 
-        const btn = document.createElement('button');
-        btn.id = "btnManageFormFields";
-        btn.innerHTML = `<i class="fas fa-edit"></i> CONFIGURAR FORMULARIO VIP`;
-        
-        // Estilo forzado para asegurar visibilidad en fondo oscuro
-        btn.style.cssText = `
-            background: #000 !important;
-            color: #d4af37 !important;
-            border: 2px solid #d4af37 !important;
-            padding: 10px 20px !important;
-            border-radius: 5px !important;
-            font-size: 11px !important;
-            font-weight: 900 !important;
-            letter-spacing: 1px !important;
-            cursor: pointer !important;
-            margin: 10px !important;
-            z-index: 1000 !important;
-            display: inline-block !important;
-        `;
+        // Intentamos encontrar el título de la sección por su texto
+        const allElements = document.querySelectorAll('h2, h3, h4, span, div');
+        let anchor = null;
 
-        container.prepend(btn);
-        
-        btn.onclick = () => {
-            const modal = document.getElementById('modalEditorCampos');
-            if(modal) {
-                modal.style.display = 'flex';
-                if(typeof refreshAdminRows === 'function') refreshAdminRows();
-            } else {
-                console.error("El modal de edición no se encuentra en el DOM");
+        for (let el of allElements) {
+            if (el.textContent.includes("DATOS DE PARTICIPANTES") || el.id === "datosParticipantes") {
+                anchor = el;
+                break;
             }
-        };
+        }
+
+        if (anchor) {
+            const btn = document.createElement('button');
+            btn.id = "btnManageFormFields";
+            btn.innerHTML = `<i class="fas fa-sliders-h"></i> CONFIGURAR FORMULARIO`;
+            
+            // Estilo Premium con posicionamiento absoluto para que "salte" a la vista
+            btn.style.cssText = `
+                background: #000 !important;
+                color: #d4af37 !important;
+                border: 1px solid #d4af37 !important;
+                padding: 8px 15px !important;
+                border-radius: 4px !important;
+                font-size: 10px !important;
+                font-weight: bold !important;
+                cursor: pointer !important;
+                margin-left: 20px !important;
+                text-transform: uppercase !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+            `;
+
+            // Si el anclaje es un título, lo ponemos al lado
+            anchor.appendChild(btn);
+            console.log("🎯 NEXO® Config Button: Target anchored and injected.");
+            
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const modal = document.getElementById('modalEditorCampos');
+                if(modal) {
+                    modal.style.display = 'flex';
+                    if(typeof refreshAdminRows === 'function') refreshAdminRows();
+                }
+            };
+        }
     };
 
-    // Observador: Mira cambios en el body para detectar cuando aparece el Admin Panel
-    const observer = new MutationObserver((mutations) => {
-        // Buscamos tu sección específica de participantes
-        const target = document.querySelector('#datosParticipantes') || 
-                       document.querySelector('.leads-header') ||
-                       document.querySelector('.section-title'); // Buscador genérico de títulos
-
-        if (target) {
-            injectNow(target);
-        }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Ejecutar inmediatamente y cada vez que cambie la vista del panel
+    setInterval(findAndInject, 2000);
 })();
 </script>
 </body>
 </html>
-
-
