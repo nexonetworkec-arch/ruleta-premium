@@ -1175,5 +1175,103 @@
         }
     })();
 </script>
+
+    <div id="modalRegistration" class="modal" style="z-index: 13000;">
+    <div class="modal-content" style="border-width: 2px; max-width: 400px;">
+        <h3 style="margin-bottom: 20px;">REGISTRO DE PARTICIPANTE</h3>
+        <input type="text" id="regName" placeholder="NOMBRE Y APELLIDO" style="width:100%; margin-bottom:15px;">
+        <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%; margin-bottom:15px;">
+        <input type="email" id="regEmail" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px;" class="no-caps">
+        <div id="regError" style="color: #ff4d4d; font-size: 10px; margin-bottom: 15px; display: none; font-weight: 900;"></div>
+        <button id="btnSubmitReg" class="btn btn-primary" style="width:100%;">REGISTRAR Y GIRAR</button>
+        <button id="btnCancelReg" class="btn" style="width:100%; margin-top:10px; color: #555 !important; font-size: 9px;">CANCELAR</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    const regModal = document.getElementById('modalRegistration');
+    const errorDiv = document.getElementById('regError');
+    
+    // Extensión del método handleSpinClick original
+    const originalSpinClick = appWheel.handleSpinClick;
+    appWheel.handleSpinClick = function() {
+        if(config.modoRegistro && !config.isValidated) {
+            regModal.style.display = 'flex';
+            return;
+        }
+        originalSpinClick.apply(appWheel);
+    };
+
+    document.getElementById('btnCancelReg').onclick = () => {
+        regModal.style.display = 'none';
+        errorDiv.style.display = 'none';
+    };
+
+    document.getElementById('btnSubmitReg').onclick = async () => {
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const email = document.getElementById('regEmail').value.trim().toLowerCase();
+        
+        errorDiv.style.display = 'none';
+
+        // 1. Validación de campos vacíos
+        if(!name || !phone || !email) {
+            showError("TODOS LOS CAMPOS SON OBLIGATORIOS");
+            return;
+        }
+
+        // 2. Validación de formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(email)) {
+            showError("FORMATO DE CORREO INVÁLIDO");
+            return;
+        }
+
+        // 3. Verificación de Duplicados en Firebase
+        try {
+            const snapshot = await db.ref(`users/${currentUser.uid}/leads`).once('value');
+            let isDuplicate = false;
+            
+            if(snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const data = child.val();
+                    if(data.email === email || data.phone === phone) {
+                        isDuplicate = true;
+                    }
+                });
+            }
+
+            if(isDuplicate) {
+                showError("ESTOS DATOS YA HAN PARTICIPADO");
+                return;
+            }
+
+            // 4. Guardado de Lead y Activación de Giro
+            const newLeadRef = db.ref(`users/${currentUser.uid}/leads`).push();
+            await newLeadRef.set({
+                name: name,
+                phone: phone,
+                email: email,
+                date: new Date().toLocaleString(),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            config.isValidated = true;
+            regModal.style.display = 'none';
+            appWheel.handleSpinClick(); // Ejecuta el giro original
+
+        } catch (error) {
+            showError("ERROR DE CONEXIÓN AL VALIDAR");
+            console.error(error);
+        }
+    };
+
+    function showError(msg) {
+        errorDiv.innerText = msg;
+        errorDiv.style.display = 'block';
+    }
+})();
+</script>
 </body>
 </html>
