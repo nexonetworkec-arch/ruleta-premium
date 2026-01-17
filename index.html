@@ -263,18 +263,12 @@
     </script>
 
     <style>
-    /* MANTENEMOS TU ESTÉTICA ORIGINAL AL 100% */
+    /* Estética Ultra Premium para el Panel Admin */
     #adminMasterPanel {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
         z-index: 15000; overflow-y: auto; padding: 40px 20px; font-family: 'Segoe UI', sans-serif;
     }
     .admin-container { max-width: 1000px; margin: 0 auto; }
-    
-    /* NAVEGACIÓN POR PESTAÑAS (SUPERPODERES ADITIVOS) */
-    .admin-nav-tabs { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 10px; }
-    .nav-link { color: #555; cursor: pointer; font-size: 11px; letter-spacing: 2px; transition: 0.3s; padding: 5px 10px; text-transform: uppercase; }
-    .nav-link.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-
     .admin-module {
         background: rgba(15, 15, 15, 0.95); border: 1px solid var(--gold-mix);
         border-radius: 25px; padding: 25px; margin-bottom: 30px;
@@ -282,127 +276,150 @@
     }
     .admin-module h3 { color: var(--gold); font-size: 14px; margin-bottom: 20px; border-bottom: 1px solid var(--gold-mix); padding-bottom: 10px; }
     
+    /* Grid de Estadísticas (Módulo 1) */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-    .stat-card { background: #000; border: 1px solid #222; padding: 20px; border-radius: 15px; text-align: center; }
-    .stat-card h4 { color: #444; font-size: 10px; margin: 0 0 10px 0; letter-spacing: 2px; }
-    .stat-card p { color: var(--gold); font-size: 24px; font-weight: bold; margin: 0; }
+    .stat-card { background: #000; border: 1px solid #222; padding: 15px; border-radius: 15px; text-align: center; }
+    .stat-val { font-size: 24px; display: block; margin-bottom: 5px; }
+    .stat-label { font-size: 9px; color: var(--gold-dark); }
 
-    .admin-table { width: 100%; border-collapse: collapse; color: #fff; font-size: 11px; }
-    .admin-table th { text-align: left; padding: 12px; color: #555; border-bottom: 1px solid #222; font-size: 10px; }
-    .admin-table td { padding: 12px; border-bottom: 1px solid #111; }
-    .row-admin { background: rgba(212, 175, 55, 0.05); }
+    /* Búsqueda y Lista (Módulo 2 y 3) */
+    .search-bar { width: 100%; background: #000; border: 1px solid var(--gold-mix); padding: 15px; border-radius: 15px; margin-bottom: 10px; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .admin-table th { position: sticky; top: 0; background: #000; padding: 12px; text-align: left; border-bottom: 2px solid var(--gold); }
+    .admin-table td { padding: 12px; border-bottom: 1px solid #222; }
+    .row-admin { background: rgba(212, 175, 55, 0.05); } /* Resalte para el admin */
+
+    /* Formularios y Selectores */
+    select, textarea { background: #000; border: 1px solid #333; color: var(--gold); border-radius: 10px; padding: 10px; width: 100%; margin-bottom: 10px; }
 </style>
 
 <div id="adminMasterPanel">
     <div class="admin-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <div style="display:flex; flex-direction:column;">
-                <h2 style="color: var(--gold); letter-spacing: 5px; font-size: 18px; margin: 0;">NEXO® ADMIN PANEL</h2>
-                <span style="color:#333; font-size:8px; letter-spacing:2px;">SISTEMA INTEGRADO DE GESTIÓN</span>
-            </div>
-            <button class="btn" onclick="closeAdmin()" style="background: transparent; border: 1px solid #333; font-size: 10px;">CERRAR</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <h1 style="font-size: 20px; margin: 0;">NEXO® CONTROL CENTER</h1>
+            <button id="btnCloseAdmin" class="btn btn-primary" style="padding: 10px 20px;">CERRAR PANEL</button>
         </div>
 
-        <div class="admin-nav-tabs">
-            <div id="tab-stats" class="nav-link active" onclick="switchTab('stats')">GENERAL</div>
-            <div id="tab-participants" class="nav-link" onclick="switchTab('participants')">AUDIENCIA</div>
-            <div id="tab-leads" class="nav-link" onclick="switchTab('leads')">LEADS</div>
-        </div>
-
-        <div id="sec-stats" class="admin-tab-content" style="display: block;">
-            <div class="admin-module">
-                <div id="adminStatsGrid" class="stats-grid">
-                    </div>
+        <div class="admin-module">
+            <h3>ANALYTICS & STATUS</h3>
+            <div style="margin-bottom: 20px;">
+                <label class="stat-label">FILTRAR SUSCRIPCIÓN:</label>
+                <select id="subFilter">
+                    <option value="ALL">TODOS LOS NIVELES</option>
+                    <option value="PREMIUM">PREMIUM</option>
+                    <option value="BASIC">BÁSICO</option>
+                </select>
             </div>
-            <div class="admin-module">
-                <h3>SISTEMA DE LICENCIAS Y USUARIOS</h3>
-                <div style="overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>#</th><th>PROYECTO</th><th>UID</th><th>PLAN</th><th>ACCIONES</th></tr>
-                        </thead>
-                        <tbody id="userTableBody"></tbody>
-                    </table>
-                </div>
+            <div class="stats-grid">
+                <div class="stat-card"><span class="stat-val" id="countActive">0</span><span class="stat-label">ACTIVOS AHORA</span></div>
+                <div class="stat-card"><span class="stat-val" id="countTotal">0</span><span class="stat-label">USUARIOS TOTALES</span></div>
+                <div class="stat-card"><span class="stat-val" id="countExpiring">0</span><span class="stat-label">POR CADUCAR</span></div>
+                <div class="stat-card"><span class="stat-val" id="countPrizes">0</span><span class="stat-label">PREMIOS ENTREGADOS</span></div>
             </div>
         </div>
 
-        <div id="sec-participants" class="admin-tab-content" style="display: none;">
-            <div class="admin-module">
-                <h3>CONFIGURACIÓN DE AUDIENCIA</h3>
-                <div id="participantDataSlot" style="min-height: 150px;">
-                    </div>
+        <div class="admin-module">
+            <h3>SEARCH ENGINE</h3>
+            <input type="text" id="smartSearch" class="search-bar" placeholder="BUSCAR POR NOMBRE, UID, EMAIL O TELÉFONO...">
+        </div>
+
+        <div class="admin-module" style="max-height: 400px; overflow-y: auto;">
+            <h3>USER MANAGEMENT</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>USUARIO</th>
+                        <th>UID</th>
+                        <th>SUSCRIPCIÓN</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    </tbody>
+            </table>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn" style="border: 1px solid var(--gold); flex: 1;" onclick="downloadData('all')">DESCARGA MASIVA</button>
             </div>
         </div>
 
-        <div id="sec-leads" class="admin-tab-content" style="display: none;">
-            <div class="admin-module">
-                <h3>AUDITORÍA Y EXPORTACIÓN DE DATA</h3>
-                <div id="leadIntegrationsSlot" style="margin-bottom:20px;">
-                    </div>
-                <div id="nexo-export-area">
-                    </div>
+        <div class="admin-module">
+            <h3>GLOBAL MESSAGING</h3>
+            <select id="msgTarget">
+                <option value="ALL">TODOS LOS USUARIOS</option>
+                <option value="ACTIVE">SOLO ACTIVOS</option>
+            </select>
+            <textarea id="msgText" placeholder="MENSAJE DE TEXTO..."></textarea>
+            <input type="text" id="msgImg" class="admin-input" style="width:100%; background:#000; border:1px solid #333; padding:10px; margin-bottom:10px;" placeholder="URL DE IMAGEN (OPCIONAL)">
+            <button class="btn btn-primary" style="width: 100%;">ENVIAR COMUNICADO</button>
+        </div>
+
+        <div class="admin-module">
+            <h3>LICENSE GENERATOR</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" placeholder="DÍAS DE ACCESO" style="flex: 2; margin: 0;" class="admin-input">
+                <button class="btn btn-primary" style="flex: 1;">GENERAR CÓDIGO</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // LÓGICA DE NAVEGACIÓN SIN BORRADO DE DOM
-    window.switchTab = function(tab) {
-        // Ocultar todas las secciones
-        document.querySelectorAll('.admin-tab-content').forEach(s => s.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        
-        // Mostrar sección seleccionada
-        document.getElementById('sec-' + tab).style.display = 'block';
-        document.getElementById('tab-' + tab).classList.add('active');
-        
-        console.log("NEXO: Cambio a pestaña " + tab);
-    };
+    /* Lógica del Panel de Administración Master */
+    const adminUID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2"; // Tu UID [cite: 2026-01-14]
 
-    window.openAdmin = function() {
-        document.getElementById('adminMasterPanel').style.display = 'block';
-        loadAdminData(); 
-    };
+    // Función para abrir el panel (puedes llamarla desde consola o vincularla a un gesto)
+    function openAdmin() {
+        if(currentUser && currentUser.uid === adminUID) {
+            document.getElementById('adminMasterPanel').style.display = 'block';
+            loadAdminData();
+        } else {
+            console.warn("ACCESO DENEGADO");
+        }
+    }
 
-    window.closeAdmin = function() {
+    document.getElementById('btnCloseAdmin').onclick = () => {
         document.getElementById('adminMasterPanel').style.display = 'none';
     };
 
     function loadAdminData() {
         const tableBody = document.getElementById('userTableBody');
-        const statsGrid = document.getElementById('adminStatsGrid');
-        
-        tableBody.innerHTML = ""; 
+        tableBody.innerHTML = ""; // Limpiar
 
         db.ref('users').once('value', (snap) => {
-            const users = snap.val() || {};
-            const totalUsers = Object.keys(users).length;
-            
-            // Actualizar Estadísticas
-            statsGrid.innerHTML = `
-                <div class="stat-card"><h4>TOTAL PROYECTOS</h4><p>${totalUsers}</p></div>
-                <div class="stat-card"><h4>SISTEMA</h4><p>NEXO® PRO</p></div>
-                <div class="stat-card"><h4>ESTADO</h4><p>ONLINE</p></div>
-            `;
-
             let index = 1;
+            const users = snap.val();
+            
+            // Asegurar que el Admin sea el primero
+            if(users[adminUID]) {
+                appendUserRow(adminUID, users[adminUID], 0, true);
+            }
+
+            // Listar el resto
             Object.keys(users).forEach(uid => {
-                const data = users[uid];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index++}</td>
-                    <td>${data.config?.tituloSorteo || 'NUEVO USUARIO'}</td>
-                    <td style="font-family: monospace; font-size: 9px; opacity:0.5;">${uid}</td>
-                    <td><span style="color:var(--gold)">${data.subscription?.type || 'FREE'}</span></td>
-                    <td><button class="btn" style="padding: 5px 10px; font-size: 8px;">GESTIONAR</button></td>
-                `;
-                tableBody.appendChild(row);
+                if(uid !== adminUID) {
+                    appendUserRow(uid, users[uid], index++);
+                }
             });
         });
     }
-</script>
+
+    function appendUserRow(uid, data, idx, isAdmin = false) {
+        const tableBody = document.getElementById('userTableBody');
+        const row = document.createElement('tr');
+        if(isAdmin) row.className = 'row-admin';
+        
+        row.innerHTML = `
+            <td>${isAdmin ? '★' : idx}</td>
+            <td>${data.config?.tituloSorteo || 'NUEVO USUARIO'}</td>
+            <td style="font-family: monospace; font-size: 9px;">${uid}</td>
+            <td>${data.subscription?.type || 'FREE'}</td>
+            <td><button class="btn" style="padding: 5px 10px; font-size: 8px; border: 1px solid var(--gold);">GESTIONAR</button></td>
+        `;
+        tableBody.appendChild(row);
+    }
+
+    // Preparado para recibir más integraciones
 </script>
 
     <style>
