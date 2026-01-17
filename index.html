@@ -1193,75 +1193,49 @@
 </script>
 
 <script>
-    console.log("NEXO® Cleanup Module: Armed and ready.");
-</script>
-
-    <script>
     (function() {
-        // 1. Buscamos el encabezado de la sección de Leads (Fase 3)
-        const checkLeadsHeader = setInterval(() => {
-            // Buscamos el título o el contenedor de la tabla de leads
-            const leadsContainer = document.querySelector('h3[style*="LEADS"]')?.parentElement || 
-                                 document.getElementById('nexo-export-area')?.previousElementSibling;
-
-            if (leadsContainer) {
-                clearInterval(checkLeadsHeader);
-                injectConfigButton(leadsContainer);
-            }
-        }, 600);
-
-        function injectConfigButton(parent) {
-            // Evitar duplicados
-            if (document.getElementById('btnOpenRegistryConfig')) return;
-
-            // Crear contenedor para el botón dentro de la sección de leads
-            const btnWrapper = document.createElement('div');
-            btnWrapper.style.cssText = `margin-bottom: 20px; display: flex; justify-content: flex-end;`;
-            btnWrapper.innerHTML = `
-                <button id="btnOpenRegistryConfig" style="
-                    background: transparent; color: var(--gold); border: 1px solid var(--gold); 
-                    padding: 8px 15px; border-radius: 8px; font-size: 9px; font-weight: bold; 
-                    letter-spacing: 1px; cursor: pointer; transition: 0.3s;
-                    display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 12px;">⚙️</span> CONFIGURAR CAMPOS DE REGISTRO
-                </button>
+        const btn = document.getElementById('btnOpenRegistryConfig');
+        if (btn) {
+            // Aplicamos el ADN visual de la marca
+            btn.style.cssText = `
+                background: #000; 
+                color: #fff; 
+                border: 1px solid #1a1a1a; 
+                padding: 10px 22px; 
+                border-radius: 12px; 
+                font-size: 9px; 
+                font-weight: bold; 
+                letter-spacing: 2px; 
+                text-transform: uppercase;
+                cursor: pointer; 
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex; 
+                align-items: center; 
+                gap: 10px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             `;
-            // Lo insertamos al inicio del contenedor de leads para que sea visible
-            parent.prepend(btnWrapper);
 
-            // 2. Estructura del Modal (Esqueleto Limpio)
-            if (!document.getElementById('nexo_canvas_registro')) {
-                const masterCanvas = document.createElement('div');
-                masterCanvas.id = "nexo_canvas_registro";
-                masterCanvas.style.cssText = `
-                    display: none; position: fixed; inset: 0; 
-                    background: rgba(0,0,0,0.98); z-index: 2000000;
-                    backdrop-filter: blur(40px); align-items: center; justify-content: center;
-                `;
-                
-                masterCanvas.innerHTML = `
-                    <div style="width: 90vw; max-width: 800px; height: 70vh; background: #000; border: 1px solid #111; border-radius: 35px; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.9);">
-                        <div style="padding: 30px 40px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h3 style="color: var(--gold); font-size: 16px; letter-spacing: 4px; margin: 0;">EDITOR DE FORMULARIO</h3>
-                                <p style="color: #444; font-size: 8px; margin-top: 5px;">DEFINE LOS DATOS QUE SOLICITA LA RUBUSTA</p>
-                            </div>
-                            <button id="btnCloseRegistry" style="background: #111; border: none; color: #fff; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 16px;">&times;</button>
-                        </div>
+            // Efectos de interactividad (Hover)
+            btn.onmouseenter = () => {
+                btn.style.borderColor = 'var(--gold)';
+                btn.style.color = 'var(--gold)';
+                btn.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.1)';
+                btn.style.transform = 'translateY(-1px)';
+            };
 
-                        <div id="nexo_slot_logica" style="flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                            <p style="color: #151515; font-size: 10px; letter-spacing: 3px;">ESTRUCTURA LISTA PARA CAMPOS EDITABLES...</p>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(masterCanvas);
+            btn.onmouseleave = () => {
+                btn.style.borderColor = '#1a1a1a';
+                btn.style.color = '#fff';
+                btn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+                btn.style.transform = 'translateY(0)';
+            };
 
-                // Eventos
-                document.getElementById('btnOpenRegistryConfig').onclick = () => masterCanvas.style.display = 'flex';
-                document.getElementById('btnCloseRegistry').onclick = () => masterCanvas.style.display = 'none';
-            }
+            // Ajuste del icono interno para que sea sutil
+            const icon = btn.querySelector('span');
+            if(icon) icon.style.color = 'var(--gold)';
         }
     })();
 </script>
 </body>
 </html>
+
