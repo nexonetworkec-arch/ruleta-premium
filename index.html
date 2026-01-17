@@ -260,6 +260,269 @@
             const pin = document.getElementById('authPin').value;
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
+
+        /* ==========================================================================
+   INYECCIÓN ADITIVA: PANEL DE ADMINISTRADOR (FULL SCREEN OVERLAY)
+   ========================================================================== */
+
+// Objeto principal del Panel para mantener el scope limpio
+const adminPanel = {
+    config: {
+        brandColor: "#TuColorMarca", // Se adapta a tus colores guardados
+        isOpen: false,
+        handshakeVerified: false
+    },
+
+    // 1. ESTRUCTURA BASE (CONTENEDOR MAESTRO)
+    init() {
+        const overlay = document.createElement('div');
+        overlay.id = 'admin-overlay-master';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a; color: white; z-index: 9999;
+            display: none; overflow-y: auto; font-family: sans-serif;
+        `;
+        
+        overlay.innerHTML = `
+            <header style="padding: 20px; background: #222; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid ${this.config.brandColor};">
+                <h2 style="margin: 0;">🛠️ Panel de Administración</h2>
+                <div id="admin-clock"></div>
+                <button onclick="adminPanel.close()" style="background: ${this.config.brandColor}; border: none; color: white; padding: 10px 20px; cursor: pointer; border-radius: 5px;">Cerrar Panel</button>
+            </header>
+            <div id="admin-content-wrapper" style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        this.renderModules();
+        this.startClock();
+    },
+
+    // 2. MÓDULO I: ESTADÍSTICAS (KPIs)
+    renderStats() {
+        return `
+            <div class="admin-card" style="background: #2a2a2a; padding: 20px; border-radius: 10px; border-left: 5px solid ${this.config.brandColor};">
+                <h3>📊 Estadísticas Globales</h3>
+                <div style="display: flex; gap: 15px;">
+                    <div>Activos: <strong id="stat-active">0</strong></div>
+                    <div>Totales: <strong id="stat-total">0</strong></div>
+                    <div>Premios: <strong id="stat-prizes">0</strong></div>
+                </div>
+                <hr style="border: 0.5px solid #444; margin: 15px 0;">
+                <label>Filtrar por Suscripción:</label>
+                <select id="stat-sub-filter" style="width: 100%; padding: 5px; margin-top: 5px;">
+                    <option value="all">Todos</option>
+                    <option value="gratis">Gratis</option>
+                    <option value="premium">Premium</option>
+                </select>
+                <p style="font-size: 0.8em; color: #aaa; margin-top: 10px;">Usuarios por caducar (7 días): <span id="stat-expire">0</span></p>
+            </div>
+        `;
+    },
+
+    // 3. MÓDULO II & III: BÚSQUEDA Y TABLA DE USUARIOS
+    renderUserManagement() {
+        return `
+            <div class="admin-card" style="background: #2a2a2a; padding: 20px; border-radius: 10px; grid-column: span 2;">
+                <h3>🔍 Gestión de Usuarios e Inteligencia</h3>
+                <input type="text" id="admin-search" placeholder="Buscar por UID, Nombre, Email o Licencia..." 
+                       style="width: 97%; padding: 12px; border-radius: 5px; border: none; margin-bottom: 15px;">
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background: #333;">
+                                <th style="padding: 10px;">#</th>
+                                <th>Nombre</th>
+                                <th>UID</th>
+                                <th>Suscripción</th>
+                                <th>Última Conexión</th>
+                                <th>Leads/Eventos</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 15px;">
+                    <button onclick="adminPanel.exportData()" style="padding: 8px; cursor: pointer;">📥 Descargar Selección</button>
+                </div>
+            </div>
+        `;
+    },
+
+    // 4. MÓDULO IV: MENSAJERÍA GLOBAL
+    renderMessaging() {
+        return `
+            <div class="admin-card" style="background: #2a2a2a; padding: 20px; border-radius: 10px;">
+                <h3>✉️ Mensajería Global & Publicidad</h3>
+                <select id="msg-target" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                    <option value="all">Todos los usuarios</option>
+                    <option value="active">Solo activos</option>
+                </select>
+                <textarea id="msg-text" placeholder="Escribe tu mensaje aquí..." style="width: 95%; height: 60px; margin-bottom: 10px;"></textarea>
+                <input type="text" id="msg-img-url" placeholder="URL de imagen (opcional)" style="width: 95%; margin-bottom: 10px;">
+                <input type="file" id="msg-img-local" style="font-size: 0.8em; margin-bottom: 10px;">
+                <button onclick="adminPanel.sendGlobalMessage()" style="width: 100%; background: #444; color: white; border: none; padding: 10px; cursor: pointer;">Enviar Mensaje</button>
+            </div>
+        `;
+    },
+
+    // 5. MÓDULO V: GENERADOR DE LICENCIAS
+    renderLicenseGen() {
+        return `
+            <div class="admin-card" style="background: #2a2a2a; padding: 20px; border-radius: 10px;">
+                <h3>🔑 Generador de Licencias</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="lic-uid" placeholder="UID del Usuario" style="flex: 2; padding: 5px;">
+                    <button onclick="adminPanel.activateManual()" style="flex: 1; font-size: 0.8em;">Activar Manual</button>
+                </div>
+                <hr style="border: 0.5px solid #444; margin: 15px 0;">
+                <button onclick="adminPanel.generateCode()" style="width: 100%; padding: 10px; background: ${this.config.brandColor}; border: none; color: white; cursor: pointer;">Generar Código de Activación</button>
+                <div id="last-code-gen" style="text-align: center; margin-top: 10px; font-weight: bold; color: ${this.config.brandColor};"></div>
+            </div>
+        `;
+    },
+
+    // LÓGICA DE SOPORTE (PUNTO 2 Y 9)
+    async requestSupportAccess(uid) {
+        const code = prompt("Ingrese el Código de Aprobación del Usuario para soporte:");
+        if(code) {
+            // Aquí iría la validación con la DB
+            console.log(`Solicitando acceso a UID: ${uid} con código: ${code}`);
+            alert("Acceso concedido. Modo Soporte Activo.");
+        }
+    },
+
+    // UTILIDADES
+    renderModules() {
+        const container = document.getElementById('admin-content-wrapper');
+        container.innerHTML = 
+            this.renderStats() + 
+            this.renderMessaging() + 
+            this.renderLicenseGen() +
+            this.renderUserManagement();
+    },
+
+    startClock() {
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('admin-clock').innerText = now.toLocaleString();
+        }, 1000);
+    },
+
+    close() {
+        document.getElementById('admin-overlay-master').style.display = 'none';
+        this.config.isOpen = false;
+    },
+
+    open() {
+        document.getElementById('admin-overlay-master').style.display = 'block';
+        this.config.isOpen = true;
+    }
+};
+
+// Inicialización silenciosa (Sin botón aún)
+adminPanel.init();
+
+        /* ==========================================================================
+   INYECCIÓN ADITIVA: MENÚ FLOTANTE ESCALABLE (BOTTOM-RIGHT)
+   ========================================================================== */
+
+const appMenu = {
+    config: {
+        brandColor: "#TuColorMarca", // Color de tu marca guardado
+        isOpen: false
+    },
+
+    // 1. CREACIÓN DEL CONTENEDOR DE MENÚ Y EL ICONO HAMBURGUESA
+    init() {
+        // Contenedor principal del botón disparador
+        const menuWrapper = document.createElement('div');
+        menuWrapper.id = 'app-menu-wrapper';
+        menuWrapper.style = `
+            position: fixed; bottom: 20px; right: 20px;
+            z-index: 9998; display: flex; flex-direction: column-reverse;
+            align-items: flex-end; gap: 10px;
+        `;
+
+        // El Icono Hamburguesa Cuadrado (Limpio)
+        const triggerBtn = document.createElement('div');
+        triggerBtn.id = 'menu-trigger-sq';
+        triggerBtn.style = `
+            width: 50px; height: 50px; background: ${this.config.brandColor};
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; cursor: pointer; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.3s ease;
+        `;
+        
+        // Líneas de la hamburguesa
+        triggerBtn.innerHTML = `
+            <div style="width: 25px; height: 3px; background: white; margin: 2px 0;"></div>
+            <div style="width: 25px; height: 3px; background: white; margin: 2px 0;"></div>
+            <div style="width: 25px; height: 3px; background: white; margin: 2px 0;"></div>
+        `;
+
+        // Contenedor de Botones Inyectables (Actualmente vacío y limpio)
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.id = 'menu-buttons-slot';
+        buttonsContainer.style = `
+            display: flex; flex-direction: column; gap: 10px;
+            transition: all 0.3s opacity; opacity: 0; pointer-events: none;
+        `;
+
+        // Evento de apertura
+        triggerBtn.onclick = () => this.toggleMenu();
+
+        menuWrapper.appendChild(triggerBtn);
+        menuWrapper.appendChild(buttonsContainer);
+        document.body.appendChild(menuWrapper);
+    },
+
+    // 2. FUNCIÓN PARA ABRIR/CERRAR (ESCALABLE)
+    toggleMenu() {
+        this.config.isOpen = !this.config.isOpen;
+        const slot = document.getElementById('menu-buttons-slot');
+        const trigger = document.getElementById('menu-trigger-sq');
+
+        if (this.config.isOpen) {
+            slot.style.opacity = '1';
+            slot.style.pointerEvents = 'auto';
+            trigger.style.transform = 'rotate(90deg)';
+        } else {
+            slot.style.opacity = '0';
+            slot.style.pointerEvents = 'none';
+            trigger.style.transform = 'rotate(0deg)';
+        }
+    },
+
+    // 3. MÉTODO DE INYECCIÓN ADITIVA (Para futuros botones)
+    addButton(id, icon, label, actionCallback) {
+        const slot = document.getElementById('menu-buttons-slot');
+        const btn = document.createElement('button');
+        btn.id = id;
+        btn.title = label;
+        btn.style = `
+            width: 45px; height: 45px; border-radius: 8px; border: none;
+            background: #2a2a2a; color: white; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        `;
+        btn.innerHTML = icon;
+        btn.onclick = () => {
+            actionCallback();
+            this.toggleMenu(); // Cierra el menú tras la acción
+        };
+        
+        slot.appendChild(btn);
+    }
+};
+
+// Inicialización del Menú
+appMenu.init();
     </script>
 </body>
 </html>
+
