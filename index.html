@@ -1198,80 +1198,110 @@
 
     <script>
     (function() {
-        const checkPanel = setInterval(() => {
-            const exportArea = document.getElementById('nexo-export-area');
-            if (exportArea) {
-                clearInterval(checkPanel);
-                injectScalableFramework(exportArea);
+        const checkCanvas = setInterval(() => {
+            const container = document.getElementById('formBuilderContent');
+            if (container) {
+                clearInterval(checkCanvas);
+                initUniversalFieldEditor(container);
             }
-        }, 500);
+        }, 600);
 
-        function injectScalableFramework(container) {
-            // 1. BOTÓN MAESTRO DE ACCESO (Mínimalista)
-            const btnEntry = document.createElement('div');
-            btnEntry.style.cssText = `margin-top: 25px; padding-top: 20px; border-top: 1px solid #151515;`;
-            btnEntry.innerHTML = `
-                <button id="btnMasterRegistro" style="
-                    width: 100%; padding: 18px; background: transparent; color: #fff; 
-                    border: 1px solid #333; border-radius: 15px; font-size: 10px; 
-                    font-weight: bold; letter-spacing: 2px; cursor: pointer; 
-                    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                    display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    <span style="color: var(--gold);">◈</span> REGISTRO DE PARTICIPANTE
-                </button>
+        function initUniversalFieldEditor(container) {
+            container.innerHTML = ''; // Limpiar lienzo
+
+            const editorWrapper = document.createElement('div');
+            editorWrapper.style.cssText = `
+                grid-column: 1 / -1; max-width: 700px; margin: 0 auto; width: 100%;
+                background: #050505; border: 1px solid #111; border-radius: 35px;
+                padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
             `;
-            container.appendChild(btnEntry);
 
-            const btn = document.getElementById('btnMasterRegistro');
-            btn.onmouseenter = () => { btn.style.borderColor = 'var(--gold)'; btn.style.background = '#0a0a0a'; };
-            btn.onmouseleave = () => { btn.style.borderColor = '#333'; btn.style.background = 'transparent'; };
+            editorWrapper.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                    <div>
+                        <h4 style="color: #fff; font-size: 16px; letter-spacing: 3px; margin: 0;">GESTOR DE FORMULARIO</h4>
+                        <p style="color: #444; font-size: 8px; letter-spacing: 1px; margin-top: 5px;">EDITA, AGREGA O ELIMINA CUALQUIER CAMPO DEL REGISTRO</p>
+                    </div>
+                    <button id="btnAddNewField" style="background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-size: 9px; font-weight: bold; cursor: pointer; transition: 0.3s;">
+                        + AÑADIR CAMPO
+                    </button>
+                </div>
 
-            // 2. LIENZO UNIVERSAL (MODAL ESCALABLE)
-            const masterModal = document.createElement('div');
-            masterModal.id = "nexoMasterCanvas";
-            masterModal.style.cssText = `
-                display: none; position: fixed; inset: 0; 
-                background: rgba(0,0,0,0.98); z-index: 2000000;
-                backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                align-items: center; justify-content: center;
-            `;
-            
-            masterModal.innerHTML = `
-                <div style="width: 95vw; max-width: 1100px; height: 85vh; background: #000; border: 1px solid #111; border-radius: 40px; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 50px 100px rgba(0,0,0,0.8);">
-                    
-                    <div style="padding: 40px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3 style="color: var(--gold); font-size: 20px; letter-spacing: 6px; margin: 0; font-weight: 200;">REGISTRO DE PARTICIPANTE</h3>
-                            <p style="color: #333; font-size: 8px; letter-spacing: 2px; margin-top: 5px;">MÓDULO DE CONFIGURACIÓN ESCALABLE</p>
-                        </div>
-                        <button id="btnCloseCanvas" style="background: #111; border: none; color: #fff; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 18px; transition: 0.3s;">&times;</button>
+                <div id="universalFieldsList" style="display: flex; flex-direction: column; gap: 15px;">
                     </div>
 
-                    <div id="formBuilderContent" style="flex-grow: 1; overflow-y: auto; padding: 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; align-content: start;">
-                        <div id="emptyStateHint" style="grid-column: 1 / -1; text-align: center; padding-top: 100px;">
-                            <span style="font-size: 40px; opacity: 0.1;">⚙️</span>
-                            <p style="color: #1a1a1a; font-size: 10px; letter-spacing: 4px; margin-top: 20px;">ESPERANDO INTEGRACIONES MODULARES...</p>
-                        </div>
-                    </div>
-
-                    <div style="padding: 20px 40px; background: #050505; border-top: 1px solid #0d0d0d; text-align: right;">
-                        <span style="color: #222; font-size: 7px; letter-spacing: 1px;">NEXO® FRAMEWORK V2.0 | FULL SCALABILITY READY</span>
-                    </div>
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #111; text-align: center;">
+                    <p style="color: #222; font-size: 7px; letter-spacing: 2px;">SISTEMA DE SINCRONIZACIÓN EN TIEMPO REAL ACTIVO</p>
                 </div>
             `;
-            document.body.appendChild(masterModal);
+            container.appendChild(editorWrapper);
 
-            // Control de Interfaz
-            btn.onclick = () => masterModal.style.display = 'flex';
-            document.getElementById('btnCloseCanvas').onclick = () => masterModal.style.display = 'none';
-            document.getElementById('btnCloseCanvas').onmouseenter = (e) => e.target.style.background = '#222';
-            document.getElementById('btnCloseCanvas').onmouseleave = (e) => e.target.style.background = '#111';
+            const listContainer = document.getElementById('universalFieldsList');
+            const btnAdd = document.getElementById('btnAddNewField');
+
+            // Función para Renderizar una Fila Editable
+            function createFieldRow(id, label) {
+                const row = document.createElement('div');
+                row.style.cssText = `
+                    display: flex; gap: 15px; align-items: center; background: #0a0a0a; 
+                    padding: 15px 20px; border-radius: 15px; border: 1px solid #1a1a1a;
+                    transition: 0.3s; animation: fadeIn 0.4s ease;
+                `;
+                
+                row.innerHTML = `
+                    <div style="color: var(--gold); font-size: 12px; opacity: 0.5;">☰</div>
+                    <input type="text" value="${label}" style="
+                        flex-grow: 1; background: transparent; border: none; border-bottom: 1px solid #222;
+                        color: #fff; font-size: 11px; padding: 5px 0; outline: none; letter-spacing: 1px;
+                    " onchange="updateNexoField('${id}', this.value)">
+                    <button onclick="deleteNexoField('${id}')" style="
+                        background: rgba(255, 77, 77, 0.1); border: none; color: #ff4d4d; 
+                        width: 35px; height: 35px; border-radius: 10px; cursor: pointer; 
+                        transition: 0.3s; display: flex; align-items: center; justify-content: center;
+                    ">🗑</button>
+                `;
+
+                row.onmouseenter = () => row.style.borderColor = '#333';
+                row.onmouseleave = () => row.style.borderColor = '#1a1a1a';
+                listContainer.appendChild(row);
+            }
+
+            // Lógica de Datos (Firebase)
+            function loadFields() {
+                db.ref(`users/${currentUser.uid}/config/formFields`).on('value', snap => {
+                    listContainer.innerHTML = '';
+                    if (snap.exists()) {
+                        snap.forEach(child => {
+                            createFieldRow(child.key, child.val());
+                        });
+                    } else {
+                        // Estado Inicial: Cargar campos base si no existen en DB
+                        const baseFields = { f1: "Nombre Completo", f2: "Correo Electrónico", f3: "Teléfono" };
+                        db.ref(`users/${currentUser.uid}/config/formFields`).set(baseFields);
+                    }
+                });
+            }
+
+            // Acciones Globales
+            window.updateNexoField = (id, newLabel) => {
+                if (newLabel.trim() === "") return;
+                db.ref(`users/${currentUser.uid}/config/formFields/${id}`).set(newLabel);
+            };
+
+            window.deleteNexoField = (id) => {
+                if (confirm("¿Seguro que deseas eliminar este campo? Los nuevos registros ya no pedirán este dato.")) {
+                    db.ref(`users/${currentUser.uid}/config/formFields/${id}`).remove();
+                }
+            };
+
+            btnAdd.onclick = () => {
+                const newId = 'field_' + Date.now();
+                db.ref(`users/${currentUser.uid}/config/formFields/${newId}`).set("Nuevo Campo");
+            };
+
+            loadFields();
         }
     })();
-</script>
-
-<script>
-    console.log("NEXO® Scalable Framework: Empty canvas deployed.");
 </script>
 </body>
 </html>
