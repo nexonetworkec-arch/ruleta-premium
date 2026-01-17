@@ -260,6 +260,324 @@
             const pin = document.getElementById('authPin').value;
             auth.signInWithEmailAndPassword(email, pin).catch(err => alert("ERROR: " + err.message));
         };
+
+        /* ==========================================================================
+   INYECCIÓN ADITIVA: NEXO® ADMIN PANEL (FULL SCREEN OVERLAY)
+   ========================================================================== */
+
+const adminPanel = {
+    config: {
+        isOpen: false,
+        lastSearch: "",
+        brandGold: "#d4af37"
+    },
+
+    // 1. ESTRUCTURA BASE Y UI
+    init() {
+        const overlay = document.createElement('div');
+        overlay.id = 'admin-panel-overlay';
+        overlay.style = `
+            position: fixed; inset: 0; background: var(--bg-color, #000);
+            z-index: 10500; display: none; flex-direction: column;
+            color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden;
+        `;
+
+        overlay.innerHTML = `
+            <header style="padding: 20px; background: var(--card-bg); border-bottom: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; color: var(--gold); font-size: 18px; letter-spacing: 2px;">NEXO® ADMIN PANEL</h2>
+                    <div id="admin-clock" style="font-size: 12px; color: #666;"></div>
+                </div>
+                <button onclick="adminPanel.close()" style="background: var(--gold); border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; color: black;">VOLVER</button>
+            </header>
+
+            <div style="display: flex; flex: 1; overflow: hidden;">
+                <main id="admin-main-scroll" style="flex: 1; overflow-y: auto; padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                    
+                    <section class="admin-card" style="background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid #222;">
+                        <h3 style="color: var(--gold); margin-top: 0; font-size: 14px;">📊 ESTADÍSTICAS (KPIs)</h3>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                            <div style="text-align: center;"> <span id="kpi-online" style="display: block; font-size: 20px; font-weight: bold;">0</span> <small style="color:#666">Online</small> </div>
+                            <div style="text-align: center;"> <span id="kpi-total" style="display: block; font-size: 20px; font-weight: bold;">0</span> <small style="color:#666">Usuarios</small> </div>
+                            <div style="text-align: center;"> <span id="kpi-prizes" style="display: block; font-size: 20px; font-weight: bold;">0</span> <small style="color:#666">Premios</small> </div>
+                        </div>
+                        <select id="sub-filter" style="width: 100%; background: #000; color: white; border: 1px solid #333; padding: 8px; border-radius: 5px;">
+                            <option value="all">Suscripción: Todas</option>
+                            <option value="pro">Plan Pro</option>
+                            <option value="free">Gratis</option>
+                        </select>
+                    </section>
+
+                    <section class="admin-card" style="background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid #222;">
+                        <h3 style="color: var(--gold); margin-top: 0; font-size: 14px;">✉️ BROADCAST MARKETING</h3>
+                        <textarea id="msg-global" placeholder="Mensaje para todos los usuarios..." style="width: 100%; height: 60px; background: #000; color: white; border: 1px solid #333; padding: 10px; border-radius: 5px;"></textarea>
+                        <button onclick="adminPanel.sendBroadcast()" style="width: 100%; margin-top: 10px; padding: 10px; background: #222; color: var(--gold); border: 1px solid var(--gold); border-radius: 5px; cursor: pointer;">ENVIAR AHORA</button>
+                    </section>
+
+                    <section class="admin-card" style="background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid #222; grid-column: span 2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="color: var(--gold); margin: 0; font-size: 14px;">🔍 GESTIÓN DE USUARIOS</h3>
+                            <input type="text" oninput="adminPanel.search(this.value)" placeholder="Buscar por Nombre, UID o Email..." style="width: 60%; background: #000; color: white; border: 1px solid #333; padding: 10px; border-radius: 5px;">
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+                                <thead style="position: sticky; top: 0; background: #111; color: var(--gold);">
+                                    <tr>
+                                        <th style="padding: 12px; border-bottom: 1px solid #333;">USUARIO</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid #333;">SUSCRIPCIÓN</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid #333;">PUNTO 9 (LEADS)</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid #333;">ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-user-list"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="admin-card" style="background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid #222;">
+                        <h3 style="color: var(--gold); margin-top: 0; font-size: 14px;">🔑 GENERADOR DE LICENCIAS</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="adminPanel.generateKey('PRO')" style="flex: 1; padding: 10px; background: var(--gold); color: black; border: none; border-radius: 5px; font-weight: bold;">GEN KEY PRO</button>
+                            <button onclick="adminPanel.generateKey('TRIAL')" style="flex: 1; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">GEN KEY TRIAL</button>
+                        </div>
+                        <div id="key-output" style="margin-top: 15px; font-family: monospace; text-align: center; color: var(--gold);"></div>
+                    </section>
+                </main>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        this.startClock();
+        this.syncRealTime();
+    },
+
+    // LÓGICA DE SINCRONIZACIÓN REALTIME CON FIREBASE
+    syncRealTime() {
+        // Contador de usuarios
+        db.ref('users').on('value', snapshot => {
+            const users = snapshot.val();
+            if(!users) return;
+            const list = document.getElementById('admin-user-list');
+            list.innerHTML = "";
+            let totalPrizes = 0;
+            let onlineCount = 0;
+
+            Object.keys(users).forEach(uid => {
+                const u = users[uid];
+                const config = u.config || {};
+                const status = u.status || { state: 'offline' };
+                if(status.state === 'online') onlineCount++;
+                
+                // Conteo de premios
+                if(u.history) totalPrizes += Object.keys(u.history).length;
+
+                // Renderizado de tabla (Incluyendo Punto 9)
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 12px; border-bottom: 1px solid #222;">
+                        <div style="font-weight:bold">${config.businessName || 'N/A'}</div>
+                        <div style="font-size:10px; color:#555">${uid}</div>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #222;">${config.plan || 'Free'}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #222;">
+                        <label class="switch">
+                            <input type="checkbox" ${config.modoRegistro ? 'checked' : ''} onchange="adminPanel.toggleLeads('${uid}', this.checked)">
+                            <span style="color: ${config.modoRegistro ? 'var(--gold)' : '#555'}">${config.modoRegistro ? 'ACTIVO' : 'OFF'}</span>
+                        </label>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #222;">
+                        <button onclick="adminPanel.downloadLeads('${uid}')" title="Descargar Leads" style="background:none; border:none; cursor:pointer;">📥</button>
+                        <button onclick="adminPanel.requestHandshake('${uid}')" title="Soporte Remoto" style="background:none; border:none; cursor:pointer;">🛡️</button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+
+            document.getElementById('kpi-total').innerText = Object.keys(users).length;
+            document.getElementById('kpi-online').innerText = onlineCount;
+            document.getElementById('kpi-prizes').innerText = totalPrizes;
+        });
+    },
+
+    // PUNTO 9: CONTROL REMOTO DE REGISTRO
+    toggleLeads(uid, state) {
+        db.ref(`users/${uid}/config/modoRegistro`).set(state);
+    },
+
+    // EXPORTACIÓN DE DATOS (MÓDULO III)
+    downloadLeads(uid) {
+        db.ref(`users/${uid}/leads`).once('value', s => {
+            const data = s.val();
+            if(!data) return alert("Este usuario no tiene leads capturados.");
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `leads_${uid}.json`;
+            a.click();
+        });
+    },
+
+    open() {
+        document.getElementById('admin-panel-overlay').style.display = 'flex';
+        this.config.isOpen = true;
+    },
+
+    close() {
+        document.getElementById('admin-panel-overlay').style.display = 'none';
+        this.config.isOpen = false;
+    },
+
+    startClock() {
+        setInterval(() => {
+            document.getElementById('admin-clock').innerText = new Date().toLocaleString();
+        }, 1000);
+    }
+};
+
+adminPanel.init();
+
+        /* ==========================================================================
+   INYECCIÓN ADITIVA FINAL: MENÚ, SEGURIDAD Y VINCULACIÓN DE PIN
+   ========================================================================== */
+
+const nexoSecurity = {
+    attempts: 0,
+    maxAttempts: 3,
+    isLocked: false,
+    
+    init() {
+        // 1. CREACIÓN DEL MODAL DE SEGURIDAD NEXO®
+        const modal = document.createElement('div');
+        modal.id = 'nexo-security-modal';
+        modal.style = `
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            display: none; justify-content: center; align-items: center;
+            z-index: 11000; backdrop-filter: blur(15px);
+        `;
+
+        modal.innerHTML = `
+            <div style="background: var(--card-bg); padding: 40px; border-radius: 25px; 
+                        border: 1px solid var(--gold); width: min(320px, 90%); text-align: center;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
+                <div style="color: var(--gold); font-size: 24px; margin-bottom: 10px;">🛡️</div>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 16px; letter-spacing: 1px;">ACCESO PROTEGIDO</h3>
+                <p style="color: #666; font-size: 11px; margin-bottom: 20px;">INGRESE SU PIN DE SESIÓN</p>
+                
+                <input type="password" id="nexo-pin-verify" placeholder="••••" 
+                       style="width: 100%; background: #000; border: 1px solid #333; padding: 15px; 
+                              text-align: center; color: var(--gold); border-radius: 12px; font-size: 20px; letter-spacing: 4px;">
+                
+                <div id="nexo-sec-error" style="color: #ff4444; font-size: 10px; margin: 10px 0; height: 12px;"></div>
+                
+                <button onclick="nexoSecurity.process()" style="width: 100%; background: var(--gold); color: black; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s;">VERIFICAR</button>
+                <button onclick="nexoSecurity.hide()" style="background:transparent; border:none; color:#444; cursor:pointer; font-size:10px; margin-top:15px;">CANCELAR</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        this.buildMenu();
+    },
+
+    buildMenu() {
+        // 2. CREACIÓN DEL MENÚ HAMBURGUESA (BOTTOM-RIGHT)
+        const menuContainer = document.createElement('div');
+        menuContainer.id = 'nexo-floating-menu';
+        menuContainer.style = `position: fixed; bottom: 30px; right: 30px; z-index: 10000; display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 15px;`;
+
+        const burger = document.createElement('div');
+        burger.id = 'nexo-burger-trigger';
+        burger.style = `
+            width: 55px; height: 55px; background: #000; border: 2px solid var(--gold);
+            border-radius: 12px; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; cursor: pointer; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        `;
+        burger.innerHTML = `
+            <div style="width:24px; height:2px; background:var(--gold); margin:3px 0;"></div>
+            <div style="width:18px; height:2px; background:var(--gold); margin:3px 0;"></div>
+            <div style="width:24px; height:2px; background:var(--gold); margin:3px 0;"></div>
+        `;
+
+        const slot = document.createElement('div');
+        slot.id = 'nexo-btn-slot';
+        slot.style = `display: flex; flex-direction: column; gap: 12px; opacity: 0; pointer-events: none; transition: 0.3s; transform: translateY(20px);`;
+
+        burger.onclick = () => {
+            if (slot.style.opacity === "0") {
+                this.show(); // Primero pide contraseña
+            } else {
+                this.toggle(false);
+            }
+        };
+
+        menuContainer.appendChild(burger);
+        menuContainer.appendChild(slot);
+        document.body.appendChild(menuContainer);
+
+        // VALIDACIÓN DE ADMIN: Solo tú ves el botón de Panel
+        // REEMPLAZA EL UID POR EL TUYO REAL:
+        setTimeout(() => {
+            if (auth.currentUser && auth.currentUser.uid === "9rlrqduPdIZn8G9vkdGIJHkiuOI2") {
+                this.addBtn('🛠️', () => adminPanel.open());
+            }
+            // Los usuarios pueden activar su propio modal (Punto 9)
+            this.addBtn('👤', () => {
+                const newState = !config.modoRegistro;
+                db.ref(`users/${auth.currentUser.uid}/config/modoRegistro`).set(newState);
+                alert("Modo Registro: " + (newState ? "ACTIVADO" : "DESACTIVADO"));
+            });
+        }, 2000);
+    },
+
+    addBtn(icon, action) {
+        const btn = document.createElement('button');
+        btn.innerHTML = icon;
+        btn.style = `width: 48px; height: 48px; border-radius: 12px; border: 1px solid #333; background: #000; color: var(--gold); cursor: pointer; font-size: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);`;
+        btn.onclick = () => { action(); this.toggle(false); };
+        document.getElementById('nexo-btn-slot').appendChild(btn);
+    },
+
+    async process() {
+        if (this.isLocked) return;
+        const pin = document.getElementById('nexo-pin-verify').value;
+        const error = document.getElementById('nexo-sec-error');
+
+        try {
+            // RE-AUTENTICACIÓN CON FIREBASE USANDO EL PIN DE SESIÓN
+            const credential = firebase.auth.EmailAuthProvider.credential(auth.currentUser.email, pin);
+            await auth.currentUser.reauthenticateWithCredential(credential);
+            
+            this.attempts = 0;
+            this.hide();
+            this.toggle(true);
+            document.getElementById('nexo-pin-verify').value = "";
+        } catch (e) {
+            this.attempts++;
+            error.innerText = `PIN INCORRECTO (${this.attempts}/${this.maxAttempts})`;
+            if (this.attempts >= this.maxAttempts) this.lock();
+        }
+    },
+
+    toggle(show) {
+        const s = document.getElementById('nexo-btn-slot');
+        const t = document.getElementById('nexo-burger-trigger');
+        s.style.opacity = show ? "1" : "0";
+        s.style.pointerEvents = show ? "auto" : "none";
+        s.style.transform = show ? "translateY(0)" : "translateY(20px)";
+        t.style.transform = show ? "rotate(90deg)" : "rotate(0deg)";
+    },
+
+    lock() {
+        this.isLocked = true;
+        document.getElementById('nexo-sec-error').innerText = "BLOQUEADO POR SEGURIDAD (60s)";
+        setTimeout(() => { this.isLocked = false; this.attempts = 0; }, 60000);
+    },
+
+    show() { document.getElementById('nexo-security-modal').style.display = 'flex'; document.getElementById('nexo-pin-verify').focus(); },
+    hide() { document.getElementById('nexo-security-modal').style.display = 'none'; }
+};
+
+nexoSecurity.init();
     </script>
 </body>
 </html>
+
