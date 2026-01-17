@@ -1123,8 +1123,77 @@
 <script>
     console.log("NEXO® Export Module: Integrated successfully.");
 </script>
+
+    <script>
+    (function() {
+        const checkExportArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkExportArea);
+                renderCleanupModule(exportArea);
+            }
+        }, 800);
+
+        function renderCleanupModule(container) {
+            // Creamos el contenedor de limpieza sin borrar lo anterior (Exportación)
+            const cleanupDiv = document.createElement('div');
+            cleanupDiv.style.cssText = `
+                margin-top: 25px; padding-top: 20px; 
+                border-top: 1px solid #1a1a1a; 
+                display: flex; flex-direction: column; gap: 10px;
+            `;
+
+            cleanupDiv.innerHTML = `
+                <p style="font-size: 8px; color: #ff4d4d; letter-spacing: 3px; margin: 0 0 5px 0; font-weight: bold; opacity: 0.7;">ZONA DE PELIGRO</p>
+                <button id="btnPurgeLeads" style="
+                    width: 100%; padding: 12px; background: transparent; 
+                    color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.2); border-radius: 10px;
+                    font-size: 8px; letter-spacing: 1px; cursor: pointer;
+                    transition: 0.3s;">
+                    🗑️ BORRAR TODOS LOS LEADS
+                </button>
+            `;
+            container.appendChild(cleanupDiv);
+
+            const btnPurge = document.getElementById('btnPurgeLeads');
+            
+            // Efecto Hover de Advertencia
+            btnPurge.onmouseenter = () => { 
+                btnPurge.style.background = 'rgba(255, 77, 77, 0.1)'; 
+                btnPurge.style.borderColor = '#ff4d4d'; 
+            };
+            btnPurge.onmouseleave = () => { 
+                btnPurge.style.background = 'transparent'; 
+                btnPurge.style.borderColor = 'rgba(255, 77, 77, 0.2)'; 
+            };
+
+            // LÓGICA DE BORRADO SEGURO
+            btnPurge.onclick = () => {
+                const confirm1 = confirm("⚠️ ATENCIÓN: Estás a punto de borrar TODA la base de datos de leads. Esta acción no se puede deshacer.\n\n¿Deseas continuar?");
+                
+                if (confirm1) {
+                    const confirm2 = prompt("Para confirmar la eliminación masiva, escribe la palabra: BORRAR");
+                    
+                    if (confirm2 === "BORRAR") {
+                        db.ref(`users/${currentUser.uid}/leads`).remove()
+                        .then(() => {
+                            alert("Base de datos purgada con éxito.");
+                        })
+                        .catch((error) => {
+                            console.error("Error al limpiar:", error);
+                            alert("Hubo un error al intentar borrar los datos.");
+                        });
+                    } else {
+                        alert("Acción cancelada. La palabra de seguridad no coincide.");
+                    }
+                }
+            };
+        }
+    })();
+</script>
+
+<script>
+    console.log("NEXO® Cleanup Module: Armed and ready.");
+</script>
 </body>
 </html>
-
-
-
