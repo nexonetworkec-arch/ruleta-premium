@@ -1463,70 +1463,93 @@
 })();
 
         /* ==========================================================
-   INYECCIÓN DE SEGURIDAD: PROTECCIÓN DE SESIÓN (UID)
-   Objetivo: Evitar el error 'reading uid' y cargar el editor
+   INYECCIÓN ADITIVA: FIX DE SESIÓN Y CARGA DEL EDITOR
+   Regla: Integridad Estructural - Inyección Add-on
    ========================================================== */
 
 (function() {
-    // Función para obtener el UID de forma segura
-    function getSafePath() {
-        // Intentamos obtener el usuario de varias formas comunes en tu código
-        const user = window.currentUser || firebase.auth().currentUser;
-        
-        if (user && user.uid) {
-            return `users/${user.uid}/config/estructuraRegistro`;
-        }
-        console.warn("NEXO: Esperando autenticación...");
-        return null;
+    // 1. FUNCIÓN DE RECONOCIMIENTO SEGURO
+    function obtenerConfiguracionSegura(callback) {
+        // Intentamos detectar al usuario de todas las formas posibles
+        const intervalIdentidad = setInterval(() => {
+            const user = window.currentUser || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
+            
+            if (user && user.uid) {
+                clearInterval(intervalIdentidad);
+                const path = `users/${user.uid}/config/estructuraRegistro`;
+                callback(path);
+            }
+        }, 500); // Reintenta cada medio segundo hasta que te reconozca
     }
 
+    // 2. ESCUCHADOR DE ACTIVACIÓN (Disparado por el botón)
     window.addEventListener('nexo_open_editor', () => {
         const slot = document.getElementById('nexo_slot_logica');
-        const path = getSafePath();
-
-        if (!path) {
-            if (slot) slot.innerHTML = '<div style="color:red; font-size:10px; text-align:center; padding:20px;">ERROR: SESIÓN NO DETECTADA. REINTENTE.</div>';
-            return;
-        }
-
-        // Si tenemos el paso libre, limpiamos el "INICIALIZANDO" e inyectamos
-        slot.innerHTML = `
-            <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto;">
-                <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;"></div>
-                <button id="nexo_btn_add_field" style="width:100%; padding:18px; background:rgba(212,175,55,0.05); color:var(--gold); border:1px dashed var(--gold); border-radius:20px; cursor:pointer; font-size:10px; letter-spacing:3px;">
-                    + AGREGAR NUEVO CAMPO AL REGISTRO
-                </button>
-            </div>
-        `;
-
-        const listaFilas = document.getElementById('nexo_lista_filas');
         
-        // Cargamos los datos con la ruta segura
-        db.ref(path).on('value', snap => {
-            listaFilas.innerHTML = '';
-            if (snap.exists()) {
-                snap.forEach(child => {
-                    renderizarFilaAdmin(child.key, child.val(), listaFilas, path);
-                });
-            }
-        });
+        obtenerConfiguracionSegura((dbPath) => {
+            if (!slot) return;
 
-        document.getElementById('nexo_btn_add_field').onclick = () => {
-            db.ref(`${path}/f${Date.now()}`).set("Nuevo Campo");
-        };
+            // Limpiamos el mensaje de "Inicializando" e inyectamos la UI real
+            slot.innerHTML = `
+                <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto; animation: fadeIn 0.4s ease;">
+                    <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:25px;">
+                        </div>
+                    
+                    <button id="nexo_btn_add_field" style="
+                        width:100%; padding:18px; background:rgba(212,175,55,0.05); 
+                        color:var(--gold); border:1px dashed var(--gold); border-radius:20px;
+                        font-size:10px; font-weight:bold; cursor:pointer; letter-spacing:3px;
+                        text-transform: uppercase;">
+                        + AGREGAR FILA AL REGISTRO
+                    </button>
+                </div>
+            `;
+
+            const listaFilas = document.getElementById('nexo_lista_filas');
+            const btnAdd = document.getElementById('nexo_btn_add_field');
+
+            // Conexión en tiempo real con Firebase
+            db.ref(dbPath).on('value', snap => {
+                listaFilas.innerHTML = '';
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        renderizarFilaAdmin(child.key, child.val(), listaFilas, dbPath);
+                    });
+                }
+            });
+
+            // Lógica para añadir nueva fila
+            btnAdd.onclick = () => {
+                const idNuevo = 'f' + Date.now();
+                db.ref(`${dbPath}/${idNuevo}`).set("Nuevo Campo");
+            };
+        });
     });
 
+    // 3. RENDERIZADOR DE FILAS (UI del Administrador)
     function renderizarFilaAdmin(id, valor, contenedor, path) {
         const fila = document.createElement('div');
-        fila.style.cssText = "display:flex; align-items:center; gap:15px; background:#0a0a0a; padding:15px; border-radius:18px; border:1px solid #1a1a1a; margin-bottom:10px;";
+        fila.style.cssText = `
+            display:flex; align-items:center; gap:15px; background:#0a0a0a; 
+            padding:12px 20px; border-radius:15px; border:1px solid #1a1a1a;
+        `;
+
         fila.innerHTML = `
-            <input type="text" value="${valor}" style="flex-grow:1; background:transparent; border:none; color:#fff; font-size:13px; outline:none; border-bottom:1px solid #222;">
-            <button class="del-btn" style="background:transparent; border:none; color:#444; cursor:pointer; font-size:18px;">&times;</button>
+            <input type="text" value="${valor}" style="
+                flex-grow:1; background:transparent; border:none; color:#fff; 
+                font-size:13px; outline:none; border-bottom:1px solid #333;">
+            <button class="nexo-btn-del" style="
+                background:transparent; border:none; color:#555; 
+                cursor:pointer; font-size:20px; font-weight:bold;">&times;</button>
         `;
 
         const input = fila.querySelector('input');
+        const btnDel = fila.querySelector('.nexo-btn-del');
+
         input.onchange = () => db.ref(`${path}/${id}`).set(input.value);
-        fila.querySelector('.del-btn').onclick = () => db.ref(`${path}/${id}`).remove();
+        btnDel.onclick = () => {
+            if(confirm("¿Eliminar este campo?")) db.ref(`${path}/${id}`).remove();
+        };
 
         contenedor.appendChild(fila);
     }
