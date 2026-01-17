@@ -1310,82 +1310,65 @@
     })();
 </script>
 
-    <script>
-    (function() {
-        // Escuchamos el evento de apertura que definimos en el paso anterior
-        window.addEventListener('nexo_open_editor', () => {
-            const slot = document.getElementById('nexo_slot_logica');
-            if (!slot) return;
+    /* ==========================================================
+   FASE 1: TRANSFORMACIÓN DEL MODAL A ESTRUCTURA DINÁMICA
+   Objetivo: Hacer que modalRegistration lea campos de Firebase
+   ========================================================== */
 
-            // 1. Definimos la ruta de los campos (Ajusta 'config/camposRegistro' según tu DB)
-            const dbPath = `users/${currentUser.uid}/config/camposRegistro`;
+(function() {
+    // Definimos la ruta maestra de la estructura (Firebase)
+    const dbPathConfig = `users/${currentUser.uid}/config/estructuraRegistro`;
 
-            // 2. Renderizamos la estructura base del editor
-            slot.innerHTML = `
-                <div id="editor_fields_container" style="display: flex; flex-direction: column; gap: 15px;">
-                    <div id="fields_list" style="display: flex; flex-direction: column; gap: 10px;">
-                        <p style="color: #333; font-size: 10px; text-align: center;">CARGANDO CAMPOS ACTUALES...</p>
-                    </div>
-                    <button id="addNewFieldV5" style="
-                        margin-top: 20px; padding: 15px; background: transparent; 
-                        color: var(--gold); border: 1px dashed var(--gold); border-radius: 15px;
-                        font-size: 10px; font-weight: bold; cursor: pointer; letter-spacing: 2px;">
-                        + AGREGAR OTRO CAMPO AL REGISTRO
-                    </button>
-                </div>
-            `;
+    // 1. EL OBSERVADOR DINÁMICO
+    // Este código se queda vigilando la base de datos perpetuamente
+    db.ref(dbPathConfig).on('value', snap => {
+        // Buscamos el contenedor real que enviaste en tu código
+        const container = document.querySelector('#modalRegistration .reg-inputs-container');
+        if (!container) return;
 
-            const fieldsList = document.getElementById('fields_list');
+        // Limpiamos los 3 campos fijos que estaban grabados en el HTML
+        container.innerHTML = ''; 
+        
+        if (snap.exists()) {
+            // Si hay configuración en la nube, creamos los campos uno a uno
+            snap.forEach(child => {
+                const labelField = child.val();
+                const fieldId = child.key;
 
-            // 3. Listener en tiempo real de Firebase
-            db.ref(dbPath).on('value', snap => {
-                fieldsList.innerHTML = '';
-                if (snap.exists()) {
-                    snap.forEach(child => {
-                        renderRow(child.key, child.val(), fieldsList, dbPath);
-                    });
-                } else {
-                    fieldsList.innerHTML = '<p style="color:#222; font-size:9px; text-align:center;">NO HAY CAMPOS CONFIGURADOS</p>';
-                }
+                const inputRow = document.createElement('div');
+                inputRow.className = 'reg-input-group'; // Respetamos tus estilos originales
+                inputRow.innerHTML = `
+                    <input type="text" id="reg_${fieldId}" placeholder="${labelField}" required>
+                `;
+                container.appendChild(inputRow);
             });
-
-            // 4. Función para agregar nuevo campo
-            document.getElementById('addNewFieldV5').onclick = () => {
-                const newKey = db.ref(dbPath).push().key;
-                db.ref(`${dbPath}/${newKey}`).set("Nuevo Dato");
+        } else {
+            // Si la base de datos está vacía, creamos los valores iniciales para que no se vea vacío
+            const defaults = { 
+                f1: "Nombres Completos", 
+                f2: "Número de Teléfono", 
+                f3: "Correo Electrónico" 
             };
+            db.ref(dbPathConfig).set(defaults);
+        }
+    });
+
+    // 2. ACTUALIZACIÓN DE LA LÓGICA DE CAPTURA
+    // Modificamos cómo el sistema lee los datos cuando el participante hace clic en 'Confirmar'
+    window.obtenerDatosDinamicos = function() {
+        const datos = {};
+        const inputs = document.querySelectorAll('#modalRegistration .reg-inputs-container input');
+        let todoLleno = true;
+
+        inputs.forEach(inp => {
+            const valor = inp.value.trim();
+            const etiqueta = inp.placeholder;
+            if (!valor) todoLleno = false;
+            datos[etiqueta] = valor;
         });
 
-        function renderRow(key, value, container, path) {
-            const row = document.createElement('div');
-            row.style.cssText = `
-                display: flex; align-items: center; gap: 15px; background: #080808; 
-                padding: 10px 20px; border-radius: 15px; border: 1px solid #111;
-            `;
-
-            row.innerHTML = `
-                <span style="color: #222; font-size: 10px; font-family: monospace;">ID: ${key.slice(-4)}</span>
-                <input type="text" value="${value}" style="
-                    flex-grow: 1; background: transparent; border: none; color: #fff; 
-                    font-size: 13px; border-bottom: 1px solid #1a1a1a; outline: none; padding: 5px;">
-                <button class="del-btn" style="background: transparent; border: none; color: #444; cursor: pointer; font-size: 18px;">&times;</button>
-            `;
-
-            // Guardado automático al editar
-            const input = row.querySelector('input');
-            input.onchange = () => db.ref(`${path}/${key}`).set(input.value);
-
-            // Eliminar fila
-            row.querySelector('.del-btn').onclick = () => {
-                if(confirm("¿Eliminar este campo del formulario?")) {
-                    db.ref(`${path}/${key}`).remove();
-                }
-            };
-
-            container.appendChild(row);
-        }
-    })();
-</script>
+        return { valido: todoLleno, data: datos };
+    };
+})();
 </body>
 </html>
-
