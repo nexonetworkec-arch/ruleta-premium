@@ -1794,5 +1794,68 @@
     }, 1000);
 })();
 </script>
+
+    <div id="nexo_ModalEditor" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); z-index: 999999; align-items: center; justify-content: center; padding: 20px; font-family: sans-serif;">
+    <div style="background: #050505; width: 100%; max-width: 850px; border: 1px solid #d4af37; border-radius: 15px; padding: 25px; max-height: 85vh; overflow-y: auto; box-shadow: 0 0 40px rgba(0,0,0,1);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="color: #d4af37; margin: 0; font-size: 14px; letter-spacing: 2px;">GESTIÓN DE PARTICIPANTES</h2>
+            <button onclick="document.getElementById('nexo_ModalEditor').style.display='none'" style="background: #111; border: 1px solid #333; color: #888; cursor: pointer; padding: 5px 12px; border-radius: 5px;">ESC / CERRAR</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; background: #0a0a0a; padding: 15px; border-radius: 10px; border: 1px solid #1a1a1a;">
+            <input type="text" id="inp_NexoName" placeholder="Nombre" style="background:#000; border:1px solid #333; color:#fff; padding:8px; border-radius:5px;">
+            <input type="text" id="inp_NexoPhone" placeholder="Teléfono" style="background:#000; border:1px solid #333; color:#fff; padding:8px; border-radius:5px;">
+            <input type="email" id="inp_NexoMail" placeholder="Email" style="background:#000; border:1px solid #333; color:#fff; padding:8px; border-radius:5px;">
+            <button onclick="nexo_LocalAdd()" style="background:#d4af37; color:#000; border:none; padding:8px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">AÑADIR</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px;">
+                <thead>
+                    <tr style="background: #111; text-align: left;">
+                        <th style="padding: 12px; border-bottom: 2px solid #222;">PARTICIPANTE</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #222;">CONTACTO</th>
+                        <th style="padding: 12px; border-bottom: 2px solid #222; text-align: center;">ELIMINAR</th>
+                    </tr>
+                </thead>
+                <tbody id="nexo_Tbody_Participants">
+                    </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; text-align: right;">
+            <button onclick="nexo_FinalCloudSave()" style="background: linear-gradient(to right, #d4af37, #8a6e2f); color: #000; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">GUARDAR CAMBIOS EN FIREBASE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // LÓGICA DE ACTIVACIÓN DE EMERGENCIA
+    (function() {
+        // Esta función será llamada por el botón que ya tienes
+        window.nexo_ForceOpenEditor = function() {
+            const modal = document.getElementById('nexo_ModalEditor');
+            if(modal) {
+                modal.style.display = 'flex';
+                nexo_LoadCurrentParticipants();
+            }
+        };
+
+        // Escucha universal para el botón
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.innerText.includes("EDITAR DATOS DE PARTICIPANTES")) {
+                e.preventDefault();
+                nexo_ForceOpenEditor();
+            }
+        }, true);
+    })();
+
+    function nexo_LoadCurrentParticipants() {
+        const tbody = document.getElementById('nexo_Tbody_Participants');
+        // Aquí conectaremos con tu db.participants en el siguiente paso
+        tbody.innerHTML = '<tr><td colspan="3" style="padding:20px; text-align:center; color:#555;">Listo para sincronizar con Firebase...</td></tr>';
+    }
+</script>
 </body>
 </html>
