@@ -1399,6 +1399,179 @@
         };
     })();
 </script>
+
+    <style>
+    /* MODAL DE EDICIÓN NEXO® */
+    #nexoEditorModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.98);
+        z-index: 17000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(30px);
+        padding: 20px;
+        animation: nexoFadeIn 0.4s ease;
+    }
+
+    .nexo-editor-container {
+        background: var(--card-bg);
+        border: 1px solid var(--gold-mix);
+        border-radius: 30px;
+        width: min(900px, 95%);
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        padding: 35px;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .nexo-editable-title {
+        border: none;
+        background: transparent;
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--gold);
+        width: 100%;
+        margin-bottom: 25px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        padding-bottom: 10px;
+        text-transform: uppercase;
+        outline: none;
+    }
+
+    .nexo-table-wrapper {
+        overflow-y: auto;
+        flex-grow: 1;
+        margin-bottom: 25px;
+        border-radius: 15px;
+    }
+
+    .nexo-edit-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .nexo-edit-table th {
+        background: #0a0a0a;
+        position: sticky;
+        top: 0;
+        padding: 15px;
+        text-align: left;
+        font-size: 10px;
+        color: #555;
+        border-bottom: 1px solid var(--gold-mix);
+        z-index: 2;
+    }
+
+    .nexo-edit-table td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .nexo-edit-table input {
+        width: 100%;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 8px;
+        color: #ccc;
+        font-size: 13px;
+    }
+
+    .nexo-edit-table input:focus {
+        border-color: var(--gold-mix);
+        background: rgba(212, 175, 55, 0.05);
+        outline: none;
+        color: #fff;
+    }
+
+    .nexo-btn-del {
+        background: rgba(255, 77, 77, 0.1);
+        border: 1px solid rgba(255, 77, 77, 0.2);
+        color: #ff4d4d;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    @keyframes nexoFadeIn {
+        from { opacity: 0; transform: scale(0.98); }
+        to { opacity: 1; transform: scale(1); }
+    }
+</style>
+
+<div id="nexoEditorModal">
+    <div class="nexo-editor-container">
+        <input type="text" class="nexo-editable-title" value="DATOS DE PARTICIPANTES" id="nexoMainTitle">
+        
+        <div class="nexo-table-wrapper nexo-scroll">
+            <table class="nexo-edit-table">
+                <thead>
+                    <tr>
+                        <th>NOMBRE Y APELLIDO</th>
+                        <th>TELÉFONO</th>
+                        <th>CORREO ELECTRÓNICO</th>
+                        <th style="width: 40px; text-align: center;">🗑️</th>
+                    </tr>
+                </thead>
+                <tbody id="nexoTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; gap: 15px;">
+            <button class="btn" style="border: 1px solid var(--gold-mix); flex: 1;" onclick="nexoAddRow()">+ AGREGAR FILA</button>
+            <button class="btn btn-primary" style="flex: 1.5;" onclick="nexoSaveData()">GUARDAR CAMBIOS</button>
+            <button class="btn" style="background: transparent; color: #444 !important; flex: 0.5;" onclick="nexoCloseModal()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // 1. LÓGICA DEL MODAL
+    const modal = document.getElementById('nexoEditorModal');
+    const tableBody = document.getElementById('nexoTableBody');
+
+    window.nexoAddRow = function(n="", t="", e="") {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" placeholder="NOMBRE" value="${n}"></td>
+            <td><input type="text" placeholder="TELÉFONO" value="${t}"></td>
+            <td style="text-transform:none"><input type="email" placeholder="EMAIL" value="${e}"></td>
+            <td style="text-align:center"><button class="nexo-btn-del" onclick="this.closest('tr').remove()">✕</button></td>
+        `;
+        tableBody.appendChild(tr);
+    };
+
+    window.nexoCloseModal = function() { modal.style.display = 'none'; };
+    
+    window.nexoSaveData = function() {
+        console.log("SISTEMA: Datos capturados para Firebase.");
+        nexoCloseModal();
+    };
+
+    // 2. INYECCIÓN DEL BOTÓN EN EL SLOT EXISTENTE
+    const injectBtn = setInterval(() => {
+        const slot = document.getElementById('participantDataSlot');
+        if (slot) {
+            clearInterval(injectBtn);
+            slot.innerHTML = `
+                <div style="padding: 10px 0;">
+                    <button id="btnTriggerEditor" class="btn" style="width:100%; background:rgba(212,175,55,0.05); border:1px solid var(--gold-mix); color:var(--gold); font-size:10px; padding:12px; gap:10px; display:flex; align-items:center; justify-content:center;">
+                        ✍️ EDITAR DATOS DE PARTICIPANTES
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('btnTriggerEditor').onclick = () => {
+                if(tableBody.children.length === 0) nexoAddRow(); // Fila inicial
+                modal.style.display = 'flex';
+            };
+        }
+    }, 500);
+})();
+</script>
 </body>
 </html>
-
