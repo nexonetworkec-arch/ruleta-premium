@@ -1193,115 +1193,68 @@
 </script>
 
 <script>
-    console.log("NEXO® Cleanup Module: Armed and ready.");
-</script>
-
-    <script>
     (function() {
-        const checkCanvas = setInterval(() => {
-            const container = document.getElementById('formBuilderContent');
-            if (container) {
-                clearInterval(checkCanvas);
-                initUniversalFieldEditor(container);
-            }
-        }, 600);
-
-        function initUniversalFieldEditor(container) {
-            container.innerHTML = ''; // Limpiar lienzo
-
-            const editorWrapper = document.createElement('div');
-            editorWrapper.style.cssText = `
-                grid-column: 1 / -1; max-width: 700px; margin: 0 auto; width: 100%;
-                background: #050505; border: 1px solid #111; border-radius: 35px;
-                padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-            `;
-
-            editorWrapper.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-                    <div>
-                        <h4 style="color: #fff; font-size: 16px; letter-spacing: 3px; margin: 0;">GESTOR DE FORMULARIO</h4>
-                        <p style="color: #444; font-size: 8px; letter-spacing: 1px; margin-top: 5px;">EDITA, AGREGA O ELIMINA CUALQUIER CAMPO DEL REGISTRO</p>
-                    </div>
-                    <button id="btnAddNewField" style="background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-size: 9px; font-weight: bold; cursor: pointer; transition: 0.3s;">
-                        + AÑADIR CAMPO
-                    </button>
-                </div>
-
-                <div id="universalFieldsList" style="display: flex; flex-direction: column; gap: 15px;">
-                    </div>
-
-                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #111; text-align: center;">
-                    <p style="color: #222; font-size: 7px; letter-spacing: 2px;">SISTEMA DE SINCRONIZACIÓN EN TIEMPO REAL ACTIVO</p>
-                </div>
-            `;
-            container.appendChild(editorWrapper);
-
-            const listContainer = document.getElementById('universalFieldsList');
-            const btnAdd = document.getElementById('btnAddNewField');
-
-            // Función para Renderizar una Fila Editable
-            function createFieldRow(id, label) {
-                const row = document.createElement('div');
-                row.style.cssText = `
-                    display: flex; gap: 15px; align-items: center; background: #0a0a0a; 
-                    padding: 15px 20px; border-radius: 15px; border: 1px solid #1a1a1a;
-                    transition: 0.3s; animation: fadeIn 0.4s ease;
-                `;
-                
-                row.innerHTML = `
-                    <div style="color: var(--gold); font-size: 12px; opacity: 0.5;">☰</div>
-                    <input type="text" value="${label}" style="
-                        flex-grow: 1; background: transparent; border: none; border-bottom: 1px solid #222;
-                        color: #fff; font-size: 11px; padding: 5px 0; outline: none; letter-spacing: 1px;
-                    " onchange="updateNexoField('${id}', this.value)">
-                    <button onclick="deleteNexoField('${id}')" style="
-                        background: rgba(255, 77, 77, 0.1); border: none; color: #ff4d4d; 
-                        width: 35px; height: 35px; border-radius: 10px; cursor: pointer; 
-                        transition: 0.3s; display: flex; align-items: center; justify-content: center;
-                    ">🗑</button>
-                `;
-
-                row.onmouseenter = () => row.style.borderColor = '#333';
-                row.onmouseleave = () => row.style.borderColor = '#1a1a1a';
-                listContainer.appendChild(row);
-            }
-
-            // Lógica de Datos (Firebase)
-            function loadFields() {
-                db.ref(`users/${currentUser.uid}/config/formFields`).on('value', snap => {
-                    listContainer.innerHTML = '';
-                    if (snap.exists()) {
-                        snap.forEach(child => {
-                            createFieldRow(child.key, child.val());
-                        });
-                    } else {
-                        // Estado Inicial: Cargar campos base si no existen en DB
-                        const baseFields = { f1: "Nombre Completo", f2: "Correo Electrónico", f3: "Teléfono" };
-                        db.ref(`users/${currentUser.uid}/config/formFields`).set(baseFields);
-                    }
-                });
-            }
-
-            // Acciones Globales
-            window.updateNexoField = (id, newLabel) => {
-                if (newLabel.trim() === "") return;
-                db.ref(`users/${currentUser.uid}/config/formFields/${id}`).set(newLabel);
-            };
-
-            window.deleteNexoField = (id) => {
-                if (confirm("¿Seguro que deseas eliminar este campo? Los nuevos registros ya no pedirán este dato.")) {
-                    db.ref(`users/${currentUser.uid}/config/formFields/${id}`).remove();
+        // Forzamos la limpieza cada vez que se abre el modal para evitar el "Esperando registros"
+        const masterBtn = document.getElementById('btnMasterRegistro');
+        
+        if (masterBtn) {
+            masterBtn.addEventListener('click', () => {
+                const canvas = document.getElementById('formBuilderContent');
+                if (canvas) {
+                    canvas.innerHTML = '<div style="color:var(--gold); font-size:10px; text-align:center; width:100%;">CARGANDO CONFIGURACIÓN...</div>';
+                    // Re-ejecutamos la inicialización del editor
+                    setTimeout(() => {
+                        if (typeof initUniversalFieldEditor === 'function') {
+                            initUniversalFieldEditor(canvas);
+                        } else {
+                            // Si la función no se encuentra por alcance, la re-definimos aquí
+                            forceRenderEditor(canvas);
+                        }
+                    }, 300);
                 }
-            };
+            });
+        }
 
-            btnAdd.onclick = () => {
-                const newId = 'field_' + Date.now();
-                db.ref(`users/${currentUser.uid}/config/formFields/${newId}`).set("Nuevo Campo");
-            };
+        function forceRenderEditor(container) {
+            container.innerHTML = ''; // Limpieza absoluta
+            
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `grid-column: 1 / -1; max-width: 600px; margin: 0 auto; width: 100%; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 25px; padding: 30px;`;
+            
+            wrapper.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h4 style="color: #fff; font-size: 14px; letter-spacing: 2px; margin: 0;">GESTOR DE FORMULARIO</h4>
+                    <button id="btnAddNewFieldInternal" style="background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-size: 9px; font-weight: bold; cursor: pointer;">+ NUEVO CAMPO</button>
+                </div>
+                <div id="fieldsListInternal" style="display: flex; flex-direction: column; gap: 12px;"></div>
+            `;
+            container.appendChild(wrapper);
 
-            loadFields();
+            const list = document.getElementById('fieldsListInternal');
+            
+            // Sincronización Directa
+            db.ref(`users/${currentUser.uid}/config/formFields`).on('value', snap => {
+                list.innerHTML = '';
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        const row = document.createElement('div');
+                        row.style.cssText = `display: flex; gap: 10px; background: #000; padding: 12px; border-radius: 10px; border: 1px solid #111;`;
+                        row.innerHTML = `
+                            <input type="text" value="${child.val()}" style="flex-grow:1; background:transparent; border:none; color:#fff; font-size:11px; outline:none;" onchange="db.ref('users/${currentUser.uid}/config/formFields/${child.key}').set(this.value)">
+                            <button onclick="db.ref('users/${currentUser.uid}/config/formFields/${child.key}').remove()" style="background:transparent; border:none; color:#ff4d4d; cursor:pointer;">🗑</button>
+                        `;
+                        list.appendChild(row);
+                    });
+                }
+            });
+
+            document.getElementById('btnAddNewFieldInternal').onclick = () => {
+                const id = 'f' + Date.now();
+                db.ref(`users/${currentUser.uid}/config/formFields/${id}`).set("Nuevo Campo");
+            };
         }
     })();
 </script>
 </body>
 </html>
+
