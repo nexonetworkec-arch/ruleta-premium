@@ -1311,39 +1311,38 @@
 </script>
 
     /* ==========================================================
-   FASE 1: TRANSFORMACIÓN DEL MODAL A ESTRUCTURA DINÁMICA
-   Objetivo: Hacer que modalRegistration lea campos de Firebase
+   INYECCIÓN ADITIVA: MOTOR DE ESCALABILIDAD (modalRegistration)
+   Regla: Integridad Estructural - No modifica el HTML base.
    ========================================================== */
 
 (function() {
-    // Definimos la ruta maestra de la estructura (Firebase)
+    // Definimos la ruta de configuración en Firebase
     const dbPathConfig = `users/${currentUser.uid}/config/estructuraRegistro`;
 
-    // 1. EL OBSERVADOR DINÁMICO
-    // Este código se queda vigilando la base de datos perpetuamente
+    // 1. ESCUCHADOR DE ESTRUCTURA (Para agregar o eliminar filas)
     db.ref(dbPathConfig).on('value', snap => {
-        // Buscamos el contenedor real que enviaste en tu código
+        // Localizamos el contenedor de tu modal original
         const container = document.querySelector('#modalRegistration .reg-inputs-container');
         if (!container) return;
 
-        // Limpiamos los 3 campos fijos que estaban grabados en el HTML
+        // Limpiamos los inputs estáticos para renderizar la lista dinámica
         container.innerHTML = ''; 
         
         if (snap.exists()) {
-            // Si hay configuración en la nube, creamos los campos uno a uno
+            // Recorremos la configuración y creamos cada fila
             snap.forEach(child => {
-                const labelField = child.val();
+                const nombreDelCampo = child.val(); // Ej: "DNI", "Ciudad", etc.
                 const fieldId = child.key;
 
                 const inputRow = document.createElement('div');
-                inputRow.className = 'reg-input-group'; // Respetamos tus estilos originales
+                inputRow.className = 'reg-input-group'; // Usamos tu clase CSS original
                 inputRow.innerHTML = `
-                    <input type="text" id="reg_${fieldId}" placeholder="${labelField}" required>
+                    <input type="text" id="reg_${fieldId}" placeholder="${nombreDelCampo}" required>
                 `;
                 container.appendChild(inputRow);
             });
         } else {
-            // Si la base de datos está vacía, creamos los valores iniciales para que no se vea vacío
+            // Si la base de datos está limpia, creamos los 3 campos base por defecto
             const defaults = { 
                 f1: "Nombres Completos", 
                 f2: "Número de Teléfono", 
@@ -1353,21 +1352,26 @@
         }
     });
 
-    // 2. ACTUALIZACIÓN DE LA LÓGICA DE CAPTURA
-    // Modificamos cómo el sistema lee los datos cuando el participante hace clic en 'Confirmar'
-    window.obtenerDatosDinamicos = function() {
-        const datos = {};
+    // 2. FUNCIÓN DE CAPTURA ESCALABLE
+    // Esta función reemplaza la necesidad de buscar IDs fijos
+    window.capturarRegistroDinamico = function() {
         const inputs = document.querySelectorAll('#modalRegistration .reg-inputs-container input');
-        let todoLleno = true;
+        let dataResult = {};
+        let validacionOk = true;
 
         inputs.forEach(inp => {
-            const valor = inp.value.trim();
-            const etiqueta = inp.placeholder;
-            if (!valor) todoLleno = false;
-            datos[etiqueta] = valor;
+            const val = inp.value.trim();
+            if (!val) {
+                validacionOk = false;
+                inp.style.borderColor = "red"; // Feedback visual simple
+            } else {
+                inp.style.borderColor = "var(--gold)";
+            }
+            // Guardamos el dato usando el placeholder como etiqueta
+            dataResult[inp.placeholder] = val;
         });
 
-        return { valido: todoLleno, data: datos };
+        return { valido: validacionOk, data: dataResult };
     };
 })();
 </body>
