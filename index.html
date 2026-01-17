@@ -532,6 +532,52 @@
         });
     })();
 </script>
+
+    <script>
+    (function() {
+        const menuSlot = document.getElementById('dynamicMenuSlot');
+        
+        // Crear el botón con estética Premium
+        const btnAdmin = document.createElement('button');
+        btnAdmin.className = 'btn';
+        btnAdmin.style.cssText = `
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #000, #111);
+            border: 1px solid var(--gold);
+            color: var(--gold) !important;
+            font-size: 10px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.3s;
+        `;
+        
+        btnAdmin.innerHTML = `<span>⚙️</span> PANEL DE ADMINISTRADOR`;
+        
+        // Efecto Hover
+        btnAdmin.onmouseenter = () => btnAdmin.style.background = 'var(--gold-mix)';
+        btnAdmin.onmouseleave = () => btnAdmin.style.background = 'linear-gradient(135deg, #000, #111)';
+
+        // Acción: Abrir el Panel de Admin (referencia a la función openAdmin creada anteriormente)
+        btnAdmin.onclick = () => {
+            if (typeof openAdmin === "function") {
+                openAdmin();
+                document.getElementById('mainMenuContent').style.display = 'none';
+            } else {
+                console.error("ERROR: Módulo de Panel de Administración no encontrado.");
+            }
+        };
+
+        // Inyectar en el slot
+        menuSlot.appendChild(btnAdmin);
+    })();
+</script>
 </body>
 </html>
+
 
