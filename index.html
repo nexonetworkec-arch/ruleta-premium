@@ -1236,55 +1236,51 @@ appWheel.handleSpinClick = function() {
 
    <script>
 (function() {
-    console.log("NEXO: Iniciando Observador Quirúrgico de Integridad...");
+    console.log("NEXO: Vigilante de integridad activado...");
 
-    const nexoFinalSync = () => {
-        const btnEdit = document.getElementById('btnParticipantData');
-        const modalEdit = document.getElementById('modalEditorCampos');
+    // Función de vinculación quirúrgica
+    const performLink = () => {
+        const btn = document.getElementById('btnParticipantData');
+        const modal = document.getElementById('modalEditorCampos');
         const exportArea = document.getElementById('nexo-export-area');
 
-        // 1. VÍNCULO DEL BOTÓN DE EDICIÓN (Elimina el error :1169)
-        if (btnEdit && modalEdit) {
-            btnEdit.onclick = (e) => {
+        // Vínculo del Botón y Modal
+        if (btn && modal) {
+            btn.onclick = (e) => {
                 e.preventDefault();
-                modalEdit.style.display = 'flex';
-                // Si existe la función de carga de campos, la ejecutamos
-                if (typeof loadCurrentFields === 'function') loadCurrentFields();
-                console.log("NEXO: Vínculo Botón-Modal activado correctamente.");
+                modal.style.display = 'flex';
+                console.log("NEXO: Modal de edición desplegado.");
             };
         }
 
-        // 2. RESTAURACIÓN DEL DEPURADOR (Zona de Peligro)
-        if (exportArea) {
-            // Si el botón de purga no está presente, lo re-inyectamos sin borrar nada
-            if (!document.getElementById('btnPurgeLeads') && typeof renderCleanupModule === 'function') {
+        // Protección del Depurador (Zona de Peligro)
+        if (exportArea && !document.getElementById('btnPurgeLeads')) {
+            if (typeof renderCleanupModule === 'function') {
                 renderCleanupModule(exportArea);
-                console.log("NEXO: Módulo de Depuración restaurado.");
             }
         }
 
-        // 3. SINCRONIZACIÓN DE PIN (Evita fallos de validación)
+        // Sincronización de PIN (Los 4 bloques)
         const pins = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
             i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
         );
-        pins.forEach(input => {
-            input.oninput = (e) => {
-                pins.forEach(other => { if(other !== e.target) other.value = e.target.value; });
-            };
+        pins.forEach(p => {
+            p.oninput = (e) => { pins.forEach(o => o.value = e.target.value); };
         });
     };
 
-    // Ejecución Multinivel para ganar la carrera de carga
-    // Intento 1: A los 2 segundos
-    setTimeout(nexoFinalSync, 2000);
-    
-    // Intento 2: A los 4 segundos (por si el servidor está lento)
-    setTimeout(nexoFinalSync, 4000);
+    // Observador de Mutaciones: Detecta cuando se agregan nuevos elementos al HTML
+    const observer = new MutationObserver((mutations) => {
+        performLink();
+    });
 
-    // Intento 3: Al terminar de cargar toda la ventana
-    window.addEventListener('load', nexoFinalSync);
+    // Empezar a vigilar el cuerpo del documento
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Ejecución inicial preventiva
+    setTimeout(performLink, 1000);
+    setTimeout(performLink, 3000);
 })();
 </script>
 </body>
 </html>
-
