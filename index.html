@@ -1846,6 +1846,56 @@
     }, 1000); // Verifica cada segundo para asegurar persistencia
 })();
 </script>
+
+   <div id="nexo_ModalEditor" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 20000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0a0a0a; width: 100%; max-width: 800px; border: 1px solid var(--gold); border-radius: 20px; padding: 30px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 0 50px rgba(0,0,0,1);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;">
+            <h3 style="color: var(--gold); margin: 0; letter-spacing: 3px; font-size: 16px;">GESTOR DE AUDIENCIA</h3>
+            <button onclick="document.getElementById('nexo_ModalEditor').style.display='none'" style="background: transparent; border: 1px solid #333; color: #555; cursor: pointer; padding: 5px 15px; border-radius: 8px; font-size: 10px;">CERRAR</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 25px; background: #111; padding: 15px; border-radius: 12px; border: 1px solid #222;">
+            <input type="text" id="newPartName" placeholder="Nombre" style="background: #000; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px; font-size: 11px;">
+            <input type="text" id="newPartPhone" placeholder="Teléfono" style="background: #000; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px; font-size: 11px;">
+            <input type="email" id="newPartMail" placeholder="Email" style="background: #000; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 5px; font-size: 11px;">
+            <button onclick="nexo_AddParticipant()" style="background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px;">+</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: #fff; font-size: 12px;">
+                <thead>
+                    <tr style="text-align: left; color: #444; font-size: 10px; text-transform: uppercase;">
+                        <th style="padding: 10px; border-bottom: 1px solid #222;">Participante</th>
+                        <th style="padding: 10px; border-bottom: 1px solid #222;">Contacto</th>
+                        <th style="padding: 10px; border-bottom: 1px solid #222; text-align: right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="nexo_TableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+            <button onclick="nexo_SaveChanges()" style="background: var(--gold-mix); color: #fff; border: 1px solid var(--gold); padding: 12px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; letter-spacing: 1px;">GUARDAR CAMBIOS EN CLOUD</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lógica interna del Modal (Conexión con el bloque de datos)
+    window.nexo_ForceOpenEditor = function() {
+        document.getElementById('nexo_ModalEditor').style.display = 'flex';
+        nexo_LoadTableData();
+    };
+
+    function nexo_LoadTableData() {
+        const tbody = document.getElementById('nexo_TableBody');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#555;">Cargando base de datos...</td></tr>';
+        
+        // Aquí se conecta con tu lógica de Firebase existente para listar participantes
+        // nexo_RefreshTable(appWheel.participants); 
+    }
+</script> 
 </body>
 </html>
-
