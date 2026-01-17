@@ -629,6 +629,73 @@ function requestRemoteSupport(uid) {
         }
     });
 </script>
+
+    <script>
+(function() {
+    const MASTER_UID = "9rlrqduPdIZn8G9vkdGIJHkiuOI2";
+
+    // Función para inyectar el botón de Admin si el UID coincide
+    function injectAdminAccess() {
+        const menuGrid = document.getElementById('injectedMenuItems');
+        const user = firebase.auth().currentUser;
+
+        if (user && user.uid === MASTER_UID && menuGrid) {
+            // Limpiamos el mensaje de "En preparación" si existe
+            if (menuGrid.innerHTML.includes("MODULOS EN PREPARACIÓN")) {
+                menuGrid.innerHTML = '';
+            }
+
+            // Creamos el botón con la estética de la marca
+            const adminBtn = document.createElement('div');
+            adminBtn.id = "btnOpenMasterAdmin";
+            adminBtn.innerHTML = `
+                <div style="
+                    border: 1px solid var(--gold);
+                    background: rgba(212, 175, 55, 0.1);
+                    border-radius: 15px;
+                    padding: 20px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                ">
+                    <span style="font-size: 20px;">👑</span>
+                    <span style="font-size: 10px; font-weight: bold; letter-spacing: 1px;">PANEL MAESTRO</span>
+                </div>
+            `;
+
+            adminBtn.onclick = () => {
+                document.getElementById('userMenuPanel').style.display = 'none'; // Cierra el menú de usuario
+                document.getElementById('adminPanel').style.display = 'block'; // Abre el panel de administrador
+            };
+
+            // Insertamos al inicio del grid
+            menuGrid.prepend(adminBtn);
+        }
+    }
+
+    // Escuchamos el estado de autenticación para activar la inyección
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // Pequeño delay para asegurar que el DOM del menú esté listo
+            setTimeout(injectAdminAccess, 1000);
+        }
+    });
+})();
+</script>
+
+<style>
+    /* Efecto hover para el botón de admin dentro del menú */
+    #btnOpenMasterAdmin:hover div {
+        background: rgba(212, 175, 55, 0.2) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    }
+</style>
 </body>
 </html>
+
 
