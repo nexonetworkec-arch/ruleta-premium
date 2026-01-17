@@ -1309,5 +1309,83 @@
         }, 1000); // Se mantiene vigilante por si el DOM se refresca
     })();
 </script>
+
+    <script>
+    (function() {
+        // Escuchamos el evento de apertura que definimos en el paso anterior
+        window.addEventListener('nexo_open_editor', () => {
+            const slot = document.getElementById('nexo_slot_logica');
+            if (!slot) return;
+
+            // 1. Definimos la ruta de los campos (Ajusta 'config/camposRegistro' según tu DB)
+            const dbPath = `users/${currentUser.uid}/config/camposRegistro`;
+
+            // 2. Renderizamos la estructura base del editor
+            slot.innerHTML = `
+                <div id="editor_fields_container" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div id="fields_list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <p style="color: #333; font-size: 10px; text-align: center;">CARGANDO CAMPOS ACTUALES...</p>
+                    </div>
+                    <button id="addNewFieldV5" style="
+                        margin-top: 20px; padding: 15px; background: transparent; 
+                        color: var(--gold); border: 1px dashed var(--gold); border-radius: 15px;
+                        font-size: 10px; font-weight: bold; cursor: pointer; letter-spacing: 2px;">
+                        + AGREGAR OTRO CAMPO AL REGISTRO
+                    </button>
+                </div>
+            `;
+
+            const fieldsList = document.getElementById('fields_list');
+
+            // 3. Listener en tiempo real de Firebase
+            db.ref(dbPath).on('value', snap => {
+                fieldsList.innerHTML = '';
+                if (snap.exists()) {
+                    snap.forEach(child => {
+                        renderRow(child.key, child.val(), fieldsList, dbPath);
+                    });
+                } else {
+                    fieldsList.innerHTML = '<p style="color:#222; font-size:9px; text-align:center;">NO HAY CAMPOS CONFIGURADOS</p>';
+                }
+            });
+
+            // 4. Función para agregar nuevo campo
+            document.getElementById('addNewFieldV5').onclick = () => {
+                const newKey = db.ref(dbPath).push().key;
+                db.ref(`${dbPath}/${newKey}`).set("Nuevo Dato");
+            };
+        });
+
+        function renderRow(key, value, container, path) {
+            const row = document.createElement('div');
+            row.style.cssText = `
+                display: flex; align-items: center; gap: 15px; background: #080808; 
+                padding: 10px 20px; border-radius: 15px; border: 1px solid #111;
+            `;
+
+            row.innerHTML = `
+                <span style="color: #222; font-size: 10px; font-family: monospace;">ID: ${key.slice(-4)}</span>
+                <input type="text" value="${value}" style="
+                    flex-grow: 1; background: transparent; border: none; color: #fff; 
+                    font-size: 13px; border-bottom: 1px solid #1a1a1a; outline: none; padding: 5px;">
+                <button class="del-btn" style="background: transparent; border: none; color: #444; cursor: pointer; font-size: 18px;">&times;</button>
+            `;
+
+            // Guardado automático al editar
+            const input = row.querySelector('input');
+            input.onchange = () => db.ref(`${path}/${key}`).set(input.value);
+
+            // Eliminar fila
+            row.querySelector('.del-btn').onclick = () => {
+                if(confirm("¿Eliminar este campo del formulario?")) {
+                    db.ref(`${path}/${key}`).remove();
+                }
+            };
+
+            container.appendChild(row);
+        }
+    })();
+</script>
 </body>
 </html>
+
