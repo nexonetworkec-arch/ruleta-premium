@@ -1195,5 +1195,79 @@
 <script>
     console.log("NEXO® Cleanup Module: Armed and ready.");
 </script>
+
+    <script>
+    (function() {
+        const checkExportArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkExportArea);
+                renderFormBuilder(exportArea);
+            }
+        }, 900);
+
+        function renderFormBuilder(container) {
+            const builderDiv = document.createElement('div');
+            builderDiv.style.cssText = `
+                margin-top: 25px; padding-top: 20px; 
+                border-top: 1px solid #1a1a1a; 
+                display: flex; flex-direction: column; gap: 15px;
+            `;
+
+            builderDiv.innerHTML = `
+                <p style="font-size: 8px; color: var(--gold); letter-spacing: 3px; margin: 0; font-weight: bold;">CAMPOS DEL FORMULARIO</p>
+                <div id="formFieldsToggles" style="display: flex; flex-direction: column; gap: 10px;">
+                    </div>
+            `;
+            container.appendChild(builderDiv);
+
+            const fieldsContainer = document.getElementById('formFieldsToggles');
+            
+            // Definición de campos extra
+            const extraFields = [
+                { id: 'askCity', label: 'PEDIR CIUDAD' },
+                { id: 'askCompany', label: 'PEDIR EMPRESA' },
+                { id: 'askDNI', label: 'PEDIR IDENTIFICACIÓN (DNI)' }
+            ];
+
+            function syncFields() {
+                fieldsContainer.innerHTML = '';
+                extraFields.forEach(field => {
+                    const isEnabled = (typeof config !== 'undefined' && config[field.id]);
+                    const fieldRow = document.createElement('div');
+                    fieldRow.style.cssText = `display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 10px; border-radius: 8px; border: 1px solid #111;`;
+                    
+                    fieldRow.innerHTML = `
+                        <span style="font-size: 8px; color: #eee; letter-spacing: 1px;">${field.label}</span>
+                        <button id="btnField-${field.id}" style="
+                            background: ${isEnabled ? 'var(--gold)' : 'transparent'};
+                            color: ${isEnabled ? '#000' : 'var(--gold)'} !important;
+                            border: 1px solid var(--gold); padding: 5px 10px; font-size: 7px; 
+                            border-radius: 5px; cursor: pointer; min-width: 60px;">
+                            ${isEnabled ? 'SÍ' : 'NO'}
+                        </button>
+                    `;
+                    fieldsContainer.appendChild(fieldRow);
+
+                    document.getElementById(`btnField-${field.id}`).onclick = () => {
+                        const newState = !config[field.id];
+                        db.ref(`users/${currentUser.uid}/config`).update({ [field.id]: newState })
+                        .then(() => {
+                            config[field.id] = newState;
+                            syncFields();
+                        });
+                    };
+                });
+            }
+
+            syncFields();
+        }
+    })();
+</script>
+
+<script>
+    console.log("NEXO® Form Builder Module: Loaded.");
+</script>
 </body>
 </html>
+
