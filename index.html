@@ -486,5 +486,149 @@ function requestRemoteSupport(uid) {
     if(authCode) alert("CONECTANDO AL NODO " + uid + " BAJO CONSENTIMIENTO.");
 }
 </script>
+
+    <style>
+    /* Estilos del Botón Hamburguesa Cuadrado */
+    #btnUserMenu {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background: var(--bg-color);
+        border: 2px solid var(--gold-mix);
+        border-radius: 12px; /* Cuadrado con puntas suavizadas */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        z-index: 9990;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+    }
+    #btnUserMenu:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+    .bar { width: 25px; height: 2px; background: var(--gold); transition: 0.3s; }
+
+    /* Panel del Menú (Escalable) */
+    #userMenuPanel {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.98);
+        z-index: 9991;
+        padding: 40px 20px;
+        color: var(--gold);
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Modal de Validación de Contraseña */
+    #menuAuthLock {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 9995;
+        justify-content: center;
+        align-items: center;
+    }
+    .lock-card {
+        background: var(--card-bg);
+        padding: 30px;
+        border: 1px solid var(--gold);
+        border-radius: 20px;
+        text-align: center;
+        width: 90%;
+        max-width: 350px;
+    }
+    .menu-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+
+<div id="btnUserMenu" onclick="attemptOpenMenu()">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</div>
+
+<div id="menuAuthLock">
+    <div class="lock-card">
+        <h3 style="margin-top:0; letter-spacing:2px;">ACCESO RESTRINGIDO</h3>
+        <p style="font-size:10px; opacity:0.7; margin-bottom:20px;">INGRESE SU CONTRASEÑA DE SESIÓN PARA CONTINUAR</p>
+        <input type="password" id="menuPassVerify" class="auth-input" style="width:100%; text-align:center; margin-bottom:15px;" placeholder="••••••••">
+        <div style="display:flex; gap:10px;">
+            <button onclick="closeMenuLock()" class="btn" style="flex:1; border:1px solid #333;">CANCELAR</button>
+            <button onclick="verifyMenuAccess()" id="btnVerifyLock" class="btn btn-primary" style="flex:1;">ENTRAR</button>
+        </div>
+    </div>
+</div>
+
+<div id="userMenuPanel">
+    <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-mix); padding-bottom: 15px;">
+        <h2 style="margin:0; font-size:18px;">MENÚ DE CONFIGURACIÓN</h2>
+        <button onclick="document.getElementById('userMenuPanel').style.display='none'" class="btn" style="border:1px solid var(--gold); background:transparent;">CERRAR</button>
+    </div>
+
+    <div class="menu-grid" id="injectedMenuItems">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; opacity: 0.3; border: 1px dashed var(--gold-mix); border-radius: 15px;">
+            MODULOS EN PREPARACIÓN...
+        </div>
+    </div>
+</div>
+
+<script>
+    function attemptOpenMenu() {
+        document.getElementById('menuAuthLock').style.display = 'flex';
+        document.getElementById('menuPassVerify').focus();
+    }
+
+    function closeMenuLock() {
+        document.getElementById('menuAuthLock').style.display = 'none';
+        document.getElementById('menuPassVerify').value = '';
+    }
+
+    function verifyMenuAccess() {
+        const password = document.getElementById('menuPassVerify').value;
+        const user = firebase.auth().currentUser;
+        const btn = document.getElementById('btnVerifyLock');
+
+        if (!password || !user) return;
+
+        btn.innerText = "VERIFICANDO...";
+        btn.disabled = true;
+
+        // Re-autenticación dinámica para validar que sea la contraseña actual
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+        
+        user.reauthenticateWithCredential(credential)
+            .then(() => {
+                btn.innerText = "ENTRAR";
+                btn.disabled = false;
+                closeMenuLock();
+                document.getElementById('userMenuPanel').style.display = 'block';
+            })
+            .catch(error => {
+                btn.innerText = "ERROR";
+                btn.disabled = false;
+                alert("CONTRASEÑA INCORRECTA O SESIÓN EXPIRADA.");
+                console.error(error);
+            });
+    }
+
+    // Cerrar con tecla Escape
+    window.addEventListener('keydown', (e) => {
+        if(e.key === "Escape") {
+            closeMenuLock();
+            document.getElementById('userMenuPanel').style.display = 'none';
+        }
+    });
+</script>
 </body>
 </html>
+
