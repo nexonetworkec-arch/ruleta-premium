@@ -1173,114 +1173,61 @@
     })();
 </script>
 
-    <script>
-// 1. Mapa de Datos Predeterminado (Escalable)
-window.formConfigVIP = [
-    { id: "regName", label: "NOMBRE COMPLETO", type: "text", placeholder: "Identificación" },
-    { id: "regPhone", label: "WHATSAPP", type: "tel", placeholder: "Contacto directo" },
-    { id: "regEmail", label: "EMAIL", type: "email", placeholder: "Correo electrónico" }
-];
-
-// 2. Función Maestra de Renderizado
-// Esta función "dibuja" el formulario basándose en el Mapa de Datos
-function renderDynamicForm() {
-    const container = document.getElementById('dynamicFieldsContainer');
-    if (!container) return;
-
-    container.innerHTML = ''; // Limpiar lienzo
-
-    window.formConfigVIP.forEach(field => {
-        const fieldHTML = `
-            <div style="margin-bottom: 18px; text-align: left;">
-                <label style="color: #888; font-size: 8px; letter-spacing: 1.5px; font-weight: 700; margin-left: 2px; text-transform: uppercase;">
-                    ${field.label}
-                </label>
-                <input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" 
-                    style="width:100%; margin-top:6px; padding: 14px; background: #000; border: 1px solid #1a1a1a; color: #fff; font-size: 11px; border-radius: 5px; outline: none; transition: 0.3s;">
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', fieldHTML);
-    });
-}
-
-// 3. Ajuste del Modal Existente (Inyección Aditiva sobre appWheel o el disparador)
-// Modificamos el disparador para que renderice antes de mostrarse
-const originalShowModal = () => {
-    const regModal = document.getElementById('modalRegistration');
-    // Insertamos el contenedor si no existe (Integridad Estructural)
-    let container = document.getElementById('dynamicFieldsContainer');
-    if(!container) {
-        const formDiv = document.getElementById('regForm');
-        // Limpiamos los inputs estáticos antiguos y ponemos el contenedor
-        formDiv.innerHTML = `
-            <h3 style="color: var(--gold); letter-spacing: 5px; margin-bottom: 8px; font-size: 16px; font-weight: 900; text-transform: uppercase;">Membresía VIP</h3>
-            <p style="color: #666; font-size: 9px; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase;">Valida tu acceso para participar</p>
-            <div id="dynamicFieldsContainer"></div>
-            <button id="btnSubmitReg" style="width:100%; padding: 18px; background: var(--gold); border: none; color: #000; font-weight: 900; cursor: pointer; border-radius: 5px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; transition: 0.4s;">Iniciar Desafío</button>
-        `;
-    }
-    
-    renderDynamicForm(); // Construir campos
-    regModal.style.display = 'flex';
-};
-
-// Re-vincular el clic de la ruleta al nuevo motor dinámico
-appWheel.handleSpinClick = function() {
-    if(config.modoRegistro && !config.isValidated) {
-        originalShowModal();
-        return;
-    }
-    // Lógica original de giro...
-};
-</script>
-
-   <script>
+  <script>
 (function() {
-    console.log("NEXO: Vigilante de integridad activado...");
+    console.log("NEXO: Iniciando Estabilización Quirúrgica...");
 
-    // Función de vinculación quirúrgica
-    const performLink = () => {
-        const btn = document.getElementById('btnParticipantData');
-        const modal = document.getElementById('modalEditorCampos');
-        const exportArea = document.getElementById('nexo-export-area');
-
-        // Vínculo del Botón y Modal
-        if (btn && modal) {
-            btn.onclick = (e) => {
-                e.preventDefault();
+    // 1. VINCULACIÓN UNIVERSAL (Delegación)
+    // Esto permite que el botón funcione aunque el código anterior lo borre y lo vuelva a crear
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('#btnParticipantData');
+        if (target) {
+            e.preventDefault();
+            const modal = document.getElementById('modalEditorCampos');
+            if (modal) {
                 modal.style.display = 'flex';
-                console.log("NEXO: Modal de edición desplegado.");
-            };
-        }
-
-        // Protección del Depurador (Zona de Peligro)
-        if (exportArea && !document.getElementById('btnPurgeLeads')) {
-            if (typeof renderCleanupModule === 'function') {
-                renderCleanupModule(exportArea);
+                if (typeof loadCurrentFields === 'function') loadCurrentFields();
+            } else {
+                console.error("NEXO: Error Crítico - El modal fue eliminado del DOM por otro módulo.");
             }
         }
-
-        // Sincronización de PIN (Los 4 bloques)
-        const pins = Array.from(document.querySelectorAll('input[type="password"]')).filter(i => 
-            i.id.includes('gatekeeperPin') || i.placeholder.includes('••••')
-        );
-        pins.forEach(p => {
-            p.oninput = (e) => { pins.forEach(o => o.value = e.target.value); };
-        });
-    };
-
-    // Observador de Mutaciones: Detecta cuando se agregan nuevos elementos al HTML
-    const observer = new MutationObserver((mutations) => {
-        performLink();
     });
 
-    // Empezar a vigilar el cuerpo del documento
-    observer.observe(document.body, { childList: true, subtree: true });
+    // 2. SINCRONIZADOR DE SEGURIDAD (PIN)
+    // Sincroniza los 4 cuadros de PIN en tiempo real para evitar "PIN Incorrecto"
+    document.addEventListener('input', function(e) {
+        if (e.target.id.includes('gatekeeperPin') || e.target.placeholder.includes('••••')) {
+            const val = e.target.value;
+            const allPins = document.querySelectorAll('input[type="password"]');
+            allPins.forEach(p => { if(p !== e.target) p.value = val; });
+        }
+    });
 
-    // Ejecución inicial preventiva
-    setTimeout(performLink, 1000);
-    setTimeout(performLink, 3000);
+    // 3. RESTAURACIÓN AUTOMÁTICA DE MÓDULOS (Depurador y Permisos)
+    const stabilizer = () => {
+        // Restaurar Zona de Peligro si el código de Leads la borró
+        const exportArea = document.getElementById('nexo-export-area');
+        if (exportArea && !document.getElementById('btnPurgeLeads')) {
+            if (typeof renderCleanupModule === 'function') renderCleanupModule(exportArea);
+        }
+
+        // Corregir ruta de Firebase para evitar Permission Denied
+        if (window.loadAdminData && !window.loadAdminData._isPatched) {
+            const originalLoad = window.loadAdminData;
+            window.loadAdminData = function() {
+                if (!auth.currentUser) return;
+                db.ref(`users/${auth.currentUser.uid}/leads`).once('value', (snap) => {
+                    if (typeof renderLeadsTable === 'function') renderLeadsTable(snap.val());
+                }).catch(err => console.error("NEXO Auth Fix:", err));
+            };
+            window.loadAdminData._isPatched = true;
+        }
+    };
+
+    // Mantener el sistema estable cada 2 segundos sin recargar la página
+    setInterval(stabilizer, 2000);
 })();
 </script>
 </body>
 </html>
+
