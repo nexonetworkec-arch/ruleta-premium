@@ -1236,75 +1236,77 @@ appWheel.handleSpinClick = function() {
 
     <script>
 (function() {
-    console.log("NEXO: Iniciando reparación quirúrgica del sistema...");
+    console.log("NEXO: Iniciando reparación total y sincronización de PIN...");
 
-    const nexoFinalFix = () => {
-        // 1. CORRECCIÓN DE IDs DUPLICADOS (Gatekeeper)
-        // Buscamos todos los inputs de PIN y les damos identidad única para eliminar el error [DOM]
-        const allPinInputs = document.querySelectorAll('#gatekeeperPin');
-        allPinInputs.forEach((input, index) => {
-            const newId = `gatekeeperPin_v${index + 1}`;
-            input.id = newId;
-            
-            // Sincronización: Si escribes en uno, se escribe en todos automáticamente
+    const fixNexoSystem = () => {
+        // 1. SINCRONIZACIÓN MAESTRA DE INPUTS
+        // Buscamos todos los campos que actúen como PIN
+        const allInputs = document.querySelectorAll('input[type="password"]');
+        const gatekeeperInputs = Array.from(allInputs).filter(i => 
+            i.id.includes('gatekeeperPin') || 
+            i.placeholder.includes('••••') ||
+            i.closest('.gatekeeper-content')
+        );
+
+        gatekeeperInputs.forEach((input) => {
+            // Sincronización en tiempo real: lo que escribes en uno se copia en los demás
             input.addEventListener('input', (e) => {
-                allPinInputs.forEach(i => i.value = e.target.value);
+                const val = e.target.value;
+                gatekeeperInputs.forEach(other => {
+                    if (other !== e.target) other.value = val;
+                });
             });
+        });
 
-            // Vincular el botón de ese modal específico a la validación
-            const parent = input.closest('.gatekeeper-content');
-            if (parent) {
-                const btn = parent.querySelector('button');
-                if (btn) {
-                    btn.onclick = () => {
-                        if (input.value === "1234") { // Validador local rápido
-                            document.querySelectorAll('[id^="gatekeeperModal"]').forEach(m => m.style.display = 'none');
-                            console.log("NEXO: Acceso concedido.");
-                        } else {
-                            alert("PIN INCORRECTO");
-                        }
-                    };
-                }
+        // 2. UNIFICACIÓN DE LÓGICA DE BOTONES
+        // Reprogramamos todos los botones "ENTRAR" para que lean el PIN sincronizado
+        document.querySelectorAll('button').forEach(btn => {
+            const txt = btn.innerText.toUpperCase();
+            if (txt.includes('ENTRAR') || txt.includes('VALIDAR')) {
+                btn.onclick = async (e) => {
+                    e.preventDefault();
+                    // Tomamos el valor de cualquiera de los inputs (ya están sincronizados)
+                    const pinValue = gatekeeperInputs[0]?.value;
+
+                    if (pinValue === "1234") { 
+                        console.log("NEXO: Acceso Autorizado.");
+                        // Cerramos TODOS los modales de seguridad abiertos
+                        document.querySelectorAll('[id^="gatekeeperModal"], .gatekeeper-nexo').forEach(m => {
+                            m.style.display = 'none';
+                        });
+                        // Abrimos el panel si existe la función
+                        if (typeof openAdmin === 'function') openAdmin();
+                    } else {
+                        alert("PIN INCORRECTO - VERIFIQUE SUS CREDENCIALES");
+                    }
+                };
             }
         });
 
-        // 2. CORRECCIÓN DE PERMISOS DE FIREBASE (Permission Denied)
-        // Redirigimos las funciones que fallan hacia la ruta permitida por Firebase
-        const originalLoadData = window.loadAdminData;
-        window.loadAdminData = function() {
-            if (!auth.currentUser) return;
-            // Forzamos la ruta al nodo del usuario para evitar el error /users
-            const safePath = `users/${auth.currentUser.uid}/leads`;
-            console.log("NEXO: Redirigiendo consulta a ruta segura: " + safePath);
-            
-            db.ref(safePath).once('value', (snap) => {
-                if (typeof renderLeadsTable === 'function') {
-                    renderLeadsTable(snap.val());
-                }
-            }).catch(err => console.error("Error de permisos en Firebase: ", err));
-        };
-
-        // 3. VÍNCULO DEL MODAL DE EDICIÓN (Solución al error "No inyectado")
-        const btnParticipant = document.getElementById('btnParticipantData');
-        const modalEditor = document.getElementById('modalEditorCampos');
-        
-        if (btnParticipant && modalEditor) {
-            btnParticipant.onclick = (e) => {
-                e.preventDefault();
-                modalEditor.style.display = 'flex';
-                console.log("NEXO: Modal de edición activado correctamente.");
+        // 3. FIX DE PERMISOS FIREBASE (Evita el Permission Denied)
+        if (window.loadAdminData) {
+            window.loadAdminData = function() {
+                if (!auth.currentUser) return;
+                // Forzamos la ruta al nodo privado del usuario
+                db.ref(`users/${auth.currentUser.uid}/leads`).once('value', (snap) => {
+                    if (typeof renderLeadsTable === 'function') renderLeadsTable(snap.val());
+                }).catch(err => console.error("Error de acceso a Leads: ", err));
             };
         }
-        
-        console.log("NEXO: Sistema estabilizado. Errores de colisión resueltos.");
+
+        // 4. VÍNCULO DEL BOTÓN DE EDICIÓN
+        const btnEdit = document.getElementById('btnParticipantData');
+        const modalEdit = document.getElementById('modalEditorCampos');
+        if (btnEdit && modalEdit) {
+            btnEdit.onclick = (e) => {
+                e.preventDefault();
+                modalEdit.style.display = 'flex';
+            };
+        }
     };
 
-    // Ejecución retardada para asegurar que todas las inyecciones previas terminaron de cargar
-    if (document.readyState === 'complete') {
-        setTimeout(nexoFinalFix, 1500);
-    } else {
-        window.addEventListener('load', () => setTimeout(nexoFinalFix, 1500));
-    }
+    // Ejecutar con un delay para asegurar que el DOM cargó todas las inyecciones
+    setTimeout(fixNexoSystem, 1500);
 })();
 </script>
 </body>
