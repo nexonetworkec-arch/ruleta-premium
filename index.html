@@ -1176,101 +1176,136 @@
     })();
 </script>
 
-    <div id="modalRegistration" class="modal" style="z-index: 13000;">
-    <div class="modal-content" style="border-width: 2px; max-width: 400px;">
-        <h3 style="margin-bottom: 20px;">REGISTRO DE PARTICIPANTE</h3>
-        <input type="text" id="regName" placeholder="NOMBRE Y APELLIDO" style="width:100%; margin-bottom:15px;">
-        <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%; margin-bottom:15px;">
-        <input type="email" id="regEmail" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px;" class="no-caps">
-        <div id="regError" style="color: #ff4d4d; font-size: 10px; margin-bottom: 15px; display: none; font-weight: 900;"></div>
-        <button id="btnSubmitReg" class="btn btn-primary" style="width:100%;">REGISTRAR Y GIRAR</button>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+<div id="modalRegistration" class="modal" style="z-index: 13000;">
+    <div class="modal-content" style="border-width: 2px; max-width: 400px; text-align: center;">
+        <div id="step1_Register">
+            <h3 style="margin-bottom: 20px;">REGISTRO DE PARTICIPANTE</h3>
+            <input type="text" id="regName" placeholder="NOMBRE Y APELLIDO" style="width:100%; margin-bottom:15px;">
+            <input type="tel" id="regPhone" placeholder="NÚMERO DE TELÉFONO" style="width:100%; margin-bottom:15px;">
+            <input type="email" id="regEmail" placeholder="CORREO ELECTRÓNICO" style="width:100%; margin-bottom:20px;" class="no-caps">
+            <button id="btnSendCode" class="btn btn-primary" style="width:100%;">ENVIAR CÓDIGO DE VERIFICACIÓN</button>
+        </div>
+
+        <div id="step2_Verify" style="display:none;">
+            <h3 style="margin-bottom: 10px;">VERIFICA TU CORREO</h3>
+            <p style="font-size: 10px; color: #888; margin-bottom: 20px;">HEMOS ENVIADO UN CÓDIGO A TU EMAIL</p>
+            <input type="text" id="otpInput" placeholder="INGRESAR CÓDIGO" style="width:100%; margin-bottom:20px; text-align: center; letter-spacing: 5px; font-weight: bold;">
+            <button id="btnVerifyCode" class="btn btn-primary" style="width:100%;">VERIFICAR Y GIRAR</button>
+        </div>
+
+        <div id="regError" style="color: #ff4d4d; font-size: 10px; margin-top: 15px; display: none; font-weight: 900;"></div>
         <button id="btnCancelReg" class="btn" style="width:100%; margin-top:10px; color: #555 !important; font-size: 9px;">CANCELAR</button>
     </div>
 </div>
 
 <script>
 (function() {
+    // INICIALIZACIÓN EMAILJS (Reemplaza con tus llaves)
+    emailjs.init("YOUR_PUBLIC_KEY");
+
     const regModal = document.getElementById('modalRegistration');
+    const step1 = document.getElementById('step1_Register');
+    const step2 = document.getElementById('step2_Verify');
     const errorDiv = document.getElementById('regError');
     
-    // Extensión del método handleSpinClick original
+    let generatedOTP = null;
+    let pendingData = {};
+
+    // Inyección en el flujo de giro original
     const originalSpinClick = appWheel.handleSpinClick;
     appWheel.handleSpinClick = function() {
         if(config.modoRegistro && !config.isValidated) {
             regModal.style.display = 'flex';
+            resetModal();
             return;
         }
         originalSpinClick.apply(appWheel);
     };
 
-    document.getElementById('btnCancelReg').onclick = () => {
-        regModal.style.display = 'none';
+    function resetModal() {
+        step1.style.display = 'block';
+        step2.style.display = 'none';
         errorDiv.style.display = 'none';
-    };
-
-    document.getElementById('btnSubmitReg').onclick = async () => {
-        const name = document.getElementById('regName').value.trim();
-        const phone = document.getElementById('regPhone').value.trim();
-        const email = document.getElementById('regEmail').value.trim().toLowerCase();
-        
-        errorDiv.style.display = 'none';
-
-        // 1. Validación de campos vacíos
-        if(!name || !phone || !email) {
-            showError("TODOS LOS CAMPOS SON OBLIGATORIOS");
-            return;
-        }
-
-        // 2. Validación de formato de email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if(!emailRegex.test(email)) {
-            showError("FORMATO DE CORREO INVÁLIDO");
-            return;
-        }
-
-        // 3. Verificación de Duplicados en Firebase
-        try {
-            const snapshot = await db.ref(`users/${currentUser.uid}/leads`).once('value');
-            let isDuplicate = false;
-            
-            if(snapshot.exists()) {
-                snapshot.forEach(child => {
-                    const data = child.val();
-                    if(data.email === email || data.phone === phone) {
-                        isDuplicate = true;
-                    }
-                });
-            }
-
-            if(isDuplicate) {
-                showError("ESTOS DATOS YA HAN PARTICIPADO");
-                return;
-            }
-
-            // 4. Guardado de Lead y Activación de Giro
-            const newLeadRef = db.ref(`users/${currentUser.uid}/leads`).push();
-            await newLeadRef.set({
-                name: name,
-                phone: phone,
-                email: email,
-                date: new Date().toLocaleString(),
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            config.isValidated = true;
-            regModal.style.display = 'none';
-            appWheel.handleSpinClick(); // Ejecuta el giro original
-
-        } catch (error) {
-            showError("ERROR DE CONEXIÓN AL VALIDAR");
-            console.error(error);
-        }
-    };
+    }
 
     function showError(msg) {
         errorDiv.innerText = msg;
         errorDiv.style.display = 'block';
     }
+
+    // PASO 1: VALIDAR Y ENVIAR CÓDIGO
+    document.getElementById('btnSendCode').onclick = async () => {
+        const name = document.getElementById('regName').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const email = document.getElementById('regEmail').value.trim().toLowerCase();
+        
+        if(!name || !phone || !email) return showError("TODOS LOS CAMPOS SON OBLIGATORIOS");
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(email)) return showError("FORMATO DE CORREO INVÁLIDO");
+
+        try {
+            // Verificar duplicados en Firebase
+            const snapshot = await db.ref(`users/${currentUser.uid}/leads`).once('value');
+            let isDuplicate = false;
+            if(snapshot.exists()) {
+                snapshot.forEach(child => {
+                    const data = child.val();
+                    if(data.email === email || data.phone === phone) isDuplicate = true;
+                });
+            }
+
+            if(isDuplicate) return showError("ESTE CORREO O TELÉFONO YA HA PARTICIPADO");
+
+            // Generar OTP
+            generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            pendingData = { name, phone, email };
+
+            // Enviar Email vía EmailJS
+            await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+                to_name: name,
+                to_email: email,
+                otp_code: generatedOTP
+            });
+
+            step1.style.display = 'none';
+            step2.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+        } catch (err) {
+            showError("ERROR AL ENVIAR CÓDIGO. INTENTE MÁS TARDE.");
+            console.error(err);
+        }
+    };
+
+    // PASO 2: VERIFICAR OTP Y REGISTRAR
+    document.getElementById('btnVerifyCode').onclick = async () => {
+        const userInput = document.getElementById('otpInput').value.trim();
+        
+        if(userInput === generatedOTP) {
+            try {
+                await db.ref(`users/${currentUser.uid}/leads`).push().set({
+                    ...pendingData,
+                    date: new Date().toLocaleString(),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                config.isValidated = true;
+                regModal.style.display = 'none';
+                appWheel.handleSpinClick(); // Ejecuta el giro
+            } catch (e) {
+                showError("ERROR AL GUARDAR REGISTRO");
+            }
+        } else {
+            showError("CÓDIGO INCORRECTO");
+        }
+    };
+
+    document.getElementById('btnCancelReg').onclick = () => {
+        regModal.style.display = 'none';
+    };
 })();
 </script>
 </body>
