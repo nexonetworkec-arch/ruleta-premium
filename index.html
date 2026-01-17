@@ -919,85 +919,101 @@
 
     <script>
     (function() {
-        // 1. AJUSTE DE ESTILO FULL SCREEN PARA EL PANEL EXISTENTE
+        // 1. RE-ESTRUCTURACIÓN DEL CONTENEDOR MAESTRO
         const toolsPanel = document.getElementById('leadToolsPanel');
+        
         if (toolsPanel) {
+            // Aplicamos estilos de Pantalla Completa Absoluta
             toolsPanel.style.cssText = `
                 display: none; 
-                position: fixed; 
-                inset: 0; 
-                background: rgba(0,0,0,0.99); 
-                z-index: 25000; 
+                position: fixed !important; 
+                top: 0 !important; 
+                left: 0 !important; 
+                width: 100vw !important; 
+                height: 100vh !important; 
+                background: rgba(0,0,0,0.98) !important; 
+                z-index: 999999 !important; 
                 align-items: center; 
                 justify-content: center; 
-                backdrop-filter: blur(40px);
-                animation: premiumFade 0.5s ease;
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
+                animation: premiumFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             `;
+
+            // Ajustamos el contenido interno para que no sea pequeño
+            const innerContent = toolsPanel.querySelector('.reg-content');
+            if (innerContent) {
+                innerContent.style.cssText = `
+                    width: 90%; 
+                    max-width: 500px; 
+                    background: #000; 
+                    border: 2px double var(--gold); 
+                    padding: 30px; 
+                    border-radius: 25px;
+                    box-shadow: 0 0 50px rgba(212, 175, 55, 0.1);
+                `;
+            }
         }
 
-        // 2. CAPA DE SEGURIDAD (Validación de Usuario)
-        const initSafetyCheck = setInterval(() => {
+        // 2. SEGURIDAD DE SESIÓN Y RENDERIZADO
+        const checkAppSession = setInterval(() => {
             if (typeof currentUser !== 'undefined' && currentUser !== null) {
-                clearInterval(initSafetyCheck);
-                renderLeadSystem();
+                clearInterval(checkAppSession);
+                buildPremiumInterface();
             }
         }, 500);
 
-        function renderLeadSystem() {
+        function buildPremiumInterface() {
             const toolsSlot = document.getElementById('toolsFunctionsSlot');
             if (!toolsSlot) return;
 
             toolsSlot.innerHTML = ''; 
 
-            // --- COMPONENTE: SWITCH DE REGISTRO ---
+            // --- SWITCH DE CONTROL ---
             const isRegOn = (typeof config !== 'undefined' && config.modoRegistro);
             const switchBox = document.createElement('div');
             switchBox.style.cssText = `
-                width: 100%; background: #080808; padding: 25px; 
+                width: 100%; background: #0a0a0a; padding: 25px; 
                 border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.15);
                 margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             `;
             
             switchBox.innerHTML = `
-                <div style="flex: 1;">
-                    <p style="font-size: 7px; color: var(--gold); letter-spacing: 4px; margin: 0 0 5px 0;">SISTEMA DE CAPTACIÓN</p>
-                    <h4 id="statusTitle" style="font-size: 11px; color: #fff; margin: 0; letter-spacing: 1px;">
-                        ${isRegOn ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE (OFF)'}
+                <div style="text-align: left;">
+                    <p style="font-size: 7px; color: var(--gold); letter-spacing: 3px; margin: 0;">MODO DE ACCESO</p>
+                    <h4 id="statusTitle" style="font-size: 11px; color: #fff; margin: 5px 0 0 0; font-family: sans-serif;">
+                        ${isRegOn ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE'}
                     </h4>
                 </div>
                 <button id="btnToggleReg" class="btn" style="
                     background: ${isRegOn ? 'var(--gold)' : 'transparent'};
                     color: ${isRegOn ? '#000' : 'var(--gold)'} !important;
                     border: 1px solid var(--gold); padding: 12px 20px; font-size: 8px; 
-                    letter-spacing: 2px; border-radius: 12px; transition: 0.4s; min-width: 120px;">
+                    letter-spacing: 2px; border-radius: 10px; cursor: pointer; transition: 0.3s;">
                     ${isRegOn ? 'DESACTIVAR' : 'ACTIVAR'}
                 </button>
             `;
             toolsSlot.appendChild(switchBox);
 
-            // --- COMPONENTE: VISOR DE BASE DE DATOS ---
+            // --- VISOR DE DATA ---
             const listCard = document.createElement('div');
             listCard.style.cssText = `
                 width: 100%; background: #000; border: 1px solid #151515; 
-                border-radius: 20px; overflow: hidden;
+                border-radius: 20px; overflow: hidden; margin-bottom: 20px;
             `;
             
             listCard.innerHTML = `
-                <div style="background: #0a0a0a; padding: 15px 20px; border-bottom: 1px solid #151515; display: flex; justify-content: space-between;">
-                    <span style="font-size: 9px; color: #444; letter-spacing: 2px;">BASE DE DATOS EN VIVO</span>
-                    <span style="font-size: 7px; color: var(--gold-dark); opacity: 0.5;">NEXO® PRO v2.0</span>
+                <div style="background: #0d0d0d; padding: 15px; border-bottom: 1px solid #1a1a1a; text-align: center;">
+                    <span style="font-size: 9px; color: #555; letter-spacing: 2px;">AUDITORÍA DE LEADS</span>
                 </div>
-                <div id="leadsTableBody" style="max-height: 320px; overflow-y: auto; background: #030303;">
-                    <div style="padding: 50px; text-align: center; font-size: 9px; color: #222;">SINCRONIZANDO NUBE...</div>
+                <div id="leadsTableBody" style="max-height: 300px; overflow-y: auto;">
+                    <div style="padding: 40px; text-align: center; font-size: 9px; color: #222;">CARGANDO NUBE...</div>
                 </div>
             `;
             toolsSlot.appendChild(listCard);
 
-            // --- LÓGICA DE INTERACCIÓN ---
+            // LÓGICA DE ACTUALIZACIÓN
             const btn = document.getElementById('btnToggleReg');
-            const title = document.getElementById('statusTitle');
-
             btn.onclick = () => {
                 const newState = !config.modoRegistro;
                 db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState })
@@ -1006,11 +1022,11 @@
                     btn.innerText = newState ? 'DESACTIVAR' : 'ACTIVAR';
                     btn.style.background = newState ? 'var(--gold)' : 'transparent';
                     btn.style.color = newState ? '#000' : 'var(--gold)';
-                    title.innerText = newState ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE (OFF)';
+                    document.getElementById('statusTitle').innerText = newState ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE';
                 });
             };
 
-            // Escucha de Firebase para actualizar la lista
+            // ESCUCHA DE DATOS
             db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
                 const body = document.getElementById('leadsTableBody');
                 body.innerHTML = '';
@@ -1018,13 +1034,10 @@
                     snap.forEach(child => {
                         const data = child.val();
                         const row = document.createElement('div');
-                        row.style.cssText = `
-                            padding: 15px 20px; border-bottom: 1px solid #0a0a0a;
-                            display: flex; justify-content: space-between; align-items: center;
-                        `;
+                        row.style.cssText = `padding: 15px 20px; border-bottom: 1px solid #0a0a0a; display: flex; justify-content: space-between; align-items: center;`;
                         row.innerHTML = `
-                            <div style="display: flex; flex-direction: column;">
-                                <span style="font-size: 10px; color: #eee; font-weight: bold; letter-spacing: 0.5px;">${data.name.toUpperCase()}</span>
+                            <div style="text-align: left;">
+                                <span style="font-size: 10px; color: #fff; font-weight: bold; display: block;">${data.name.toUpperCase()}</span>
                                 <span style="font-size: 8px; color: #444;">${data.email}</span>
                             </div>
                             <span style="font-size: 9px; color: var(--gold-dark);">${data.phone}</span>
@@ -1032,7 +1045,7 @@
                         body.prepend(row);
                     });
                 } else {
-                    body.innerHTML = `<div style="padding: 50px; text-align: center; font-size: 9px; color: #222;">ESPERANDO REGISTROS...</div>`;
+                    body.innerHTML = `<div style="padding: 50px; text-align: center; color: #222; font-size: 9px;">SIN DATOS</div>`;
                 }
             });
         }
@@ -1040,19 +1053,17 @@
 </script>
 
 <style>
-    @keyframes premiumFade {
-        from { opacity: 0; transform: scale(1.02); }
-        to { opacity: 1; transform: scale(1); }
+    @keyframes premiumFadeIn {
+        from { opacity: 0; transform: scale(1.1); filter: blur(10px); }
+        to { opacity: 1; transform: scale(1); filter: blur(0); }
     }
-    #leadsTableBody::-webkit-scrollbar { width: 4px; }
-    #leadsTableBody::-webkit-scrollbar-track { background: transparent; }
-    #leadsTableBody::-webkit-scrollbar-thumb { background: #151515; border-radius: 10px; }
 </style>
 
 <script>
-    console.log("NEXO® Full Screen Tools: Active and Secure.");
+    console.log("NEXO® Full Screen Master: Ready.");
 </script>
 </body>
 </html>
+
 
 
