@@ -1233,5 +1233,62 @@ appWheel.handleSpinClick = function() {
     // Lógica original de giro...
 };
 </script>
+    /* ============================================================
+   NEXO® INTEGRAL REPAIR - INYECCIÓN ADITIVA FINAL
+   ============================================================ */
+(function() {
+    console.log("NEXO: Iniciando Reparación Quirúrgica...");
+
+    const fixSystem = () => {
+        // 1. RESOLVER DUPLICADOS DE SEGURIDAD (Gatekeeper)
+        const pins = document.querySelectorAll('#gatekeeperPin');
+        pins.forEach((el, i) => {
+            const newId = `gatekeeperPin_sync_${i + 1}`;
+            el.id = newId;
+            // Sincronizar escritura: lo que escribes en uno se escribe en todos
+            el.oninput = (e) => {
+                pins.forEach(p => p.value = e.target.value);
+            };
+        });
+
+        // 2. CORRECCIÓN QUIRÚRGICA DE PERMISOS (Firebase)
+        // Sobrescribimos la función de carga para que apunte a la ruta segura
+        window.loadAdminData = function() {
+            if (!auth.currentUser) return;
+            const tableBody = document.getElementById('userTableBody');
+            if(tableBody) tableBody.innerHTML = "<tr><td colspan='5'>CARGANDO DATA SEGURA...</td></tr>";
+
+            // Apuntamos solo a los leads del usuario actual para evitar el Permission Denied
+            db.ref(`users/${auth.currentUser.uid}/leads`).once('value', (snap) => {
+                if (typeof renderLeadsTable === 'function') {
+                    renderLeadsTable(snap.val()); // Si existe la función de renderizado
+                }
+                console.log("NEXO: Data cargada desde ruta permitida.");
+            }).catch(err => {
+                console.error("NEXO: Error de acceso, verifique reglas de Firebase.", err);
+            });
+        };
+
+        // 3. VÍNCULO DE BOTÓN "EDITAR DATOS" Y MODAL
+        const btnEditar = document.getElementById('btnParticipantData');
+        const modalEdit = document.getElementById('modalEditorCampos');
+        
+        if (btnEditar && modalEdit) {
+            btnEditar.onclick = (e) => {
+                e.preventDefault();
+                modalEdit.style.display = 'flex';
+                console.log("NEXO: Modal de edición desplegado.");
+            };
+        }
+    };
+
+    // Ejecutar con un pequeño delay para asegurar que el DOM esté listo
+    if (document.readyState === 'complete') {
+        setTimeout(fixSystem, 1000);
+    } else {
+        window.addEventListener('load', () => setTimeout(fixSystem, 1000));
+    }
+})();
 </body>
 </html>
+
