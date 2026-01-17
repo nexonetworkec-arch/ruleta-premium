@@ -1194,48 +1194,50 @@
 
 <script>
     (function() {
+        // 1. Refuerzo de Visibilidad del Botón
         const btn = document.getElementById('btnOpenRegistryConfig');
         if (btn) {
-            // Aplicamos el ADN visual de la marca
-            btn.style.cssText = `
-                background: #000; 
-                color: #fff; 
-                border: 1px solid #1a1a1a; 
-                padding: 10px 22px; 
-                border-radius: 12px; 
-                font-size: 9px; 
-                font-weight: bold; 
-                letter-spacing: 2px; 
-                text-transform: uppercase;
-                cursor: pointer; 
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                display: flex; 
-                align-items: center; 
-                gap: 10px;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            `;
-
-            // Efectos de interactividad (Hover)
-            btn.onmouseenter = () => {
-                btn.style.borderColor = 'var(--gold)';
-                btn.style.color = 'var(--gold)';
-                btn.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.1)';
-                btn.style.transform = 'translateY(-1px)';
+            btn.style.display = 'flex'; // Aseguramos que no esté oculto
+            btn.style.opacity = '1';
+            btn.style.visibility = 'visible';
+            
+            // 2. Blindaje del Lienzo (Al hacer clic)
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const modal = document.getElementById('nexo_canvas_registro');
+                const slot = document.getElementById('nexo_slot_logica');
+                
+                if (modal && slot) {
+                    // BLOQUEO DE INTERFERENCIA: Limpiamos antes de mostrar
+                    slot.innerHTML = ''; 
+                    
+                    // Insertamos un marcador temporal neutral (Lienzo Limpio)
+                    slot.innerHTML = `
+                        <div id="clean_canvas_marker" style="text-align:center; opacity:0.3;">
+                            <div style="font-size:30px; margin-bottom:15px;">✦</div>
+                            <p style="color:#fff; font-size:9px; letter-spacing:4px; text-transform:uppercase;">Lienzo Maestro Escalable</p>
+                        </div>
+                    `;
+                    
+                    modal.style.display = 'flex';
+                }
             };
-
-            btn.onmouseleave = () => {
-                btn.style.borderColor = '#1a1a1a';
-                btn.style.color = '#fff';
-                btn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-                btn.style.transform = 'translateY(0)';
-            };
-
-            // Ajuste del icono interno para que sea sutil
-            const icon = btn.querySelector('span');
-            if(icon) icon.style.color = 'var(--gold)';
         }
+
+        // 3. Estilo de Aislamiento para evitar que otros scripts "encuentren" este div
+        const styleShield = document.createElement('style');
+        styleShield.innerHTML = `
+            #nexo_slot_logica * { pointer-events: auto; }
+            #nexo_slot_logica { all: unset; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; overflow-y: auto; padding: 40px; }
+        `;
+        document.head.appendChild(styleShield);
     })();
+</script>
+
+<script>
+    console.log("NEXO® Shield: Visual isolation active. Canvas is now clean.");
 </script>
 </body>
 </html>
+
 
