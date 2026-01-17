@@ -1109,40 +1109,37 @@
 
     <script>
     (function() {
-        // Buscador constante para asegurar la inyección en el DOM dinámico
-        const checkPlacement = setInterval(() => {
-            // Buscamos el texto "Activar Captura" dentro del panel de herramientas
-            const labels = document.querySelectorAll('#leadToolsPanel span, #leadToolsPanel div');
-            let captureToggleBlock = null;
+        const checkDataSection = setInterval(() => {
+            // Buscamos el botón de descarga dentro del panel de herramientas
+            const allButtons = document.querySelectorAll('#leadToolsPanel button');
+            let downloadBtn = null;
 
-            for (let label of labels) {
-                if (label.textContent.trim() === "Activar Captura") {
-                    // Subimos al contenedor padre que tiene el estilo de fondo del interruptor
-                    captureToggleBlock = label.closest('div[style*="background"]');
+            for (let btn of allButtons) {
+                if (btn.textContent.includes("DESCARGAR BASE DE DATOS")) {
+                    downloadBtn = btn;
                     break;
                 }
             }
 
-            // Si encontramos el bloque y aún no hemos inyectado nuestro botón
-            if (captureToggleBlock && !document.getElementById('nexo-participants-module')) {
-                clearInterval(checkPlacement);
-                renderParticipantModule(captureToggleBlock);
+            // Si lo encontramos y aún no hemos inyectado nuestro módulo
+            if (downloadBtn && !document.getElementById('nexo-participants-module')) {
+                clearInterval(checkDataSection);
+                injectInDataSection(downloadBtn);
             }
         }, 800);
 
-        function renderParticipantModule(anchor) {
+        function injectInDataSection(anchor) {
             const wrapper = document.createElement('div');
             wrapper.id = "nexo-participants-module";
-            wrapper.style.cssText = "margin-bottom: 15px; width: 100%; animation: fadeInNexo 0.5s ease;";
+            wrapper.style.cssText = "margin-bottom: 15px; width: 100%;";
 
             wrapper.innerHTML = `
                 <button id="btnParticipantData" style="
                     width: 100%; padding: 14px; background: rgba(212, 175, 55, 0.08); 
                     color: var(--gold); border: 1px solid var(--gold-mix); border-radius: 12px;
                     font-size: 9px; font-weight: bold; letter-spacing: 2px; cursor: pointer;
-                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-                    display: flex; align-items: center; justify-content: center; gap: 12px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    transition: all 0.4s ease; display: flex; align-items: center; 
+                    justify-content: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                     <span style="font-size: 14px;">👥</span> DATOS DE PARTICIPANTES
                 </button>
                 <div id="participantDataSlot" style="
@@ -1151,40 +1148,32 @@
                     border-radius: 8px; color: #888; font-size: 8px; text-align: center; 
                     letter-spacing: 1px; line-height: 1.5;">
                     <span style="color: var(--gold); font-weight: bold;">MÓDULO DE AUDIENCIA</span><br>
-                    SISTEMA ESCALABLE LISTO PARA INTEGRACIÓN
+                    ESTRUCTURA ESCALABLE LISTA PARA INTEGRACIÓN
                 </div>
-                <style>
-                    @keyframes fadeInNexo { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-                </style>
             `;
 
-            // INYECCIÓN QUIRÚRGICA: Justo antes del bloque "Activar Captura"
-            anchor.insertAdjacentElement('beforebegin', wrapper);
+            // Inyección exacta: Justo arriba del botón de descarga
+            anchor.parentNode.insertBefore(wrapper, anchor);
 
             const btn = document.getElementById('btnParticipantData');
             const slot = document.getElementById('participantDataSlot');
 
-            // Interacción Premium
             btn.onmouseenter = () => { 
                 btn.style.background = 'var(--gold)'; 
-                btn.style.color = '#000';
-                btn.style.transform = 'scale(1.02)';
+                btn.style.color = '#000'; 
             };
             btn.onmouseleave = () => { 
                 btn.style.background = 'rgba(212, 175, 55, 0.08)'; 
-                btn.style.color = 'var(--gold)';
-                btn.style.transform = 'scale(1)';
+                btn.style.color = 'var(--gold)'; 
             };
 
             btn.onclick = () => {
                 const isVisible = slot.style.display === 'block';
                 slot.style.display = isVisible ? 'none' : 'block';
                 btn.style.borderColor = isVisible ? 'var(--gold-mix)' : 'var(--gold)';
-                console.log("NEXO® Analytics: Participant Slot " + (isVisible ? "standby" : "active"));
             };
         }
     })();
 </script>
 </body>
 </html>
-
