@@ -1180,8 +1180,8 @@
     @keyframes premiumFadeIn {
         from { 
             opacity: 0; 
-            transform: scale(0.92); /* Inicia un poco más pequeño para dar profundidad */
-            filter: blur(5px);      /* Efecto de desenfoque inicial */
+            transform: scale(0.95); 
+            filter: blur(3px);      
         }
         to { 
             opacity: 1; 
@@ -1190,16 +1190,16 @@
         }
     }
     .modal-premium-animate {
-        /* Duración aumentada a 1.2s para una entrada suave y premium */
-        animation: premiumFadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        /* Ajustado a 0.8s: 2 veces más lento que el estándar de 0.4s */
+        animation: premiumFadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
     .modal-border-gold {
         border: 1px solid rgba(212, 175, 55, 0.4);
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.1); 
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.1); 
     }
 </style>
 
-<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); backdrop-filter: blur(12px); transition: background 1.2s ease;">
+<div id="modalRegistration" class="modal" style="z-index: 13000; display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); backdrop-filter: blur(8px);">
     <div class="modal-content modal-premium-animate modal-border-gold" style="background: #0a0a0a; padding: 45px 35px; border-radius: 15px; max-width: 380px; width: 90%; text-align: center; position: relative;">
         
         <div id="regForm">
