@@ -1463,33 +1463,72 @@
 })();
 
         /* ==========================================================
-   INYECCIÓN DE ACTIVACIÓN FORZADA
-   Objetivo: Eliminar el mensaje "INICIALIZANDO..." y cargar el editor
+   INYECCIÓN DE SEGURIDAD: PROTECCIÓN DE SESIÓN (UID)
+   Objetivo: Evitar el error 'reading uid' y cargar el editor
    ========================================================== */
 
 (function() {
-    const btnAdmin = document.getElementById('btnConfigFormV5');
-    
-    if (btnAdmin) {
-        // Guardamos la función original de apertura para no romperla
-        const originalClick = btnAdmin.onclick;
+    // Función para obtener el UID de forma segura
+    function getSafePath() {
+        // Intentamos obtener el usuario de varias formas comunes en tu código
+        const user = window.currentUser || firebase.auth().currentUser;
+        
+        if (user && user.uid) {
+            return `users/${user.uid}/config/estructuraRegistro`;
+        }
+        console.warn("NEXO: Esperando autenticación...");
+        return null;
+    }
 
-        btnAdmin.onclick = (e) => {
-            // 1. Ejecutamos la apertura visual
-            if (originalClick) originalClick(e);
+    window.addEventListener('nexo_open_editor', () => {
+        const slot = document.getElementById('nexo_slot_logica');
+        const path = getSafePath();
 
-            // 2. Disparamos manualmente la carga del editor
-            console.log("NEXO: Forzando carga del editor...");
-            
-            // Enviamos el evento para que la lógica de Firebase tome el control
-            window.dispatchEvent(new CustomEvent('nexo_open_editor'));
+        if (!path) {
+            if (slot) slot.innerHTML = '<div style="color:red; font-size:10px; text-align:center; padding:20px;">ERROR: SESIÓN NO DETECTADA. REINTENTE.</div>';
+            return;
+        }
 
-            // 3. Verificación de seguridad: si el evento falla, llamamos a la función directamente
-            const slot = document.getElementById('nexo_slot_logica');
-            if (slot && slot.innerHTML.includes("INICIALIZANDO")) {
-                slot.innerHTML = '<div style="color:var(--gold); font-size:10px; text-align:center; padding:20px; letter-spacing:3px;">CONECTANDO CON BASE DE DATOS...</div>';
+        // Si tenemos el paso libre, limpiamos el "INICIALIZANDO" e inyectamos
+        slot.innerHTML = `
+            <div id="nexo_editor_wrapper" style="width:100%; max-width:600px; margin:0 auto;">
+                <div id="nexo_lista_filas" style="display:flex; flex-direction:column; gap:12px; margin-bottom:30px;"></div>
+                <button id="nexo_btn_add_field" style="width:100%; padding:18px; background:rgba(212,175,55,0.05); color:var(--gold); border:1px dashed var(--gold); border-radius:20px; cursor:pointer; font-size:10px; letter-spacing:3px;">
+                    + AGREGAR NUEVO CAMPO AL REGISTRO
+                </button>
+            </div>
+        `;
+
+        const listaFilas = document.getElementById('nexo_lista_filas');
+        
+        // Cargamos los datos con la ruta segura
+        db.ref(path).on('value', snap => {
+            listaFilas.innerHTML = '';
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    renderizarFilaAdmin(child.key, child.val(), listaFilas, path);
+                });
             }
+        });
+
+        document.getElementById('nexo_btn_add_field').onclick = () => {
+            db.ref(`${path}/f${Date.now()}`).set("Nuevo Campo");
         };
+    });
+
+    function renderizarFilaAdmin(id, valor, contenedor, path) {
+        const fila = document.createElement('div');
+        fila.style.cssText = "display:flex; align-items:center; gap:15px; background:#0a0a0a; padding:15px; border-radius:18px; border:1px solid #1a1a1a; margin-bottom:10px;";
+        fila.innerHTML = `
+            <input type="text" value="${valor}" style="flex-grow:1; background:transparent; border:none; color:#fff; font-size:13px; outline:none; border-bottom:1px solid #222;">
+            <button class="del-btn" style="background:transparent; border:none; color:#444; cursor:pointer; font-size:18px;">&times;</button>
+        `;
+
+        const input = fila.querySelector('input');
+        input.onchange = () => db.ref(`${path}/${id}`).set(input.value);
+        fila.querySelector('.del-btn').onclick = () => db.ref(`${path}/${id}`).remove();
+
+        contenedor.appendChild(fila);
     }
 })();
 </script>
