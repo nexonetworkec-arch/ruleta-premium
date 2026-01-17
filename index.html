@@ -453,149 +453,116 @@ function toggleAdminPanel(code) {
 }
 
 /* --- FIN DE INYECCIÓN ADITIVA --- */
-    </script>
 
-    <style>
-    /* Estilos del Botón Hamburguesa Cuadrado */
-    #btnUserMenu {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        background: var(--bg-color);
-        border: 2px solid var(--gold-mix);
-        border-radius: 12px; /* Cuadrado con puntas suavizadas */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        cursor: pointer;
-        z-index: 9990;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
-    }
-    #btnUserMenu:hover { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
-    .bar { width: 25px; height: 2px; background: var(--gold); transition: 0.3s; }
+        /* --- INICIO DE INYECCIÓN ADITIVA: MENÚ DE USUARIO ESCALABLE --- */
+/* INSERTAR AL FINAL DEL ARCHIVO, DESPUÉS DE LA LÍNEA 265 */
 
-    /* Panel del Menú (Escalable) */
-    #userMenuPanel {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.98);
-        z-index: 9991;
-        padding: 40px 20px;
-        color: var(--gold);
-        animation: fadeIn 0.3s ease;
+// 1. ESTILOS DEL MENÚ (ADN NEXO® - CUADRADO Y DORADO)
+const menuStyles = `
+    #userMenuBtn {
+        position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+        background: #000; border: 2px solid var(--gold); display: flex;
+        flex-direction: column; justify-content: center; align-items: center;
+        cursor: pointer; z-index: 9500; transition: 0.3s;
     }
+    .hamburguer-line { width: 25px; height: 2px; background: var(--gold); margin: 3px 0; }
+    
+    #menuContainer {
+        display: none; position: fixed; bottom: 80px; right: 20px;
+        width: 280px; background: rgba(0,0,0,0.98); border: 1px solid var(--gold);
+        border-radius: 0px; padding: 20px; z-index: 9501; backdrop-filter: blur(10px);
+    }
+    .menu-item {
+        padding: 15px; border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        cursor: pointer; font-size: 11px; letter-spacing: 2px; color: var(--gold);
+        transition: 0.2s; text-align: right;
+    }
+    .menu-item:hover { background: rgba(212, 175, 55, 0.05); padding-right: 20px; }
+    
+    #menuLockOverlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        z-index: 9600; justify-content: center; align-items: center; flex-direction: column;
+    }
+`;
+const menuSheet = document.createElement("style");
+menuSheet.innerText = menuStyles;
+document.head.appendChild(menuSheet);
 
-    /* Modal de Validación de Contraseña */
-    #menuAuthLock {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 9995;
-        justify-content: center;
-        align-items: center;
-    }
-    .lock-card {
-        background: var(--card-bg);
-        padding: 30px;
-        border: 1px solid var(--gold);
-        border-radius: 20px;
-        text-align: center;
-        width: 90%;
-        max-width: 350px;
-    }
-    .menu-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-top: 30px;
-    }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-
-<div id="btnUserMenu" onclick="attemptOpenMenu()">
-    <div class="bar"></div>
-    <div class="bar"></div>
-    <div class="bar"></div>
+// 2. ESTRUCTURA HTML DEL MENÚ
+const menuHTML = `
+<div id="userMenuBtn" onclick="userMenuEngine.requestAccess()">
+    <div class="hamburguer-line"></div>
+    <div class="hamburguer-line"></div>
+    <div class="hamburguer-line"></div>
 </div>
 
-<div id="menuAuthLock">
-    <div class="lock-card">
-        <h3 style="margin-top:0; letter-spacing:2px;">ACCESO RESTRINGIDO</h3>
-        <p style="font-size:10px; opacity:0.7; margin-bottom:20px;">INGRESE SU CONTRASEÑA DE SESIÓN PARA CONTINUAR</p>
-        <input type="password" id="menuPassVerify" class="auth-input" style="width:100%; text-align:center; margin-bottom:15px;" placeholder="••••••••">
-        <div style="display:flex; gap:10px;">
-            <button onclick="closeMenuLock()" class="btn" style="flex:1; border:1px solid #333;">CANCELAR</button>
-            <button onclick="verifyMenuAccess()" id="btnVerifyLock" class="btn btn-primary" style="flex:1;">ENTRAR</button>
+<div id="menuContainer">
+    <div style="color: var(--gold-dark); font-size: 10px; margin-bottom: 15px; text-align: right;">NEXO® USER INTERFACE</div>
+    <div class="menu-item" onclick="userMenuEngine.toggleLeads()">MODO REGISTRO: <span id="statusLeads">OFF</span></div>
+    <div class="menu-item" onclick="userMenuEngine.viewHistory()">HISTORIAL DE PREMIOS</div>
+    <div class="menu-item" onclick="userMenuEngine.openSupport()">SOLICITAR SOPORTE</div>
+    <div class="menu-item" style="color: #ff4444; border:none;" onclick="auth.signOut()">CERRAR SESIÓN</div>
+</div>
+
+<div id="menuLockOverlay">
+    <div class="admin-card" style="width: min(300px, 80%);">
+        <p style="font-size: 10px; margin-bottom: 15px;">INGRESE SU PIN PARA ACCEDER AL MENÚ</p>
+        <input type="password" id="menuPinInput" class="search-bar" style="text-align:center;" placeholder="****">
+        <div style="display:flex; gap:10px; margin-top: 15px;">
+            <button class="btn btn-primary" style="flex:1" onclick="userMenuEngine.verifyPin()">ENTRAR</button>
+            <button class="btn" style="flex:1; border:1px solid var(--gold)" onclick="userMenuEngine.closeLock()">X</button>
         </div>
     </div>
 </div>
+`;
+document.body.insertAdjacentHTML('beforeend', menuHTML);
 
-<div id="userMenuPanel">
-    <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gold-mix); padding-bottom: 15px;">
-        <h2 style="margin:0; font-size:18px;">MENÚ DE CONFIGURACIÓN</h2>
-        <button onclick="document.getElementById('userMenuPanel').style.display='none'" class="btn" style="border:1px solid var(--gold); background:transparent;">CERRAR</button>
-    </div>
-
-    <div class="menu-grid" id="injectedMenuItems">
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; opacity: 0.3; border: 1px dashed var(--gold-mix); border-radius: 15px;">
-            MODULOS EN PREPARACIÓN...
-        </div>
-    </div>
-</div>
-
-<script>
-    function attemptOpenMenu() {
-        document.getElementById('menuAuthLock').style.display = 'flex';
-        document.getElementById('menuPassVerify').focus();
-    }
-
-    function closeMenuLock() {
-        document.getElementById('menuAuthLock').style.display = 'none';
-        document.getElementById('menuPassVerify').value = '';
-    }
-
-    function verifyMenuAccess() {
-        const password = document.getElementById('menuPassVerify').value;
-        const user = firebase.auth().currentUser;
-        const btn = document.getElementById('btnVerifyLock');
-
-        if (!password || !user) return;
-
-        btn.innerText = "VERIFICANDO...";
-        btn.disabled = true;
-
-        // Re-autenticación dinámica para validar que sea la contraseña actual
-        const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-        
-        user.reauthenticateWithCredential(credential)
-            .then(() => {
-                btn.innerText = "ENTRAR";
-                btn.disabled = false;
-                closeMenuLock();
-                document.getElementById('userMenuPanel').style.display = 'block';
-            })
-            .catch(error => {
-                btn.innerText = "ERROR";
-                btn.disabled = false;
-                alert("CONTRASEÑA INCORRECTA O SESIÓN EXPIRADA.");
-                console.error(error);
-            });
-    }
-
-    // Cerrar con tecla Escape
-    window.addEventListener('keydown', (e) => {
-        if(e.key === "Escape") {
-            closeMenuLock();
-            document.getElementById('userMenuPanel').style.display = 'none';
+// 3. LÓGICA DEL MENÚ
+const userMenuEngine = {
+    requestAccess() {
+        const menu = document.getElementById('menuContainer');
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+        } else {
+            document.getElementById('menuLockOverlay').style.display = 'flex';
+            document.getElementById('menuPinInput').focus();
         }
-    });
-</script>
+    },
+    
+    verifyPin() {
+        const inputPin = document.getElementById('menuPinInput').value;
+        const originalPin = document.getElementById('authPin').value; // Sincronización automática con login [cite: 32]
+        
+        if (inputPin === originalPin) {
+            document.getElementById('menuLockOverlay').style.display = 'none';
+            document.getElementById('menuContainer').style.display = 'block';
+            document.getElementById('menuPinInput').value = '';
+        } else {
+            alert("PIN INCORRECTO");
+        }
+    },
+    
+    closeLock() {
+        document.getElementById('menuLockOverlay').style.display = 'none';
+    },
+
+    toggleLeads() {
+        config.modoRegistro = !config.modoRegistro; // Punto 9 [cite: 37]
+        document.getElementById('statusLeads').innerText = config.modoRegistro ? "ON" : "OFF";
+        alert("MODO REGISTRO: " + (config.modoRegistro ? "ACTIVADO" : "DESACTIVADO"));
+    },
+
+    viewHistory() {
+        alert("ABRIENDO HISTORIAL PERSONAL...");
+    },
+
+    openSupport() {
+        const code = "NEXO-" + Math.floor(1000 + Math.random() * 9000);
+        alert("CÓDIGO DE SOPORTE PARA ADMINISTRADOR: " + code + "\n(Proporcione este código para autorizar el acceso)");
+    }
+};
+
+/* --- FIN DE INYECCIÓN ADITIVA --- */
+    </script>
 </body>
 </html>
