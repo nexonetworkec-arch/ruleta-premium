@@ -1101,6 +1101,63 @@
             };
         }
     })();
+
+        /* ==========================================================
+   PASO 1.2: BOTÓN DATOS DE PARTICIPANTES (ESCALABLE)
+   Objetivo: Crear el acceso dentro de Lead Tools Config
+   ========================================================== */
+
+(function() {
+    const toolsSlot = document.getElementById('toolsFunctionsSlot');
+    
+    if (toolsSlot) {
+        // Limpiamos el mensaje provisional
+        toolsSlot.innerHTML = '';
+        toolsSlot.style.display = 'flex';
+        toolsSlot.style.flexDirection = 'column';
+        toolsSlot.style.gap = '15px';
+        toolsSlot.style.width = '100%';
+
+        // 1. CREACIÓN DEL BOTÓN
+        const btnDatosPart = document.createElement('button');
+        btnDatosPart.id = 'btnDatosParticipantesNexo';
+        btnDatosPart.style.cssText = `
+            width: 100%; padding: 20px;
+            background: rgba(212, 175, 55, 0.02);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--gold); border-radius: 15px;
+            cursor: pointer; font-size: 11px; letter-spacing: 2px;
+            font-weight: bold; transition: 0.4s ease;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+        `;
+        
+        btnDatosPart.innerHTML = `<span>👥</span> DATOS DE PARTICIPANTES`;
+
+        // 2. EFECTOS HOVER
+        btnDatosPart.onmouseenter = () => {
+            btnDatosPart.style.background = 'rgba(212, 175, 55, 0.08)';
+            btnDatosPart.style.borderColor = 'var(--gold)';
+            btnDatosPart.style.transform = 'translateY(-2px)';
+        };
+        btnDatosPart.onmouseleave = () => {
+            btnDatosPart.style.background = 'rgba(212, 175, 55, 0.02)';
+            btnDatosPart.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+            btnDatosPart.style.transform = 'translateY(0)';
+        };
+
+        // 3. ACCIÓN: CONECTAR CON EL LIENZO CREADO ANTERIORMENTE
+        btnDatosPart.onclick = () => {
+            // Cerramos el panel de herramientas para mostrar el gran lienzo de edición
+            document.getElementById('leadToolsPanel').style.display = 'none';
+            
+            // Disparamos la apertura del lienzo maestro que instalamos en el paso anterior
+            const event = new CustomEvent('nexo_open_editor');
+            window.dispatchEvent(event);
+        };
+
+        toolsSlot.appendChild(btnDatosPart);
+    }
+})();
 </script>
 
 <script>
@@ -1108,3 +1165,4 @@
 </script>
 </body>
 </html>
+
