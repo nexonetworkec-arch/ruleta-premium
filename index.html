@@ -1052,7 +1052,79 @@
         }
     })();
 </script>
+
+    <script>
+    (function() {
+        const checkExportArea = setInterval(() => {
+            const exportArea = document.getElementById('nexo-export-area');
+            if (exportArea) {
+                clearInterval(checkExportArea);
+                renderExportModule(exportArea);
+            }
+        }, 600);
+
+        function renderExportModule(container) {
+            container.innerHTML = `
+                <p style="font-size: 8px; color: #d4af37; letter-spacing: 3px; margin: 0 0 15px 0; font-weight: bold;">GESTIÓN DE DATA</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="btnExportCSV" style="
+                        width: 100%; padding: 12px; background: transparent; 
+                        color: #fff; border: 1px solid #222; border-radius: 10px;
+                        font-size: 8px; letter-spacing: 1px; cursor: pointer;
+                        transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span>📥</span> DESCARGAR BASE DE DATOS (.CSV)
+                    </button>
+                    <p style="font-size: 7px; color: #444; text-align: center; margin-top: 5px;">Formato universal para Excel o CRM</p>
+                </div>
+            `;
+
+            const btn = document.getElementById('btnExportCSV');
+            
+            // Efecto Hover Premium
+            btn.onmouseenter = () => { btn.style.borderColor = '#d4af37'; btn.style.background = '#0a0a0a'; };
+            btn.onmouseleave = () => { btn.style.borderColor = '#222'; btn.style.background = 'transparent'; };
+
+            // LÓGICA DE EXPORTACIÓN
+            btn.onclick = () => {
+                db.ref(`users/${currentUser.uid}/leads`).once('value', snap => {
+                    if (!snap.exists()) {
+                        alert("No hay datos para exportar.");
+                        return;
+                    }
+
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += "NOMBRE,EMAIL,TELEFONO,FECHA\n"; // Cabeceras
+
+                    snap.forEach(child => {
+                        const d = child.val();
+                        // Limpieza de comas para no romper el CSV
+                        const name = (d.name || "").replace(/,/g, "");
+                        const email = (d.email || "").replace(/,/g, "");
+                        const phone = (d.phone || "").replace(/,/g, "");
+                        const date = (d.date || "").replace(/,/g, "");
+                        
+                        csvContent += `${name.toUpperCase()},${email},${phone},${date}\n`;
+                    });
+
+                    // Proceso de Descarga Automática
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `LEADS_NEXO_${new Date().toLocaleDateString()}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            };
+        }
+    })();
+</script>
+
+<script>
+    console.log("NEXO® Export Module: Integrated successfully.");
+</script>
 </body>
 </html>
+
 
 
