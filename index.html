@@ -533,48 +533,114 @@
     })();
 </script>
 
-    <script>
-    (function() {
-        const menuSlot = document.getElementById('dynamicMenuSlot');
-        
-        // Crear el botón con estética Premium
-        const btnAdmin = document.createElement('button');
-        btnAdmin.className = 'btn';
-        btnAdmin.style.cssText = `
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #000, #111);
-            border: 1px solid var(--gold);
-            color: var(--gold) !important;
-            font-size: 10px;
-            letter-spacing: 2px;
-            cursor: pointer;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: 0.3s;
-        `;
-        
-        btnAdmin.innerHTML = `<span>⚙️</span> PANEL DE ADMINISTRADOR`;
-        
-        // Efecto Hover
-        btnAdmin.onmouseenter = () => btnAdmin.style.background = 'var(--gold-mix)';
-        btnAdmin.onmouseleave = () => btnAdmin.style.background = 'linear-gradient(135deg, #000, #111)';
+    <style>
+    /* Trigger: Botón Hamburguesa Cuadrado */
+    #menuMasterTrigger {
+        position: fixed; bottom: 30px; right: 30px; width: 55px; height: 55px;
+        background: #000; border: 2px solid var(--gold); border-radius: 12px;
+        cursor: pointer; z-index: 11000; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 5px;
+        box-shadow: 0 0 20px rgba(212,175,55,0.3); transition: 0.3s;
+    }
+    #menuMasterTrigger:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(212,175,55,0.5); }
+    .bar { width: 25px; height: 3px; background: var(--gold); border-radius: 2px; }
 
-        // Acción: Abrir el Panel de Admin (referencia a la función openAdmin creada anteriormente)
-        btnAdmin.onclick = () => {
-            if (typeof openAdmin === "function") {
-                openAdmin();
-                document.getElementById('mainMenuContent').style.display = 'none';
+    /* Modal de Validación de Seguridad */
+    #gatekeeperModal {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+        z-index: 12000; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+    }
+    .gatekeeper-content {
+        background: var(--card-bg); border: 1px solid var(--gold);
+        padding: 35px; border-radius: 30px; width: min(320px, 85%); text-align: center;
+    }
+
+    /* Contenedor del Menú (Vacío y Escalable) */
+    #mainMenuContent {
+        display: none; position: fixed; bottom: 100px; right: 30px;
+        width: min(300px, 80vw); background: var(--card-bg);
+        border: 1px solid var(--gold); border-radius: 25px;
+        padding: 20px; z-index: 11500; backdrop-filter: blur(20px);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+    }
+    .menu-slot { display: flex; flex-direction: column; gap: 12px; }
+</style>
+
+<button id="menuMasterTrigger">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+</button>
+
+<div id="gatekeeperModal">
+    <div class="gatekeeper-content">
+        <h3 style="margin-bottom: 20px; font-size: 14px;">VALIDACIÓN DE SEGURIDAD</h3>
+        <input type="password" id="gatekeeperPin" placeholder="INGRESE PIN DE ACCESO" 
+               style="width:100%; margin-bottom:20px; text-align:center;" class="no-caps">
+        <button id="btnValidateAccess" class="btn btn-primary" style="width:100%;">DESBLOQUEAR</button>
+        <button id="btnCancelAccess" class="btn" style="width:100%; margin-top:10px; color: #555 !important;">CANCELAR</button>
+    </div>
+</div>
+
+<div id="mainMenuContent">
+    <div id="dynamicMenuSlot" class="menu-slot">
+        </div>
+</div>
+
+<script>
+    (function() {
+        const trigger = document.getElementById('menuMasterTrigger');
+        const gateModal = document.getElementById('gatekeeperModal');
+        const menuContent = document.getElementById('mainMenuContent');
+        const pinInput = document.getElementById('gatekeeperPin');
+        
+        let isUnlocked = false;
+
+        // Abrir Modal de Validación
+        trigger.onclick = () => {
+            if (!isUnlocked) {
+                gateModal.style.display = 'flex';
+                pinInput.focus();
             } else {
-                console.error("ERROR: Módulo de Panel de Administración no encontrado.");
+                toggleMenu();
             }
         };
 
-        // Inyectar en el slot
-        menuSlot.appendChild(btnAdmin);
+        // Lógica de Validación (Re-autenticación)
+        document.getElementById('btnValidateAccess').onclick = async () => {
+            const pin = pinInput.value;
+            if(!pin) return;
+
+            const email = auth.currentUser.email; // Usa el email de la sesión activa 
+            
+            try {
+                // Intenta re-autenticar para validar que el PIN es correcto
+                await auth.signInWithEmailAndPassword(email, pin);
+                isUnlocked = true;
+                gateModal.style.display = 'none';
+                pinInput.value = "";
+                toggleMenu();
+            } catch (error) {
+                alert("PIN INCORRECTO - ACCESO DENEGADO");
+                pinInput.value = "";
+            }
+        };
+
+        document.getElementById('btnCancelAccess').onclick = () => {
+            gateModal.style.display = 'none';
+        };
+
+        function toggleMenu() {
+            const isVisible = menuContent.style.display === 'block';
+            menuContent.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Cerrar menú al hacer clic fuera
+        window.addEventListener('click', (e) => {
+            if (!menuContent.contains(e.target) && !trigger.contains(e.target) && !gateModal.contains(e.target)) {
+                menuContent.style.display = 'none';
+            }
+        });
     })();
 </script>
 
@@ -1110,7 +1176,6 @@
     <script>
     (function() {
         const checkDataSection = setInterval(() => {
-            // Buscamos el botón de descarga dentro del panel de herramientas
             const allButtons = document.querySelectorAll('#leadToolsPanel button');
             let downloadBtn = null;
 
@@ -1121,18 +1186,18 @@
                 }
             }
 
-            // Si lo encontramos y aún no hemos inyectado nuestro módulo
             if (downloadBtn && !document.getElementById('nexo-participants-module')) {
                 clearInterval(checkDataSection);
-                injectInDataSection(downloadBtn);
+                injectEditModule(downloadBtn);
             }
         }, 800);
 
-        function injectInDataSection(anchor) {
+        function injectEditModule(anchor) {
             const wrapper = document.createElement('div');
             wrapper.id = "nexo-participants-module";
             wrapper.style.cssText = "margin-bottom: 15px; width: 100%;";
 
+            // Renombrado a "EDITAR DATOS DE PARTICIPANTES" como solicitaste
             wrapper.innerHTML = `
                 <button id="btnParticipantData" style="
                     width: 100%; padding: 14px; background: rgba(212, 175, 55, 0.08); 
@@ -1140,24 +1205,15 @@
                     font-size: 9px; font-weight: bold; letter-spacing: 2px; cursor: pointer;
                     transition: all 0.4s ease; display: flex; align-items: center; 
                     justify-content: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    <span style="font-size: 14px;">👥</span> DATOS DE PARTICIPANTES
+                    <span style="font-size: 14px;">⚙️</span> EDITAR DATOS DE PARTICIPANTES
                 </button>
-                <div id="participantDataSlot" style="
-                    display:none; margin-top: 10px; padding: 15px; 
-                    background: rgba(255,255,255,0.02); border: 1px dashed rgba(212,175,55,0.2);
-                    border-radius: 8px; color: #888; font-size: 8px; text-align: center; 
-                    letter-spacing: 1px; line-height: 1.5;">
-                    <span style="color: var(--gold); font-weight: bold;">MÓDULO DE AUDIENCIA</span><br>
-                    ESTRUCTURA ESCALABLE LISTA PARA INTEGRACIÓN
-                </div>
             `;
 
-            // Inyección exacta: Justo arriba del botón de descarga
             anchor.parentNode.insertBefore(wrapper, anchor);
 
             const btn = document.getElementById('btnParticipantData');
-            const slot = document.getElementById('participantDataSlot');
 
+            // Efectos visuales Premium
             btn.onmouseenter = () => { 
                 btn.style.background = 'var(--gold)'; 
                 btn.style.color = '#000'; 
@@ -1167,39 +1223,23 @@
                 btn.style.color = 'var(--gold)'; 
             };
 
+            // VÍNCULO DIRECTO CON EL MODAL
             btn.onclick = () => {
-                const isVisible = slot.style.display === 'block';
-                slot.style.display = isVisible ? 'none' : 'block';
-                btn.style.borderColor = isVisible ? 'var(--gold-mix)' : 'var(--gold)';
+                const modal = document.getElementById('modalEditorCampos');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    if (typeof refreshAdminRows === 'function') {
+                        refreshAdminRows();
+                    }
+                } else {
+                    console.error("NEXO Error: El modal de edición no ha sido inyectado aún.");
+                }
             };
         }
     })();
 </script>
 
-    <style>
-    @keyframes premiumFadeIn {
-        from { 
-            opacity: 0; 
-            transform: scale(0.95); 
-            filter: blur(3px);      
-        }
-        to { 
-            opacity: 1; 
-            transform: scale(1); 
-            filter: blur(0px);
-        }
-    }
-    .modal-premium-animate {
-        /* Ajustado a 0.8s: 2 veces más lento que el estándar de 0.4s */
-        animation: premiumFadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    }
-    .modal-border-gold {
-        border: 1px solid rgba(212, 175, 55, 0.4);
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.1); 
-    }
-
-</script>
-        <script>
+    <script>
 // 1. Mapa de Datos Predeterminado (Escalable)
 window.formConfigVIP = [
     { id: "regName", label: "NOMBRE COMPLETO", type: "text", placeholder: "Identificación" },
@@ -1258,62 +1298,6 @@ appWheel.handleSpinClick = function() {
     }
     // Lógica original de giro...
 };
-
- /* INYECCIÓN ADITIVA: ANCLAJE DE PRECISIÓN PARA BOTÓN CONFIG */
-(function() {
-    const findAndInject = () => {
-        if (document.getElementById('btnManageFormFields')) return;
-
-        // Intentamos encontrar el título de la sección por su texto
-        const allElements = document.querySelectorAll('h2, h3, h4, span, div');
-        let anchor = null;
-
-        for (let el of allElements) {
-            if (el.textContent.includes("DATOS DE PARTICIPANTES") || el.id === "datosParticipantes") {
-                anchor = el;
-                break;
-            }
-        }
-
-        if (anchor) {
-            const btn = document.createElement('button');
-            btn.id = "btnManageFormFields";
-            btn.innerHTML = `<i class="fas fa-sliders-h"></i> CONFIGURAR FORMULARIO`;
-            
-            // Estilo Premium con posicionamiento absoluto para que "salte" a la vista
-            btn.style.cssText = `
-                background: #000 !important;
-                color: #d4af37 !important;
-                border: 1px solid #d4af37 !important;
-                padding: 8px 15px !important;
-                border-radius: 4px !important;
-                font-size: 10px !important;
-                font-weight: bold !important;
-                cursor: pointer !important;
-                margin-left: 20px !important;
-                text-transform: uppercase !important;
-                display: inline-block !important;
-                vertical-align: middle !important;
-            `;
-
-            // Si el anclaje es un título, lo ponemos al lado
-            anchor.appendChild(btn);
-            console.log("🎯 NEXO® Config Button: Target anchored and injected.");
-            
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const modal = document.getElementById('modalEditorCampos');
-                if(modal) {
-                    modal.style.display = 'flex';
-                    if(typeof refreshAdminRows === 'function') refreshAdminRows();
-                }
-            };
-        }
-    };
-
-    // Ejecutar inmediatamente y cada vez que cambie la vista del panel
-    setInterval(findAndInject, 2000);
-})();
 </script>
 </body>
 </html>
