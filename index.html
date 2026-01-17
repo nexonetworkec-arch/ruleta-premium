@@ -919,33 +919,49 @@
 
     <script>
     (function() {
-        // SEGURIDAD DE SESIÓN: Esperar validación de Firebase
-        const checkSession = setInterval(() => {
-            if (typeof currentUser !== 'undefined' && currentUser !== null) {
-                clearInterval(checkSession);
-                renderLeadTools();
-            }
-        }, 600);
+        // 1. AJUSTE DE ESTILO FULL SCREEN PARA EL PANEL EXISTENTE
+        const toolsPanel = document.getElementById('leadToolsPanel');
+        if (toolsPanel) {
+            toolsPanel.style.cssText = `
+                display: none; 
+                position: fixed; 
+                inset: 0; 
+                background: rgba(0,0,0,0.99); 
+                z-index: 25000; 
+                align-items: center; 
+                justify-content: center; 
+                backdrop-filter: blur(40px);
+                animation: premiumFade 0.5s ease;
+            `;
+        }
 
-        function renderLeadTools() {
+        // 2. CAPA DE SEGURIDAD (Validación de Usuario)
+        const initSafetyCheck = setInterval(() => {
+            if (typeof currentUser !== 'undefined' && currentUser !== null) {
+                clearInterval(initSafetyCheck);
+                renderLeadSystem();
+            }
+        }, 500);
+
+        function renderLeadSystem() {
             const toolsSlot = document.getElementById('toolsFunctionsSlot');
             if (!toolsSlot) return;
 
             toolsSlot.innerHTML = ''; 
 
-            // --- 1. INTERRUPTOR MAESTRO (DISEÑO PREMIUM) ---
+            // --- COMPONENTE: SWITCH DE REGISTRO ---
             const isRegOn = (typeof config !== 'undefined' && config.modoRegistro);
             const switchBox = document.createElement('div');
             switchBox.style.cssText = `
-                width: 100%; background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
-                padding: 25px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.2);
+                width: 100%; background: #080808; padding: 25px; 
+                border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.15);
                 margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.8);
             `;
             
             switchBox.innerHTML = `
                 <div style="flex: 1;">
-                    <p style="font-size: 8px; color: var(--gold); letter-spacing: 3px; margin: 0 0 5px 0; font-weight: bold;">SISTEMA DE CAPTACIÓN</p>
+                    <p style="font-size: 7px; color: var(--gold); letter-spacing: 4px; margin: 0 0 5px 0;">SISTEMA DE CAPTACIÓN</p>
                     <h4 id="statusTitle" style="font-size: 11px; color: #fff; margin: 0; letter-spacing: 1px;">
                         ${isRegOn ? 'REGISTRO OBLIGATORIO' : 'GIRO LIBRE (OFF)'}
                     </h4>
@@ -953,32 +969,32 @@
                 <button id="btnToggleReg" class="btn" style="
                     background: ${isRegOn ? 'var(--gold)' : 'transparent'};
                     color: ${isRegOn ? '#000' : 'var(--gold)'} !important;
-                    border: 1px solid var(--gold); padding: 10px 15px; font-size: 8px; 
-                    letter-spacing: 2px; border-radius: 8px; transition: 0.4s; min-width: 110px;">
+                    border: 1px solid var(--gold); padding: 12px 20px; font-size: 8px; 
+                    letter-spacing: 2px; border-radius: 12px; transition: 0.4s; min-width: 120px;">
                     ${isRegOn ? 'DESACTIVAR' : 'ACTIVAR'}
                 </button>
             `;
             toolsSlot.appendChild(switchBox);
 
-            // --- 2. VISOR DE LEADS (MINIMALISTA PRO) ---
+            // --- COMPONENTE: VISOR DE BASE DE DATOS ---
             const listCard = document.createElement('div');
             listCard.style.cssText = `
-                width: 100%; background: #000; border: 1px solid #1a1a1a; 
+                width: 100%; background: #000; border: 1px solid #151515; 
                 border-radius: 20px; overflow: hidden;
             `;
             
             listCard.innerHTML = `
-                <div style="background: #0a0a0a; padding: 15px; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 9px; color: #555; letter-spacing: 2px;">BASE DE DATOS EN VIVO</span>
-                    <span style="font-size: 7px; color: var(--gold-dark);">NEXO® SECURE</span>
+                <div style="background: #0a0a0a; padding: 15px 20px; border-bottom: 1px solid #151515; display: flex; justify-content: space-between;">
+                    <span style="font-size: 9px; color: #444; letter-spacing: 2px;">BASE DE DATOS EN VIVO</span>
+                    <span style="font-size: 7px; color: var(--gold-dark); opacity: 0.5;">NEXO® PRO v2.0</span>
                 </div>
-                <div id="leadsTableBody" style="max-height: 280px; overflow-y: auto; background: #050505;">
-                    <div style="padding: 40px; text-align: center; font-size: 9px; color: #333; letter-spacing: 1px;">SINCRONIZANDO CON LA NUBE...</div>
+                <div id="leadsTableBody" style="max-height: 320px; overflow-y: auto; background: #030303;">
+                    <div style="padding: 50px; text-align: center; font-size: 9px; color: #222;">SINCRONIZANDO NUBE...</div>
                 </div>
             `;
             toolsSlot.appendChild(listCard);
 
-            // --- LÓGICA DE ACTUALIZACIÓN ---
+            // --- LÓGICA DE INTERACCIÓN ---
             const btn = document.getElementById('btnToggleReg');
             const title = document.getElementById('statusTitle');
 
@@ -994,7 +1010,7 @@
                 });
             };
 
-            // Escucha de Leads en tiempo real
+            // Escucha de Firebase para actualizar la lista
             db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
                 const body = document.getElementById('leadsTableBody');
                 body.innerHTML = '';
@@ -1003,32 +1019,40 @@
                         const data = child.val();
                         const row = document.createElement('div');
                         row.style.cssText = `
-                            padding: 15px 20px; border-bottom: 1px solid #111;
+                            padding: 15px 20px; border-bottom: 1px solid #0a0a0a;
                             display: flex; justify-content: space-between; align-items: center;
-                            transition: 0.3s; cursor: default;
                         `;
-                        row.onmouseenter = () => row.style.background = '#0a0a0a';
-                        row.onmouseleave = () => row.style.background = 'transparent';
-                        
                         row.innerHTML = `
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-size: 10px; color: #eee; font-weight: bold; letter-spacing: 0.5px;">${data.name.toUpperCase()}</span>
-                                <span style="font-size: 8px; color: #555;">${data.email}</span>
+                                <span style="font-size: 8px; color: #444;">${data.email}</span>
                             </div>
-                            <div style="text-align: right;">
-                                <span style="font-size: 8px; color: var(--gold-dark); display: block;">${data.phone}</span>
-                                <span style="font-size: 6px; color: #222;">${data.date || ''}</span>
-                            </div>
+                            <span style="font-size: 9px; color: var(--gold-dark);">${data.phone}</span>
                         `;
                         body.prepend(row);
                     });
                 } else {
-                    body.innerHTML = `<div style="padding: 50px; text-align: center; font-size: 9px; color: #333; letter-spacing: 2px;">ESPERANDO PRIMER CLIENTE...</div>`;
+                    body.innerHTML = `<div style="padding: 50px; text-align: center; font-size: 9px; color: #222;">ESPERANDO REGISTROS...</div>`;
                 }
             });
         }
     })();
 </script>
+
+<style>
+    @keyframes premiumFade {
+        from { opacity: 0; transform: scale(1.02); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    #leadsTableBody::-webkit-scrollbar { width: 4px; }
+    #leadsTableBody::-webkit-scrollbar-track { background: transparent; }
+    #leadsTableBody::-webkit-scrollbar-thumb { background: #151515; border-radius: 10px; }
+</style>
+
+<script>
+    console.log("NEXO® Full Screen Tools: Active and Secure.");
+</script>
 </body>
 </html>
+
 
