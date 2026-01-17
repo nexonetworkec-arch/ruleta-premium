@@ -1259,96 +1259,57 @@ appWheel.handleSpinClick = function() {
     // Lógica original de giro...
 };
 
-        /* INYECCIÓN ADITIVA: GESTOR DE FILAS DINÁMICAS (Lienzo Limpio y Escalable)
-   Insertar al final del módulo del Admin Panel
-*/
+      /* INYECCIÓN ADITIVA REFORZADA: GESTOR DE FORMULARIO */
 (function() {
-    // 1. Localización de la ruta administrativa
-    const targetSection = document.querySelector('#datosParticipantes') || document.body;
+    const injectButton = () => {
+        // Buscamos múltiples posibles contenedores para asegurar el tiro
+        const target = document.querySelector('#datosParticipantes') || 
+                       document.querySelector('.leads-header') || 
+                       document.body;
 
-    // 2. Creación del Botón de Control
-    const btnAdminForm = document.createElement('button');
-    btnAdminForm.id = "btnManageFormFields";
-    btnAdminForm.innerHTML = `<i class="fas fa-cog" style="margin-right:8px;"></i> CONFIGURAR FILAS REGISTRO`;
-    
-    // Estilo Premium Integrado
-    Object.assign(btnAdminForm.style, {
-        background: '#000',
-        color: 'var(--gold)',
-        border: '1px solid var(--gold)',
-        padding: '12px 24px',
-        borderRadius: '5px',
-        fontSize: '10px',
-        fontWeight: '900',
-        letterSpacing: '2px',
-        cursor: 'pointer',
-        margin: '20px 0',
-        textTransform: 'uppercase',
-        transition: '0.3s'
-    });
-
-    targetSection.prepend(btnAdminForm);
-
-    // 3. Función para generar las filas editables en el Panel Admin
-    function refreshAdminRows() {
-        const listContainer = document.getElementById('listaFilasEditables');
-        listContainer.innerHTML = '';
-        
-        window.formConfigVIP.forEach((field, index) => {
-            const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.gap = '10px';
-            row.style.marginBottom = '10px';
-            row.style.alignItems = 'center';
+        if (target && !document.getElementById('btnManageFormFields')) {
+            const btnAdminForm = document.createElement('button');
+            btnAdminForm.id = "btnManageFormFields";
+            btnAdminForm.innerHTML = `<i class="fas fa-cog"></i> CONFIGURAR FILAS REGISTRO`;
             
-            row.innerHTML = `
-                <input type="text" value="${field.label}" class="edit-label" data-index="${index}" 
-                    style="flex:1; background:#000; border:1px solid #333; color:#fff; padding:8px; font-size:11px; border-radius:4px;">
-                <button class="btn-delete-row" data-index="${index}" 
-                    style="background:#441111; color:#ff4d4d; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; font-size:10px;">✕</button>
+            // Estilo con !important para evitar bloqueos de CSS externo
+            btnAdminForm.style.cssText = `
+                background: #000 !important;
+                color: #d4af37 !important;
+                border: 1px solid #d4af37 !important;
+                padding: 12px 24px !important;
+                border-radius: 5px !important;
+                font-size: 10px !important;
+                font-weight: 900 !important;
+                letter-spacing: 2px !important;
+                cursor: pointer !important;
+                margin: 20px 10px !important;
+                display: inline-block !important;
+                position: relative !important;
+                z-index: 9999 !important;
             `;
-            listContainer.appendChild(row);
-        });
-    }
 
-    // 4. Eventos del Panel
-    btnAdminForm.onclick = () => {
-        document.getElementById('modalEditorCampos').style.display = 'flex';
-        refreshAdminRows();
+            target.prepend(btnAdminForm);
+            console.log("✅ Botón de configuración inyectado con éxito.");
+
+            // Vincular el evento de click (asegúrate de que el resto del código del panel esté presente)
+            btnAdminForm.onclick = () => {
+                const modal = document.getElementById('modalEditorCampos');
+                if(modal) modal.style.display = 'flex';
+                if(typeof refreshAdminRows === 'function') refreshAdminRows();
+            };
+        }
     };
 
-    // Manejo de clicks dentro del panel (Delegación de eventos)
-    document.addEventListener('click', (e) => {
-        // Añadir Fila
-        if (e.target.id === 'btnAddRow') {
-            window.formConfigVIP.push({ id: `custom_${Date.now()}`, label: "NUEVO CAMPO", type: "text", placeholder: "" });
-            refreshAdminRows();
-        }
-        // Borrar Fila
-        if (e.target.classList.contains('btn-delete-row')) {
-            const idx = e.target.getAttribute('data-index');
-            window.formConfigVIP.splice(idx, 1);
-            refreshAdminRows();
-        }
-        // Cerrar
-        if (e.target.id === 'btnCloseEditor') {
-            document.getElementById('modalEditorCampos').style.display = 'none';
-        }
-        // Guardar
-        if (e.target.id === 'btnSaveAllFields') {
-            const labels = document.querySelectorAll('.edit-label');
-            labels.forEach((input, idx) => {
-                window.formConfigVIP[idx].label = input.value.toUpperCase();
-            });
-            
-            // Refrescar el modal del usuario si está abierto
-            if(typeof renderDynamicForm === 'function') renderDynamicForm();
-            
-            alert("CONFIGURACIÓN APLICADA CORRECTAMENTE");
-            document.getElementById('modalEditorCampos').style.display = 'none';
-        }
-    });
+    // Reintentar cada 1 segundo por si el panel tarda en cargar
+    const searchTimer = setInterval(() => {
+        injectButton();
+        // Si ya se inyectó, podemos detener el timer después de unos segundos
+    }, 1000);
+    
+    setTimeout(() => clearInterval(searchTimer), 10000); // Se detiene tras 10 seg
 })();
 </script>
 </body>
 </html>
+
