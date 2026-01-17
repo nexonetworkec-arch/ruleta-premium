@@ -1794,5 +1794,58 @@
     }, 1000);
 })();
 </script>
+
+    <script>
+(function() {
+    /**
+     * Este script monitorea el DOM para activar el botón existente
+     * sin interferir con la lógica de carga de Firebase.
+     */
+    const nexoActivator = setInterval(() => {
+        // Buscamos el botón específico por su contenido de texto
+        const botones = document.querySelectorAll('button');
+        let botonEdicion = null;
+
+        botones.forEach(btn => {
+            if (btn.innerText.includes("EDITAR DATOS DE PARTICIPANTES")) {
+                botonEdicion = btn;
+            }
+        });
+
+        // Si el botón existe y aún no ha sido "activado"
+        if (botonEdicion && botonEdicion.dataset.nexoStatus !== "active") {
+            console.log("NEXO: Botón de Edición detectado. Vinculando Modal...");
+
+            // Marcamos como activo para no repetir el proceso
+            botonEdicion.dataset.nexoStatus = "active";
+
+            // Inyectamos la acción de apertura
+            botonEdicion.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Intentamos localizar el modal de edición (ID estándar Nexo®)
+                const modalEdicion = document.getElementById('nexo_ModalEditor') || 
+                                     document.querySelector('.modal-edicion-participantes');
+
+                if (modalEdicion) {
+                    modalEdicion.style.display = 'flex';
+                    modalEdicion.style.zIndex = '20000'; // Asegura prioridad sobre el panel admin
+                    console.log("NEXO: Sistema de Edición Abierto.");
+                } else {
+                    console.error("NEXO: El módulo del modal no se encuentra en el DOM.");
+                    alert("ERROR: El módulo de edición aún no ha sido inyectado.");
+                }
+            };
+
+            // Opcional: Mejoramos el feedback visual del botón original
+            botonEdicion.style.transition = "0.3s";
+            botonEdicion.onmouseover = () => botonEdicion.style.filter = "brightness(1.3) drop-shadow(0 0 5px var(--gold))";
+            botonEdicion.onmouseleave = () => botonEdicion.style.filter = "none";
+        }
+    }, 1000); // Verifica cada segundo para asegurar persistencia
+})();
+</script>
 </body>
 </html>
+
