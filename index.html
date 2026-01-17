@@ -919,65 +919,100 @@
 
    <script>
     (function() {
-        const toolsPanel = document.getElementById('leadToolsPanel');
-        if (!toolsPanel) return;
-
-        // 1. Forzamos al contenedor interno a expandirse
-        const innerContent = toolsPanel.querySelector('.reg-content');
-        if (innerContent) {
-            innerContent.style.cssText = `
-                width: 95vw !important; 
-                max-width: 1200px !important; 
-                height: 90vh !important;
-                background: #000; 
-                border: 1px solid #111; 
-                padding: 40px; 
-                border-radius: 30px;
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                box-shadow: 0 0 100px rgba(0,0,0,1);
-                overflow: hidden;
-            `;
-        }
-
-        // 2. Re-organizamos el Slot de Funciones para que use Grid (Multicolumna)
         const toolsSlot = document.getElementById('toolsFunctionsSlot');
-        if (toolsSlot) {
-            toolsSlot.style.cssText = `
-                display: grid;
-                grid-template-columns: 1fr 2fr; /* Columna izquierda para controles, derecha para datos */
-                gap: 30px;
-                align-items: start;
-                margin-top: 20px;
-                height: 100%;
+        if (!toolsSlot) return;
+
+        // 1. CREACIÓN DE LA ESTRUCTURA DE DOS COLUMNAS (GRID)
+        toolsSlot.innerHTML = `
+            <div id="colSettings" style="display: flex; flex-direction: column; gap: 20px;">
+                <div id="statusCard" style="background: #080808; padding: 25px; border-radius: 20px; border: 1px solid rgba(212,175,55,0.2);">
+                    <p style="font-size: 8px; color: var(--gold); letter-spacing: 3px; margin-bottom: 10px;">CONFIGURACIÓN GLOBAL</p>
+                    <div id="switchContainer"></div>
+                </div>
+                <div id="exportCard" style="background: #080808; padding: 25px; border-radius: 20px; border: 1px solid #111;">
+                    <p style="font-size: 8px; color: #444; letter-spacing: 3px; margin-bottom: 15px;">PRÓXIMAS INTEGRACIONES</p>
+                    <div id="nextFeaturesSlot" style="opacity: 0.3; font-size: 9px; color: #333;">Módulos de Exportación y API listos para inyectar...</div>
+                </div>
+            </div>
+
+            <div id="colDatabase" style="background: #050505; border-radius: 25px; border: 1px solid #111; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
+                <div style="background: #0a0a0a; padding: 20px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center;">
+                    <h5 style="margin: 0; font-size: 11px; color: #fff; letter-spacing: 2px;">AUDITORÍA DE PROSPECTOS</h5>
+                    <span id="leadCounter" style="font-size: 9px; color: var(--gold); font-weight: bold;">0 LEADS</span>
+                </div>
+                <div id="premiumTableBody" style="flex-grow: 1; overflow-y: auto; padding: 10px;">
+                    <p style="text-align: center; padding: 50px; color: #222; font-size: 10px;">SINCRONIZANDO NUBE...</p>
+                </div>
+            </div>
+        `;
+
+        // 2. RE-POBLAR DATOS (FIREBASE SYNC)
+        function refreshDashboard() {
+            if (typeof currentUser === 'undefined' || !currentUser) return;
+
+            // Lógica del Switch
+            const switchCont = document.getElementById('switchContainer');
+            const isRegOn = (typeof config !== 'undefined' && config.modoRegistro);
+            
+            switchCont.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span id="txtModo" style="font-size: 12px; color: #fff;">${isRegOn ? 'Registro Activo' : 'Giro Libre'}</span>
+                    <button id="btnActionToggle" class="btn" style="padding: 10px 20px; font-size: 8px; border-radius: 8px; background: ${isRegOn ? 'var(--gold)' : 'transparent'}; color: ${isRegOn ? '#000' : 'var(--gold)'} !important; border: 1px solid var(--gold);">
+                        ${isRegOn ? 'OFF' : 'ON'}
+                    </button>
+                </div>
             `;
+
+            document.getElementById('btnActionToggle').onclick = () => {
+                const newState = !config.modoRegistro;
+                db.ref(`users/${currentUser.uid}/config`).update({ modoRegistro: newState }).then(() => {
+                    config.modoRegistro = newState;
+                    refreshDashboard();
+                });
+            };
+
+            // Lógica de la Tabla
+            db.ref(`users/${currentUser.uid}/leads`).on('value', snap => {
+                const table = document.getElementById('premiumTableBody');
+                const counter = document.getElementById('leadCounter');
+                table.innerHTML = '';
+                
+                if (snap.exists()) {
+                    let count = 0;
+                    snap.forEach(child => {
+                        count++;
+                        const d = child.val();
+                        const row = document.createElement('div');
+                        row.style.cssText = `padding: 15px 20px; border-bottom: 1px solid #0d0d0d; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;`;
+                        row.onmouseenter = () => row.style.background = '#080808';
+                        row.onmouseleave = () => row.style.background = 'transparent';
+                        
+                        row.innerHTML = `
+                            <div style="text-align: left;">
+                                <b style="font-size: 11px; color: #eee; display: block; letter-spacing: 0.5px;">${d.name.toUpperCase()}</b>
+                                <small style="color: #444; font-size: 8px;">${d.email}</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="color: var(--gold-dark); font-size: 10px; font-weight: bold; display: block;">${d.phone}</span>
+                                <span style="color: #222; font-size: 7px;">${d.date || ''}</span>
+                            </div>
+                        `;
+                        table.prepend(row);
+                    });
+                    counter.innerText = `${count} LEADS REGISTRADOS`;
+                } else {
+                    table.innerHTML = `<div style="padding: 100px; text-align: center; color: #1a1a1a; letter-spacing: 2px; font-size: 9px;">BASE DE DATOS VACÍA</div>`;
+                }
+            });
         }
 
-        // 3. Ajuste estético del título principal para que no se vea "perdido"
-        const header = toolsPanel.querySelector('h3');
-        if (header) {
-            header.style.cssText = `
-                font-size: 24px; 
-                color: var(--gold); 
-                letter-spacing: 8px; 
-                text-align: left;
-                margin-bottom: 5px;
-                font-weight: 200;
-            `;
-        }
+        refreshDashboard();
     })();
 </script>
 
-<style>
-    /* Mejora de la barra de desplazamiento para el visor de datos */
-    #leadsTableBody::-webkit-scrollbar { width: 6px; }
-    #leadsTableBody::-webkit-scrollbar-track { background: #050505; }
-    #leadsTableBody::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
-</style>
-
 <script>
-    console.log("NEXO® Interface expanded to Full Canvas.");
+    console.log("NEXO® Dashboard: Data relinked and expanded.");
 </script>
 </body>
 </html>
+
